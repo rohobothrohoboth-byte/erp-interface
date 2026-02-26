@@ -1389,13 +1389,25 @@ const Sidebar: React.FC = () => {
                 {...theme}
                 collapsed={collapsed}
               />
-              <NavItem
-                to="/finance/accounts"
+              <NavGroup
                 icon={<Package size={18} />}
-                label="Accounts"
-                {...theme}
+                label="Account"
+                isOpen={openGroup === "Account"}
+                onToggle={() => toggleGroup("Account")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
                 collapsed={collapsed}
-              />
+              >
+                <NavItem
+                  to="/finance/accounts"
+                  icon={<Package size={18} />}
+                  label="Chart of Account"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+              </NavGroup>
               <NavItem
                 to="/finance/journals"
                 icon={<Notebook size={18} />}
@@ -1410,13 +1422,41 @@ const Sidebar: React.FC = () => {
                 {...theme}
                 collapsed={collapsed}
               />
-              <NavItem
-                to="/finance/budget-list"
+              <NavGroup
                 icon={<FileSpreadsheet size={18} />}
                 label="Budgeting"
-                {...theme}
+                isOpen={openGroup === "Budgeting"}
+                onToggle={() => toggleGroup("Budgeting")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
                 collapsed={collapsed}
-              />
+              >
+                <NavItem
+                  to="/finance/budget"
+                  icon={<FileSpreadsheet size={18} />}
+                  label="Budget"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/budget-plan"
+                  icon={<FileText size={18} />}
+                  label="Budget Plan"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/budget-approval"
+                  icon={<FileCheck size={18} />}
+                  label="Budget Approval"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+              </NavGroup>
               <NavItem
                 to="/finance/payroll"
                 icon={<FileSpreadsheet size={18} />}
@@ -1450,13 +1490,33 @@ const Sidebar: React.FC = () => {
                 {...theme}
                 collapsed={collapsed}
               />
-              <NavItem
-                to="/finance/accounts"
+              <NavGroup
                 icon={<Package size={18} />}
-                label="Accounts"
-                {...theme}
+                label="Account"
+                isOpen={openGroup === "Account"}
+                onToggle={() => toggleGroup("Account")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
                 collapsed={collapsed}
-              />
+              >
+                <NavItem
+                  to="/finance/accounts"
+                  icon={<Package size={18} />}
+                  label="Chart of Account"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/account-category"
+                  icon={<Package size={18} />}
+                  label="Account Category"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+              </NavGroup>
               <NavItem
                 to="/finance/journals"
                 icon={<Notebook size={18} />}
@@ -1471,13 +1531,41 @@ const Sidebar: React.FC = () => {
                 {...theme}
                 collapsed={collapsed}
               />
-              <NavItem
-                to="/finance/budget-list"
+              <NavGroup
                 icon={<FileSpreadsheet size={18} />}
                 label="Budgeting"
-                {...theme}
+                isOpen={openGroup === "Budgeting"}
+                onToggle={() => toggleGroup("Budgeting")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
                 collapsed={collapsed}
-              />
+              >
+                <NavItem
+                  to="/finance/budget"
+                  icon={<FileSpreadsheet size={18} />}
+                  label="Budget"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/budget-plan"
+                  icon={<FileText size={18} />}
+                  label="Budget Plan"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/budget-approval"
+                  icon={<FileCheck size={18} />}
+                  label="Budget Approval"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+              </NavGroup>
               <NavItem
                 to="/finance/payroll"
                 icon={<FileSpreadsheet size={18} />}

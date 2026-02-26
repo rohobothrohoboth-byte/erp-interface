@@ -11,7 +11,7 @@ import {
   Layers,
   Loader,
 } from 'lucide-react';
-import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover';
+import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/popover';
 
 interface AccountItem {
   id: number;

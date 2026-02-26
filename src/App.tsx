@@ -65,7 +65,20 @@ import LeaveAppChainHistory from "./pages/settings/hrSettings/Leave/LeaveAppChai
 import LeavePolicyConfigHistory from "./pages/settings/hrSettings/Leave/leavePolicyConfigHistory";
 import PolicyAssignmentRule from "./pages/settings/hrSettings/Leave/policyAssignmentRule";
 import PolicyAssignmentRuleHistory from "./pages/settings/hrSettings/Leave/policyAssignmentRuleHistory";
-import PageAccounts from "./pages/finance/PageAccounts";
+import PageAccounts from "./pages/settings/FinanceSettings/Account/PageAccounts";
+import PageAccountDetail from "./pages/settings/FinanceSettings/Account/PageAccountDetail";
+import PageAccountCategory from "./pages/settings/FinanceSettings/Account/PageAccountCategory";
+import PageFinanceSettings from "./pages/settings/FinanceSettings/PageFinanceSettings";
+import PageCostCenter from "./pages/settings/FinanceSettings/CostCenter/PageCostCenter";
+import PageBudgetCode from "./pages/settings/FinanceSettings/BudgetCode/PageBudgetCode";
+import PageBudgetCategory from "./pages/settings/FinanceSettings/BudgetCategory/PageBudgetCategory";
+import FinancePageAccounts from "./pages/finance/Account/PageAccounts";
+import FinancePageAccountDetail from "./pages/finance/Account/PageAccountDetail";
+import PageBudget from "./pages/finance/budgeting/PageBudget";
+import PageBudgetPlan from "./pages/finance/budgeting/PageBudgetPlan";
+import PageBudgetExpenses from "./pages/finance/budgeting/PageBudgetExpenses";
+import PageBudgetApproval from "./pages/finance/budgeting/PageBudgetApproval";
+import PageExpenseApproval from "./pages/finance/budgeting/PageExpenseApproval";
 import PageJournal from "./pages/finance/PageJournal";
 import PageReports from "./pages/finance/PageReports";
 import PageAssets from "./pages/finance/PageAssets";
@@ -119,6 +132,7 @@ import PageTicketStatus from "./pages/settings/crmSettings/pageTicketStatus";
 import VacanciesPage from "./pages/vacancy/VacanciesPage";
 import AddAccountPage from "./pages/core/usermanagement/pageAddAccount";
 import EditAccountPage from "./pages/core/usermanagement/pageEditAccount";
+import NotFoundPage from "./pages/NotFoundPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -374,6 +388,13 @@ function App() {
                   element={<TimeClockFormContainer />}
                 />
                 <Route path="/settings" element={<PageSettings />} />
+                <Route path="/settings/finance" element={<PageFinanceSettings />} />
+                <Route path="/settings/finance/accounts" element={<PageAccounts />} />
+                <Route path="/settings/finance/accounts/:accountId" element={<PageAccountDetail />} />
+                <Route path="/settings/finance/account-category" element={<PageAccountCategory />} />
+                <Route path="/settings/finance/cost-center" element={<PageCostCenter />} />
+                <Route path="/settings/finance/budget-code" element={<PageBudgetCode />} />
+                <Route path="/settings/finance/budget-category" element={<PageBudgetCategory />} />
                 <Route
                   path="/settings/hr/benefitset"
                   element={<PageBenefitSet />}
@@ -428,7 +449,13 @@ function App() {
                 {/* START FINANCE ROUTES */}
                 <Route path="/finance/gl" element={<GlPage />} />
                 <Route path="/finance/budget-list" element={<BudgetList />} />
-                <Route path="/finance/accounts" element={<PageAccounts />} />
+                <Route path="/finance/budget" element={<PageBudget />} />
+                <Route path="/finance/budget-plan" element={<PageBudgetPlan />} />
+                <Route path="/finance/budget-plan/:budgetPlanId/expenses" element={<PageBudgetExpenses />} />
+                <Route path="/finance/budget-approval" element={<PageBudgetApproval />} />
+                <Route path="/finance/budget-approval/:budgetPlanId/expenses" element={<PageExpenseApproval />} />
+                <Route path="/finance/accounts" element={<FinancePageAccounts />} />
+                <Route path="/finance/accounts/:accountId" element={<FinancePageAccountDetail />} />
                 <Route path="/finance/journals" element={<PageJournal />} />
                 <Route path="/finance/payroll" element={<PagePayroll />} />
                 <Route
@@ -516,6 +543,9 @@ function App() {
                   isAuthenticated ? <VacanciesPage /> : <Navigate to="/login" />
                 }
               />
+
+              {/* 404 Page */}
+              <Route path="/404" element={<NotFoundPage />} />
 
               {/* Catch-all route */}
               <Route
