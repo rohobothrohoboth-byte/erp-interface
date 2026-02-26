@@ -8,11 +8,13 @@ import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 import { Gender, AddressType } from '../../../../../types/hr/enum';
 import type { Step3Dto } from '../../../../../types/hr/employee/empAddDto';
-import type { UUID } from 'crypto';
 import { amharicRegex } from '../../../../../utils/amharic-regex';
 import List from '../../../../List/list';
 import { listService } from '../../../../../services/hr/listservice';
-import type { ListItem } from '../../../../../types/List/list';
+import type { ListItem, UUID } from '../../../../../types/List/list';
+import EnumSelect from '../../../../ui/enumSelect';
+import { Relation } from '../../../../../types/enum';
+import { Label } from '../../../../ui/label';
 // import { empService } from '../../../../../services/hr/employee/empService';
 
 interface EmergencyContactStepProps {
@@ -46,7 +48,7 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
   employeeId,
   loading = false
 }) => {
-  const [relations, setRelations] = useState<ListItem[]>([]);
+  const [relations, setRelations] = useState("0");
   const [loadingRelations, setLoadingRelations] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -110,27 +112,27 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
   }, [employeeId]);
 
   // Fetch relations when component mounts
-  useEffect(() => {
-    const fetchRelations = async () => {
-      setLoadingRelations(true);
-      try {
-        const relationsData = await listService.getAllRelations();
-        setRelations(relationsData);
+  // useEffect(() => {
+  //   const fetchRelations = async () => {
+  //     setLoadingRelations(true);
+  //     try {
+  //       const relationsData = await listService.getAllRelations();
+  //       setRelations(relationsData);
 
-        // Auto-select first relation if none is selected and we have relations
-        if (!formik.values.relationId && relationsData.length > 0) {
-          formik.setFieldValue('relationId', relationsData[0].id);
-        }
-      } catch (error) {
-        console.error('Error fetching relations:', error);
-        setSubmitError('Failed to load relations');
-      } finally {
-        setLoadingRelations(false);
-      }
-    };
+  //       // Auto-select first relation if none is selected and we have relations
+  //       if (!formik.values.relationId && relationsData.length > 0) {
+  //         formik.setFieldValue('relationId', relationsData[0].id);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching relations:', error);
+  //       setSubmitError('Failed to load relations');
+  //     } finally {
+  //       setLoadingRelations(false);
+  //     }
+  //   };
 
-    fetchRelations();
-  }, []);
+  //   fetchRelations();
+  // }, []);
 
   // Handle relation selection
   const handleRelationSelect = (item: ListItem) => {
@@ -165,13 +167,25 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
   };
 
   // Handle form submission without validation
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async(e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
-    
-    // Scroll to top before form submission
+
+    const errors = await formik.validateForm();
+
+    if (Object.keys(errors).length > 0) {
+      formik.setTouched(
+        Object.keys(errors).reduce((acc, key) => {
+          acc[key] = true;
+          return acc;
+        }, {} as any),
+      );
+      return;
+    }
+
     scrollToTop();
     formik.handleSubmit();
+    
   };
 
   // Handle back button click with scroll to top
@@ -181,7 +195,7 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
   };
 
   // Get the selected relation name for display
-  const selectedRelation = relations.find(relation => relation.id === formik.values.relationId);
+  // const selectedRelation = relations.find(relation => relation.id === formik.values.relationId);
 
   return (
     <motion.div
@@ -200,8 +214,16 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
         >
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+              <svg
+                className="h-5 w-5 text-red-400"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clipRule="evenodd"
+                />
               </svg>
             </div>
             <div className="ml-3">
@@ -213,7 +235,11 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                 onClick={() => setSubmitError(null)}
                 className="text-red-800 hover:text-red-900"
               >
-                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <svg
+                  className="h-4 w-4"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
                   <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
                 </svg>
               </button>
@@ -227,14 +253,19 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-2 h-8 bg-gradient-to-b from-purple-400 to-purple-600 rounded-full"></div>
-            <h3 className="text-xl font-semibold text-gray-800">Emergency Contact Person Information</h3>
+            <h3 className="text-xl font-semibold text-gray-800">
+              Emergency Contact Person Information
+            </h3>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {/* English Names Column */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="firstName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   First Name *
                 </label>
                 <Input
@@ -243,18 +274,26 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                   value={formik.values.firstName}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('firstName') ? "border-red-500" : "border-gray-300"
-                    }`}
+                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                    getErrorMessage("firstName")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
                   placeholder="John"
                   disabled={loading}
                 />
-                {getErrorMessage('firstName') && (
-                  <div className="text-red-500 text-xs mt-1">{getErrorMessage('firstName')}</div>
+                {getErrorMessage("firstName") && (
+                  <div className="text-red-500 text-xs mt-1">
+                    {getErrorMessage("firstName")}
+                  </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="middleName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="middleName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Middle Name *
                 </label>
                 <Input
@@ -263,18 +302,26 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                   value={formik.values.middleName}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('middleName') ? "border-red-500" : "border-gray-300"
-                    }`}
+                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                    getErrorMessage("middleName")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
                   placeholder="Michael"
                   disabled={loading}
                 />
-                {getErrorMessage('middleName') && (
-                  <div className="text-red-500 text-xs mt-1">{getErrorMessage('middleName')}</div>
+                {getErrorMessage("middleName") && (
+                  <div className="text-red-500 text-xs mt-1">
+                    {getErrorMessage("middleName")}
+                  </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="lastName"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Last Name *
                 </label>
                 <Input
@@ -283,13 +330,18 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                   value={formik.values.lastName}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('lastName') ? "border-red-500" : "border-gray-300"
-                    }`}
+                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                    getErrorMessage("lastName")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
                   placeholder="Doe"
                   disabled={loading}
                 />
-                {getErrorMessage('lastName') && (
-                  <div className="text-red-500 text-xs mt-1">{getErrorMessage('lastName')}</div>
+                {getErrorMessage("lastName") && (
+                  <div className="text-red-500 text-xs mt-1">
+                    {getErrorMessage("lastName")}
+                  </div>
                 )}
               </div>
             </div>
@@ -297,62 +349,86 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
             {/* Amharic Names Column */}
             <div className="space-y-4">
               <div className="space-y-2">
-                <label htmlFor="firstNameAm" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="firstNameAm"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   First Name (Amharic) *
                 </label>
                 <Input
                   id="firstNameAm"
                   name="firstNameAm"
                   value={formik.values.firstNameAm}
-                  onChange={(e) => handleAmharicInputChange(e, 'firstNameAm')}
+                  onChange={(e) => handleAmharicInputChange(e, "firstNameAm")}
                   onBlur={formik.handleBlur}
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('firstNameAm') ? "border-red-500" : "border-gray-300"
-                    }`}
+                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                    getErrorMessage("firstNameAm")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
                   placeholder="አየለ"
                   disabled={loading}
                 />
-                {getErrorMessage('firstNameAm') && (
-                  <div className="text-red-500 text-xs mt-1">{getErrorMessage('firstNameAm')}</div>
+                {getErrorMessage("firstNameAm") && (
+                  <div className="text-red-500 text-xs mt-1">
+                    {getErrorMessage("firstNameAm")}
+                  </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="middleNameAm" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="middleNameAm"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Middle Name (Amharic) *
                 </label>
                 <Input
                   id="middleNameAm"
                   name="middleNameAm"
                   value={formik.values.middleNameAm}
-                  onChange={(e) => handleAmharicInputChange(e, 'middleNameAm')}
+                  onChange={(e) => handleAmharicInputChange(e, "middleNameAm")}
                   onBlur={formik.handleBlur}
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('middleNameAm') ? "border-red-500" : "border-gray-300"
-                    }`}
+                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                    getErrorMessage("middleNameAm")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
                   placeholder="በቀለ"
                   disabled={loading}
                 />
-                {getErrorMessage('middleNameAm') && (
-                  <div className="text-red-500 text-xs mt-1">{getErrorMessage('middleNameAm')}</div>
+                {getErrorMessage("middleNameAm") && (
+                  <div className="text-red-500 text-xs mt-1">
+                    {getErrorMessage("middleNameAm")}
+                  </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="lastNameAm" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="lastNameAm"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Last Name (Amharic) *
                 </label>
                 <Input
                   id="lastNameAm"
                   name="lastNameAm"
                   value={formik.values.lastNameAm}
-                  onChange={(e) => handleAmharicInputChange(e, 'lastNameAm')}
+                  onChange={(e) => handleAmharicInputChange(e, "lastNameAm")}
                   onBlur={formik.handleBlur}
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('lastNameAm') ? "border-red-500" : "border-gray-300"
-                    }`}
+                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                    getErrorMessage("lastNameAm")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
                   placeholder="ዮሐንስ"
                   disabled={loading}
                 />
-                {getErrorMessage('lastNameAm') && (
-                  <div className="text-red-500 text-xs mt-1">{getErrorMessage('lastNameAm')}</div>
+                {getErrorMessage("lastNameAm") && (
+                  <div className="text-red-500 text-xs mt-1">
+                    {getErrorMessage("lastNameAm")}
+                  </div>
                 )}
               </div>
             </div>
@@ -361,7 +437,10 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
           {/* Additional Contact Details */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
             <div className="space-y-2">
-              <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="nationality"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Nationality *
               </label>
               <Input
@@ -370,27 +449,42 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                 value={formik.values.nationality}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('nationality') ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                  getErrorMessage("nationality")
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
                 placeholder="Ethiopian"
                 disabled={loading}
               />
-              {getErrorMessage('nationality') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('nationality')}</div>
+              {getErrorMessage("nationality") && (
+                <div className="text-red-500 text-xs mt-1">
+                  {getErrorMessage("nationality")}
+                </div>
               )}
             </div>
-
+            {/* gender */}
             <div className="space-y-2">
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="gender"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Gender *
               </label>
               <Select
                 value={formik.values.gender}
-                onValueChange={(value: Gender) => formik.setFieldValue('gender', value)}
+                onValueChange={(value: Gender) =>
+                  formik.setFieldValue("gender", value)
+                }
                 disabled={loading}
               >
-                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('gender') ? "border-red-500" : "border-gray-300"
-                  }`}>
+                <SelectTrigger
+                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                    getErrorMessage("gender")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                >
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -401,29 +495,27 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              {getErrorMessage('gender') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('gender')}</div>
+              {getErrorMessage("gender") && (
+                <div className="text-red-500 text-xs mt-1">
+                  {getErrorMessage("gender")}
+                </div>
               )}
             </div>
-
+            {/* relation */}
             <div className="space-y-2">
-              <List
-                items={relations}
-                selectedValue={formik.values.relationId}
-                onSelect={handleRelationSelect}
-                label="Select Relation"
-                placeholder="Choose a relation"
-                disabled={loadingRelations || loading}
+              <Label
+                htmlFor="fiscalYear"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Relation <span className="text-red-500">*</span>
+              </Label>
+              <EnumSelect
+                enumObject={Relation}
+                value={formik.values.relationId}
+                onChange={(value) => formik.setFieldValue("relationId", value)}
+                placeholder="Select Relation"
+                disabled={loading}
               />
-              {loadingRelations && (
-                <p className="text-sm text-gray-500">Loading relations...</p>
-              )}
-              {getErrorMessage('relationId') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('relationId')}</div>
-              )}
-              {selectedRelation && (
-                <p className="text-sm text-green-600 mt-1">Selected: {selectedRelation.name}</p>
-              )}
             </div>
           </div>
         </div>
@@ -432,22 +524,34 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-2 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full"></div>
-            <h3 className="text-xl font-semibold text-gray-800">Contact Address Information</h3>
+            <h3 className="text-xl font-semibold text-gray-800">
+              Contact Address Information
+            </h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Address Type */}
             <div className="space-y-2">
-              <label htmlFor="addressType" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="addressType"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Address Type *
               </label>
               <Select
                 value={formik.values.addressType}
-                onValueChange={(value: AddressType) => formik.setFieldValue('addressType', value)}
+                onValueChange={(value: AddressType) =>
+                  formik.setFieldValue("addressType", value)
+                }
                 disabled={loading}
               >
-                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('addressType') ? "border-red-500" : "border-gray-300"
-                  }`}>
+                <SelectTrigger
+                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                    getErrorMessage("addressType")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                  }`}
+                >
                   <SelectValue placeholder="Select address type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -458,14 +562,19 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                   ))}
                 </SelectContent>
               </Select>
-              {getErrorMessage('addressType') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('addressType')}</div>
+              {getErrorMessage("addressType") && (
+                <div className="text-red-500 text-xs mt-1">
+                  {getErrorMessage("addressType")}
+                </div>
               )}
             </div>
 
             {/* Country */}
             <div className="space-y-2">
-              <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="country"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Country *
               </label>
               <Input
@@ -474,19 +583,27 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                 value={formik.values.country}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('country') ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                  getErrorMessage("country")
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
                 placeholder="Ethiopia"
                 disabled={loading}
               />
-              {getErrorMessage('country') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('country')}</div>
+              {getErrorMessage("country") && (
+                <div className="text-red-500 text-xs mt-1">
+                  {getErrorMessage("country")}
+                </div>
               )}
             </div>
 
             {/* Region */}
             <div className="space-y-2">
-              <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="region"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Region *
               </label>
               <Input
@@ -495,66 +612,87 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                 value={formik.values.region}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('region') ? "border-red-500" : "border-gray-300"
-                  }`}
+                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                  getErrorMessage("region")
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
                 placeholder="Addis Ababa"
                 disabled={loading}
               />
-              {getErrorMessage('region') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('region')}</div>
+              {getErrorMessage("region") && (
+                <div className="text-red-500 text-xs mt-1">
+                  {getErrorMessage("region")}
+                </div>
               )}
             </div>
 
             {/* Telephone */}
             <div className="space-y-2">
-              <label htmlFor="telephone" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="telephone"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Telephone *
               </label>
-              <div className={`w-full border rounded-md transition-colors duration-200 ${getErrorMessage('telephone') ? "border-red-500" : "border-gray-300"
-                }`}>
+              <div
+                className={`w-full border rounded-md transition-colors duration-200 ${
+                  getErrorMessage("telephone")
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
+              >
                 <PhoneInput
-                  country={'et'}
+                  country={"et"}
                   value={formik.values.telephone}
                   onChange={handlePhoneChange}
                   disabled={loading}
                   inputProps={{
                     name: "telephone",
                     onBlur: formik.handleBlur,
-                    disabled: loading
+                    disabled: loading,
                   }}
                   inputStyle={{
-                    width: '100%',
-                    height: '42px',
-                    paddingLeft: '48px',
-                    outline: 'none',
-                    fontSize: '14px',
-                    borderRadius: '6px',
-                    border: 'none',
-                    ...(loading && { backgroundColor: '#f3f4f6', cursor: 'not-allowed' })
+                    width: "100%",
+                    height: "42px",
+                    paddingLeft: "48px",
+                    outline: "none",
+                    fontSize: "14px",
+                    borderRadius: "6px",
+                    border: "none",
+                    ...(loading && {
+                      backgroundColor: "#f3f4f6",
+                      cursor: "not-allowed",
+                    }),
                   }}
                   buttonStyle={{
-                    border: 'none',
-                    borderRight: '1px solid #ccc',
-                    borderRadius: '6px 0 0 6px',
-                    backgroundColor: '#f8f9fa',
-                    ...(loading && { cursor: 'not-allowed' })
+                    border: "none",
+                    borderRight: "1px solid #ccc",
+                    borderRadius: "6px 0 0 6px",
+                    backgroundColor: "#f8f9fa",
+                    ...(loading && { cursor: "not-allowed" }),
                   }}
                   containerStyle={{
-                    width: '100%'
+                    width: "100%",
                   }}
                   dropdownStyle={{
-                    borderRadius: '6px'
+                    borderRadius: "6px",
                   }}
                 />
               </div>
-              {getErrorMessage('telephone') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('telephone')}</div>
+              {getErrorMessage("telephone") && (
+                <div className="text-red-500 text-xs mt-1">
+                  {getErrorMessage("telephone")}
+                </div>
               )}
             </div>
 
             {/* Subcity - Optional */}
             <div className="space-y-2">
-              <label htmlFor="subcity" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="subcity"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Subcity
               </label>
               <Input
@@ -571,7 +709,10 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
 
             {/* Zone - Optional */}
             <div className="space-y-2">
-              <label htmlFor="zone" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="zone"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Zone
               </label>
               <Input
@@ -588,7 +729,10 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
 
             {/* Woreda - Optional */}
             <div className="space-y-2">
-              <label htmlFor="woreda" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="woreda"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Woreda
               </label>
               <Input
@@ -605,7 +749,10 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
 
             {/* Kebele - Optional */}
             <div className="space-y-2">
-              <label htmlFor="kebele" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="kebele"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Kebele
               </label>
               <Input
@@ -622,7 +769,10 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
 
             {/* House Number - Optional */}
             <div className="space-y-2">
-              <label htmlFor="houseNo" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="houseNo"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 House Number
               </label>
               <Input
@@ -639,7 +789,10 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
 
             {/* P.O. Box - Optional */}
             <div className="space-y-2">
-              <label htmlFor="poBox" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="poBox"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 P.O. Box
               </label>
               <Input
@@ -656,7 +809,10 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
 
             {/* Fax - Optional */}
             <div className="space-y-2">
-              <label htmlFor="fax" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="fax"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Fax
               </label>
               <Input
@@ -673,7 +829,10 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
 
             {/* Email - Optional */}
             <div className="space-y-2">
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Email
               </label>
               <Input
@@ -691,7 +850,10 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
 
             {/* Website - Optional */}
             <div className="space-y-2">
-              <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="website"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Website
               </label>
               <Input
@@ -729,7 +891,7 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
                 Saving...
               </>
             ) : (
-              'Save & Continue'
+              "Save & Continue"
             )}
           </button>
         </div>

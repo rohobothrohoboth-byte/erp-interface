@@ -7,11 +7,10 @@ import type {
   PositionEduAddDto,
   PositionEduModDto,
   UUID,
-  EducationLevelDto,
 } from "../../../../../types/hr/position";
 import { positionService } from "../../../../../services/core/settings/ModHrm/positionService";
 import DeletePositionEducationModal from "./DeletePositionEducationModal";
-import { listService } from "../../../../../services/hr/listservice";
+import { EducationLevel } from "../../../../../types/enum";
 
 interface PositionEducationProps {
   positionId: UUID;
@@ -27,9 +26,6 @@ const PositionEducation = forwardRef<
   PositionEducationProps
 >(({ positionId, onEdit }, ref) => {
   const [educations, setEducations] = useState<PositionEduListDto[]>([]);
-  const [educationLevels, setEducationLevels] = useState<EducationLevelDto[]>(
-    []
-  );
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEducation, setEditingEducation] =
@@ -45,22 +41,19 @@ const PositionEducation = forwardRef<
     fetchData();
   }, [positionId]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const [positionEducations, educationLevelsData] = await Promise.all([
-        positionService.getAllPositionEducations(positionId),
-        listService.getAllEducationLevels(),
-      ]);
+const fetchData = async () => {
+  try {
+    setLoading(true);
+    const positionEducations =
+      await positionService.getAllPositionEducations(positionId);
 
-      setEducations(positionEducations);
-      setEducationLevels(educationLevelsData);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setEducations(positionEducations);
+  } catch (error) {
+    console.error("Error fetching data:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSave = async (data: PositionEduAddDto | PositionEduModDto) => {
     try {
@@ -130,9 +123,6 @@ const PositionEducation = forwardRef<
     <div className="space-y-6">
       <div className="space-y-4">
         {educations.map((education) => {
-          const educationLevel = educationLevels.find(
-            (el) => el.id === education.educationLevelId
-          );
           return (
             <div
               key={education.id}
@@ -141,7 +131,9 @@ const PositionEducation = forwardRef<
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900 text-lg">
-                    {educationLevel?.name || "Unknown Level"}
+                    {EducationLevel[
+                      education.educationLevelId as keyof typeof EducationLevel
+                    ] ?? "Unknown Level"}
                   </h4>
                   <p className="text-sm text-gray-600 mt-1">
                     {education.position}

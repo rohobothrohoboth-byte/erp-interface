@@ -11,9 +11,10 @@ import { Gender, AddressType } from '../../../../../types/hr/enum';
 import type { Step4Dto } from '../../../../../types/hr/employee/empAddDto';
 import type { UUID } from 'crypto';
 import { amharicRegex } from '../../../../../utils/amharic-regex';
-import List from '../../../../List/list';
-import { listService } from '../../../../../services/hr/listservice';
 import type { ListItem } from '../../../../../types/List/list';
+import EnumSelect from '../../../../ui/enumSelect';
+import { Label } from '../../../../ui/label';
+import { Relation } from '../../../../../types/enum';
 
 interface GuarantorStepProps {
   data: Partial<Step4Dto>;
@@ -51,7 +52,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
   employeeId,
   loading = false
 }) => {
-  const [relations, setRelations] = useState<ListItem[]>([]);
+  const [relations, setRelations] = useState("0");
   const [loadingRelations, setLoadingRelations] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -113,27 +114,27 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
   }, [employeeId]);
 
   // Fetch relations when component mounts
-  useEffect(() => {
-    const fetchRelations = async () => {
-      setLoadingRelations(true);
-      try {
-        const relationsData = await listService.getAllRelations();
-        setRelations(relationsData);
+  // useEffect(() => {
+  //   const fetchRelations = async () => {
+  //     setLoadingRelations(true);
+  //     try {
+  //       const relationsData = await listService.getAllRelations();
+  //       setRelations(relationsData);
 
-        // Auto-select first relation if none is selected and we have relations
-        if (!formik.values.relationId && relationsData.length > 0) {
-          formik.setFieldValue('relationId', relationsData[0].id);
-        }
-      } catch (error) {
-        console.error('Error fetching relations:', error);
-        setSubmitError('Failed to load relations');
-      } finally {
-        setLoadingRelations(false);
-      }
-    };
+  //       // Auto-select first relation if none is selected and we have relations
+  //       if (!formik.values.relationId && relationsData.length > 0) {
+  //         formik.setFieldValue('relationId', relationsData[0].id);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching relations:', error);
+  //       setSubmitError('Failed to load relations');
+  //     } finally {
+  //       setLoadingRelations(false);
+  //     }
+  //   };
 
-    fetchRelations();
-  }, []);
+  //   fetchRelations();
+  // }, []);
 
   // Handle relation selection
   const handleRelationSelect = (item: ListItem) => {
@@ -176,33 +177,32 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
     return '';
   };
 
-  // Get the selected relation name for display
-  const selectedRelation = relations.find(relation => relation.id === formik.values.relationId);
+
 
   // Handle form submission - same as EmergencyContactStep
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitError(null);
-    
-    // Validate form before submission
-    const errors = formik.validateForm();
-    if (Object.keys(errors).length > 0) {
-      // Set touched for all fields to show errors
-      const allTouched = Object.keys(formik.values).reduce((acc, key) => {
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setSubmitError(null);
+
+  const errors = await formik.validateForm(); // ✅ await it
+
+  if (Object.keys(errors).length > 0) {
+    const allTouched = Object.keys(formik.values).reduce(
+      (acc, key) => {
         acc[key as keyof Step4Dto] = true;
         return acc;
-      }, {} as Record<keyof Step4Dto, boolean>);
-      formik.setTouched(allTouched);
-      
-      // Scroll to first error
-      scrollToTop();
-      return;
-    }
-    
-    // Scroll to top before form submission
+      },
+      {} as Record<keyof Step4Dto, boolean>,
+    );
+
+    formik.setTouched(allTouched);
     scrollToTop();
-    formik.handleSubmit();
-  };
+    return;
+  }
+
+  scrollToTop();
+  formik.handleSubmit();
+};
 
   // Handle back button click with scroll to top
   const handleBackClick = () => {
@@ -434,23 +434,19 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
             </div>
 
             <div className="space-y-2">
-              <List
-                items={relations}
-                selectedValue={formik.values.relationId}
-                onSelect={handleRelationSelect}
-                label="Select Relation"
-                placeholder="Choose a relation"
-                disabled={loadingRelations || loading}
-              />
-              {loadingRelations && (
-                <p className="text-sm text-gray-500">Loading relations...</p>
-              )}
-              {getErrorMessage('relationId') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('relationId')}</div>
-              )}
-              {selectedRelation && (
-                <p className="text-sm text-green-600 mt-1">Selected: {selectedRelation.name}</p>
-              )}
+              <Label
+                              htmlFor="fiscalYear"
+                              className="block text-sm font-medium text-gray-700"
+                            >
+                              Relation <span className="text-red-500">*</span>
+                            </Label>
+               <EnumSelect
+                              enumObject={Relation}
+                              value={formik.values.relationId}
+  onChange={(value) => formik.setFieldValue("relationId", value)}
+                              placeholder="Select Relation"
+                              disabled={loading}
+                            />
             </div>
           </div>
         </div>
