@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { useModule } from '../ModuleContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from '../components/ui/dropdown-menu';
 import { useNavigate } from "react-router";
+import { useAuth } from '../contexts/AuthContext';
 
 
 interface HeaderProps {
@@ -14,6 +15,12 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
   const { activeModule } = useModule();
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   
   // Module-based color themes
@@ -78,7 +85,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
               <DropdownMenuItem onClick={() => navigate("/profile")}>
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/login")}>
+              <DropdownMenuItem onClick={handleLogout}>
                 logout
               </DropdownMenuItem>
             </DropdownMenuContent>

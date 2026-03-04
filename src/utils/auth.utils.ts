@@ -27,8 +27,8 @@ export const refresh = async (): Promise<void> => {
 };
 
 export const logout = (): void => {
-  Cookies.remove("accessToken");
-  Cookies.remove("expiresAt");
+  Cookies.remove("accessToken", { path: "/" });
+  Cookies.remove("expiresAt", { path: "/" });
 };
 
 const setTokens = (tokens: AuthTokens): void => {
@@ -36,13 +36,15 @@ const setTokens = (tokens: AuthTokens): void => {
   // Set cookie expiration to match token expiration
   Cookies.set("accessToken", tokens.accessToken, {
     expires: expiresDate,
-    secure: process.env.NODE_ENV === "production", // Secure in prod
-    sameSite: "strict",
+    secure: import.meta.env.NODE_ENV === "production", // Secure in prod
+    sameSite: "lax", // Changed from strict to lax for better compatibility
+    path: "/",
   });
   Cookies.set("expiresAt", tokens.expiresDate, {
     expires: expiresDate,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: import.meta.env.NODE_ENV === "production",
+    sameSite: "lax", // Changed from strict to lax for better compatibility
+    path: "/",
   });
 };
 

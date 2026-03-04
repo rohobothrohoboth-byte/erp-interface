@@ -16,6 +16,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { getAccessToken } from "../utils/auth.utils";
 import { hasRole } from "../utils/jwt.utils";
+import { useAuth } from "../contexts/AuthContext";
 
 interface Notification {
   id: number;
@@ -92,6 +93,7 @@ const mockTasks: Task[] = [
 
 function Modules() {
   const navigate = useNavigate();
+const { logout, isAuthenticated, isLoading } = useAuth();
   const [visibleNotifications, setVisibleNotifications] = useState<
     Notification[]
   >([]);
@@ -101,6 +103,26 @@ function Modules() {
     useState<number>(0);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+
+useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      console.log("Modules → not authenticated → redirect to login");
+      navigate("/login", { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  if (isLoading) {
+    return <div className="min-h-screen grid place-items-center">Checking session...</div>;
+  }
+
+  if (!isAuthenticated) {
+    return null; // effect will handle redirect
+  }
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   // Get token and check roles
   const token = getAccessToken();
@@ -156,72 +178,75 @@ function Modules() {
   }, [visibleNotifications]);
 
   return (
-    <div className="relative h-screen w-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 overflow-hidden">
+    <div className="relative h-screen w-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 overflow-x-hidden overflow-y-auto">
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-white/90 to-transparent backdrop-blur-sm py-4">
-        <div className="container mx-auto flex justify-between items-center">
-          {/* Split header text */}
-          <div className={`text-center ${hideSidebars ? "mx-auto" : "ml-96"}`}>
-            <h1 className="text-4xl font-bold text-gray-800 drop-shadow">
-              Welcome to the{" "}
-              <i className="text-blue-500 relative">
-                RST
-                <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-20 h-1 bg-gradient-to-r from-blue-400 to-blue-300 rounded-full"></div>
-              </i>{" "}
-              <span className="text-blue-500"> ERP</span>
-            </h1>
-          </div>
-
-          {/* Fixed Header Controls */}
-          <div className="flex items-center gap-4">
-            {/* Vacancies Button */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/vacancies")}
-              className="flex items-center gap-2 bg-white hover:bg-green-50 border-green-200 text-green-700 hover:text-green-800 shadow-sm"
-            >
-              <Briefcase className="w-4 h-4" />
-              <span className="font-medium">Vacancies</span>
-            </Button>
-
-            {/* Notification Icon with Badge - Show for all users */}
-            <div className="relative">
-              <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
-                <Bell className="h-6 w-6 text-gray-700" />
-              </button>
-              {shownNotificationCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {shownNotificationCount}
-                </span>
-              )}
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Centered Title (Desktop) */}
+            <div className="flex-1 text-center">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 drop-shadow">
+                Welcome to the{" "}
+                <i className="text-blue-500 relative not-italic">
+                  RST
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 sm:w-20 h-1 bg-gradient-to-r from-blue-400 to-blue-300 rounded-full"></div>
+                </i>{" "}
+                <span className="text-blue-500">ERP</span>
+              </h1>
             </div>
 
-            {/* Logout Button */}
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Avatar>
-                  <AvatarImage src="https://github.com/shadcn.png" />
-                  <AvatarFallback>CN</AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/login")}>
-                  logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Header Controls */}
+            <div className="flex flex-wrap items-center justify-center md:justify-end gap-3">
+              {/* Vacancies Button (Original Green Style) */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/vacancies")}
+                className="flex items-center gap-2 bg-white hover:bg-green-50 border-green-200 text-green-700 hover:text-green-800 shadow-sm"
+              >
+                <Briefcase className="w-4 h-4" />
+                <span className="font-medium">Vacancies</span>
+              </Button>
+
+              {/* Notification */}
+              <div className="relative">
+                <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                  <Bell className="h-6 w-6 text-gray-700" />
+                </button>
+                {shownNotificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {shownNotificationCount}
+                  </span>
+                )}
+              </div>
+
+              {/* Avatar */}
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <Avatar>
+                    <AvatarImage src="https://github.com/shadcn.png" />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto h-full flex items-center pt-24">
+      <div className="container mx-auto h-full flex items-start md:items-center pt-32 md:pt-28 px-4">
+        {" "}
         {/* Left Panel - Calendar (Hidden for admin/executive roles) */}
         {!hideSidebars && (
           <div className="w-1/4 h-full pr-8">
@@ -230,7 +255,6 @@ function Modules() {
             </div>
           </div>
         )}
-
         {/* Center Panel - Modules Section */}
         <div
           className={`flex items-center justify-center ${
@@ -241,7 +265,6 @@ function Modules() {
             <ModulesSection onModuleSelect={handleModuleSelect} />
           </div>
         </div>
-
         {/* Right Panel - Notifications (Hidden for admin/executive roles) */}
         {!hideSidebars && (
           <div className="w-1/4 pl-8 h-full">

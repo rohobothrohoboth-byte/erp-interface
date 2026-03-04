@@ -21,12 +21,10 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
-  const { login, setIsAuthenticated } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
-
   // Auto-clear alert after 6 seconds
   useEffect(() => {
     if (alertMessage) {
@@ -49,9 +47,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
     setAlertMessage(null);
 
     try {
-      await login(code, password);
-      setIsAuthenticated(true);
-      navigate("/modules", { replace: true });
+      await login(code, password)
     } catch (error: any) {
       console.error("Login failed:", error);
 
@@ -61,7 +57,6 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
         "Invalid credentials. Please check your employee code and password.";
 
       setAlertMessage(message);
-    } finally {
       setIsLoading(false);
     }
   };

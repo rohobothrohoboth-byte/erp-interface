@@ -2,42 +2,64 @@ import {
   createContext,
   useContext,
   useState,
- type ReactNode,
   useEffect,
+  type ReactNode,
 } from "react";
-import { getAccessToken, login, refresh, logout } from "../utils/auth.utils"; // Adjust path
+import { getAccessToken, login, refresh, logout } from "../utils/auth.utils";
+import { useLocation } from "react-router-dom";
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  setIsAuthenticated: (value: boolean) => void;
+  isLoading: boolean;
   login: (username: string, password: string) => Promise<void>;
   refresh: () => Promise<void>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-    () => !!getAccessToken()
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // true until token checked
+ 
 
-  // Optional: Sync state if cookies change externally (rare, but for completeness)
   useEffect(() => {
-    const checkAuth = () => setIsAuthenticated(!!getAccessToken());
-    window.addEventListener("storage", checkAuth); // Cookies don't trigger this, but if you mix with localStorage elsewhere
-    return () => window.removeEventListener("storage", checkAuth);
-  }, []);
+  const token = getAccessToken();
+  const currentlyAuthenticated = !!token;
+
+  console.log("AuthProvider check →", {
+    hasToken: currentlyAuthenticated,
+    previous: isAuthenticated,
+    path: window.location.pathname,
+  });
+
+  if (currentlyAuthenticated !== isAuthenticated) {
+    setIsAuthenticated(currentlyAuthenticated);
+  }
+
+  setIsLoading(false);
+}, []);;
+
+const handleLogin = async (username: string, password: string) => {
+  setIsLoading(true);
+  await login(username, password);
+  const token = getAccessToken();
+  setIsAuthenticated(!!token);
+  setIsLoading(false);
+};
+
+  const handleLogout = () => {
+    logout();
+    setIsAuthenticated(false);
+  };
 
   return (
     <AuthContext.Provider
-      value={{ isAuthenticated, setIsAuthenticated, login, refresh, logout }}
+      value={{ isAuthenticated, isLoading, login: handleLogin, refresh, logout: handleLogout }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
-
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
