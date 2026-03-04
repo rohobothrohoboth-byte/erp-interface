@@ -1,30 +1,68 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MoreVertical, PenBox, Trash2, FileText, Settings } from 'lucide-react';
+import { MoreVertical, PenBox, Trash2, DollarSign } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/popover';
-import { Button } from '../../../ui/button';
-import type { BudgetPlan } from './BudgetPlanSection';
 
-interface BudgetPlanTableProps {
-  budgetPlans: BudgetPlan[];
-  onEdit: (plan: BudgetPlan) => void;
-  onDelete: (plan: BudgetPlan) => void;
-  onManageExpenses: (plan: BudgetPlan) => void;
+interface AdditionalBudgetRequest {
+  id: string;
+  budgetPlanId: string;
+  budgetPlanName: string;
+  expenseId: string;
+  expenseName: string;
+  budgetCode: string;
+  budgetCategory: string;
+  account: string;
+  amount: number;
+  justification: string;
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Returned';
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+  createdAt: string;
+  createdBy: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
-export default function BudgetPlanTable({
-  budgetPlans,
+interface AdditionalBudgetTableProps {
+  requests: AdditionalBudgetRequest[];
+  onEdit: (request: AdditionalBudgetRequest) => void;
+  onDelete: (request: AdditionalBudgetRequest) => void;
+}
+
+export default function AdditionalBudgetTable({
+  requests,
   onEdit,
-  onDelete,
-  onManageExpenses
-}: BudgetPlanTableProps) {
+  onDelete
+}: AdditionalBudgetTableProps) {
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Approved':
+        return 'bg-green-100 text-green-800';
+      case 'Rejected':
+        return 'bg-red-100 text-red-800';
+      case 'Returned':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   return (
@@ -37,22 +75,19 @@ export default function BudgetPlanTable({
         <thead className="bg-white">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Fiscal Year
+              Budget Plan
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Cost Center
+              Expense
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Total Requested
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Expenses
+              Amount
             </th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
             </th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Manage Expenses
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Created
             </th>
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
@@ -60,74 +95,56 @@ export default function BudgetPlanTable({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {budgetPlans.length === 0 ? (
+          {requests.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
-                No budget plans found.
+              <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                No additional budget requests found.
               </td>
             </tr>
           ) : (
-            budgetPlans.map((plan) => (
+            requests.map((request) => (
               <motion.tr
-                key={plan.id}
+                key={request.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="transition-colors hover:bg-gray-50"
               >
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
-                      <FileText className="text-gray-700 h-5 w-5" />
-                    </div>
                     <div className="ml-3">
                       <div className="font-medium text-gray-900">
-                        {plan.fiscalYear}
+                        {request.budgetPlanName}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                  {plan.costCenter}
+                  <div className="font-medium">{request.expenseName}</div>
+                  <div className="text-xs text-gray-500">{request.budgetCode} - {request.account}</div>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-semibold">
-                  {formatCurrency(plan.totalRequested)}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    {plan.expenseCount} items
-                  </span>
+                  {formatCurrency(request.amount)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    plan.status === 'Approved'
-                      ? 'bg-green-100 text-green-800'
-                      : plan.status === 'Submitted'
-                      ? 'bg-gray-100 text-gray-800'
-                      : plan.status === 'Rejected'
-                      ? 'bg-red-100 text-red-800'
-                      : plan.status === 'Returned'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {plan.status}
-                  </span>
+                  <div className="flex flex-col gap-1">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
+                      {request.status}
+                    </span>
+                    {request.status === 'Returned' && request.rejectionReason && (
+                      <div className="text-xs text-yellow-600 mt-1">
+                        Reason: {request.rejectionReason}
+                      </div>
+                    )}
+                  </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-center">
-                  <Button
-                    onClick={() => onManageExpenses(plan)}
-                    variant="outline"
-                    size="sm"
-                    className="text-gray-700 hover:text-gray-500 hover:bg-gray-50"
-                  >
-                    <Settings className="w-4 h-4 mr-1" />
-                    Manage
-                  </Button>
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                  {formatDate(request.createdAt)}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
                   <Popover
-                    open={popoverOpen === plan.id}
+                    open={popoverOpen === request.id}
                     onOpenChange={(open) =>
-                      setPopoverOpen(open ? plan.id : null)
+                      setPopoverOpen(open ? request.id : null)
                     }
                   >
                     <PopoverTrigger asChild>
@@ -139,20 +156,22 @@ export default function BudgetPlanTable({
                       <div className="py-1">
                         <button
                           onClick={() => {
-                            onEdit(plan);
+                            onEdit(request);
                             setPopoverOpen(null);
                           }}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-500 flex items-center gap-2"
+                          disabled={request.status !== 'Pending' && request.status !== 'Returned'}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 rounded text-gray-500 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <PenBox size={16} />
                           Edit
                         </button>
                         <button
                           onClick={() => {
-                            onDelete(plan);
+                            onDelete(request);
                             setPopoverOpen(null);
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
+                          disabled={request.status !== 'Pending' && request.status !== 'Returned'}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Trash2 size={16} />
                           Delete

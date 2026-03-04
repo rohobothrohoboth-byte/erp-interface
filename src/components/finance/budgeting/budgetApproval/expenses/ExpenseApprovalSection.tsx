@@ -51,6 +51,139 @@ export default function ExpenseApprovalSection({ budgetPlanId }: ExpenseApproval
     const storageKey = `budgetExpenses_${budgetPlanId}`;
     localStorage.setItem(storageKey, JSON.stringify(updatedExpenses));
     setExpenses(updatedExpenses);
+    
+    // Check if all expenses are approved and update budget plan status
+    checkAndUpdateBudgetPlanStatus(updatedExpenses);
+  };
+
+  const checkAndUpdateBudgetPlanStatus = (expensesList: BudgetExpenseWithApproval[]) => {
+    if (expensesList.length === 0) return;
+    
+    const allApproved = expensesList.every(e => e.status === 'Approved');
+    const hasApproved = expensesList.some(e => e.status === 'Approved');
+    const hasPending = expensesList.some(e => e.status === 'Pending' || e.status === 'Returned');
+    
+    // Update budget plan status
+    const budgetPlansStored = localStorage.getItem('budgetPlans');
+    if (budgetPlansStored) {
+      try {
+        const budgetPlans = JSON.parse(budgetPlansStored);
+        
+        const updatedPlans = budgetPlans.map((plan: any) => {
+          if (plan.id === budgetPlanId) {
+            if (allApproved) {
+              // Create Master Budget Version (V1) when all expenses approved
+              createMasterBudgetVersion(plan, expensesList);
+              return { ...plan, status: 'Approved' };
+            } else if (hasApproved && hasPending) {
+              // Some approved, some pending/returned
+              return { ...plan, status: 'In Review' };
+            } else if (hasApproved) {
+              // Some approved, rest rejected
+              return { ...plan, status: 'Partially Approved' };
+            } else {
+              // Keep current status or set to In Review
+              return { ...plan, status: plan.status === 'Submitted' ? 'In Review' : plan.status };
+            }
+          }
+          return plan;
+        });
+        localStorage.setItem('budgetPlans', JSON.stringify(updatedPlans));
+      } catch (e) {
+        console.error('Error updating budget plan status:', e);
+      }
+    }
+  };
+
+  const createMasterBudgetVersion = (budgetPlan: any, approvedExpenses: BudgetExpenseWithApproval[]) => {
+    // Check if master version already exists
+    const versionsStored = localStorage.getItem('budgetVersions');
+    const existingVersions = versionsStored ? JSON.parse(versionsStored) : [];
+    
+    const masterExists = existingVersions.some(
+      (v: any) => v.budgetPlanId === budgetPlan.id && v.versionType === 'Master'
+    );
+    
+    if (masterExists) return; // Don't create duplicate master version
+    
+    // Find matching budget (same fiscal year only)
+    const budgetsStored = localStorage.getItem('budgets');
+    let matchingBudgetId = null;
+    if (budgetsStored) {
+      const budgets = JSON.parse(budgetsStored);
+      
+      // Helper function to normalize fiscal year strings for comparison
+      const normalizeFiscalYear = (fy: string) => {
+        if (!fy) return '';
+        return fy.toLowerCase().replace(/\s+/g, '');
+      };
+      
+      // Helper function to extract year number
+      const extractYear = (fy: string) => {
+        if (!fy) return null;
+        const match = fy.match(/\d{4}/);
+        return match ? match[0] : null;
+      };
+      
+      const planFYNormalized = normalizeFiscalYear(budgetPlan.fiscalYear);
+      const planYear = extractYear(budgetPlan.fiscalYear);
+      
+      const matchingBudget = budgets.find((b: any) => {
+        if (b.status !== 'Active') return false;
+        
+        const budgetFYNormalized = normalizeFiscalYear(b.fiscalYear);
+        const budgetYear = extractYear(b.fiscalYear);
+        
+        // Try exact match
+        if (b.fiscalYear === budgetPlan.fiscalYear) return true;
+        
+        // Try normalized match
+        if (budgetFYNormalized === planFYNormalized) return true;
+        
+        // Try year match
+        if (budgetYear && planYear && budgetYear === planYear) return true;
+        
+        return false;
+      });
+      
+      if (matchingBudget) {
+        matchingBudgetId = matchingBudget.id;
+      }
+    }
+    
+    const totalAmount = approvedExpenses.reduce((sum, exp) => sum + exp.requestedAmount, 0);
+    
+    const masterVersion = {
+      id: `version-${Date.now()}`,
+      budgetId: matchingBudgetId, // Link to budget if found
+      budgetPlanId: budgetPlan.id,
+      budgetPlanName: `${budgetPlan.fiscalYear} - ${budgetPlan.costCenter}`,
+      version: 'V1',
+      versionType: 'Master',
+      fiscalYear: budgetPlan.fiscalYear,
+      costCenter: budgetPlan.costCenter,
+      totalAmount: totalAmount,
+      approvedAmount: totalAmount,
+      expenses: approvedExpenses.map(exp => ({
+        id: `vexp-${exp.id}`,
+        expenseId: exp.id,
+        budgetCode: exp.budgetCode,
+        account: exp.account,
+        budgetCategory: exp.budgetCategory,
+        amount: exp.requestedAmount,
+        justification: exp.justification,
+        source: 'BudgetPlan',
+        sourceId: budgetPlan.id
+      })),
+      createdAt: new Date().toISOString(),
+      createdBy: 'Current User',
+      approvedAt: new Date().toISOString(),
+      approvedBy: 'Current User',
+      status: 'Active'
+    };
+    
+    existingVersions.push(masterVersion);
+    localStorage.setItem('budgetVersions', JSON.stringify(existingVersions));
   };
 
   const handleApprove = (expense: BudgetExpenseWithApproval) => {

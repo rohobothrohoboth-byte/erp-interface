@@ -36,8 +36,8 @@ export default function ExpenseApprovalTable({
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount);
   };
 
@@ -46,7 +46,7 @@ export default function ExpenseApprovalTable({
       Pending: 'bg-yellow-100 text-yellow-800',
       Approved: 'bg-green-100 text-green-800',
       Rejected: 'bg-red-100 text-red-800',
-      Returned: 'bg-blue-100 text-blue-800',
+      Returned: 'bg-gray-100 text-gray-800',
     };
     return (
       <span className={`px-2 py-1 rounded-full text-xs font-medium ${styles[status as keyof typeof styles]}`}>
@@ -177,7 +177,7 @@ export default function ExpenseApprovalTable({
                             <p className="whitespace-pre-wrap">{expense.justification}</p>
                             <button
                               onClick={() => toggleRow(expense.id)}
-                              className="text-indigo-600 hover:text-indigo-800 text-xs mt-1 flex items-center gap-1"
+                              className="text-gray-700 hover:text-indigo-800 text-xs mt-1 flex items-center gap-1"
                             >
                               See less <ChevronUp className="w-3 h-3" />
                             </button>
@@ -192,7 +192,7 @@ export default function ExpenseApprovalTable({
                             {expense.justification.length > 50 && (
                               <button
                                 onClick={() => toggleRow(expense.id)}
-                                className="text-indigo-600 hover:text-indigo-800 text-xs mt-1 flex items-center gap-1"
+                                className="text-gray-700 hover:text-indigo-800 text-xs mt-1 flex items-center gap-1"
                               >
                                 See more <ChevronDown className="w-3 h-3" />
                               </button>

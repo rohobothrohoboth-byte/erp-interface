@@ -41,6 +41,7 @@ import {
   Notebook,
   Mail,
   MessageSquare,
+  DollarSign,
 } from "lucide-react";
 import { useModule } from "../ModuleContext";
 import {
@@ -1452,6 +1453,31 @@ const Sidebar: React.FC = () => {
                   to="/finance/budget-approval"
                   icon={<FileCheck size={18} />}
                   label="Budget Approval"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/additional-budget"
+                  icon={<DollarSign size={18} />}
+                  label="Additional Budget"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/budget-review"
+                  icon={<ClipboardCheck size={18} />}
+                  label="Budget Review"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+
+                <NavItem
+                  to="/finance/additional-budget-approval"
+                  icon={<FileCheck size={18} />}
+                  label="Additional Budget Approval"
                   {...theme}
                   isChild
                   collapsed={collapsed}

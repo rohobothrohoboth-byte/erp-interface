@@ -102,7 +102,7 @@ export default function EditBudgetPlanModal({
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto"
       >
         <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export default function EditBudgetPlanModal({
                   onValueChange={(value) => setFormData({ ...formData, fiscalYear: value })}
                   required
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className='w-full'>
                     <SelectValue placeholder={loading ? "Loading..." : "Select fiscal year"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -151,7 +151,7 @@ export default function EditBudgetPlanModal({
                   onValueChange={(value) => setFormData({ ...formData, costCenter: value })}
                   required
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className='w-full'>
                     <SelectValue placeholder={loading ? "Loading..." : "Select cost center"} />
                   </SelectTrigger>
                   <SelectContent>
@@ -177,7 +177,7 @@ export default function EditBudgetPlanModal({
                   onValueChange={(value: any) => setFormData({ ...formData, status: value })}
                   required
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className='w-full'>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>

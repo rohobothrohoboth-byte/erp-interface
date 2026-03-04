@@ -133,11 +133,18 @@ export default function BudgetExpensesSection({ budgetPlanId }: BudgetExpensesSe
     if (editingExpense) {
       const updatedExpenses = expenses.map(e =>
         e.id === editingExpense.id
-          ? { ...e, ...expenseData, updatedAt: new Date().toISOString(), updatedBy: 'Current User' }
+          ? { 
+              ...e, 
+              ...expenseData, 
+              status: 'Pending' as const, // Reset to Pending when edited
+              rejectionReason: undefined, // Clear rejection reason
+              updatedAt: new Date().toISOString(), 
+              updatedBy: 'Current User' 
+            }
           : e
       );
       saveExpenses(updatedExpenses);
-      showToast.success('Expense updated successfully');
+      showToast.success('Expense updated and resubmitted for approval');
       setEditingExpense(null);
     }
   };

@@ -50,7 +50,7 @@ const BudgetPlanSection = () => {
     // Create mock budget plan if none exists
     const mockPlan: BudgetPlan = {
       id: 'bp-001',
-      fiscalYear: 'FY 2024/2025',
+      fiscalYear: 'fy 2026',
       costCenter: 'IT Department',
       status: 'Submitted',
       submittedDate: new Date().toISOString(),

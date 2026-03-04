@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, FileSpreadsheet } from 'lucide-react';
+import { X, DollarSign } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Label } from '../../../ui/label';
 import { Input } from '../../../ui/input';
+import { Textarea } from '../../../ui/textarea';
 import {
   Select,
   SelectContent,
@@ -12,86 +13,68 @@ import {
   SelectValue,
 } from '../../../ui/select';
 import type { Budget } from './types';
+import { fiscalYearApi } from '../../../../services/core/fiscalyear/fisc.api';
+import type { FiscYearListDto } from '../../../../types/core/fisc';
 
 interface EditBudgetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Omit<Budget, 'id' | 'createdAt'>) => void;
-  budget: Budget | null;
+  onEdit: (data: Budget) => void;
+  budget: Budget;
 }
-
-type DistributionFrequency = 'Monthly' | 'Quarterly' | 'Yearly';
 
 const EditBudgetModal: React.FC<EditBudgetModalProps> = ({
   isOpen,
   onClose,
-  onSubmit,
+  onEdit,
   budget,
 }) => {
-  const [formData, setFormData] = useState({
-    budgetId: '',
-    title: '',
-    accountId: '',
-    accountName: '',
-    fiscalYearId: '',
-    fiscalYearName: '',
-    amount: 0,
-    distributionFrequency: 'Monthly' as DistributionFrequency,
-    costCenterId: '',
-    costCenterName: '',
-  });
+  const [formData, setFormData] = useState<Budget>(budget);
+  const [fiscalYears, setFiscalYears] = useState<FiscYearListDto[]>([]);
+  const [loadingFiscalYears, setLoadingFiscalYears] = useState(false);
 
-  // Mock data for dropdowns
-  const accounts = [
-    { id: '1', name: 'Operating Account' },
-    { id: '2', name: 'Capital Account' },
-    { id: '3', name: 'Revenue Account' },
-  ];
-
-  const fiscalYears = [
-    { id: '1', name: '2024' },
-    { id: '2', name: '2025' },
-    { id: '3', name: '2026' },
-  ];
-
+  // Sample cost center data
   const costCenters = [
-    { id: '1', name: 'Head Office' },
-    { id: '2', name: 'Regional Office' },
-    { id: '3', name: 'Branch Office' },
+    { id: '1', code: 'CC001', name: 'Head Office' },
+    { id: '2', code: 'CC002', name: 'Regional Office - North' },
+    { id: '3', code: 'CC003', name: 'Regional Office - South' },
+    { id: '4', code: 'CC004', name: 'Branch Office - Downtown' },
+    { id: '5', code: 'CC005', name: 'Branch Office - Uptown' },
+    { id: '6', code: 'CC006', name: 'Manufacturing Plant' },
+    { id: '7', code: 'CC007', name: 'Warehouse' },
+    { id: '8', code: 'CC008', name: 'IT Department' },
+    { id: '9', code: 'CC009', name: 'HR Department' },
+    { id: '10', code: 'CC010', name: 'Finance Department' },
   ];
-
-  const distributionFrequencies: DistributionFrequency[] = ['Monthly', 'Quarterly', 'Yearly'];
 
   useEffect(() => {
-    if (isOpen && budget) {
-      setFormData({
-        budgetId: budget.budgetId,
-        title: budget.title,
-        accountId: budget.accountId,
-        accountName: budget.accountName,
-        fiscalYearId: budget.fiscalYearId,
-        fiscalYearName: budget.fiscalYearName,
-        amount: budget.amount,
-        distributionFrequency: budget.distributionFrequency,
-        costCenterId: budget.costCenterId,
-        costCenterName: budget.costCenterName,
-      });
+    if (isOpen) {
+      setFormData(budget);
+      fetchFiscalYears();
     }
   }, [isOpen, budget]);
 
+  const fetchFiscalYears = async () => {
+    setLoadingFiscalYears(true);
+    try {
+      const data = await fiscalYearApi.getAllFiscalYears();
+      setFiscalYears(data);
+    } catch (error) {
+      console.error('Error fetching fiscal years:', error);
+    } finally {
+      setLoadingFiscalYears(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    onEdit(formData);
   };
 
-  const handleClose = () => {
-    onClose();
-  };
-
-  if (!isOpen || !budget) return null;
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6 h-screen">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -99,14 +82,14 @@ const EditBudgetModal: React.FC<EditBudgetModalProps> = ({
         className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">
+        <div className="flex justify-between items-center border-b border-indigo-200 px-6 py-4 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2">
-            <FileSpreadsheet className="h-5 w-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-gray-800">Edit Budget</h2>
+            <DollarSign className="h-5 w-5 text-indigo-600" />
+            <h2 className="text-lg font-bold text-indigo-900">Edit Budget</h2>
           </div>
           <button
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+            onClick={onClose}
+            className="text-indigo-500 hover:text-indigo-700 p-2 rounded-full hover:bg-indigo-50 transition-colors duration-200"
             type="button"
           >
             <X size={20} />
@@ -116,188 +99,158 @@ const EditBudgetModal: React.FC<EditBudgetModalProps> = ({
         {/* Body */}
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Budget ID */}
-              <div className="space-y-2">
-                <Label htmlFor="budgetId" className="text-sm text-gray-500">
-                  Budget ID <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="budgetId"
-                  value={formData.budgetId}
-                  onChange={(e) => setFormData({ ...formData, budgetId: e.target.value })}
-                  placeholder="Enter budget ID"
-                  required
-                />
-              </div>
-
-              {/* Title */}
-              <div className="space-y-2">
-                <Label htmlFor="title" className="text-sm text-gray-500">
-                  Title <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Enter budget title"
-                  required
-                />
-              </div>
+            {/* Budget Name */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-sm text-indigo-700">
+                Budget Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter budget name"
+                className="border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500"
+                required
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Account */}
-              <div className="space-y-2">
-                <Label htmlFor="account" className="text-sm text-gray-500">
-                  Account <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.accountId}
-                  onValueChange={(value) => {
-                    const selectedAccount = accounts.find((acc) => acc.id === value);
-                    setFormData({
-                      ...formData,
-                      accountId: value,
-                      accountName: selectedAccount?.name || '',
-                    });
-                  }}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select account" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {/* Fiscal Year */}
               <div className="space-y-2">
-                <Label htmlFor="fiscalYear" className="text-sm text-gray-500">
+                <Label htmlFor="fiscalYear" className="text-sm text-indigo-700">
                   Fiscal Year <span className="text-red-500">*</span>
                 </Label>
                 <Select
-                  value={formData.fiscalYearId}
-                  onValueChange={(value) => {
-                    const selectedYear = fiscalYears.find((year) => year.id === value);
-                    setFormData({
-                      ...formData,
-                      fiscalYearId: value,
-                      fiscalYearName: selectedYear?.name || '',
-                    });
-                  }}
+                  value={formData.fiscalYear}
+                  onValueChange={(value) => setFormData({ ...formData, fiscalYear: value })}
+                  required
+                  disabled={loadingFiscalYears}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select fiscal year" />
+                  <SelectTrigger className="w-full border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500">
+                    <SelectValue placeholder={loadingFiscalYears ? "Loading..." : "Select fiscal year"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {fiscalYears.map((year) => (
-                      <SelectItem key={year.id} value={year.id}>
-                        {year.name}
+                    {loadingFiscalYears ? (
+                      <SelectItem value="loading" disabled>
+                        Loading fiscal years...
                       </SelectItem>
-                    ))}
+                    ) : fiscalYears.length === 0 ? (
+                      <SelectItem value="no-data" disabled>
+                        No fiscal years available
+                      </SelectItem>
+                    ) : (
+                      fiscalYears.map((year) => (
+                        <SelectItem key={year.id} value={year.name}>
+                          {year.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Cost Center */}
+              <div className="space-y-2">
+                <Label htmlFor="costCenter" className="text-sm text-indigo-700">
+                  Cost Center <span className="text-red-500">*</span>
+                </Label>
+                <Select
+                  value={formData.costCenter}
+                  onValueChange={(value) => setFormData({ ...formData, costCenter: value })}
+                  required
+                >
+                  <SelectTrigger className="w-full border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500">
+                    <SelectValue placeholder="Select cost center" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {costCenters.length === 0 ? (
+                      <SelectItem value="no-data" disabled>
+                        No cost centers available
+                      </SelectItem>
+                    ) : (
+                      costCenters.map((center) => (
+                        <SelectItem key={center.id} value={center.name}>
+                          {center.code} - {center.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              {/* Amount */}
+              {/* Total Amount */}
               <div className="space-y-2">
-                <Label htmlFor="amount" className="text-sm text-gray-500">
-                  Amount <span className="text-red-500">*</span>
+                <Label htmlFor="totalAmount" className="text-sm text-indigo-700">
+                  Total Amount <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="amount"
+                  id="totalAmount"
                   type="number"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                  placeholder="Enter amount"
+                  value={formData.totalAmount}
+                  onChange={(e) => setFormData({ ...formData, totalAmount: parseFloat(e.target.value) || 0 })}
+                  placeholder="Enter total amount"
+                  className="border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500"
                   required
                   min="0"
                   step="0.01"
                 />
               </div>
 
-              {/* Distribution Frequency */}
+              {/* Status */}
               <div className="space-y-2">
-                <Label htmlFor="frequency" className="text-sm text-gray-500">
-                  Distribution Frequency <span className="text-red-500">*</span>
+                <Label htmlFor="status" className="text-sm text-indigo-700">
+                  Status <span className="text-red-500">*</span>
                 </Label>
                 <Select
-                  value={formData.distributionFrequency}
-                  onValueChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      distributionFrequency: value as DistributionFrequency,
-                    })
-                  }
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value as 'Draft' | 'Active' | 'Closed' })}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select frequency" />
+                  <SelectTrigger className="w-full border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500">
+                    <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {distributionFrequencies.map((freq) => (
-                      <SelectItem key={freq} value={freq}>
-                        {freq}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="Draft">Draft</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Closed">Closed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {/* Cost Center */}
+            {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="costCenter" className="text-sm text-gray-500">
-                Cost Center <span className="text-red-500">*</span>
+              <Label htmlFor="description" className="text-sm text-indigo-700">
+                Description
               </Label>
-              <Select
-                value={formData.costCenterId}
-                onValueChange={(value) => {
-                  const selectedCenter = costCenters.find((center) => center.id === value);
-                  setFormData({
-                    ...formData,
-                    costCenterId: value,
-                    costCenterName: selectedCenter?.name || '',
-                  });
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select cost center" />
-                </SelectTrigger>
-                <SelectContent>
-                  {costCenters.map((center) => (
-                    <SelectItem key={center.id} value={center.id}>
-                      {center.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Textarea
+                id="description"
+                value={formData.description || ''}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Enter budget description (optional)"
+                className="border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500"
+                rows={3}
+              />
             </div>
           </div>
 
           {/* Footer */}
-          <div className="border-t px-6 py-2 rounded-b-xl">
-            <div className="flex justify-center items-center gap-1.5">
+          <div className="border-t border-indigo-200 px-6 py-4 rounded-b-xl bg-gray-50">
+            <div className="flex justify-end items-center gap-2">
+              <Button
+                variant="outline"
+                className="cursor-pointer px-6 border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                onClick={onClose}
+                type="button"
+              >
+                Cancel
+              </Button>
               <Button
                 type="submit"
                 className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer px-6"
               >
-                Update
-              </Button>
-              <Button
-                variant="outline"
-                className="cursor-pointer px-6"
-                onClick={handleClose}
-                type="button"
-              >
-                Cancel
+                Update Budget
               </Button>
             </div>
           </div>

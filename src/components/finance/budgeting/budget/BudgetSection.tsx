@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { showToast } from '../../../../layout/layout';
 import BudgetHeader from './BudgetHeader';
 import BudgetSearchFilter from './BudgetSearchFilter';
 import BudgetTable from './BudgetTable';
@@ -9,71 +11,83 @@ import DeleteBudgetModal from './DeleteBudgetModal';
 import type { Budget } from './types';
 
 const BudgetSection = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Mock data
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [deletingBudget, setDeletingBudget] = useState<Budget | null>(null);
 
-  const totalPages = Math.ceil(budgets.length / 10);
+  useEffect(() => {
+    loadBudgets();
+  }, []);
 
-  const handleAddBudget = (data: Omit<Budget, 'id' | 'createdAt'>) => {
-    const newBudget: Budget = {
-      ...data,
+  const loadBudgets = () => {
+    const stored = localStorage.getItem('budgets');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setBudgets(parsed);
+      } catch (e) {
+        console.error('Error loading budgets:', e);
+      }
+    }
+  };
+
+  const saveBudgets = (updatedBudgets: Budget[]) => {
+    localStorage.setItem('budgets', JSON.stringify(updatedBudgets));
+    setBudgets(updatedBudgets);
+  };
+
+  const handleAdd = (newBudget: Omit<Budget, 'id' | 'createdAt' | 'createdBy'>) => {
+    const budget: Budget = {
+      ...newBudget,
       id: `budget-${Date.now()}`,
       createdAt: new Date().toISOString(),
+      createdBy: 'Current User'
     };
-    setBudgets([...budgets, newBudget]);
+    saveBudgets([...budgets, budget]);
+    showToast.success('Budget created successfully');
     setIsAddModalOpen(false);
   };
 
-  const handleEditBudget = (data: Omit<Budget, 'id' | 'createdAt'>) => {
-    if (!selectedBudget) return;
-
-    setBudgets(
-      budgets.map((budget) =>
-        budget.id === selectedBudget.id
-          ? { ...budget, ...data }
-          : budget
-      )
+  const handleEdit = (updatedBudget: Budget) => {
+    const updated = budgets.map(b =>
+      b.id === updatedBudget.id
+        ? {
+            ...updatedBudget,
+            updatedAt: new Date().toISOString(),
+            updatedBy: 'Current User'
+          }
+        : b
     );
-    setIsEditModalOpen(false);
-    setSelectedBudget(null);
+    saveBudgets(updated);
+    showToast.success('Budget updated successfully');
+    setEditingBudget(null);
   };
 
-  const handleDeleteBudget = () => {
-    if (!selectedBudget) return;
-
-    setBudgets(budgets.filter((budget) => budget.id !== selectedBudget.id));
-    setIsDeleteModalOpen(false);
-    setSelectedBudget(null);
+  const handleDelete = () => {
+    if (deletingBudget) {
+      const updated = budgets.filter(b => b.id !== deletingBudget.id);
+      saveBudgets(updated);
+      showToast.success('Budget deleted successfully');
+      setDeletingBudget(null);
+    }
   };
 
-  const handleEdit = (budget: Budget) => {
-    setSelectedBudget(budget);
-    setIsEditModalOpen(true);
-  };
-
-  const handleDelete = (budget: Budget) => {
-    setSelectedBudget(budget);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleView = (budget: Budget) => {
-    // Implement view logic if needed
-    console.log('View budget:', budget);
+  const handleViewVersions = (budget: Budget) => {
+    navigate(`/finance/budget/${budget.id}/versions`);
   };
 
   const filteredBudgets = budgets.filter(
     (budget) =>
-      budget.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      budget.budgetId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      budget.accountName.toLowerCase().includes(searchTerm.toLowerCase())
+      budget.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      budget.fiscalYear.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      budget.costCenter.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredBudgets.length / 10);
 
   return (
     <motion.section
@@ -87,7 +101,7 @@ const BudgetSection = () => {
       <BudgetSearchFilter
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        onAddClick={() => setIsAddModalOpen(true)}
+        onAdd={() => setIsAddModalOpen(true)}
       />
 
       <BudgetTable
@@ -96,36 +110,34 @@ const BudgetSection = () => {
         totalPages={totalPages}
         totalItems={filteredBudgets.length}
         onPageChange={setCurrentPage}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onView={handleView}
+        onViewVersions={handleViewVersions}
+        onEdit={setEditingBudget}
+        onDelete={setDeletingBudget}
       />
 
       <AddBudgetModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddBudget}
+        onAdd={handleAdd}
       />
 
-      <EditBudgetModal
-        isOpen={isEditModalOpen}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedBudget(null);
-        }}
-        onSubmit={handleEditBudget}
-        budget={selectedBudget}
-      />
+      {editingBudget && (
+        <EditBudgetModal
+          isOpen={true}
+          onClose={() => setEditingBudget(null)}
+          onEdit={handleEdit}
+          budget={editingBudget}
+        />
+      )}
 
-      <DeleteBudgetModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setSelectedBudget(null);
-        }}
-        onConfirm={handleDeleteBudget}
-        budgetTitle={selectedBudget?.title || ''}
-      />
+      {deletingBudget && (
+        <DeleteBudgetModal
+          isOpen={true}
+          onClose={() => setDeletingBudget(null)}
+          onDelete={handleDelete}
+          budgetName={deletingBudget.name}
+        />
+      )}
     </motion.section>
   );
 };

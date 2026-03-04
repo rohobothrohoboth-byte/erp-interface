@@ -153,31 +153,31 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   CODE
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Branch
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider "
                 >
                   Department
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider "
                 >
                   Position
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell"
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider "
                 >
                   Job Grade
                 </th>
@@ -246,42 +246,42 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
                         <span className="truncate max-w-[120px]">
                           {employee.code || "Not specified"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
                         <span className="truncate max-w-[120px]">
                           {employee.branch || "Not specified"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
                         <span className="truncate max-w-[120px]">
                           {employee.department || "Not specified"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center">
                         <span className="truncate max-w-[120px]">
                           {employee.position || "Not specified"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
                         <span className="truncate max-w-[120px]">
                           {employee.jobGrade || "Not specified"}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
                         <span
                           className={`truncate max-w-30 ${employee.status === "active" ? "text-green-600" : "text-red-600"}`}

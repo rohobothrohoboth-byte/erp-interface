@@ -178,7 +178,8 @@ export default function AddBudgetExpenseModal({
 
         {/* Body */}
         <div className="px-6">
-          <div className="py-4 space-y-4">
+          <div className="py-4 grid grid-cols-2 gap-4">
+            {/* Budget Code */}
             <div className="space-y-2">
               <Label htmlFor="budgetCode" className="text-sm text-gray-500">
                 Budget Code <span className="text-red-500">*</span>
@@ -187,7 +188,7 @@ export default function AddBudgetExpenseModal({
                 value={formData.budgetCode}
                 onValueChange={(value) => setFormData({ ...formData, budgetCode: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select budget code" />
                 </SelectTrigger>
                 <SelectContent>
@@ -200,6 +201,7 @@ export default function AddBudgetExpenseModal({
               </Select>
             </div>
 
+            {/* Account */}
             <div className="space-y-2">
               <Label htmlFor="account" className="text-sm text-gray-500">
                 Account <span className="text-red-500">*</span>
@@ -208,7 +210,7 @@ export default function AddBudgetExpenseModal({
                 value={formData.account}
                 onValueChange={(value) => setFormData({ ...formData, account: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
                 <SelectContent>
@@ -221,6 +223,7 @@ export default function AddBudgetExpenseModal({
               </Select>
             </div>
 
+            {/* Budget Category */}
             <div className="space-y-2">
               <Label htmlFor="budgetCategory" className="text-sm text-gray-500">
                 Budget Category <span className="text-red-500">*</span>
@@ -229,7 +232,7 @@ export default function AddBudgetExpenseModal({
                 value={formData.budgetCategory}
                 onValueChange={(value) => setFormData({ ...formData, budgetCategory: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select budget category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -242,6 +245,7 @@ export default function AddBudgetExpenseModal({
               </Select>
             </div>
 
+            {/* Requested Amount */}
             <div className="space-y-2">
               <Label htmlFor="requestedAmount" className="text-sm text-gray-500">
                 Requested Amount <span className="text-red-500">*</span>
@@ -254,9 +258,11 @@ export default function AddBudgetExpenseModal({
                 onChange={(e) => setFormData({ ...formData, requestedAmount: e.target.value })}
                 placeholder="0.00"
                 disabled={isSubmitting}
+                className="w-full"
               />
             </div>
 
+            {/* Priority */}
             <div className="space-y-2">
               <Label htmlFor="priority" className="text-sm text-gray-500">
                 Priority <span className="text-red-500">*</span>
@@ -265,7 +271,7 @@ export default function AddBudgetExpenseModal({
                 value={formData.priority}
                 onValueChange={(value: any) => setFormData({ ...formData, priority: value })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
@@ -278,7 +284,8 @@ export default function AddBudgetExpenseModal({
               </Select>
             </div>
 
-            <div className="space-y-2">
+            {/* Justification - Full Width */}
+            <div className="space-y-2 col-span-2">
               <Label htmlFor="justification" className="text-sm text-gray-500">
                 Justification <span className="text-red-500">*</span>
               </Label>
@@ -287,8 +294,9 @@ export default function AddBudgetExpenseModal({
                 value={formData.justification}
                 onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
                 placeholder="Enter justification for this expense"
-                rows={4}
+                rows={3}
                 disabled={isSubmitting}
+                className="w-full"
               />
             </div>
           </div>

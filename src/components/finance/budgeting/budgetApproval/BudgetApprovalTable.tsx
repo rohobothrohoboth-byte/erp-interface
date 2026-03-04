@@ -14,8 +14,8 @@ export default function BudgetApprovalTable({
 }: BudgetApprovalTableProps) {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     }).format(amount);
   };
 
@@ -23,35 +23,35 @@ export default function BudgetApprovalTable({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="overflow-x-auto rounded-lg border border-indigo-200 shadow-sm"
+      className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm"
     >
-      <table className="min-w-full divide-y divide-indigo-200">
+      <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-white">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Fiscal Year
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Cost Center
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Total Requested
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Expenses
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-indigo-700 uppercase tracking-wider">
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
             </th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-indigo-700 uppercase tracking-wider">
+            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-indigo-200">
+        <tbody className="bg-white divide-y divide-gray-200">
           {budgetPlans.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-4 py-8 text-center text-indigo-500">
+              <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                 No budget plans found.
               </td>
             </tr>
@@ -61,27 +61,27 @@ export default function BudgetApprovalTable({
                 key={plan.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="transition-colors hover:bg-indigo-50"
+                className="transition-colors hover:bg-gray-50"
               >
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                      <FileText className="text-indigo-600 h-5 w-5" />
+                      <FileText className="text-gray-700 h-5 w-5" />
                     </div>
                     <div className="ml-3">
-                      <div className="font-medium text-indigo-900">
+                      <div className="font-medium text-gray-900">
                         {plan.fiscalYear}
                       </div>
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-indigo-900">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                   {plan.costCenter}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-indigo-900 font-semibold">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-semibold">
                   {formatCurrency(plan.totalRequested)}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-indigo-900">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                     {plan.expenseCount} items
                   </span>
@@ -91,7 +91,7 @@ export default function BudgetApprovalTable({
                     plan.status === 'Approved'
                       ? 'bg-green-100 text-green-800'
                       : plan.status === 'Submitted'
-                      ? 'bg-blue-100 text-blue-800'
+                      ? 'bg-gray-100 text-gray-800'
                       : plan.status === 'Rejected'
                       ? 'bg-red-100 text-red-800'
                       : plan.status === 'Returned'
@@ -106,7 +106,7 @@ export default function BudgetApprovalTable({
                     onClick={() => onViewExpenses(plan)}
                     variant="outline"
                     size="sm"
-                    className="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50"
+                    className="text-gray-700 hover:text-gray-500 hover:bg-gray-50"
                   >
                     <Eye className="w-4 h-4 mr-1" />
                     View Expenses

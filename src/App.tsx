@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import SignInPage from "./pages/SignInPage";
 import Layout from "./layout/layout";
@@ -58,7 +57,7 @@ import PageMenuSettings from "./pages/settings/coreSettings/PageMenuSettings";
 import FileDashboard from "./pages/modules/File";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "./contexts/AuthContext";
+import { useAuth } from "./contexts/AuthContext";
 import LeavePolicy from "./pages/settings/hrSettings/Leave/leavePolicy";
 import LeavePolicyConfig from "./pages/settings/hrSettings/Leave/leavePolicyConfig";
 import LeaveAppChainHistory from "./pages/settings/hrSettings/Leave/LeaveAppChainHistory";
@@ -79,6 +78,10 @@ import PageBudgetPlan from "./pages/finance/budgeting/PageBudgetPlan";
 import PageBudgetExpenses from "./pages/finance/budgeting/PageBudgetExpenses";
 import PageBudgetApproval from "./pages/finance/budgeting/PageBudgetApproval";
 import PageExpenseApproval from "./pages/finance/budgeting/PageExpenseApproval";
+import PageAdditionalBudget from "./pages/finance/budgeting/PageAdditionalBudget";
+import PageBudgetReview from "./pages/finance/budgeting/PageBudgetReview";
+import PageAdditionalBudgetApproval from "./pages/finance/budgeting/PageAdditionalBudgetApproval";
+import PageBudgetVersions from "./pages/finance/budgeting/PageBudgetVersions";
 import PageJournal from "./pages/finance/PageJournal";
 import PageReports from "./pages/finance/PageReports";
 import PageAssets from "./pages/finance/PageAssets";
@@ -133,6 +136,7 @@ import VacanciesPage from "./pages/vacancy/VacanciesPage";
 import AddAccountPage from "./pages/core/usermanagement/pageAddAccount";
 import EditAccountPage from "./pages/core/usermanagement/pageEditAccount";
 import NotFoundPage from "./pages/NotFoundPage";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -144,421 +148,424 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem("isAuthenticated") === "true";
-  });
-
-  // const handleLogin = () => {
-  //   localStorage.setItem("isAuthenticated", "true");
-  //   setIsAuthenticated(true);
-  // };
+  const { isAuthenticated } = useAuth();
 
   return (
-    <AuthProvider>
-      <ModuleProvider>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <Routes>
-              {/* Root path redirects to login */}
-              <Route path="/" element={<Navigate to="/login" replace />} />
+    <ModuleProvider>
+      <QueryClientProvider client={queryClient}>
+          <Routes>
+            {/* Root path redirects to login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
 
-              {/* Public route */}
-              <Route path="/login" element={<SignInPage />} />
+            {/* Public route */}
+            <Route path="/login" element={<SignInPage />} />
 
-              {/* Protected layout routes */}
+           <Route element={<ProtectedRoute />}>
+           <Route element={<Layout />}>
+              
+              {/* START MENU ROUTES */}
+              <Route path="/hr" element={<Dashboard />} />
+              <Route path="/inventory" element={<InventoryDashboard />} />
+              <Route path="/core" element={<CoreDashboard />} />
+              <Route path="/crm" element={<CRMDashboard />} />
+              <Route path="/finance" element={<Finance />} />
+              <Route path="/procurement" element={<Procurement />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/file" element={<FileDashboard />} />
+              {/* End MENU ROUTES */}
+              {/* START CRM ROUTES */}
               <Route
-                path="/"
-                element={
-                  isAuthenticated ? <Layout /> : <Navigate to="/login" />
-                }
-              >
-                {/* START MENU ROUTES */}
-                <Route path="/hr" element={<Dashboard />} />
-                <Route path="/inventory" element={<InventoryDashboard />} />
-                <Route path="/core" element={<CoreDashboard />} />
-                <Route path="/crm" element={<CRMDashboard />} />
-                <Route path="/finance" element={<Finance />} />
-                <Route path="/procurement" element={<Procurement />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/file" element={<FileDashboard />} />
-                {/* End MENU ROUTES */}
-                {/* START CRM ROUTES */}
-                <Route
-                  path="/crm/leads/generation"
-                  element={<LeadGenerationPage />}
-                />
-                <Route
-                  path="/crm/leads/generation/import"
-                  element={<ImportLeadPage />}
-                />
-                <Route
-                  path="/crm/leads/assigned"
-                  element={<AssignedLeadsPage />}
-                />
-                <Route
-                  path="/crm/leads/assigned/:id"
-                  element={<LeadDetailPage />}
-                />
-                <Route
-                  path="/crm/leads/grouping"
-                  element={<LeadGroupingPage />}
-                />
-                <Route path="/crm/leads/add" element={<AddLeadPage />} />
-                <Route path="/crm/leads/:id/edit" element={<EditLeadPage />} />
-                <Route
-                  path="/crm/leads/routing"
-                  element={<LeadRoutingPage />}
-                />
-                <Route
-                  path="/crm/leads/:id/convert"
-                  element={<LeadConversion />}
-                />
-                <Route path="/crm/contacts" element={<ContactsPage />} />
-                <Route
-                  path="/crm/contacts/grouping"
-                  element={<ContactGroupingPage />}
-                />
-                <Route
-                  path="/crm/contacts/assigned"
-                  element={<AssignedContactsPage />}
-                />
-                <Route
-                  path="/crm/contacts/assigned/:id"
-                  element={<AssignedContactDetailPage />}
-                />
-                <Route path="/crm/contacts/add" element={<AddContactPage />} />
-                <Route
-                  path="/crm/contacts/:id/edit"
-                  element={<EditContactPage />}
-                />
-                <Route
-                  path="/crm/contacts/:id"
-                  element={<ContactDetailPage />}
-                />
-                <Route
-                  path="/crm/contacts/:id/activities"
-                  element={<ContactDetailPage />}
-                />
-                <Route path="/crm/sales" element={<SalesManagement />} />
-                <Route
-                  path="/crm/sales/opportunities"
-                  element={<OpportunitiesPage />}
-                />
-                <Route path="/crm/quotations" element={<QuotationsPage />} />
-                <Route path="/crm/orders" element={<OrdersPage />} />
-                <Route path="/crm/orders/:id" element={<OrderDetailPage />} />
-                <Route
-                  path="/crm/opportunity/:id"
-                  element={<OpportunityDetailPage />}
-                />
-                <Route
-                  path="/crm/marketing"
-                  element={<MarketingAutomation />}
-                />
-                <Route path="/crm/campaigns" element={<CampaignsPage />} />
-                <Route
-                  path="/crm/campaigns/email"
-                  element={<EmailCampaignsPage />}
-                />
-                <Route
-                  path="/crm/campaigns/sms"
-                  element={<SMSCampaignsPage />}
-                />
-                <Route path="/crm/support" element={<CustomerSupport />} />
-                <Route path="/crm/support/tickets" element={<TicketsPage />} />
-                <Route
-                  path="/crm/support/knowledge-base"
-                  element={<KnowledgeBasePage />}
-                />
-                <Route
-                  path="/crm/activities"
-                  element={<ActivityManagement />}
-                />
-                <Route path="/crm/activities/tasks" element={<TasksPage />} />
-                <Route
-                  path="/crm/activities/calendar"
-                  element={<CalendarPage />}
-                />
-                <Route
-                  path="/crm/activities/time-tracking"
-                  element={<TimeTrackingPage />}
-                />
-                <Route
-                  path="/crm/activities/notifications"
-                  element={<NotificationsPage />}
-                />
-                <Route path="/crm/analytics" element={<AnalyticsReporting />} />
-                <Route path="/settings/crm" element={<PageCrmSettings />} />
-                <Route
-                  path="/settings/crm/routing-rules"
-                  element={<PageRoutingRules />}
-                />
-                <Route
-                  path="/settings/crm/lead-scoring"
-                  element={<PageLeadScoring />}
-                />
-                <Route
-                  path="/settings/crm/lead-sources"
-                  element={<PageLeadSources />}
-                />
-                <Route
-                  path="/settings/crm/quotation-templates"
-                  element={<PageQuotationTemplates />}
-                />
-                <Route
-                  path="/settings/crm/email-templates"
-                  element={<PageEmailTemplates />}
-                />
-                <Route
-                  path="/settings/crm/sms-templates"
-                  element={<PageSMSTemplates />}
-                />
-                <Route
-                  path="/settings/crm/lead-statuses"
-                  element={<PageLeadStatuses />}
-                />
-                <Route
-                  path="/settings/crm/industries"
-                  element={<PageIndustries />}
-                />
-                <Route
-                  path="/settings/crm/ticket-status"
-                  element={<PageTicketStatus />}
-                />
-                {/* END CRM ROUTES */}
-                {/* START HR ROUTES */}
-                <Route
-                  path="/hr/employees/record"
-                  element={<EmployeeManagementPage />}
-                />
-                <Route
-                  path="/hr/employees/record/Add"
-                  element={<AddEmployeePage />}
-                />
-                <Route
-                  path="/hr/employees/edit/:employeeId"
-                  element={<EditEmployeePage />}
-                />
-                <Route
-                  path="/hr/employees/:id"
-                  element={<EmployeeDetailsPage />}
-                />
-                <Route path="/settings/hr/jobgrade" element={<JobGrade />} />
-                <Route
-                  path="/settings/hr/jobgrade/:gradeId/steps"
-                  element={<JobGradeSubgrades />}
-                />
-                <Route
-                  path="/hr/employees/termination"
-                  element={<Termination />}
-                />
-                <Route
-                  path="/hr/recruitment/pipeline"
-                  element={<CandidatePipeline />}
-                />
-                <Route
-                  path="/hr/recruitment/candidates/:candidateId"
-                  element={<CandidatePipeline />}
-                />
-                <Route
-                  path="/hr/recruitment/onboarding"
-                  element={<OnBoarding />}
-                />
-                <Route
-                  path="/hr/recruitment/list"
-                  element={<RecruitmentList />}
-                />
-                <Route path="/hr/leave/list" element={<LeaveList />} />
-                <Route path="/hr/leave/form" element={<LeaveRequestForm />} />
-                <Route
-                  path="/hr/leave/entitlement"
-                  element={<LeaveEntitlementPage />}
-                />
-                <Route
-                  path="/hr/attendance/list"
-                  element={<AttendanceList />}
-                />
-                <Route
-                  path="/hr/shift-scheduler"
-                  element={<ShiftScheduler />}
-                />
-                <Route path="/hr/time-clock" element={<TimeClock />} />
-                <Route
-                  path="/hr/attendance/form"
-                  element={<TimeClockFormContainer />}
-                />
-                <Route path="/settings" element={<PageSettings />} />
-                <Route path="/settings/finance" element={<PageFinanceSettings />} />
-                <Route path="/settings/finance/accounts" element={<PageAccounts />} />
-                <Route path="/settings/finance/accounts/:accountId" element={<PageAccountDetail />} />
-                <Route path="/settings/finance/account-category" element={<PageAccountCategory />} />
-                <Route path="/settings/finance/cost-center" element={<PageCostCenter />} />
-                <Route path="/settings/finance/budget-code" element={<PageBudgetCode />} />
-                <Route path="/settings/finance/budget-category" element={<PageBudgetCategory />} />
-                <Route
-                  path="/settings/hr/benefitset"
-                  element={<PageBenefitSet />}
-                />
-                <Route
-                  path="/settings/hr/educationqual"
-                  element={<PageEducationalQual />}
-                />
-                <Route
-                  path="/settings/hr/position"
-                  element={<PagePosition />}
-                />
-                <Route
-                  path="/settings/hr/position/:id"
-                  element={<PositionDetails />}
-                />
-                <Route
-                  path="/settings/hr/annualleave"
-                  element={<PageAnnualLeave />}
-                />
-                <Route
-                  path="/settings/hr/leave/leavePolicy"
-                  element={<LeavePolicy />}
-                />
-                <Route
-                  path="/settings/hr/leave/leavePolicyConfig/:leavePolicyId"
-                  element={<LeavePolicyConfig />}
-                />
-                <Route
-                  path="/settings/hr/leave/leaveAppChainHistory/:leavePolicyId"
-                  element={<LeaveAppChainHistory />}
-                />
-                <Route
-                  path="/settings/hr/leave/leavePolicyConfigHistory/:leavePolicyId"
-                  element={<LeavePolicyConfigHistory />}
-                />
-                <Route
-                  path="/settings/hr/leave/policyAssignmentRule/:leavePolicyId"
-                  element={<PolicyAssignmentRule />}
-                />
-                <Route
-                  path="/settings/hr/leave/policyAssignmentRuleHistory/:leavePolicyId"
-                  element={<PolicyAssignmentRuleHistory />}
-                />
-                <Route
-                  path="/settings/hr/annualleave/:id/policy"
-                  element={<LeavePolicyAccrualPage />}
-                />
-                <Route path="/settings/hr" element={<PageHrSettings />} />
-                <Route path="/hr/training" element={<Training />} />
-                {/* END HR ROUTES */}
-                {/* START FINANCE ROUTES */}
-                <Route path="/finance/gl" element={<GlPage />} />
-                <Route path="/finance/budget-list" element={<BudgetList />} />
-                <Route path="/finance/budget" element={<PageBudget />} />
-                <Route path="/finance/budget-plan" element={<PageBudgetPlan />} />
-                <Route path="/finance/budget-plan/:budgetPlanId/expenses" element={<PageBudgetExpenses />} />
-                <Route path="/finance/budget-approval" element={<PageBudgetApproval />} />
-                <Route path="/finance/budget-approval/:budgetPlanId/expenses" element={<PageExpenseApproval />} />
-                <Route path="/finance/accounts" element={<FinancePageAccounts />} />
-                <Route path="/finance/accounts/:accountId" element={<FinancePageAccountDetail />} />
-                <Route path="/finance/journals" element={<PageJournal />} />
-                <Route path="/finance/payroll" element={<PagePayroll />} />
-                <Route
-                  path="/finance/transactions"
-                  element={<PageTransactions />}
-                />
-                <Route path="/finance/assets" element={<PageAssets />} />
-                <Route path="/finance/reports" element={<PageReports />} />
-                <Route
-                  path="/finance/budget-create"
-                  element={<BudgetCreate />}
-                />
-                {/* End FINANCE ROUTES */}
-                {/*sTART CORE ROUTES */}
-                <Route
-                  path="/core/company/:companyId/branches"
-                  element={<CompanyBranchesPage />}
-                />
-                <Route path="/branches" element={<BranchesPage />} />{" "}
-                <Route path="/core/company" element={<CompanyBranchesPage />} />
-                {/* <Route path='/core/branch' element={<BranchOverview />} /> */}
-                <Route
-                  path="/core/fiscal-year"
-                  element={<FiscalYearOverview />}
-                />
-                <Route
-                  path="/core/fiscal-year/history"
-                  element={<FiscalYearHistory />}
-                />
-                <Route
-                  path="/core/fiscal-year/period-history"
-                  element={<PagePeriod />}
-                />
-                {/* <Route path='/core/hierarchy' element={<HierarchyOverview />} /> */}
-                <Route path="/core/users" element={<UserOverview />} />
-                <Route path="/core/Add-Employee" element={<PageAddUser />} />
-                <Route
-                  path="/core/user-management/add/:empId"
-                  element={<AddAccountPage />}
-                />
-                <Route
-                  path="/core/user-management/edit/:empId"
-                  element={<EditAccountPage />}
-                />
-                <Route
-                  path="/core/department"
-                  element={<DepartmentOverview />}
-                />
-                {/* <Route path="/core/company/:id" element={<CompanyDetailsPage />} /> */}
-                <Route
-                  path="/core/fiscal-year/holiday-history"
-                  element={<PageHolidayHist />}
-                />
-                <Route path="/settings/core" element={<PageCoreSettings />} />
-                <Route
-                  path="/settings/core/api-permissions"
-                  element={<PageApiSettings />}
-                />
-                <Route
-                  path="/settings/core/menu-permissions"
-                  element={<PageMenuSettings />}
-                />
-              </Route>
-              {/* END CORE ROUTES */}
-              {/*START CORE ROUTES */}
-
-              {/* Modules route at /menu */}
-              <Route
-                path="/modules"
-                element={
-                  isAuthenticated ? <Modules /> : <Navigate to="/login" />
-                }
-              />
-
-              {/* Standalone Vacancies Routes */}
-              <Route
-                path="/vacancies"
-                element={
-                  isAuthenticated ? <VacanciesPage /> : <Navigate to="/login" />
-                }
+                path="/crm/leads/generation"
+                element={<LeadGenerationPage />}
               />
               <Route
-                path="/vacancies/:id"
-                element={
-                  isAuthenticated ? <VacanciesPage /> : <Navigate to="/login" />
-                }
+                path="/crm/leads/generation/import"
+                element={<ImportLeadPage />}
               />
-
-              {/* 404 Page */}
-              <Route path="/404" element={<NotFoundPage />} />
-
-              {/* Catch-all route */}
               <Route
-                path="*"
-                element={
-                  <Navigate to={isAuthenticated ? "/404" : "/login"} replace />
-                }
+                path="/crm/leads/assigned"
+                element={<AssignedLeadsPage />}
               />
-            </Routes>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </ModuleProvider>
-    </AuthProvider>
+              <Route
+                path="/crm/leads/assigned/:id"
+                element={<LeadDetailPage />}
+              />
+              <Route
+                path="/crm/leads/grouping"
+                element={<LeadGroupingPage />}
+              />
+              <Route path="/crm/leads/add" element={<AddLeadPage />} />
+              <Route path="/crm/leads/:id/edit" element={<EditLeadPage />} />
+              <Route path="/crm/leads/routing" element={<LeadRoutingPage />} />
+              <Route
+                path="/crm/leads/:id/convert"
+                element={<LeadConversion />}
+              />
+              <Route path="/crm/contacts" element={<ContactsPage />} />
+              <Route
+                path="/crm/contacts/grouping"
+                element={<ContactGroupingPage />}
+              />
+              <Route
+                path="/crm/contacts/assigned"
+                element={<AssignedContactsPage />}
+              />
+              <Route
+                path="/crm/contacts/assigned/:id"
+                element={<AssignedContactDetailPage />}
+              />
+              <Route path="/crm/contacts/add" element={<AddContactPage />} />
+              <Route
+                path="/crm/contacts/:id/edit"
+                element={<EditContactPage />}
+              />
+              <Route path="/crm/contacts/:id" element={<ContactDetailPage />} />
+              <Route
+                path="/crm/contacts/:id/activities"
+                element={<ContactDetailPage />}
+              />
+              <Route path="/crm/sales" element={<SalesManagement />} />
+              <Route
+                path="/crm/sales/opportunities"
+                element={<OpportunitiesPage />}
+              />
+              <Route path="/crm/quotations" element={<QuotationsPage />} />
+              <Route path="/crm/orders" element={<OrdersPage />} />
+              <Route path="/crm/orders/:id" element={<OrderDetailPage />} />
+              <Route
+                path="/crm/opportunity/:id"
+                element={<OpportunityDetailPage />}
+              />
+              <Route path="/crm/marketing" element={<MarketingAutomation />} />
+              <Route path="/crm/campaigns" element={<CampaignsPage />} />
+              <Route
+                path="/crm/campaigns/email"
+                element={<EmailCampaignsPage />}
+              />
+              <Route path="/crm/campaigns/sms" element={<SMSCampaignsPage />} />
+              <Route path="/crm/support" element={<CustomerSupport />} />
+              <Route path="/crm/support/tickets" element={<TicketsPage />} />
+              <Route
+                path="/crm/support/knowledge-base"
+                element={<KnowledgeBasePage />}
+              />
+              <Route path="/crm/activities" element={<ActivityManagement />} />
+              <Route path="/crm/activities/tasks" element={<TasksPage />} />
+              <Route
+                path="/crm/activities/calendar"
+                element={<CalendarPage />}
+              />
+              <Route
+                path="/crm/activities/time-tracking"
+                element={<TimeTrackingPage />}
+              />
+              <Route
+                path="/crm/activities/notifications"
+                element={<NotificationsPage />}
+              />
+              <Route path="/crm/analytics" element={<AnalyticsReporting />} />
+              <Route path="/settings/crm" element={<PageCrmSettings />} />
+              <Route
+                path="/settings/crm/routing-rules"
+                element={<PageRoutingRules />}
+              />
+              <Route
+                path="/settings/crm/lead-scoring"
+                element={<PageLeadScoring />}
+              />
+              <Route
+                path="/settings/crm/lead-sources"
+                element={<PageLeadSources />}
+              />
+              <Route
+                path="/settings/crm/quotation-templates"
+                element={<PageQuotationTemplates />}
+              />
+              <Route
+                path="/settings/crm/email-templates"
+                element={<PageEmailTemplates />}
+              />
+              <Route
+                path="/settings/crm/sms-templates"
+                element={<PageSMSTemplates />}
+              />
+              <Route
+                path="/settings/crm/lead-statuses"
+                element={<PageLeadStatuses />}
+              />
+              <Route
+                path="/settings/crm/industries"
+                element={<PageIndustries />}
+              />
+              <Route
+                path="/settings/crm/ticket-status"
+                element={<PageTicketStatus />}
+              />
+              {/* END CRM ROUTES */}
+              {/* START HR ROUTES */}
+              <Route
+                path="/hr/employees/record"
+                element={<EmployeeManagementPage />}
+              />
+              <Route
+                path="/hr/employees/record/Add"
+                element={<AddEmployeePage />}
+              />
+              <Route
+                path="/hr/employees/edit/:employeeId"
+                element={<EditEmployeePage />}
+              />
+              <Route
+                path="/hr/employees/:id"
+                element={<EmployeeDetailsPage />}
+              />
+              <Route path="/settings/hr/jobgrade" element={<JobGrade />} />
+              <Route
+                path="/settings/hr/jobgrade/:gradeId/steps"
+                element={<JobGradeSubgrades />}
+              />
+              <Route
+                path="/hr/employees/termination"
+                element={<Termination />}
+              />
+              <Route
+                path="/hr/recruitment/pipeline"
+                element={<CandidatePipeline />}
+              />
+              <Route
+                path="/hr/recruitment/candidates/:candidateId"
+                element={<CandidatePipeline />}
+              />
+              <Route
+                path="/hr/recruitment/onboarding"
+                element={<OnBoarding />}
+              />
+              <Route
+                path="/hr/recruitment/list"
+                element={<RecruitmentList />}
+              />
+              <Route path="/hr/leave/list" element={<LeaveList />} />
+              <Route path="/hr/leave/form" element={<LeaveRequestForm />} />
+              <Route
+                path="/hr/leave/entitlement"
+                element={<LeaveEntitlementPage />}
+              />
+              <Route path="/hr/attendance/list" element={<AttendanceList />} />
+              <Route path="/hr/shift-scheduler" element={<ShiftScheduler />} />
+              <Route path="/hr/time-clock" element={<TimeClock />} />
+              <Route
+                path="/hr/attendance/form"
+                element={<TimeClockFormContainer />}
+              />
+              <Route path="/settings" element={<PageSettings />} />
+              <Route
+                path="/settings/finance"
+                element={<PageFinanceSettings />}
+              />
+              <Route
+                path="/settings/finance/accounts"
+                element={<PageAccounts />}
+              />
+              <Route
+                path="/settings/finance/accounts/:accountId"
+                element={<PageAccountDetail />}
+              />
+              <Route
+                path="/settings/finance/account-category"
+                element={<PageAccountCategory />}
+              />
+              <Route
+                path="/settings/finance/cost-center"
+                element={<PageCostCenter />}
+              />
+              <Route
+                path="/settings/finance/budget-code"
+                element={<PageBudgetCode />}
+              />
+              <Route
+                path="/settings/finance/budget-category"
+                element={<PageBudgetCategory />}
+              />
+              <Route
+                path="/settings/hr/benefitset"
+                element={<PageBenefitSet />}
+              />
+              <Route
+                path="/settings/hr/educationqual"
+                element={<PageEducationalQual />}
+              />
+              <Route path="/settings/hr/position" element={<PagePosition />} />
+              <Route
+                path="/settings/hr/position/:id"
+                element={<PositionDetails />}
+              />
+              <Route
+                path="/settings/hr/annualleave"
+                element={<PageAnnualLeave />}
+              />
+              <Route
+                path="/settings/hr/leave/leavePolicy"
+                element={<LeavePolicy />}
+              />
+              <Route
+                path="/settings/hr/leave/leavePolicyConfig/:leavePolicyId"
+                element={<LeavePolicyConfig />}
+              />
+              <Route
+                path="/settings/hr/leave/leaveAppChainHistory/:leavePolicyId"
+                element={<LeaveAppChainHistory />}
+              />
+              <Route
+                path="/settings/hr/leave/leavePolicyConfigHistory/:leavePolicyId"
+                element={<LeavePolicyConfigHistory />}
+              />
+              <Route
+                path="/settings/hr/leave/policyAssignmentRule/:leavePolicyId"
+                element={<PolicyAssignmentRule />}
+              />
+              <Route
+                path="/settings/hr/leave/policyAssignmentRuleHistory/:leavePolicyId"
+                element={<PolicyAssignmentRuleHistory />}
+              />
+              <Route
+                path="/settings/hr/annualleave/:id/policy"
+                element={<LeavePolicyAccrualPage />}
+              />
+              <Route path="/settings/hr" element={<PageHrSettings />} />
+              <Route path="/hr/training" element={<Training />} />
+              {/* END HR ROUTES */}
+              {/* START FINANCE ROUTES */}
+              <Route path="/finance/gl" element={<GlPage />} />
+              <Route path="/finance/budget-list" element={<BudgetList />} />
+              <Route path="/finance/budget" element={<PageBudget />} />
+              <Route
+                path="/finance/budget/:budgetId/versions"
+                element={<PageBudgetVersions />}
+              />
+              <Route path="/finance/budget-plan" element={<PageBudgetPlan />} />
+              <Route
+                path="/finance/budget-plan/:budgetPlanId/expenses"
+                element={<PageBudgetExpenses />}
+              />
+              <Route
+                path="/finance/budget-approval"
+                element={<PageBudgetApproval />}
+              />
+              <Route
+                path="/finance/budget-approval/:budgetPlanId/expenses"
+                element={<PageExpenseApproval />}
+              />
+              <Route
+                path="/finance/additional-budget"
+                element={<PageAdditionalBudget />}
+              />
+              <Route
+                path="/finance/budget-review"
+                element={<PageBudgetReview />}
+              />
+              <Route
+                path="/finance/additional-budget-approval"
+                element={<PageAdditionalBudgetApproval />}
+              />
+              <Route
+                path="/finance/accounts"
+                element={<FinancePageAccounts />}
+              />
+              <Route
+                path="/finance/accounts/:accountId"
+                element={<FinancePageAccountDetail />}
+              />
+              <Route path="/finance/journals" element={<PageJournal />} />
+              <Route path="/finance/payroll" element={<PagePayroll />} />
+              <Route
+                path="/finance/transactions"
+                element={<PageTransactions />}
+              />
+              <Route path="/finance/assets" element={<PageAssets />} />
+              <Route path="/finance/reports" element={<PageReports />} />
+              <Route path="/finance/budget-create" element={<BudgetCreate />} />
+              {/* End FINANCE ROUTES */}
+              {/*sTART CORE ROUTES */}
+              <Route
+                path="/core/company/:companyId/branches"
+                element={<CompanyBranchesPage />}
+              />
+              <Route path="/branches" element={<BranchesPage />} />{" "}
+              <Route path="/core/company" element={<CompanyBranchesPage />} />
+              {/* <Route path='/core/branch' element={<BranchOverview />} /> */}
+              <Route
+                path="/core/fiscal-year"
+                element={<FiscalYearOverview />}
+              />
+              <Route
+                path="/core/fiscal-year/history"
+                element={<FiscalYearHistory />}
+              />
+              <Route
+                path="/core/fiscal-year/period-history"
+                element={<PagePeriod />}
+              />
+              {/* <Route path='/core/hierarchy' element={<HierarchyOverview />} /> */}
+              <Route path="/core/users" element={<UserOverview />} />
+              <Route path="/core/Add-Employee" element={<PageAddUser />} />
+              <Route
+                path="/core/user-management/add/:empId"
+                element={<AddAccountPage />}
+              />
+              <Route
+                path="/core/user-management/edit/:empId"
+                element={<EditAccountPage />}
+              />
+              <Route path="/core/department" element={<DepartmentOverview />} />
+              {/* <Route path="/core/company/:id" element={<CompanyDetailsPage />} /> */}
+              <Route
+                path="/core/fiscal-year/holiday-history"
+                element={<PageHolidayHist />}
+              />
+              <Route path="/settings/core" element={<PageCoreSettings />} />
+              <Route
+                path="/settings/core/api-permissions"
+                element={<PageApiSettings />}
+              />
+              <Route
+                path="/settings/core/menu-permissions"
+                element={<PageMenuSettings />}
+              />
+            </Route>
+             </Route>
+            {/* END CORE ROUTES */}
+            {/*START CORE ROUTES */}
+
+            {/* Modules route at /menu */}
+            <Route path="/modules" element={<Modules />} />
+
+            {/* Standalone Vacancies Routes */}
+            <Route
+              path="/vacancies"
+              element={
+                isAuthenticated ? <VacanciesPage /> : <Navigate to="/login" />
+              }
+            />
+            <Route
+              path="/vacancies/:id"
+              element={
+                isAuthenticated ? <VacanciesPage /> : <Navigate to="/login" />
+              }
+            />
+
+            {/* 404 Page */}
+            <Route path="/404" element={<NotFoundPage />} />
+
+            {/* Catch-all route */}
+            <Route
+              path="*"
+              element={
+                <Navigate to={isAuthenticated ? "/404" : "/login"} replace />
+              }
+            />
+          </Routes>
+      </QueryClientProvider>
+    </ModuleProvider>
   );
 }
 

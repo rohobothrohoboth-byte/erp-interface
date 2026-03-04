@@ -3,48 +3,48 @@ import { Search, X, Plus } from 'lucide-react';
 import { Input } from '../../../ui/input';
 import { Button } from '../../../ui/button';
 
-interface BudgetSearchFilterProps {
+interface AdditionalBudgetSearchFilterProps {
   searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  onAdd: () => void;
+  setSearchTerm: (value: string) => void;
+  onAddClick: () => void;
 }
 
-export default function BudgetSearchFilter({
+export default function AdditionalBudgetSearchFilter({
   searchTerm,
   setSearchTerm,
-  onAdd
-}: BudgetSearchFilterProps) {
+  onAddClick
+}: AdditionalBudgetSearchFilterProps) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-white p-4 rounded-lg shadow-sm border border-indigo-200"
+      className="bg-white p-4 rounded-lg shadow-sm"
     >
       <div className="flex items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
-            placeholder="Search budgets by name, fiscal year, or cost center..."
+            placeholder="Search by budget plan, code, account, or justification..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-10 border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500"
+            className="pl-10 pr-10"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-indigo-400 hover:text-indigo-600"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
         <Button
-          onClick={onAdd}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          onClick={onAddClick}
+          className="bg-indigo-600 hover:bg-indigo-700 cursor-pointer"
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Budget
+          Request Additional Budget
         </Button>
       </div>
     </motion.div>
