@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { X, BadgePlus } from "lucide-react";
 import { Button } from "../../../ui/button";
@@ -7,6 +7,8 @@ import { Input } from "../../../ui/input";
 import List from "../../../List/list";
 import type { BenefitSetAddDto } from "../../../../types/hr/benefit";
 import type { ListItem } from "../../../../types/List/list";
+import { Per } from "../../../../types/hr/enum";
+import EnumSelect from "../../../ui/enumSelect";
 
 interface AddBenefitModalProps {
   isOpen: boolean;
@@ -22,12 +24,22 @@ const AddBenefitModal: React.FC<AddBenefitModalProps> = ({
   const [formData, setFormData] = useState<BenefitSetAddDto>({
     name: "",
     benefitValue: 0,
-    per: "Month", // Default value
+    per: " ",
   });
+  const [per, setPer] = useState("");
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        name: "",
+        benefitValue: 0,
+        per: "",
+      });
+      setPer("");
+    }
+  }, [isOpen]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -35,33 +47,20 @@ const AddBenefitModal: React.FC<AddBenefitModalProps> = ({
     }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleSubmit = () => {
-    if (!formData.name.trim() || formData.benefitValue <= 0 || !formData.per) return;
+    if (!formData.name.trim() || formData.benefitValue <= 0 || !formData.per)
+      return;
 
     onAddBenefit(formData);
+    console.log("beneft", formData);
 
-    // Reset form
     setFormData({
       name: "",
       benefitValue: 0,
-      per: "Month", // Reset to default
+      per: "",
     });
     onClose();
   };
-
-  // Period options for the List component
-  const periodOptions: ListItem[] = [
-    { id: "Day", name: "Day" },
-    { id: "Month", name: "Month" },
-    { id: "Year", name: "Year" }
-  ];
 
   if (!isOpen) return null;
 
@@ -128,13 +127,14 @@ const AddBenefitModal: React.FC<AddBenefitModalProps> = ({
 
               {/* Period - Using List component */}
               <div className="space-y-2">
-                <List
-                  items={periodOptions}
-                  selectedValue={formData.per}
-                  onSelect={(item) => handleSelectChange('per', item.id)}
-                  label="Period"
-                  placeholder="Select period"
-                  required
+                <Label htmlFor="benefitValue" className="text-sm text-gray-500">
+                  Period
+                </Label>
+                <EnumSelect
+                  enumObject={Per}
+                  value={per}
+                  onChange={setPer}
+                  placeholder="Select Period"
                 />
               </div>
             </div>
@@ -147,7 +147,11 @@ const AddBenefitModal: React.FC<AddBenefitModalProps> = ({
             <Button
               className="bg-green-600 hover:bg-green-700 text-white cursor-pointer px-6"
               onClick={handleSubmit}
-              disabled={!formData.name.trim() || formData.benefitValue <= 0 || !formData.per}
+              disabled={
+                !formData.name.trim() ||
+                formData.benefitValue <= 0 ||
+                !formData.per
+              }
             >
               Save
             </Button>
