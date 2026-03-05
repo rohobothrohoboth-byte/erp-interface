@@ -10,6 +10,7 @@ export default function BudgetApprovalSection() {
   const navigate = useNavigate();
   const [budgetPlans, setBudgetPlans] = useState<BudgetPlan[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     // Load budget plans from localStorage
@@ -35,6 +36,8 @@ export default function BudgetApprovalSection() {
     plan.costCenter.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredPlans.length / 10);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -51,6 +54,10 @@ export default function BudgetApprovalSection() {
 
       <BudgetApprovalTable
         budgetPlans={filteredPlans}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredPlans.length}
+        onPageChange={setCurrentPage}
         onViewExpenses={handleViewExpenses}
       />
     </motion.div>

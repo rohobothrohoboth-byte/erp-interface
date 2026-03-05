@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Search, X, Plus } from 'lucide-react';
+import { Search, X, Grid, List, BadgePlus } from 'lucide-react';
 import { Input } from '../../../ui/input';
 import { Button } from '../../../ui/button';
 
@@ -7,12 +7,16 @@ interface BudgetSearchFilterProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   onAdd: () => void;
+  viewMode: 'table' | 'card';
+  onViewModeChange: (mode: 'table' | 'card') => void;
 }
 
 export default function BudgetSearchFilter({
   searchTerm,
   setSearchTerm,
-  onAdd
+  onAdd,
+  viewMode,
+  onViewModeChange
 }: BudgetSearchFilterProps) {
   return (
     <motion.div
@@ -21,7 +25,7 @@ export default function BudgetSearchFilter({
       transition={{ duration: 0.4 }}
       className="bg-white p-4 rounded-lg shadow-sm border border-indigo-200"
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex md:items-center md:justify-between md:flex-row flex-col gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400 w-4 h-4" />
           <Input
@@ -39,13 +43,41 @@ export default function BudgetSearchFilter({
             </button>
           )}
         </div>
-        <Button
-          onClick={onAdd}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Budget
-        </Button>
+        
+        <div className="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap gap-3 w-full lg:w-auto items-center justify-end">
+          {/* Filters + View Mode */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            {/* View Mode Toggle */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 cursor-pointer border-indigo-300 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 whitespace-nowrap"
+              onClick={() => onViewModeChange(viewMode === "card" ? "table" : "card")}
+            >
+              {viewMode === "card" ? (
+                <>
+                  <List className="h-4 w-4" />
+                  List View
+                </>
+              ) : (
+                <>
+                  <Grid className="h-4 w-4" />
+                  Grid View
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* ➕ Add Budget Button */}
+          <Button
+            onClick={onAdd}
+            size="sm"
+            className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white whitespace-nowrap w-full sm:w-auto cursor-pointer"
+          >
+            <BadgePlus className="h-4 w-4" />
+            Add Budget
+          </Button>
+        </div>
       </div>
     </motion.div>
   );

@@ -2,7 +2,7 @@ import BudgetReviewSection from '../../../components/finance/budgeting/budgetRev
 
 export default function PageBudgetReview() {
   return (
-    <div className="p-6">
+    <div>
       <BudgetReviewSection />
     </div>
   );

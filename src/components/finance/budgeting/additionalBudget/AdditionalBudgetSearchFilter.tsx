@@ -21,7 +21,7 @@ export default function AdditionalBudgetSearchFilter({
       transition={{ duration: 0.4 }}
       className="bg-white p-4 rounded-lg shadow-sm"
     >
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex md:items-center md:justify-between md:flex-row flex-col gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
@@ -32,7 +32,7 @@ export default function AdditionalBudgetSearchFilter({
           />
           {searchTerm && (
             <button
-              onClick={() => setSearchTerm('')}
+              onClick={() => setSearchTerm("")}
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X className="h-4 w-4" />

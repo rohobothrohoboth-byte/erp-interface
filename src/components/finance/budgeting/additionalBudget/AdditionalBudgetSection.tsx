@@ -31,6 +31,7 @@ interface AdditionalBudgetRequest {
 export default function AdditionalBudgetSection() {
   const [requests, setRequests] = useState<AdditionalBudgetRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingRequest, setEditingRequest] = useState<AdditionalBudgetRequest | null>(null);
   const [deletingRequest, setDeletingRequest] = useState<AdditionalBudgetRequest | null>(null);
@@ -103,6 +104,8 @@ export default function AdditionalBudgetSection() {
     r.justification.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredRequests.length / 10);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -120,6 +123,10 @@ export default function AdditionalBudgetSection() {
 
       <AdditionalBudgetTable
         requests={filteredRequests}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredRequests.length}
+        onPageChange={setCurrentPage}
         onEdit={setEditingRequest}
         onDelete={setDeletingRequest}
       />

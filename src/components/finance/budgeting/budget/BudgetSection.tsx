@@ -5,6 +5,7 @@ import { showToast } from '../../../../layout/layout';
 import BudgetHeader from './BudgetHeader';
 import BudgetSearchFilter from './BudgetSearchFilter';
 import BudgetTable from './BudgetTable';
+import BudgetCardView from './BudgetCardView';
 import AddBudgetModal from './AddBudgetModal';
 import EditBudgetModal from './EditBudgetModal';
 import DeleteBudgetModal from './DeleteBudgetModal';
@@ -13,6 +14,7 @@ import type { Budget } from './types';
 const BudgetSection = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -102,18 +104,33 @@ const BudgetSection = () => {
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         onAdd={() => setIsAddModalOpen(true)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
-      <BudgetTable
-        budgets={filteredBudgets}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={filteredBudgets.length}
-        onPageChange={setCurrentPage}
-        onViewVersions={handleViewVersions}
-        onEdit={setEditingBudget}
-        onDelete={setDeletingBudget}
-      />
+      {viewMode === 'table' ? (
+        <BudgetTable
+          budgets={filteredBudgets}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredBudgets.length}
+          onPageChange={setCurrentPage}
+          onViewVersions={handleViewVersions}
+          onEdit={setEditingBudget}
+          onDelete={setDeletingBudget}
+        />
+      ) : (
+        <BudgetCardView
+          budgets={filteredBudgets}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredBudgets.length}
+          onPageChange={setCurrentPage}
+          onViewVersions={handleViewVersions}
+          onEdit={setEditingBudget}
+          onDelete={setDeletingBudget}
+        />
+      )}
 
       <AddBudgetModal
         isOpen={isAddModalOpen}

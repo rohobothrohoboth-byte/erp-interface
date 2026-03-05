@@ -7,6 +7,7 @@ import BudgetExpensesTable from './BudgetExpensesTable';
 import AddBudgetExpenseModal from './AddBudgetExpenseModal';
 import EditBudgetExpenseModal from './EditBudgetExpenseModal';
 import DeleteBudgetExpenseModal from './DeleteBudgetExpenseModal';
+import ViewExpenseDetailModal from './ViewExpenseDetailModal';
 
 export interface BudgetExpense {
   id: string;
@@ -32,9 +33,11 @@ interface BudgetExpensesSectionProps {
 
 export default function BudgetExpensesSection({ budgetPlanId }: BudgetExpensesSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<BudgetExpense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<BudgetExpense | null>(null);
+  const [viewingExpense, setViewingExpense] = useState<BudgetExpense | null>(null);
 
   const loadExpenses = (): BudgetExpense[] => {
     // Try to load from localStorage first
@@ -179,6 +182,7 @@ export default function BudgetExpensesSection({ budgetPlanId }: BudgetExpensesSe
   );
 
   const totalRequested = expenses.reduce((sum, exp) => sum + exp.requestedAmount, 0);
+  const totalPages = Math.ceil(filteredExpenses.length / 10);
 
   return (
     <motion.section
@@ -187,19 +191,25 @@ export default function BudgetExpensesSection({ budgetPlanId }: BudgetExpensesSe
       transition={{ duration: 0.5 }}
       className="bg-gray-50 space-y-6 min-h-screen"
     >
-      <BudgetExpensesHeader budgetPlanId={budgetPlanId} totalRequested={totalRequested} expenseCount={expenses.length} />
+      <BudgetExpensesHeader />
 
       <BudgetExpensesSearchFilter
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         onAddClick={() => setIsAddModalOpen(true)}
+        totalRequested={totalRequested}
+        expenseCount={expenses.length}
       />
 
       <BudgetExpensesTable
         expenses={filteredExpenses}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredExpenses.length}
+        onPageChange={setCurrentPage}
         onEdit={setEditingExpense}
         onDelete={setDeletingExpense}
-        onToggleStatus={() => {}} // Not used - status changed only through approval
+        onViewDetails={setViewingExpense}
       />
 
       <AddBudgetExpenseModal
@@ -220,6 +230,12 @@ export default function BudgetExpensesSection({ budgetPlanId }: BudgetExpensesSe
         onClose={() => setDeletingExpense(null)}
         onConfirm={handleDeleteConfirm}
         expenseAccount={deletingExpense?.account || ''}
+      />
+
+      <ViewExpenseDetailModal
+        isOpen={!!viewingExpense}
+        onClose={() => setViewingExpense(null)}
+        expense={viewingExpense}
       />
     </motion.section>
   );

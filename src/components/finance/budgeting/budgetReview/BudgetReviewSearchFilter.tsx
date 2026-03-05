@@ -12,7 +12,7 @@ export default function BudgetReviewSearchFilter({
 }: BudgetReviewSearchFilterProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-indigo-200 p-4">
-      <div className="relative">
+      <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
         <Input
           type="text"

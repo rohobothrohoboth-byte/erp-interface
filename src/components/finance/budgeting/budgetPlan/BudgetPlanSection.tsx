@@ -5,6 +5,7 @@ import { showToast } from '../../../../layout/layout';
 import BudgetPlanHeader from './BudgetPlanHeader';
 import BudgetPlanSearchFilter from './BudgetPlanSearchFilter';
 import BudgetPlanTable from './BudgetPlanTable';
+import BudgetPlanGridView from './BudgetPlanGridView';
 import AddBudgetPlanModal from './AddBudgetPlanModal';
 import EditBudgetPlanModal from './EditBudgetPlanModal';
 import DeleteBudgetPlanModal from './DeleteBudgetPlanModal';
@@ -27,6 +28,8 @@ const BudgetPlanSection = () => {
   // Initialize state with empty array first
   const [budgetPlans, setBudgetPlans] = useState<BudgetPlan[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<BudgetPlan | null>(null);
   const [deletingPlan, setDeletingPlan] = useState<BudgetPlan | null>(null);
@@ -124,6 +127,8 @@ const BudgetPlanSection = () => {
     plan.costCenter.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredPlans.length / 10);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -137,14 +142,33 @@ const BudgetPlanSection = () => {
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         onAddClick={() => setIsAddModalOpen(true)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
 
-      <BudgetPlanTable
-        budgetPlans={filteredPlans}
-        onEdit={setEditingPlan}
-        onDelete={setDeletingPlan}
-        onManageExpenses={handleManageExpenses}
-      />
+      {viewMode === 'list' ? (
+        <BudgetPlanTable
+          budgetPlans={filteredPlans}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredPlans.length}
+          onPageChange={setCurrentPage}
+          onEdit={setEditingPlan}
+          onDelete={setDeletingPlan}
+          onManageExpenses={handleManageExpenses}
+        />
+      ) : (
+        <BudgetPlanGridView
+          budgetPlans={filteredPlans}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredPlans.length}
+          onPageChange={setCurrentPage}
+          onEdit={setEditingPlan}
+          onDelete={setDeletingPlan}
+          onManageExpenses={handleManageExpenses}
+        />
+      )}
 
       <AddBudgetPlanModal
         isOpen={isAddModalOpen}

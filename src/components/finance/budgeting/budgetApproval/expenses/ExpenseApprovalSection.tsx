@@ -4,6 +4,7 @@ import { showToast } from '../../../../../layout/layout';
 import ExpenseApprovalHeader from './ExpenseApprovalHeader';
 import ExpenseApprovalSearchFilter from './ExpenseApprovalSearchFilter';
 import ExpenseApprovalTable from './ExpenseApprovalTable';
+import ViewExpenseDetailModal from '../../budgetPlan/expenses/ViewExpenseDetailModal';
 
 export interface BudgetExpenseWithApproval {
   id: string;
@@ -27,7 +28,9 @@ interface ExpenseApprovalSectionProps {
 
 export default function ExpenseApprovalSection({ budgetPlanId }: ExpenseApprovalSectionProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [expenses, setExpenses] = useState<BudgetExpenseWithApproval[]>([]);
+  const [viewingExpense, setViewingExpense] = useState<BudgetExpenseWithApproval | null>(null);
 
   useEffect(() => {
     loadExpenses();
@@ -245,6 +248,7 @@ export default function ExpenseApprovalSection({ budgetPlanId }: ExpenseApproval
   const approvedTotal = expenses
     .filter(e => e.status === 'Approved')
     .reduce((sum, exp) => sum + exp.requestedAmount, 0);
+  const totalPages = Math.ceil(filteredExpenses.length / 10);
 
   return (
     <motion.section
@@ -254,22 +258,32 @@ export default function ExpenseApprovalSection({ budgetPlanId }: ExpenseApproval
       className="bg-gray-50 space-y-6 min-h-screen"
     >
       <ExpenseApprovalHeader 
-        budgetPlanId={budgetPlanId} 
-        totalRequested={totalRequested}
-        approvedTotal={approvedTotal}
-        expenseCount={expenses.length}
+        budgetPlanId={budgetPlanId}
       />
 
       <ExpenseApprovalSearchFilter
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        totalRequested={totalRequested}
+        approvedTotal={approvedTotal}
       />
 
       <ExpenseApprovalTable
         expenses={filteredExpenses}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredExpenses.length}
+        onPageChange={setCurrentPage}
         onApprove={handleApprove}
         onReject={handleReject}
         onReturn={handleReturn}
+        onViewDetails={setViewingExpense}
+      />
+
+      <ViewExpenseDetailModal
+        isOpen={!!viewingExpense}
+        onClose={() => setViewingExpense(null)}
+        expense={viewingExpense}
       />
     </motion.section>
   );

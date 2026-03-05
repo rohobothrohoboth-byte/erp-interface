@@ -28,6 +28,7 @@ interface AdditionalBudgetRequest {
 export default function BudgetReviewSection() {
   const [requests, setRequests] = useState<AdditionalBudgetRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     loadRequests();
@@ -38,9 +39,8 @@ export default function BudgetReviewSection() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        // Only show requests with "Pending Review" status
-        const pendingReview = parsed.filter((r: AdditionalBudgetRequest) => r.status === 'Pending Review');
-        setRequests(pendingReview);
+        // Show all requests, not just "Pending Review"
+        setRequests(parsed);
       } catch (e) {
         console.error('Error parsing additional budget requests:', e);
       }
@@ -49,45 +49,37 @@ export default function BudgetReviewSection() {
 
   const saveRequests = (updatedRequests: AdditionalBudgetRequest[]) => {
     localStorage.setItem('additionalBudgetRequests', JSON.stringify(updatedRequests));
-    loadRequests(); // Reload to filter only "Pending Review"
+    setRequests(updatedRequests); // Update state directly instead of reloading
   };
 
   const handleAccept = (request: AdditionalBudgetRequest) => {
-    const stored = localStorage.getItem('additionalBudgetRequests');
-    if (stored) {
-      const allRequests = JSON.parse(stored);
-      const updatedRequests = allRequests.map((r: AdditionalBudgetRequest) =>
-        r.id === request.id
-          ? {
-              ...r,
-              status: 'Pending' as const,
-              updatedAt: new Date().toISOString(),
-              updatedBy: 'Current User'
-            }
-          : r
-      );
-      saveRequests(updatedRequests);
-      showToast.success('Request accepted and sent for approval');
-    }
+    const updatedRequests = requests.map((r: AdditionalBudgetRequest) =>
+      r.id === request.id
+        ? {
+            ...r,
+            status: 'Pending' as const,
+            updatedAt: new Date().toISOString(),
+            updatedBy: 'Current User'
+          }
+        : r
+    );
+    saveRequests(updatedRequests);
+    showToast.success('Request accepted and sent for approval');
   };
 
   const handleCancel = (request: AdditionalBudgetRequest) => {
-    const stored = localStorage.getItem('additionalBudgetRequests');
-    if (stored) {
-      const allRequests = JSON.parse(stored);
-      const updatedRequests = allRequests.map((r: AdditionalBudgetRequest) =>
-        r.id === request.id
-          ? {
-              ...r,
-              status: 'Cancelled' as const,
-              updatedAt: new Date().toISOString(),
-              updatedBy: 'Current User'
-            }
-          : r
-      );
-      saveRequests(updatedRequests);
-      showToast.success('Request cancelled');
-    }
+    const updatedRequests = requests.map((r: AdditionalBudgetRequest) =>
+      r.id === request.id
+        ? {
+            ...r,
+            status: 'Cancelled' as const,
+            updatedAt: new Date().toISOString(),
+            updatedBy: 'Current User'
+          }
+        : r
+    );
+    saveRequests(updatedRequests);
+    showToast.success('Request cancelled');
   };
 
   const filteredRequests = requests.filter(r =>
@@ -96,6 +88,8 @@ export default function BudgetReviewSection() {
     (r.budgetCode?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
     r.account.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const totalPages = Math.ceil(filteredRequests.length / 10);
 
   return (
     <motion.div
@@ -113,6 +107,10 @@ export default function BudgetReviewSection() {
 
       <BudgetReviewTable
         requests={filteredRequests}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredRequests.length}
+        onPageChange={setCurrentPage}
         onAccept={handleAccept}
         onCancel={handleCancel}
       />

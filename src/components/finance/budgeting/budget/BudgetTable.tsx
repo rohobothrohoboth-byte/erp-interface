@@ -1,7 +1,15 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, DollarSign, Eye, Edit, Trash2, MoreVertical } from 'lucide-react';
-import { Button } from '../../../ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '../../../ui/popover';
+import {
+  ChevronLeft,
+  ChevronRight,
+  DollarSign,
+  MoreVertical,
+  Eye,
+  Trash2,
+  PenBox,
+} from 'lucide-react';
+import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/popover';
 import type { Budget } from './types';
 
 interface BudgetTableProps {
@@ -25,6 +33,8 @@ export default function BudgetTable({
   onEdit,
   onDelete
 }: BudgetTableProps) {
+  const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 2,
@@ -62,37 +72,54 @@ export default function BudgetTable({
   const paginatedBudgets = sortedBudgets.slice(startIndex, endIndex);
 
   return (
-    <div className="space-y-4">
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm"
-      >
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: { y: 20, opacity: 0 },
+        visible: {
+          y: 0, 
+          opacity: 1,
+          transition: {
+            type: 'spring',
+            stiffness: 100,
+            damping: 15,
+            duration: 0.5
+          }
+        }
+      }}
+      className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm overflow-hidden"
+    >
+      <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-white">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Budget Name
+            <motion.tr 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Budget
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                 Fiscal Year
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                 Cost Center
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                 Total Amount
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                 Status
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                 Created
               </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
-            </tr>
+            </motion.tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {paginatedBudgets.length === 0 ? (
@@ -102,132 +129,169 @@ export default function BudgetTable({
                 </td>
               </tr>
             ) : (
-              paginatedBudgets.map((budget) => (
-                <motion.tr
+              paginatedBudgets.map((budget, index) => (
+                <motion.tr 
                   key={budget.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="transition-colors hover:bg-gray-50"
+                  custom={index}
+                  initial="hidden"
+                  animate="visible"
+                  whileHover="hover"
+                  className="hover:bg-gray-50"
                 >
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-4 py-1 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="ml-3">
-                        <div className="font-medium text-gray-900">
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] md:max-w-none">
                           {budget.name}
                         </div>
                         {budget.description && (
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-gray-500 truncate max-w-[120px] md:max-w-none">
                             {budget.description}
                           </div>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                    {budget.fiscalYear}
+                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
+                    <span className='truncate max-w-[120px]'>
+                      {budget.fiscalYear}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                    {budget.costCenter}
+                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
+                    <span className='truncate max-w-[120px]'>
+                      {budget.costCenter}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                  <td className="px-4 py-1 whitespace-nowrap text-sm font-semibold text-gray-900 hidden md:table-cell">
                     {formatCurrency(budget.totalAmount)}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(budget.status)}`}>
+                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(budget.status)}`}>
                       {budget.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
-                    {formatDate(budget.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        onClick={() => onViewVersions(budget)}
-                        variant="outline"
-                        size="sm"
-                        className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-300"
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Versions
-                      </Button>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-gray-700 hover:text-gray-900 hover:bg-gray-50 border-gray-300"
-                          >
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-40 p-2">
-                          <div className="flex flex-col gap-1">
-                            <button
-                              onClick={() => onEdit(budget)}
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded"
-                            >
-                              <Edit className="w-4 h-4" />
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => onDelete(budget)}
-                              className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              Delete
-                            </button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
+                    <div className="flex items-center">
+                      <span>{formatDate(budget.createdAt)}</span>
                     </div>
+                  </td>
+                  <td className="px-4 py-1 whitespace-nowrap text-right text-sm font-medium">
+                    <Popover open={popoverOpen === budget.id} onOpenChange={(open) => setPopoverOpen(open ? budget.id : null)}>
+                      <PopoverTrigger asChild>
+                        <motion.button 
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100"
+                        >
+                          <MoreVertical className="h-5 w-5" />
+                        </motion.button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-48 p-0" align="end">
+                        <div className="py-1">
+                          <button 
+                            onClick={() => {
+                              onViewVersions(budget);
+                              setPopoverOpen(null);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
+                          >
+                            <Eye size={16} />
+                            View Versions
+                          </button>
+
+                          <button 
+                            onClick={() => {
+                              onEdit(budget);
+                              setPopoverOpen(null);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
+                          >
+                            <PenBox size={16} />
+                            Edit
+                          </button>
+
+                          <button 
+                            onClick={() => {
+                              onDelete(budget);
+                              setPopoverOpen(null);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
+                          >
+                            <Trash2 size={16} />
+                            Delete
+                          </button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </td>
                 </motion.tr>
               ))
             )}
           </tbody>
         </table>
-      </motion.div>
+      </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 bg-white border border-gray-200 rounded-lg">
-          <div className="text-sm text-gray-700">
-            Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} results
+      <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
+        <div className="flex-1 flex justify-between sm:hidden">
+          <button
+            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Next
+          </button>
+        </div>
+        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm text-gray-700">
+              Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
+              <span className="font-medium">{Math.min(endIndex, totalItems)}</span> of{' '}
+              <span className="font-medium">{totalItems}</span> budgets
+            </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-1">
+          <div>
+            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              <button
+                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              >
+                <span className="sr-only">Previous</span>
+                <ChevronLeft size={16} />
+              </button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
                   onClick={() => onPageChange(page)}
-                  className={`px-3 py-1 rounded-lg ${
+                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                     currentPage === page
-                      ? 'bg-indigo-600 text-white'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
+                      : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                   }`}
                 >
                   {page}
                 </button>
               ))}
-            </div>
-            <button
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+              <button
+                onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              >
+                <span className="sr-only">Next</span>
+                <ChevronRight size={16} />
+              </button>
+            </nav>
           </div>
         </div>
-      )}
-    </div>
+      </div>
+    </motion.div>
   );
 }
