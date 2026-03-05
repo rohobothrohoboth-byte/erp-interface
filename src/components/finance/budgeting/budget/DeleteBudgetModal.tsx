@@ -23,49 +23,41 @@ const DeleteBudgetModal: React.FC<DeleteBudgetModalProps> = ({
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-md w-full"
+        className="bg-white rounded-xl shadow-xl max-w-4xl w-1/3 max-h-[90vh] overflow-y-auto"
       >
-        {/* Header */}
-        <div className="flex justify-between items-center border-b border-red-200 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            <h2 className="text-lg font-bold text-red-900">Delete Budget</h2>
+        <div className="p-6">
+          <div className="py-4 text-center">
+            <div className="flex items-center justify-center p-3 rounded-full gap-2 text-red-600 mx-auto">
+              <AlertTriangle size={50} />
+            </div>
+
+            <p className="text-lg font-medium text-red-600 mt-4">
+              Are you sure you want to delete this budget plan?
+            </p>
+            <p className="text-sm text-gray-600 mt-2 font-semibold">
+              "{budgetName}"
+            </p>
+            <p className="text-sm text-red-600 mt-2">
+              This action cannot be undone.
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-red-500 hover:text-red-700 p-2 rounded-full hover:bg-red-50 transition-colors duration-200"
-            type="button"
-          >
-            <X size={20} />
-          </button>
         </div>
 
-        {/* Body */}
-        <div className="px-6 py-4">
-          <p className="text-gray-700">
-            Are you sure you want to delete the budget <span className="font-semibold text-red-600">"{budgetName}"</span>?
-          </p>
-          <p className="text-sm text-gray-500 mt-2">
-            This action cannot be undone. All associated versions will remain but will no longer be linked to this budget.
-          </p>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t border-red-200 px-6 py-4 rounded-b-xl bg-gray-50">
-          <div className="flex justify-end items-center gap-2">
+        <div className="border-t px-6 py-2">
+          <div className="mx-auto flex justify-center items-center gap-1.5">
             <Button
-              variant="outline"
-              className="cursor-pointer px-6 border-gray-300 text-gray-700 hover:bg-gray-100"
-              onClick={onClose}
-              type="button"
+              variant="destructive"
+              onClick={onDelete}
+              className="cursor-pointer px-6"
             >
-              Cancel
+              Yes, Delete!
             </Button>
             <Button
-              onClick={onDelete}
-              className="bg-red-600 hover:bg-red-700 text-white cursor-pointer px-6"
+              onClick={onClose}
+              variant="outline"
+              className="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 transition-colors duration-200 font-medium"
             >
-              Delete Budget
+              No, Keep It.
             </Button>
           </div>
         </div>

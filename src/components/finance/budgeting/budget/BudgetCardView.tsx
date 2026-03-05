@@ -78,66 +78,88 @@ const BudgetCardView: React.FC<BudgetCardViewProps> = ({
               visible: { opacity: 1, y: 0 },
             }}
           >
-            <Card className="relative rounded-xl border border-gray-200 shadow-sm p-3 transition hover:shadow-md">
-              {/* Header with title and actions */}
-              <div className="flex items-start justify-between gap-2 ">
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-sm font-semibold text-black truncate">{budget.name}</h4>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-600">{budget.fiscalYear}</span>
-                    <span className="text-xs text-gray-400">•</span>
-                    <span className="text-xs text-gray-500 truncate">{budget.costCenter}</span>
+            <Card className="group relative rounded-2xl border border-gray-100 bg-white p-5 transition-all hover:shadow-lg hover:border-indigo-200">
+              {/* Top */}
+              <div className="flex items-start justify-between border-b pb-3">
+                <div className="space-y-1">
+                  <h4 className="text-[15px] font-semibold text-gray-900 truncate">
+                    {budget.name}
+                  </h4>
+
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="bg-gray-100 px-2  rounded-md">
+                      {budget.fiscalYear}
+                    </span>
+
+                    <span className="truncate">{budget.costCenter}</span>
                   </div>
                 </div>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 flex-shrink-0">
-                      <MoreVertical className="w-4 h-4 text-gray-500" />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-full opacity-60 hover:opacity-100"
+                    >
+                      <MoreVertical className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onViewVersions(budget)}
-                      className='flex items-center gap-2'>
+
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuItem
+                      onClick={() => onViewVersions(budget)}
+                      className="gap-2"
+                    >
                       <Eye size={16} />
                       View Versions
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEdit(budget)}
-                      className='flex items-center gap-2'>
+
+                    <DropdownMenuItem
+                      onClick={() => onEdit(budget)}
+                      className="gap-2"
+                    >
                       <PenBox size={16} />
                       Edit
                     </DropdownMenuItem>
+
                     <DropdownMenuItem
                       onClick={() => onDelete(budget)}
-                      className="flex items-center gap-2 text-red-600 data-[highlighted]:!bg-red-50 data-[highlighted]:text-red-700"
+                      className="gap-2 text-red-600"
                     >
-                      <Trash2 size={16} className="text-red-600" />
-                      <p className="text-red-600">Delete</p>
+                      <Trash2 size={16} />
+                      Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
 
-              {/* Amount and Status in a compact row */}
-              <div className="flex items-center justify-between py-2 border-t border-gray-100">
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-500">Amount</span>
-                  <span className="text-sm font-semibold text-gray-900">
+              {/* Amount + Status */}
+              <div className="flex items-end justify-between ">
+                <div>
+                  <p className="text-xs text-gray-500">Total Budget</p>
+
+                  <p className="text-xl font-semibold tracking-tight text-gray-900">
                     {formatCurrency(budget.totalAmount)}
-                  </span>
+                  </p>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(budget.status)}`}>
+
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                    budget.status,
+                  )}`}
+                >
                   {budget.status}
                 </span>
               </div>
 
-              {/* Action button */}
-              <div className="mt-2 pt-2 border-t border-gray-100">
+              {/* Action */}
+              <div className="flex justify-between items-center">
                 <Button
-                  className="w-full text-indigo-600 bg-indigo-50 hover:bg-indigo-100 cursor-pointer h-8"
+                  className="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 cursor-pointer"
                   size="sm"
                   onClick={() => onViewVersions(budget)}
                 >
-                  <Eye className="w-3.5 h-3.5 mr-1.5" />
                   View Versions
                 </Button>
               </div>
@@ -149,7 +171,8 @@ const BudgetCardView: React.FC<BudgetCardViewProps> = ({
       {totalPages > 1 && (
         <div className="flex items-center justify-between bg-white px-4 py-3 rounded-lg border border-gray-200">
           <div className="text-sm text-gray-700">
-            Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} results
+            Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of{" "}
+            {totalItems} results
           </div>
           <div className="flex gap-2">
             <Button
@@ -162,21 +185,23 @@ const BudgetCardView: React.FC<BudgetCardViewProps> = ({
               <ChevronLeft className="w-4 h-4" />
             </Button>
             <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  variant={currentPage === page ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => onPageChange(page)}
-                  className={
-                    currentPage === page
-                      ? 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      : 'border-indigo-200 text-indigo-600 hover:bg-indigo-50'
-                  }
-                >
-                  {page}
-                </Button>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onPageChange(page)}
+                    className={
+                      currentPage === page
+                        ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                        : "border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                    }
+                  >
+                    {page}
+                  </Button>
+                ),
+              )}
             </div>
             <Button
               variant="outline"
