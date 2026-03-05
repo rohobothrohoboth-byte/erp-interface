@@ -112,7 +112,7 @@ useEffect(() => {
   }, [isAuthenticated, isLoading, navigate]);
 
   if (isLoading) {
-    return <div className="min-h-screen grid place-items-center">Checking session...</div>;
+    return 
   }
 
   if (!isAuthenticated) {

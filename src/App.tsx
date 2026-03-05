@@ -542,15 +542,11 @@ function App() {
             {/* Standalone Vacancies Routes */}
             <Route
               path="/vacancies"
-              element={
-                isAuthenticated ? <VacanciesPage /> : <Navigate to="/login" />
-              }
+              element={ <VacanciesPage /> }
             />
             <Route
               path="/vacancies/:id"
-              element={
-                isAuthenticated ? <VacanciesPage /> : <Navigate to="/login" />
-              }
+              element={ <VacanciesPage /> }
             />
 
             {/* 404 Page */}

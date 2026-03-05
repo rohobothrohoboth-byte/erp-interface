@@ -20,11 +20,7 @@ const SignInPage: React.FC = () => {
 
   // Safety guard: never show form if authenticated
   if (isLoading) {
-    return (
-      <div className="bg-muted flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
-        <div>Checking session...</div>
-      </div>
-    );
+    return 
   }
 
   if (isAuthenticated) {

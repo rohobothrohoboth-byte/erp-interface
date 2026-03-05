@@ -228,7 +228,16 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                               className="h-10 w-10 rounded-full object-cover"
                             />
                           ) : (
-                            <User className="text-green-600 h-5 w-5" />
+                            <div className="shrink-0 h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
+                              <span className="text-orange-600 font-medium">
+                                {employee.empFullName
+                                  ?.trim()
+                                  .split(" ")
+                                  .slice(0, 2)
+                                  .map((name) => name.charAt(0).toUpperCase())
+                                  .join("")}
+                              </span>
+                            </div>
                           )}
                         </motion.div>
                         <div className="ml-3">
@@ -328,7 +337,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                                 <Eye size={16} />
                                 View Details
                               </button>
-                              <button 
+                              <button
                                 onClick={() => handleEdit(employee)}
                                 className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
                               >
