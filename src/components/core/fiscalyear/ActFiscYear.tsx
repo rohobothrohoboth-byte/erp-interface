@@ -47,7 +47,7 @@ export default function ActiveFisc({ activeYear, loading }: ActiveFiscProps) {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg shadow-sm p-3 w-2/3"
+      className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg shadow-sm p-3 md:w-2/3 w-full"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">

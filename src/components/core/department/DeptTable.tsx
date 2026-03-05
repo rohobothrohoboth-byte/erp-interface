@@ -107,13 +107,13 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({
                 <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
                   Department
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">
                   Branch
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">
                   Amharic Name
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">
                   Status
                 </th>
                 <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -158,17 +158,17 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
+                    <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center">
                         <span>{department.branch}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">
+                    <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
                       <div className="text-sm text-gray-900">
                         {department.nameAm}
                       </div>
                     </td>
-                    <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">
+                    <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
                       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(department.deptStat)}`}>
                         {department.deptStatStr}
                       </span>
