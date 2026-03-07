@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FolderTree, FolderOpen, Network, Code, Layers } from 'lucide-react';
+import { FolderTree, FolderOpen, Network, Code, Layers, GitBranch } from 'lucide-react';
 import SettingsHeader from '../../../components/settings/SettingsHeader';
 import SettingCard from '../../../components/settings/SettingCard';
 
@@ -66,6 +66,16 @@ const financeSettingsCards = [
     color: 'from-teal-500 to-teal-600',
     bgColor: 'bg-teal-50',
     iconColor: 'text-teal-600',
+  },
+  {
+    id: 6,
+    title: 'Payment Approval Chain',
+    description: 'Configure payment approval workflows and chains for different payment types',
+    icon: GitBranch,
+    href: '/settings/finance/payment-approval-chain',
+    color: 'from-indigo-500 to-indigo-600',
+    bgColor: 'bg-indigo-50',
+    iconColor: 'text-indigo-600',
   },
 ];
 

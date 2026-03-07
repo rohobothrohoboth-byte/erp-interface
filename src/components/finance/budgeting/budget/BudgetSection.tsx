@@ -90,6 +90,11 @@ const BudgetSection = () => {
   );
 
   const totalPages = Math.ceil(filteredBudgets.length / 10);
+  const mockBudgets: Budget[] = [
+  { id: '1', name: 'Marketing Q1 Campaign', fiscalYear: 'FY2026', costCenter: 'CC-MKT-001', totalAmount: 125000, status: 'Active',createdAt:"",createdBy:"" },
+  { id: '2', name: 'Engineering Infrastructure', fiscalYear: 'FY2026', costCenter: 'CC-ENG-003', totalAmount: 340000, status: 'Active',createdAt:"",createdBy:"" },
+  { id: '3', name: 'HR Training Program', fiscalYear: 'FY2025', costCenter: 'CC-HR-010', totalAmount: 45000, status: 'Draft',createdAt:"",createdBy:"" },
+];
 
   return (
     <motion.section
@@ -121,10 +126,10 @@ const BudgetSection = () => {
         />
       ) : (
         <BudgetCardView
-          budgets={filteredBudgets}
+          budgets={mockBudgets}
           currentPage={currentPage}
           totalPages={totalPages}
-          totalItems={filteredBudgets.length}
+          totalItems={mockBudgets.length}
           onPageChange={setCurrentPage}
           onViewVersions={handleViewVersions}
           onEdit={setEditingBudget}

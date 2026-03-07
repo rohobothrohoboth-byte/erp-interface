@@ -83,6 +83,8 @@ import PageBudgetReview from "./pages/finance/budgeting/PageBudgetReview";
 import PageAdditionalBudgetApproval from "./pages/finance/budgeting/PageAdditionalBudgetApproval";
 import PageBudgetVersions from "./pages/finance/budgeting/PageBudgetVersions";
 import PageJournal from "./pages/finance/PageJournal";
+import PageInvoiceApproval from "./pages/finance/PageInvoiceApproval";
+import PageAccountsPayable from "./pages/finance/PageAccountsPayable";
 import PageReports from "./pages/finance/PageReports";
 import PageAssets from "./pages/finance/PageAssets";
 import PageTransactions from "./pages/finance/PageTransactions";
@@ -137,6 +139,7 @@ import AddAccountPage from "./pages/core/usermanagement/pageAddAccount";
 import EditAccountPage from "./pages/core/usermanagement/pageEditAccount";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PagePaymentApprovalChain from "./pages/settings/FinanceSettings/PagePaymentApprovalChain";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -153,16 +156,15 @@ function App() {
   return (
     <ModuleProvider>
       <QueryClientProvider client={queryClient}>
-          <Routes>
-            {/* Root path redirects to login */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+        <Routes>
+          {/* Root path redirects to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-            {/* Public route */}
-            <Route path="/login" element={<SignInPage />} />
+          {/* Public route */}
+          <Route path="/login" element={<SignInPage />} />
 
-           <Route element={<ProtectedRoute />}>
-           <Route element={<Layout />}>
-              
+          <Route element={<ProtectedRoute />}>
+            <Route element={<Layout />}>
               {/* START MENU ROUTES */}
               <Route path="/hr" element={<Dashboard />} />
               <Route path="/inventory" element={<InventoryDashboard />} />
@@ -387,6 +389,10 @@ function App() {
                 element={<PageBudgetCategory />}
               />
               <Route
+                path="/settings/finance/payment-approval-chain"
+                element={<PagePaymentApprovalChain />}
+              />
+              <Route
                 path="/settings/hr/benefitset"
                 element={<PageBenefitSet />}
               />
@@ -472,6 +478,14 @@ function App() {
                 element={<FinancePageAccounts />}
               />
               <Route
+                path="/finance/invoice-approval"
+                element={<PageInvoiceApproval />}
+              />
+              <Route
+                path="/finance/accounts-payable"
+                element={<PageAccountsPayable />}
+              />
+              <Route
                 path="/finance/accounts/:accountId"
                 element={<FinancePageAccountDetail />}
               />
@@ -532,34 +546,28 @@ function App() {
                 element={<PageMenuSettings />}
               />
             </Route>
-             </Route>
-            {/* END CORE ROUTES */}
-            {/*START CORE ROUTES */}
+          </Route>
+          {/* END CORE ROUTES */}
+          {/*START CORE ROUTES */}
 
-            {/* Modules route at /menu */}
-            <Route path="/modules" element={<Modules />} />
+          {/* Modules route at /menu */}
+          <Route path="/modules" element={<Modules />} />
 
-            {/* Standalone Vacancies Routes */}
-            <Route
-              path="/vacancies"
-              element={ <VacanciesPage /> }
-            />
-            <Route
-              path="/vacancies/:id"
-              element={ <VacanciesPage /> }
-            />
+          {/* Standalone Vacancies Routes */}
+          <Route path="/vacancies" element={<VacanciesPage />} />
+          <Route path="/vacancies/:id" element={<VacanciesPage />} />
 
-            {/* 404 Page */}
-            <Route path="/404" element={<NotFoundPage />} />
+          {/* 404 Page */}
+          <Route path="/404" element={<NotFoundPage />} />
 
-            {/* Catch-all route */}
-            <Route
-              path="*"
-              element={
-                <Navigate to={isAuthenticated ? "/404" : "/login"} replace />
-              }
-            />
-          </Routes>
+          {/* Catch-all route */}
+          <Route
+            path="*"
+            element={
+              <Navigate to={isAuthenticated ? "/404" : "/login"} replace />
+            }
+          />
+        </Routes>
       </QueryClientProvider>
     </ModuleProvider>
   );

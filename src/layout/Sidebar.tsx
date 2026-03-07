@@ -1416,6 +1416,33 @@ const Sidebar: React.FC = () => {
                 {...theme}
                 collapsed={collapsed}
               />
+              <NavGroup
+                icon={<DollarSign size={18} />}
+                label="Accounts Payable"
+                isOpen={openGroup === "Accounts Payable"}
+                onToggle={() => toggleGroup("Accounts Payable")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
+                collapsed={collapsed}
+              >
+                <NavItem
+                  to="/finance/invoice-approval"
+                  icon={<FileCheck size={18} />}
+                  label="Invoice Approval"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/accounts-payable"
+                  icon={<DollarSign size={18} />}
+                  label="Payment Entry"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+              </NavGroup>
               <NavItem
                 to="/finance/assets"
                 icon={<Briefcase size={18} />}
@@ -1550,6 +1577,33 @@ const Sidebar: React.FC = () => {
                 {...theme}
                 collapsed={collapsed}
               />
+              <NavGroup
+                icon={<DollarSign size={18} />}
+                label="Accounts Payable"
+                isOpen={openGroup === "Accounts Payable"}
+                onToggle={() => toggleGroup("Accounts Payable")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
+                collapsed={collapsed}
+              >
+                <NavItem
+                  to="/finance/invoice-approval"
+                  icon={<FileCheck size={18} />}
+                  label="Invoice Approval"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/accounts-payable"
+                  icon={<DollarSign size={18} />}
+                  label="Payment Entry"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+              </NavGroup>
               <NavItem
                 to="/finance/assets"
                 icon={<Briefcase size={18} />}
