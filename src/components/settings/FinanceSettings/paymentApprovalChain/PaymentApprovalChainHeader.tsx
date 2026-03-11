@@ -39,12 +39,12 @@ const PaymentApprovalChainHeader: React.FC = () => {
             <ArrowLeft className="w-4 h-4" />
             <span className="text-sm font-medium">Back</span>
           </Button>
-          <div className="h-8 w-px bg-indigo-300"></div>
+          {/* <div className="h-8 w-px bg-indigo-300"></div>
           <div>
             <h1 className="text-2xl font-bold text-black tracking-tight">
               Payment Approval Chain
             </h1>
-          </div>
+          </div> */}
         </div>
       </div>
     </motion.div>

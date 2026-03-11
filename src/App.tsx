@@ -27,6 +27,9 @@ import EmployeeDetailsPage from "./components/hr/employee/EmployeeDetailsPage";
 import BudgetList from "./pages/finance/budgetpage/BudgetList";
 import BudgetCreate from "./pages/finance/budgetpage/BudgetCreate";
 import GlPage from "./pages/finance/generalledgerpage/GlPage";
+import ChartOfAccountsPage from "./pages/finance/generalledgerpage/ChartOfAccountsPage";
+import JournalEntriesPage from "./pages/finance/generalledgerpage/JournalEntriesPage";
+import AuditTrailPage from "./pages/finance/generalledgerpage/AuditTrailPage";
 // import BranchOverview from './pages/core/branchpage/BranchOverview';
 import FiscalYearOverview from "./pages/core/pageFiscYear";
 // import HierarchyOverview from './pages/core/hierarchypage/HierarchyOverview';
@@ -85,6 +88,9 @@ import PageBudgetVersions from "./pages/finance/budgeting/PageBudgetVersions";
 import PageJournal from "./pages/finance/PageJournal";
 import PageInvoiceApproval from "./pages/finance/PageInvoiceApproval";
 import PageAccountsPayable from "./pages/finance/PageAccountsPayable";
+import PagePayments from "./pages/finance/PagePayments";
+import PageInvoicePosting from "./pages/finance/PageInvoicePosting";
+import PagePaymentReceipt from "./pages/finance/PagePaymentReceipt";
 import PageReports from "./pages/finance/PageReports";
 import PageAssets from "./pages/finance/PageAssets";
 import PageTransactions from "./pages/finance/PageTransactions";
@@ -442,6 +448,18 @@ function App() {
               {/* END HR ROUTES */}
               {/* START FINANCE ROUTES */}
               <Route path="/finance/gl" element={<GlPage />} />
+              <Route
+                path="/finance/gl/chart-of-accounts"
+                element={<ChartOfAccountsPage />}
+              />
+              <Route
+                path="/finance/gl/journal-entries"
+                element={<JournalEntriesPage />}
+              />
+              <Route
+                path="/finance/gl/audit-trail"
+                element={<AuditTrailPage />}
+              />
               <Route path="/finance/budget-list" element={<BudgetList />} />
               <Route path="/finance/budget" element={<PageBudget />} />
               <Route
@@ -484,6 +502,15 @@ function App() {
               <Route
                 path="/finance/accounts-payable"
                 element={<PageAccountsPayable />}
+              />
+              <Route path="/finance/payments" element={<PagePayments />} />
+              <Route
+                path="/finance/invoice-posting"
+                element={<PageInvoicePosting />}
+              />
+              <Route
+                path="/finance/payment-receipt"
+                element={<PagePaymentReceipt />}
               />
               <Route
                 path="/finance/accounts/:accountId"

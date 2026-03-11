@@ -1,12 +1,13 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MoreVertical, DollarSign, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MoreVertical, DollarSign, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '../../../ui/popover';
 import type { Invoice } from '../types';
 
 interface InvoiceListTableProps {
   invoices: Invoice[];
   onRecordPayment: (invoice: Invoice) => void;
-  onViewDetails: (invoice: Invoice) => void;
+  onViewDocument: (invoice: Invoice) => void;
   currentPage: number;
   totalPages: number;
   totalItems: number;
@@ -16,12 +17,13 @@ interface InvoiceListTableProps {
 export default function InvoiceListTable({
   invoices,
   onRecordPayment,
-  onViewDetails,
+  onViewDocument,
   currentPage,
   totalPages,
   totalItems,
   onPageChange
 }: InvoiceListTableProps) {
+  const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
   const ITEMS_PER_PAGE = 10;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -93,10 +95,7 @@ export default function InvoiceListTable({
                 Due Date
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total Amount
-              </th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Remaining
+                Amount
               </th>
               <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -140,17 +139,12 @@ export default function InvoiceListTable({
                   {formatDate(invoice.due_date)}
                 </td>
                 <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
-                  <div className="font-medium">
+                  <div className="font-medium text-indigo-600">
                     {formatCurrency(invoice.total_amount)}
                   </div>
                 </td>
-                <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
-                  <div className="font-semibold text-indigo-600">
-                    {formatCurrency(invoice.remaining_amount)}
-                  </div>
-                </td>
                 <td className="px-4 py-1 whitespace-nowrap text-right text-sm font-medium">
-                  <Popover>
+                  <Popover open={popoverOpen === invoice.id} onOpenChange={(open) => setPopoverOpen(open ? invoice.id : null)}>
                     <PopoverTrigger asChild>
                       <motion.button 
                         whileHover={{ scale: 1.1 }}
@@ -164,7 +158,10 @@ export default function InvoiceListTable({
                       <div className="py-1">
                         {invoice.status !== 'Paid' && (
                           <button
-                            onClick={() => onRecordPayment(invoice)}
+                            onClick={() => {
+                              onRecordPayment(invoice);
+                              setPopoverOpen(null);
+                            }}
                             className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-indigo-600 flex items-center gap-2"
                           >
                             <DollarSign size={16} />
@@ -172,11 +169,14 @@ export default function InvoiceListTable({
                           </button>
                         )}
                         <button
-                          onClick={() => onViewDetails(invoice)}
+                          onClick={() => {
+                            onViewDocument(invoice);
+                            setPopoverOpen(null);
+                          }}
                           className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
                         >
-                          <Eye size={16} />
-                          View Details
+                          <FileText size={16} />
+                          View Invoice Doc
                         </button>
                       </div>
                     </PopoverContent>

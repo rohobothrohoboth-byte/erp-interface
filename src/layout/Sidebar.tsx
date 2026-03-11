@@ -42,6 +42,9 @@ import {
   Mail,
   MessageSquare,
   DollarSign,
+  Wallet,
+  Layers,
+  History,
 } from "lucide-react";
 import { useModule } from "../ModuleContext";
 import {
@@ -465,9 +468,6 @@ const Sidebar: React.FC = () => {
             {...theme}
             collapsed={collapsed}
           />
-
-          {/* Module-specific navigation items... (all existing navigation code remains the same, 
-              just add collapsed={collapsed} to each NavItem and NavGroup) */}
 
           {/* HR Module */}
           {activeModule === "HR" && !collapsed && (
@@ -1383,13 +1383,41 @@ const Sidebar: React.FC = () => {
           {/* Finance Module */}
           {activeModule === "Finance" && !collapsed && (
             <>
-              <NavItem
-                to="/finance/gl"
+              <NavGroup
                 icon={<FileText size={18} />}
                 label="General Ledger"
-                {...theme}
+                isOpen={openGroup === "General Ledger"}
+                onToggle={() => toggleGroup("General Ledger")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
                 collapsed={collapsed}
-              />
+              >
+                <NavItem
+                  to="/finance/gl/chart-of-accounts"
+                  icon={<Layers size={18} />}
+                  label="Chart of Accounts"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/gl/journal-entries"
+                  icon={<FileText size={18} />}
+                  label="Journal Entries"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/gl/audit-trail"
+                  icon={<History size={18} />}
+                  label="Audit Trail"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+              </NavGroup>
               <NavGroup
                 icon={<Package size={18} />}
                 label="Account"
@@ -1427,17 +1455,44 @@ const Sidebar: React.FC = () => {
                 collapsed={collapsed}
               >
                 <NavItem
-                  to="/finance/invoice-approval"
-                  icon={<FileCheck size={18} />}
-                  label="Invoice Approval"
+                  to="/finance/accounts-payable"
+                  icon={<DollarSign size={18} />}
+                  label="Payment Entry"
                   {...theme}
                   isChild
                   collapsed={collapsed}
                 />
                 <NavItem
-                  to="/finance/accounts-payable"
-                  icon={<DollarSign size={18} />}
-                  label="Payment Entry"
+                  to="/finance/payments"
+                  icon={<FileText size={18} />}
+                  label="Payments"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+              </NavGroup>
+              <NavGroup
+                icon={<DollarSign size={18} />}
+                label="Accounts Receivable"
+                isOpen={openGroup === "Accounts Receivable"}
+                onToggle={() => toggleGroup("Accounts Receivable")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
+                collapsed={collapsed}
+              >
+                <NavItem
+                  to="/finance/invoice-posting"
+                  icon={<FileCheck size={18} />}
+                  label="Invoice Posting"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/payment-receipt"
+                  icon={<Wallet size={18} />}
+                  label="Payment Receipt"
                   {...theme}
                   isChild
                   collapsed={collapsed}
@@ -1536,13 +1591,41 @@ const Sidebar: React.FC = () => {
 
           {activeModule === "Finance" && collapsed && (
             <>
-              <NavItem
-                to="/finance/gl"
+              <NavGroup
                 icon={<FileText size={18} />}
                 label="General Ledger"
-                {...theme}
+                isOpen={openGroup === "General Ledger"}
+                onToggle={() => toggleGroup("General Ledger")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
                 collapsed={collapsed}
-              />
+              >
+                <NavItem
+                  to="/finance/gl/chart-of-accounts"
+                  icon={<Layers size={18} />}
+                  label="Chart of Accounts"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/gl/journal-entries"
+                  icon={<FileText size={18} />}
+                  label="Journal Entries"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/gl/audit-trail"
+                  icon={<History size={18} />}
+                  label="Audit Trail"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+              </NavGroup>
               <NavGroup
                 icon={<Package size={18} />}
                 label="Account"
@@ -1588,17 +1671,44 @@ const Sidebar: React.FC = () => {
                 collapsed={collapsed}
               >
                 <NavItem
-                  to="/finance/invoice-approval"
-                  icon={<FileCheck size={18} />}
-                  label="Invoice Approval"
+                  to="/finance/accounts-payable"
+                  icon={<DollarSign size={18} />}
+                  label="Payment Entry"
                   {...theme}
                   isChild
                   collapsed={false}
                 />
                 <NavItem
-                  to="/finance/accounts-payable"
-                  icon={<DollarSign size={18} />}
-                  label="Payment Entry"
+                  to="/finance/payments"
+                  icon={<FileText size={18} />}
+                  label="Payments"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+              </NavGroup>
+              <NavGroup
+                icon={<DollarSign size={18} />}
+                label="Accounts Receivable"
+                isOpen={openGroup === "Accounts Receivable"}
+                onToggle={() => toggleGroup("Accounts Receivable")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
+                collapsed={collapsed}
+              >
+                <NavItem
+                  to="/finance/invoice-posting"
+                  icon={<FileCheck size={18} />}
+                  label="Invoice Posting"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/payment-receipt"
+                  icon={<Wallet size={18} />}
+                  label="Payment Receipt"
                   {...theme}
                   isChild
                   collapsed={false}

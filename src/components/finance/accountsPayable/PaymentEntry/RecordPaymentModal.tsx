@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Input } from '../../../ui/input';
 import { Label } from '../../../ui/label';
@@ -34,6 +34,13 @@ const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Bank_Transfer' | 'Check' | 'Telebirr'>('Bank_Transfer');
   const [bankAccount, setBankAccount] = useState('');
   const [amountPaid, setAmountPaid] = useState('');
+
+  // Set the amount to the total invoice amount when invoice changes
+  useEffect(() => {
+    if (invoice) {
+      setAmountPaid(invoice.total_amount.toString());
+    }
+  }, [invoice]);
   const [attachmentUrl, setAttachmentUrl] = useState('');
 
   const bankAccounts = [
@@ -60,8 +67,13 @@ const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
     }
 
     const amount = parseFloat(amountPaid);
-    if (amount <= 0 || amount > invoice.remaining_amount) {
-      alert(`Amount must be between 0 and ${formatCurrency(invoice.remaining_amount)}`);
+    if (amount <= 0) {
+      alert('Amount must be greater than 0');
+      return;
+    }
+
+    if (amount !== invoice.total_amount) {
+      alert(`Payment amount must exactly match the invoice amount: ${formatCurrency(invoice.total_amount)}`);
       return;
     }
 
@@ -99,27 +111,25 @@ const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
         className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
-        <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-gray-800">
-              Record Payment - {invoice.invoice_no}
-            </h2>
-          </div>
-          <button
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-            type="button"
-          >
-            <X size={24} />
-          </button>
+        <div className="flex justify-between items-center border-b px-6 py-4 sticky top-0 bg-white z-10">
+            <div>
+              <h2 className="text-lg font-bold text-gray-800">
+                Record Payment - {invoice.invoice_no}
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Vendor: {invoice.vendor_name} | 
+                Amount: <span className="font-medium text-indigo-600">
+                  {formatCurrency(invoice.total_amount)}
+                </span>
+              </p>
+            </div>
         </div>
 
         {/* Body */}
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-4 space-y-4">
-
             {/* Payment Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
               <div className="space-y-2">
                 <Label htmlFor="bankRef" className="text-sm text-gray-500">
                   Bank Reference Number <span className="text-red-500">*</span>
@@ -185,22 +195,20 @@ const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="amount" className="text-sm text-gray-500">
-                  Amount to Pay <span className="text-red-500">*</span>
+                  Amount to Pay (Must match invoice amount) <span className="text-red-500">*</span>
                 </Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  max={invoice.remaining_amount}
-                  value={amountPaid}
-                  onChange={(e) => setAmountPaid(e.target.value)}
-                  placeholder="0.00"
-                  className="border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
-                  required
-                />
-                <p className="text-xs text-gray-500">
-                  Maximum: {formatCurrency(invoice.remaining_amount)}
-                </p>
+                <div className="space-y-1">
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={amountPaid}
+                    onChange={(e) => setAmountPaid(e.target.value)}
+                    placeholder="0.00"
+                    className="border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                    required
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -224,7 +232,7 @@ const RecordPaymentModal: React.FC<RecordPaymentModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="border-t px-6 py-2">
+          <div className="border-t px-6 py-4">
             <div className="mx-auto flex justify-center items-center gap-1.5">
               <Button
                 type="submit"

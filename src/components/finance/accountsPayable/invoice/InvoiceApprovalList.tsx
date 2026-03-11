@@ -5,7 +5,6 @@ import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Avatar, AvatarFallback } from '../../../ui/avatar';
 import type { Invoice } from '../types';
-import ViewInvoiceModal from '../payment/ViewInvoiceModal';
 import ApproveRejectModal from './ApproveRejectModal';
 
 interface InvoiceApprovalListProps {
@@ -249,14 +248,14 @@ const InvoiceApprovalList: React.FC<InvoiceApprovalListProps> = ({
       {/* Modals */}
       {selectedInvoice && (
         <>
-          <ViewInvoiceModal
+          {/* <ViewInvoiceModal
             isOpen={viewModalOpen}
             onClose={() => {
               setViewModalOpen(false);
               setSelectedInvoice(null);
             }}
             invoice={selectedInvoice}
-          />
+          /> */}
           <ApproveRejectModal
             isOpen={approveRejectModalOpen}
             onClose={() => {

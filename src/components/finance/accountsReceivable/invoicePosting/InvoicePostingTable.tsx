@@ -1,36 +1,32 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MoreVertical, PenBox, Trash2, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
-import type { PaymentEntry } from './types';
+import { MoreVertical, CheckCircle, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../../../ui/popover';
+import { Badge } from '../../../ui/badge';
+import type { SalesInvoice } from '../types';
 
-
-interface PaymentEntryTableProps {
-  payments: PaymentEntry[];
-  onEdit: (payment: PaymentEntry) => void;
-  onDelete: (payment: PaymentEntry) => void;
-  onViewInvoiceDoc: (invoiceId: string, invoiceNo: string) => void;
+interface InvoicePostingTableProps {
+  invoices: SalesInvoice[];
+  onPostInvoice: (invoice: SalesInvoice) => void;
+  onViewDetails: (invoice: SalesInvoice) => void;
   currentPage: number;
   totalPages: number;
   totalItems: number;
   onPageChange: (page: number) => void;
 }
 
-export default function PaymentEntryTable({
-  payments,
-  onEdit,
-  onDelete,
-  onViewInvoiceDoc,
+export default function InvoicePostingTable({
+  invoices,
+  onPostInvoice,
+  onViewDetails,
   currentPage,
   totalPages,
   totalItems,
   onPageChange
-}: PaymentEntryTableProps) {
-  const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
+}: InvoicePostingTableProps) {
   const ITEMS_PER_PAGE = 10;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedPayments = payments.slice(startIndex, endIndex);
+  const paginatedInvoices = invoices.slice(startIndex, endIndex);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -47,32 +43,14 @@ export default function PaymentEntryTable({
     });
   };
 
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'Draft':
-        return 'bg-yellow-100 text-yellow-800 border border-yellow-200';
-      case 'Posted':
-        return 'bg-green-100 text-green-800 border border-green-200';
-      case 'Cancelled':
-        return 'bg-red-100 text-red-800 border border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border border-gray-200';
-    }
-  };
-
-  const getPaymentMethodBadge = (method: string): string => {
-    switch (method) {
-      case 'Cash':
-        return 'bg-blue-100 text-blue-800';
-      case 'Bank_Transfer':
-        return 'bg-purple-100 text-purple-800';
-      case 'Check':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'Telebirr':
-        return 'bg-orange-100 text-orange-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const getStatusBadge = (status: string) => {
+    const colors: Record<string, string> = {
+      Draft: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      Posted: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      Partially_Paid: 'bg-blue-100 text-blue-800 border-blue-200',
+      Paid: 'bg-green-100 text-green-800 border-green-200'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
   const rowVariants = {
@@ -87,7 +65,7 @@ export default function PaymentEntryTable({
     })
   };
 
-  if (payments.length === 0) {
+  if (invoices.length === 0) {
     return (
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
@@ -96,7 +74,7 @@ export default function PaymentEntryTable({
         className="rounded-xl shadow-sm overflow-hidden bg-white"
       >
         <div className="px-6 py-8 text-center text-sm text-gray-500">
-          No payment entries found
+          No invoices found
         </div>
       </motion.div>
     );
@@ -114,22 +92,19 @@ export default function PaymentEntryTable({
           <thead className="bg-white">
             <tr>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                PV Number
+                Invoice Number
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Vendor
+                Customer
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Bank Reference
+                Invoice Date
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Payment Method
+                Due Date
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Amount
-              </th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Payment Date
               </th>
               <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -140,9 +115,9 @@ export default function PaymentEntryTable({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {paginatedPayments.map((payment, index) => (
+            {paginatedInvoices.map((invoice, index) => (
               <motion.tr
-                key={payment.id}
+                key={invoice.id}
                 custom={index}
                 initial="hidden"
                 animate="visible"
@@ -153,45 +128,40 @@ export default function PaymentEntryTable({
                   <div className="flex items-center">
                     <motion.div 
                       whileHover={{ rotate: 10 }}
-                      className="flex-shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center"
+                      className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center"
                     >
-                      <span className="text-emerald-600 font-medium text-xs">
-                        {payment.internal_pv_no.split('-').pop()}
+                      <span className="text-indigo-600 font-medium text-xs">
+                        {invoice.invoice_no.split('-').pop()}
                       </span>
                     </motion.div>
                     <div className="ml-3">
                       <div className="text-sm font-medium text-gray-900">
-                        {payment.internal_pv_no}
+                        {invoice.invoice_no}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-4 py-1 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{payment.vendor_name}</div>
-                </td>
-                <td className="px-4 py-1 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{payment.external_bank_ref}</div>
-                </td>
-                <td className="px-4 py-1 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPaymentMethodBadge(payment.payment_method)}`}>
-                    {payment.payment_method.replace('_', ' ')}
-                  </span>
+                  <div className="text-sm text-gray-900">{invoice.customer_name}</div>
                 </td>
                 <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
-                  <div className="font-medium">
-                    {formatCurrency(payment.total_amount)}
+                  {formatDate(invoice.invoice_date)}
+                </td>
+                <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
+                  {formatDate(invoice.due_date)}
+                </td>
+                <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
+                  <div className="font-semibold text-indigo-600">
+                    {formatCurrency(invoice.total_amount)}
                   </div>
                 </td>
-                <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
-                  {formatDate(payment.payment_date)}
-                </td>
-                <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(payment.status)}`}>
-                    {payment.status}
-                  </span>
+                <td className="px-4 py-1 whitespace-nowrap">
+                  <Badge variant="outline" className={`text-xs ${getStatusBadge(invoice.status)}`}>
+                    {invoice.status.replace('_', ' ')}
+                  </Badge>
                 </td>
                 <td className="px-4 py-1 whitespace-nowrap text-right text-sm font-medium">
-                  <Popover open={popoverOpen === payment.id} onOpenChange={(open) => setPopoverOpen(open ? payment.id : null)}>
+                  <Popover>
                     <PopoverTrigger asChild>
                       <motion.button 
                         whileHover={{ scale: 1.1 }}
@@ -203,42 +173,22 @@ export default function PaymentEntryTable({
                     </PopoverTrigger>
                     <PopoverContent className="w-48 p-0" align="end">
                       <div className="py-1">
-                        {payment.invoices_paid.length > 0 && (
+                        {invoice.status === 'Draft' && (
                           <button
-                            onClick={() => {
-                              onViewInvoiceDoc(payment.invoices_paid[0].invoice_id, payment.invoices_paid[0].invoice_no);
-                              setPopoverOpen(null);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
+                            onClick={() => onPostInvoice(invoice)}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-indigo-600 flex items-center gap-2"
                           >
-                            <FileText size={16} />
-                            View Invoice Doc
+                            <CheckCircle size={16} />
+                            Post Invoice
                           </button>
                         )}
-                        {payment.status === 'Draft' && (
-                          <>
-                            <button
-                              onClick={() => {
-                                onEdit(payment);
-                                setPopoverOpen(null);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-indigo-600 flex items-center gap-2"
-                            >
-                              <PenBox size={16} />
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                onDelete(payment);
-                                setPopoverOpen(null);
-                              }}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
-                            >
-                              <Trash2 size={16} />
-                              Delete
-                            </button>
-                          </>
-                        )}
+                        <button
+                          onClick={() => onViewDetails(invoice)}
+                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
+                        >
+                          <Eye size={16} />
+                          View Details
+                        </button>
                       </div>
                     </PopoverContent>
                   </Popover>
@@ -272,7 +222,7 @@ export default function PaymentEntryTable({
             <p className="text-sm text-gray-700">
               Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
               <span className="font-medium">{Math.min(endIndex, totalItems)}</span> of{' '}
-              <span className="font-medium">{totalItems}</span> payments
+              <span className="font-medium">{totalItems}</span> invoices
             </p>
           </div>
           <div>
@@ -291,7 +241,7 @@ export default function PaymentEntryTable({
                   onClick={() => onPageChange(page)}
                   className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
                     currentPage === page
-                      ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600'
+                      ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
                       : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                   }`}
                 >

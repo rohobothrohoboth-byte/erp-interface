@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { showToast } from '../../../layout/layout';
-import PaymentEntryHeader from './payment/PaymentEntryHeader';
-import PaymentEntrySearchFilter from './payment/PaymentEntrySearchFilter';
+import PaymentEntryHeader from './PaymentEntry/PaymentEntryHeader';
+import PaymentEntrySearchFilter from './PaymentEntry/PaymentEntrySearchFilter';
 import PaymentEntryTable from './PaymentEntryTable';
 import AddPaymentModal from './AddPaymentModal';
 import EditPaymentModal from './EditPaymentModal';
-import ViewPaymentModal from './ViewPaymentModal';
 import DeletePaymentModal from './DeletePaymentModal';
-import type { PaymentEntry } from './types';
+import ViewInvoiceDocModal from './PaymentEntry/ViewInvoiceDocModal';
+import type { PaymentEntry, Invoice } from './types';
 
 export default function PaymentEntrySection() {
   const [payments, setPayments] = useState<PaymentEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [viewingPayment, setViewingPayment] = useState<PaymentEntry | null>(null);
   const [editingPayment, setEditingPayment] = useState<PaymentEntry | null>(null);
   const [deletingPayment, setDeletingPayment] = useState<PaymentEntry | null>(null);
+  const [viewingDocInvoice, setViewingDocInvoice] = useState<{ invoiceNo: string; documentUrl?: string } | null>(null);
 
   useEffect(() => {
     loadPayments();
@@ -203,6 +203,31 @@ export default function PaymentEntrySection() {
     }
   };
 
+  const handleViewInvoiceDoc = (invoiceId: string, invoiceNo: string) => {
+    // Find the invoice from procurement_invoices
+    const storedInvoices = localStorage.getItem('procurement_invoices');
+    if (storedInvoices) {
+      const allInvoices: Invoice[] = JSON.parse(storedInvoices);
+      const invoice = allInvoices.find(inv => inv.id === invoiceId);
+      if (invoice && invoice.invoice_document_url) {
+        // Open document directly in new tab
+        window.open(invoice.invoice_document_url, '_blank');
+      } else {
+        // Show modal if no document
+        setViewingDocInvoice({
+          invoiceNo: invoiceNo,
+          documentUrl: undefined
+        });
+      }
+    } else {
+      // Show modal if no document
+      setViewingDocInvoice({
+        invoiceNo: invoiceNo,
+        documentUrl: undefined
+      });
+    }
+  };
+
   const filteredPayments = payments.filter(p =>
     p.internal_pv_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -232,9 +257,9 @@ export default function PaymentEntrySection() {
         totalPages={totalPages}
         totalItems={filteredPayments.length}
         onPageChange={setCurrentPage}
-        onView={setViewingPayment}
         onEdit={setEditingPayment}
         onDelete={setDeletingPayment}
+        onViewInvoiceDoc={handleViewInvoiceDoc}
       />
 
       <AddPaymentModal
@@ -250,17 +275,18 @@ export default function PaymentEntrySection() {
         payment={editingPayment}
       />
 
-      <ViewPaymentModal
-        isOpen={!!viewingPayment}
-        onClose={() => setViewingPayment(null)}
-        payment={viewingPayment}
-      />
-
       <DeletePaymentModal
         isOpen={!!deletingPayment}
         onClose={() => setDeletingPayment(null)}
         onConfirm={handleDeletePayment}
         paymentNumber={deletingPayment?.internal_pv_no || ''}
+      />
+
+      <ViewInvoiceDocModal
+        isOpen={!!viewingDocInvoice}
+        onClose={() => setViewingDocInvoice(null)}
+        invoiceNumber={viewingDocInvoice?.invoiceNo || ''}
+        documentUrl={viewingDocInvoice?.documentUrl}
       />
     </motion.div>
   );

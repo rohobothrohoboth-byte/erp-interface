@@ -5,7 +5,7 @@ import PaymentEntryHeader from './PaymentEntryHeader';
 import PaymentEntrySearchFilter from './PaymentEntrySearchFilter';
 import InvoiceListTable from './InvoiceListTable';
 import RecordPaymentModal from './RecordPaymentModal';
-import ViewInvoiceModal from './ViewInvoiceModal';
+import ViewInvoiceDocModal from './ViewInvoiceDocModal';
 import type { Invoice } from '../types';
 
 export default function AccountsPayableSection() {
@@ -13,7 +13,7 @@ export default function AccountsPayableSection() {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [recordingPaymentFor, setRecordingPaymentFor] = useState<Invoice | null>(null);
-  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
+  const [viewingDocInvoice, setViewingDocInvoice] = useState<{ invoiceNo: string; documentUrl?: string } | null>(null);
 
   useEffect(() => {
     loadInvoices();
@@ -24,16 +24,182 @@ export default function AccountsPayableSection() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        // Only show approved invoices
-        const approvedInvoices = parsed.filter((inv: Invoice) => inv.approval_status === 'Approved');
+        // Only show approved invoices that are not fully paid
+        const approvedInvoices = parsed.filter(
+          (inv: Invoice) => inv.approval_status === 'Approved' && inv.status !== 'Paid'
+        );
         setInvoices(approvedInvoices);
       } catch (e) {
         console.error('Error parsing invoices:', e);
-        setInvoices([]);
+        createSampleInvoices();
       }
     } else {
-      setInvoices([]);
+      createSampleInvoices();
     }
+  };
+
+  const createSampleInvoices = () => {
+    const sampleInvoices: Invoice[] = [
+      {
+        id: 'inv-001',
+        invoice_no: 'INV-2024-001',
+        vendor_id: 'vendor-001',
+        vendor_name: 'Office Supplies Co.',
+        invoice_date: '2024-01-15',
+        due_date: '2024-02-14',
+        total_amount: 25000,
+        paid_amount: 0,
+        remaining_amount: 25000,
+        status: 'Pending',
+        approval_status: 'Approved',
+        approval_history: [
+          {
+            step_order: 1,
+            step_name: 'Department Head Approval',
+            approver_name: 'John Smith',
+            approver_role: 'Department Head',
+            action: 'Approved',
+            comment: 'Approved for office supplies purchase',
+            action_date: '2024-01-16T10:30:00'
+          },
+          {
+            step_order: 2,
+            step_name: 'Finance Manager Approval',
+            approver_name: 'Sarah Johnson',
+            approver_role: 'Finance Manager',
+            action: 'Approved',
+            comment: 'Budget approved',
+            action_date: '2024-01-17T14:20:00'
+          }
+        ],
+        description: 'Office supplies and stationery for Q1 2024',
+        invoice_document_url: 'https://example.com/invoices/INV-2024-001.pdf',
+        created_at: '2024-01-15T09:00:00'
+      },
+      {
+        id: 'inv-002',
+        invoice_no: 'INV-2024-002',
+        vendor_id: 'vendor-002',
+        vendor_name: 'Tech Solutions Ltd.',
+        invoice_date: '2024-01-18',
+        due_date: '2024-02-17',
+        total_amount: 85000,
+        paid_amount: 0,
+        remaining_amount: 85000,
+        status: 'Pending',
+        approval_status: 'Approved',
+        approval_history: [
+          {
+            step_order: 1,
+            step_name: 'IT Manager Approval',
+            approver_name: 'Mike Davis',
+            approver_role: 'IT Manager',
+            action: 'Approved',
+            comment: 'Required for system upgrade',
+            action_date: '2024-01-19T11:15:00'
+          },
+          {
+            step_order: 2,
+            step_name: 'Finance Manager Approval',
+            approver_name: 'Sarah Johnson',
+            approver_role: 'Finance Manager',
+            action: 'Approved',
+            comment: 'Approved within IT budget',
+            action_date: '2024-01-20T16:45:00'
+          }
+        ],
+        description: 'Software licenses and hardware upgrade',
+        created_at: '2024-01-18T13:30:00'
+      },
+      {
+        id: 'inv-003',
+        invoice_no: 'INV-2024-003',
+        vendor_id: 'vendor-003',
+        vendor_name: 'Maintenance Services Inc.',
+        invoice_date: '2024-01-20',
+        due_date: '2024-02-19',
+        total_amount: 45000,
+        paid_amount: 20000,
+        remaining_amount: 25000,
+        status: 'Partially_Paid',
+        approval_status: 'Approved',
+        approval_history: [
+          {
+            step_order: 1,
+            step_name: 'Operations Manager Approval',
+            approver_name: 'Lisa Brown',
+            approver_role: 'Operations Manager',
+            action: 'Approved',
+            comment: 'Essential maintenance work',
+            action_date: '2024-01-21T09:30:00'
+          }
+        ],
+        description: 'Building maintenance and repairs',
+        invoice_document_url: 'https://example.com/invoices/INV-2024-003.pdf',
+        created_at: '2024-01-20T15:00:00'
+      },
+      {
+        id: 'inv-004',
+        invoice_no: 'INV-2024-004',
+        vendor_id: 'vendor-004',
+        vendor_name: 'Catering Services',
+        invoice_date: '2024-01-22',
+        due_date: '2024-02-21',
+        total_amount: 15000,
+        paid_amount: 0,
+        remaining_amount: 15000,
+        status: 'Pending',
+        approval_status: 'Approved',
+        approval_history: [
+          {
+            step_order: 1,
+            step_name: 'HR Manager Approval',
+            approver_name: 'David Wilson',
+            approver_role: 'HR Manager',
+            action: 'Approved',
+            comment: 'Approved for company event',
+            action_date: '2024-01-23T12:00:00'
+          }
+        ],
+        description: 'Catering for annual company meeting',
+        created_at: '2024-01-22T10:15:00'
+      },
+      {
+        id: 'inv-005',
+        invoice_no: 'INV-2024-005',
+        vendor_id: 'vendor-005',
+        vendor_name: 'Transport & Logistics',
+        invoice_date: '2024-01-25',
+        due_date: '2024-02-24',
+        total_amount: 35000,
+        paid_amount: 0,
+        remaining_amount: 35000,
+        status: 'Pending',
+        approval_status: 'Approved',
+        approval_history: [
+          {
+            step_order: 1,
+            step_name: 'Logistics Manager Approval',
+            approver_name: 'Emma Taylor',
+            approver_role: 'Logistics Manager',
+            action: 'Approved',
+            comment: 'Required for product delivery',
+            action_date: '2024-01-26T14:30:00'
+          }
+        ],
+        description: 'Transportation and delivery services',
+        invoice_document_url: 'https://example.com/invoices/INV-2024-005.pdf',
+        created_at: '2024-01-25T11:45:00'
+      }
+    ];
+
+    localStorage.setItem('procurement_invoices', JSON.stringify(sampleInvoices));
+    
+    // Only show approved invoices that are not fully paid
+    const approvedInvoices = sampleInvoices.filter(
+      (inv: Invoice) => inv.approval_status === 'Approved' && inv.status !== 'Paid'
+    );
+    setInvoices(approvedInvoices);
   };
 
   const generatePVNumber = () => {
@@ -58,6 +224,12 @@ export default function AccountsPayableSection() {
     const invoice = invoices.find(inv => inv.id === data.invoice_id);
     if (!invoice) return;
 
+    // Validate that payment amount exactly matches invoice total amount
+    if (data.amount_paid !== invoice.total_amount) {
+      showToast.error(`Payment amount must exactly match the invoice amount: ${invoice.total_amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`);
+      return;
+    }
+
     const bankAccounts = [
       { id: 'bank-1', name: 'Commercial Bank - Main Account', gl_code: '1010-001' },
       { id: 'bank-2', name: 'Awash Bank - Operations', gl_code: '1010-002' },
@@ -66,18 +238,12 @@ export default function AccountsPayableSection() {
 
     const bankAccount = bankAccounts.find(b => b.id === data.bank_account_id);
 
-    // Update invoice status
-    const newPaidAmount = invoice.paid_amount + data.amount_paid;
-    const newRemainingAmount = invoice.total_amount - newPaidAmount;
-    const newStatus = newRemainingAmount === 0 ? 'Paid' : 'Partially_Paid';
-
+    // Mark invoice as paid
     const updatedInvoices = invoices.map(inv =>
       inv.id === data.invoice_id
         ? {
             ...inv,
-            paid_amount: newPaidAmount,
-            remaining_amount: newRemainingAmount,
-            status: newStatus as 'Pending' | 'Partially_Paid' | 'Paid'
+            status: 'Paid' as 'Pending' | 'Partially_Paid' | 'Paid'
           }
         : inv
     );
@@ -90,9 +256,7 @@ export default function AccountsPayableSection() {
         inv.id === data.invoice_id
           ? {
               ...inv,
-              paid_amount: newPaidAmount,
-              remaining_amount: newRemainingAmount,
-              status: newStatus as 'Pending' | 'Partially_Paid' | 'Paid'
+              status: 'Paid' as 'Pending' | 'Partially_Paid' | 'Paid'
             }
           : inv
       );
@@ -132,6 +296,9 @@ export default function AccountsPayableSection() {
 
     showToast.success(`Payment ${pvNumber} recorded successfully and journal entry created`);
     setRecordingPaymentFor(null);
+    
+    // Reload invoices to remove fully paid ones
+    loadInvoices();
   };
 
   const createJournalEntry = (
@@ -227,6 +394,19 @@ export default function AccountsPayableSection() {
     console.log('General Ledger Updated');
   };
 
+  const handleViewDocument = (invoice: Invoice) => {
+    if (invoice.invoice_document_url) {
+      // Open document directly in new tab
+      window.open(invoice.invoice_document_url, '_blank');
+    } else {
+      // Show modal if no document
+      setViewingDocInvoice({
+        invoiceNo: invoice.invoice_no,
+        documentUrl: undefined
+      });
+    }
+  };
+
   const filteredInvoices = invoices.filter(inv =>
     inv.invoice_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
     inv.vendor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -256,7 +436,7 @@ export default function AccountsPayableSection() {
         totalItems={filteredInvoices.length}
         onPageChange={setCurrentPage}
         onRecordPayment={setRecordingPaymentFor}
-        onViewDetails={setViewingInvoice}
+        onViewDocument={handleViewDocument}
       />
 
       <RecordPaymentModal
@@ -266,10 +446,11 @@ export default function AccountsPayableSection() {
         onSubmit={handleRecordPayment}
       />
 
-      <ViewInvoiceModal
-        isOpen={!!viewingInvoice}
-        onClose={() => setViewingInvoice(null)}
-        invoice={viewingInvoice}
+      <ViewInvoiceDocModal
+        isOpen={!!viewingDocInvoice}
+        onClose={() => setViewingDocInvoice(null)}
+        invoiceNumber={viewingDocInvoice?.invoiceNo || ''}
+        documentUrl={viewingDocInvoice?.documentUrl}
       />
     </motion.div>
   );
