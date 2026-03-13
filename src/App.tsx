@@ -93,6 +93,10 @@ import PageInvoicePosting from "./pages/finance/PageInvoicePosting";
 import PagePaymentReceipt from "./pages/finance/PagePaymentReceipt";
 import PageReports from "./pages/finance/PageReports";
 import PageAssets from "./pages/finance/PageAssets";
+import AssetCapitalizationPage from "./pages/finance/assetCapitalizationPage/AssetCapitalizationPage";
+import AssetRegisterPage from "./pages/finance/assetRegisterPage/AssetRegisterPage";
+import AssetDetailPage from "./pages/finance/assetDetailPage/AssetDetailPage";
+import DepreciationManagementPage from "./pages/finance/depreciationManagementPage/DepreciationManagementPage";
 import PageTransactions from "./pages/finance/PageTransactions";
 import PagePayroll from "./pages/finance/PagePayroll";
 import LeadGenerationPage from "./pages/crm/leadManagement/LeadGenerationPage";
@@ -523,6 +527,22 @@ function App() {
                 element={<PageTransactions />}
               />
               <Route path="/finance/assets" element={<PageAssets />} />
+              <Route
+                path="/finance/asset-register"
+                element={<AssetRegisterPage />}
+              />
+              <Route
+                path="/finance/asset-register/:assetId"
+                element={<AssetDetailPage />}
+              />
+              <Route
+                path="/finance/asset-capitalization"
+                element={<AssetCapitalizationPage />}
+              />
+              <Route
+                path="/finance/depreciation"
+                element={<DepreciationManagementPage />}
+              />
               <Route path="/finance/reports" element={<PageReports />} />
               <Route path="/finance/budget-create" element={<BudgetCreate />} />
               {/* End FINANCE ROUTES */}

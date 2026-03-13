@@ -23,30 +23,40 @@ const JournalEntriesSection: React.FC = () => {
       try {
         const parsed = JSON.parse(stored);
         // Ensure all entries have required fields
-        return parsed.map((entry: any) => ({
-          ...entry,
-          entryNumber: entry.entryNumber || `JE-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 5)}`,
-          description: entry.description || 'No description',
-          reference: entry.reference || '',
-          sourceModule: entry.sourceModule || 'Manual',
-          sourceReference: entry.sourceReference || '',
-          fiscalYear: entry.fiscalYear || new Date().getFullYear().toString(),
-          period: entry.period || new Date().toLocaleDateString('en-US', { month: 'long' }),
-          status: entry.status || 'Draft',
-          totalDebit: entry.totalDebit || 0,
-          totalCredit: entry.totalCredit || 0,
-          isBalanced: entry.isBalanced || false,
-          isReversing: entry.isReversing || false,
-          createdBy: entry.createdBy || 'Unknown',
-          createdAt: entry.createdAt || new Date().toISOString(),
-          rowVersion: entry.rowVersion || 1,
-          lines: (entry.lines || []).map((line: any) => ({
-            ...line,
-            accountCode: line.accountCode || '',
-            accountName: line.accountName || 'Unknown Account',
-            memo: line.memo || '',
-          })),
-        }));
+        return parsed.map((entry: any) => {
+          const lines = Array.isArray(entry.lines) ? entry.lines : [];
+          return {
+            ...entry,
+            entryNumber: entry.entryNumber || `JE-${new Date().getFullYear()}-${Math.random().toString(36).substr(2, 5)}`,
+            description: entry.description || 'No description',
+            reference: entry.reference || '',
+            sourceModule: entry.sourceModule || 'Manual',
+            sourceReference: entry.sourceReference || '',
+            fiscalYear: entry.fiscalYear || new Date().getFullYear().toString(),
+            period: entry.period || new Date().toLocaleDateString('en-US', { month: 'long' }),
+            status: entry.status || 'Draft',
+            totalDebit: entry.totalDebit || 0,
+            totalCredit: entry.totalCredit || 0,
+            isBalanced: entry.isBalanced || false,
+            isReversing: entry.isReversing || false,
+            createdBy: entry.createdBy || 'Unknown',
+            createdAt: entry.createdAt || new Date().toISOString(),
+            rowVersion: entry.rowVersion || 1,
+            lines: lines.map((line: any) => ({
+              id: line.id || `${entry.id}-${line.lineNumber}`,
+              journalId: line.journalId || entry.id,
+              lineNumber: line.lineNumber || 0,
+              accountId: line.accountId || '',
+              accountCode: line.accountCode || 'N/A',
+              accountName: line.accountName || 'Unknown Account',
+              debit: line.debit || 0,
+              credit: line.credit || 0,
+              memo: line.memo || '',
+              createdAt: line.createdAt || new Date().toISOString(),
+              rowVersion: line.rowVersion || 1,
+            })),
+          };
+        });
       } catch (error) {
         console.error('Error loading journal entries from localStorage:', error);
         // If there's an error, clear localStorage and create fresh sample data

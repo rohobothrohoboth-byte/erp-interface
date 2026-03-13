@@ -17,20 +17,21 @@ const ViewJournalEntryModal: React.FC<ViewJournalEntryModalProps> = ({
   // Debug: Log the entry data to see what we're receiving
   React.useEffect(() => {
     if (isOpen && entry) {
-      console.log('ViewJournalEntryModal - Entry data:', entry);
-      console.log('ViewJournalEntryModal - Entry lines:', entry.lines);
-      console.log('ViewJournalEntryModal - Total Debit:', entry.totalDebit);
-      console.log('ViewJournalEntryModal - Total Credit:', entry.totalCredit);
-      entry.lines.forEach((line, index) => {
-        console.log(`Line ${index + 1}:`, {
-          lineNumber: line.lineNumber,
-          accountCode: line.accountCode,
-          accountName: line.accountName,
-          memo: line.memo,
-          debit: line.debit,
-          credit: line.credit
+      console.log('ViewJournalEntryModal - Entry data:', JSON.stringify(entry, null, 2));
+      console.log('ViewJournalEntryModal - Entry lines count:', entry.lines?.length);
+      if (entry.lines && entry.lines.length > 0) {
+        entry.lines.forEach((line, index) => {
+          console.log(`Line ${index + 1}:`, {
+            id: line.id,
+            lineNumber: line.lineNumber,
+            accountCode: line.accountCode,
+            accountName: line.accountName,
+            memo: line.memo,
+            debit: line.debit,
+            credit: line.credit
+          });
         });
-      });
+      }
     }
   }, [isOpen, entry]);
 
@@ -91,42 +92,50 @@ const ViewJournalEntryModal: React.FC<ViewJournalEntryModalProps> = ({
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {entry.lines.map((line) => (
-                      <tr key={line.id} className="hover:bg-indigo-50 transition-colors">
-                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {line.lineNumber}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">
-                          <div className="font-medium text-gray-900">
-                            {line.accountCode || 'N/A'}
-                          </div>
-                          <div className="text-gray-600 text-xs">
-                            {line.accountName || 'Unknown Account'}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">
-                          {line.memo || '-'}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
-                          {line.debit > 0 ? (
-                            <span className="font-medium text-gray-900">
-                              {formatCurrency(line.debit)}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
-                          {line.credit > 0 ? (
-                            <span className="font-medium text-gray-900">
-                              {formatCurrency(line.credit)}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
+                    {!entry.lines || entry.lines.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-3 text-center text-sm text-gray-500">
+                          No journal lines found
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      entry.lines.map((line) => (
+                        <tr key={line.id} className="hover:bg-indigo-50 transition-colors">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {line.lineNumber}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900">
+                            <div className="font-medium text-gray-900">
+                              {line.accountCode || 'N/A'}
+                            </div>
+                            <div className="text-gray-600 text-xs">
+                              {line.accountName || 'Unknown Account'}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {line.memo || '-'}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                            {line.debit > 0 ? (
+                              <span className="font-medium text-gray-900">
+                                {formatCurrency(line.debit)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                            {line.credit > 0 ? (
+                              <span className="font-medium text-gray-900">
+                                {formatCurrency(line.credit)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    )}
                     
                     {/* Totals Row */}
                     <tr className="bg-indigo-100 font-semibold border-t-2 border-indigo-200">

@@ -45,6 +45,10 @@ import {
   Wallet,
   Layers,
   History,
+  TrendingDown,
+  AlertCircle,
+  ArrowRight,
+  CheckCircle,
 } from "lucide-react";
 import { useModule } from "../ModuleContext";
 import {
@@ -1502,9 +1506,46 @@ const Sidebar: React.FC = () => {
                 to="/finance/assets"
                 icon={<Briefcase size={18} />}
                 label="Assets"
-                {...theme}
-                collapsed={collapsed}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
+                collapsed={false}
               />
+              {/* <NavGroup
+                icon={<Briefcase size={18} />}
+                label="Fixed Assets"
+                isOpen={openGroup === "Fixed Assets"}
+                onToggle={() => toggleGroup("Fixed Assets")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
+                collapsed={collapsed}
+              > */}
+              {/* <NavItem
+                  to="/finance/asset-register"
+                  icon={<Package size={18} />}
+                  label="Asset Register"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/asset-capitalization"
+                  icon={<CheckCircle size={18} />}
+                  label="Asset Capitalization"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                />
+                <NavItem
+                  to="/finance/depreciation"
+                  icon={<TrendingDown size={18} />}
+                  label="Depreciation"
+                  {...theme}
+                  isChild
+                  collapsed={collapsed}
+                /> */}
+              {/* </NavGroup> */}
               <NavGroup
                 icon={<FileSpreadsheet size={18} />}
                 label="Budgeting"
@@ -1718,9 +1759,70 @@ const Sidebar: React.FC = () => {
                 to="/finance/assets"
                 icon={<Briefcase size={18} />}
                 label="Assets"
-                {...theme}
-                collapsed={collapsed}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
+                collapsed={false}
               />
+              {/* <NavGroup
+                icon={<Briefcase size={18} />}
+                label="Assets"
+                isOpen={openGroup === "Assets"}
+                onToggle={() => toggleGroup("Assets")}
+                hoverBg={theme.hoverBg}
+                textColor={theme.textColor}
+                activeBg={theme.activeBg}
+                collapsed={collapsed}
+              > */}
+              {/* <NavItem
+                  to="/finance/asset-capitalization"
+                  icon={<Package size={18} />}
+                  label="Asset Capitalization"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/depreciation"
+                  icon={<TrendingDown size={18} />}
+                  label="Depreciation"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/asset-revaluation"
+                  icon={<RefreshCw size={18} />}
+                  label="Asset Revaluation"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/asset-impairment"
+                  icon={<AlertCircle size={18} />}
+                  label="Asset Impairment"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/asset-transfer"
+                  icon={<ArrowRight size={18} />}
+                  label="Asset Transfer"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                />
+                <NavItem
+                  to="/finance/asset-disposal"
+                  icon={<Trash2 size={18} />}
+                  label="Asset Disposal"
+                  {...theme}
+                  isChild
+                  collapsed={false}
+                /> */}
+              {/* </NavGroup> */}
               <NavGroup
                 icon={<FileSpreadsheet size={18} />}
                 label="Budgeting"
