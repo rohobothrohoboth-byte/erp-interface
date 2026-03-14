@@ -6,8 +6,7 @@ import { ProfilePictureUpload } from './ProfileUpload';
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 import { Gender, EmpType, EmpNature, WorkArrangement } from '../../../../../types/hr/enum';
-import type { Step1Dto } from '../../../../../types/hr/employee/empAddDto';
-import type { UUID } from 'crypto';
+import type { Step1Dto, UUID } from '../../../../../types/hr/employee/empAddDto';
 import { amharicRegex } from '../../../../../utils/amharic-regex';
 import List from '../../../../List/list';
 import { nameListService } from '../../../../../services/List/HrmmNameListService';
@@ -17,28 +16,29 @@ import type { NameListItem } from '../../../../../types/NameList/nameList';
 import { jgStepService } from '../../../../../services/core/settings/ModHrm/JgStepService';
 
 interface BasicInfoStepProps {
-  data: Partial<Step1Dto & { branchId: UUID, jobGradeStepId: UUID }>;
-  onNext: (data: Step1Dto & { branchId: UUID, jobGradeStepId: UUID }) => void;
+  data: Partial<Step1Dto & { branchId: UUID }>;
+  onNext: (data: Step1Dto & { branchId: UUID}) => void;
   onBack: () => void;
   loading?: boolean;
 }
 
 const validationSchema = yup.object({
-  firstName: yup.string().required('First name is required'),
-  firstNameAm: yup.string().required('First name (Amharic) is required'),
-  middleName: yup.string().required('Middle name is required'),
-  middleNameAm: yup.string().required('Middle name (Amharic) is required'),
-  lastName: yup.string().required('Last name is required'),
-  lastNameAm: yup.string().required('Last name (Amharic) is required'),
-  nationality: yup.string().required('Nationality is required'),
-  gender: yup.string().required('Gender is required'),
-  employmentDate: yup.string().required('Employment date is required'),
-  branchId: yup.string().required('Branch is required'),
-  jobGradeId: yup.string().required('Job grade is required'),
-  positionId: yup.string().required('Position is required'),
-  departmentId: yup.string().required('Department is required'),
-  employmentType: yup.string().required('Employment type is required'),
-  employmentNature: yup.string().required('Employment nature is required'),
+  firstName: yup.string().required("First name is required"),
+  firstNameAm: yup.string().required("First name (Amharic) is required"),
+  middleName: yup.string().required("Middle name is required"),
+  middleNameAm: yup.string().required("Middle name (Amharic) is required"),
+  lastName: yup.string().required("Last name is required"),
+  lastNameAm: yup.string().required("Last name (Amharic) is required"),
+  nationality: yup.string().required("Nationality is required"),
+  gender: yup.string().required("Gender is required"),
+  employmentDate: yup.string().required("Employment date is required"),
+  branchId: yup.string().required("Branch is required"),
+  jobGradeId: yup.string().required("Job grade is required"),
+  jgStepId: yup.string().required("Job grade step is required"),
+  positionId: yup.string().required("Position is required"),
+  departmentId: yup.string().required("Department is required"),
+  employmentType: yup.string().required("Employment type is required"),
+  employmentNature: yup.string().required("Employment nature is required"),
 });
 
 export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
@@ -76,7 +76,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
     return data.employmentDate || new Date().toISOString().split('T')[0];
   };
 
-  const formik = useFormik<Step1Dto & { branchId: UUID, jobGradeStepId: UUID }>({
+  const formik = useFormik<Step1Dto & { branchId: UUID }>({
     initialValues: {
       firstName: data.firstName || '',
       firstNameAm: data.firstNameAm || '',
@@ -89,7 +89,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       employmentDate: getDefaultEmploymentDate(),
       branchId: data.branchId || '' as UUID,
       jobGradeId: data.jobGradeId || '' as UUID,
-      jobGradeStepId: data.jobGradeStepId || '' as UUID,
+      jgStepId: data.jgStepId || '' as UUID,
       positionId: data.positionId || '' as UUID,
       departmentId: data.departmentId || '' as UUID,
       employmentType: data.employmentType || '' as EmpType,
@@ -106,6 +106,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       // Prepare the data to send to backend
       const submitData = {
         ...values,
+        employmentDate: new Date(values.employmentDate).toISOString(),
       };
 
       // Scroll to top before calling onNext
@@ -308,8 +309,8 @@ useEffect(() => {
 
    // Handle job grade step select
   const handleJobGradeStepSelect = (item: ListItem) => {
-    formik.setFieldValue('jobGradeStepId', item.id);
-    if (submitError && formik.errors.jobGradeStepId) {
+    formik.setFieldValue('jgStepId', item.id);
+    if (submitError && formik.errors.jgStepId) {
       setSubmitError(null);
     }
   };
@@ -376,7 +377,7 @@ useEffect(() => {
           className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4"
         >
           <div className="flex items-center">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg
                 className="h-5 w-5 text-red-400"
                 viewBox="0 0 20 20"
@@ -416,7 +417,7 @@ useEffect(() => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-2 h-8 bg-gradient-to-b from-green-400 to-green-600 rounded-full"></div>
+              <div className="w-2 h-8 bg-linear-to-b from-green-400 to-green-600 rounded-full"></div>
               <h3 className="text-xl font-semibold text-gray-800">
                 Personal Information
               </h3>
@@ -676,7 +677,7 @@ useEffect(() => {
         {/* Employment Details Section */}
         <div className="mt-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-2 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full"></div>
+            <div className="w-2 h-8 bg-linear-to-b from-blue-400 to-blue-600 rounded-full"></div>
             <h3 className="text-xl font-semibold text-gray-800">
               Employment Details
             </h3>
@@ -824,7 +825,7 @@ useEffect(() => {
             <div className="space-y-2">
               <List
                 items={jobGradeStepsListItems}
-                selectedValue={formik.values.jobGradeStepId}
+                selectedValue={formik.values.jgStepId}
                 onSelect={handleJobGradeStepSelect}
                 label="Select Job Grade Step"
                 placeholder="Select a job grade step"
@@ -835,9 +836,9 @@ useEffect(() => {
                   Loading job grade steps...
                 </p>
               )}
-              {getErrorMessage("jobGradeStepId") && (
+              {getErrorMessage("jgStepId") && (
                 <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("jobGradeStepId")}
+                  {getErrorMessage("jgStepId")}
                 </div>
               )}
             </div>
@@ -964,7 +965,7 @@ useEffect(() => {
         {/* Profile Picture Section - Moved to bottom with increased size */}
         <div className="mt-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-2 h-8 bg-gradient-to-b from-purple-400 to-purple-600 rounded-full"></div>
+            <div className="w-2 h-8 bg-linear-to-b from-purple-400 to-purple-600 rounded-full"></div>
             <h3 className="text-xl font-semibold text-gray-800">
               Profile Picture
             </h3>

@@ -9,9 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Gender, AddressType } from '../../../../../types/hr/enum';
 import type { Step3Dto } from '../../../../../types/hr/employee/empAddDto';
 import { amharicRegex } from '../../../../../utils/amharic-regex';
-import List from '../../../../List/list';
-import { listService } from '../../../../../services/hr/listservice';
-import type { ListItem, UUID } from '../../../../../types/List/list';
+import type { UUID } from '../../../../../types/List/list';
 import EnumSelect from '../../../../ui/enumSelect';
 import { Relation } from '../../../../../types/enum';
 import { Label } from '../../../../ui/label';
@@ -34,7 +32,7 @@ const validationSchema = yup.object({
   lastNameAm: yup.string().required('Last name (Amharic) is required'),
   nationality: yup.string().required('Nationality is required'),
   gender: yup.string().required('Gender is required'),
-  // relationId: yup.string().required('Relation is required'),
+  relation: yup.string().required('Relation is required'),
   addressType: yup.string().required('Address type is required'),
   country: yup.string().required('Country is required'),
   region: yup.string().required('Region is required'),
@@ -48,8 +46,6 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
   employeeId,
   loading = false
 }) => {
-  const [relations, setRelations] = useState("0");
-  const [loadingRelations, setLoadingRelations] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   // Scroll to top function
@@ -75,7 +71,7 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
       lastNameAm: data.lastNameAm || '',
       nationality: data.nationality || '',
       gender: data.gender || '' as Gender,
-      relationId: data.relationId || '' as UUID,
+      relation: data.relation || '',
       employeeId: employeeId || data.employeeId || '' as UUID,
       addressType: data.addressType || '' as AddressType,
       country: data.country || '',
@@ -110,34 +106,6 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
       formik.setFieldValue('employeeId', employeeId);
     }
   }, [employeeId]);
-
-  // Fetch relations when component mounts
-  // useEffect(() => {
-  //   const fetchRelations = async () => {
-  //     setLoadingRelations(true);
-  //     try {
-  //       const relationsData = await listService.getAllRelations();
-  //       setRelations(relationsData);
-
-  //       // Auto-select first relation if none is selected and we have relations
-  //       if (!formik.values.relationId && relationsData.length > 0) {
-  //         formik.setFieldValue('relationId', relationsData[0].id);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error fetching relations:', error);
-  //       setSubmitError('Failed to load relations');
-  //     } finally {
-  //       setLoadingRelations(false);
-  //     }
-  //   };
-
-  //   fetchRelations();
-  // }, []);
-
-  // Handle relation selection
-  const handleRelationSelect = (item: ListItem) => {
-    formik.setFieldValue('relationId', item.id);
-  };
 
   // Amharic input handlers
   const handleAmharicInputChange = (
@@ -194,9 +162,6 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
     onBack();
   };
 
-  // Get the selected relation name for display
-  // const selectedRelation = relations.find(relation => relation.id === formik.values.relationId);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -213,7 +178,7 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
           className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4"
         >
           <div className="flex items-center">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg
                 className="h-5 w-5 text-red-400"
                 viewBox="0 0 20 20"
@@ -252,7 +217,7 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
         {/* Contact Person Information Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-8 bg-gradient-to-b from-purple-400 to-purple-600 rounded-full"></div>
+            <div className="w-2 h-8 bg-linear-to-b from-purple-400 to-purple-600 rounded-full"></div>
             <h3 className="text-xl font-semibold text-gray-800">
               Emergency Contact Person Information
             </h3>
@@ -511,8 +476,8 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
               </Label>
               <EnumSelect
                 enumObject={Relation}
-                value={formik.values.relationId}
-                onChange={(value) => formik.setFieldValue("relationId", value)}
+                value={formik.values.relation}
+                onChange={(value) => formik.setFieldValue("relation", value)}
                 placeholder="Select Relation"
                 disabled={loading}
               />
@@ -523,7 +488,7 @@ export const EmergencyContactStep: React.FC<EmergencyContactStepProps> = ({
         {/* Address Information Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full"></div>
+            <div className="w-2 h-8 bg-linear-to-b from-blue-400 to-blue-600 rounded-full"></div>
             <h3 className="text-xl font-semibold text-gray-800">
               Contact Address Information
             </h3>

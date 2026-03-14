@@ -1,8 +1,7 @@
 
 import type { AddressType, EmpNature, EmpType, Gender, MaritalStat, WorkArrangement, YesNo } from "../enum";
-import type { UUID } from 'crypto';
 
-export type { UUID }
+export type UUID =string;
 export interface Step1Dto {
     firstName: string;
     firstNameAm: string;
@@ -16,6 +15,7 @@ export interface Step1Dto {
     jobGradeId: UUID;
     positionId: UUID;
     departmentId: UUID;
+    jgStepId: UUID;
     employmentType: EmpType;
     employmentNature: EmpNature;
     workArrangement: WorkArrangement;
@@ -50,29 +50,29 @@ export interface Step2Dto {
 }
 
 export interface Step3Dto {
-    firstName: string;
-    firstNameAm: string;
-    middleName: string;
-    middleNameAm: string; // Fixed: was liddleNameAm
-    lastName: string;
-    lastNameAm: string;
-    nationality: string;
-    gender: Gender;
-    relationId: UUID;
-    employeeId: UUID;
-    addressType: AddressType;
-    country: string;
-    region: string;
-    subcity: string;
-    zone: string;
-    woreda: string;
-    kebele: string;
-    houseNo: string;
-    telephone: string;
-    poBox: string;
-    fax: string;
-    email: string;
-    website: string;
+  firstName: string;
+  firstNameAm: string;
+  middleName: string;
+  middleNameAm: string; // Fixed: was liddleNameAm
+  lastName: string;
+  lastNameAm: string;
+  nationality: string;
+  gender: Gender;
+  relation: string;
+  addressType: AddressType;
+  country: string;
+  region: string;
+  subcity: string;
+  zone: string;
+  woreda: string;
+  kebele: string;
+  houseNo: string;
+  telephone: string;
+  poBox: string;
+  fax: string;
+  email: string;
+  website: string;
+  employeeId: UUID;
 }
 
 export interface Step4Dto {
@@ -84,7 +84,7 @@ export interface Step4Dto {
     lastNameAm: string;
     nationality: string;
     gender: Gender;
-    relationId: UUID;
+    relation: string;
     employeeId: UUID;
     addressType: AddressType;
     country: string;

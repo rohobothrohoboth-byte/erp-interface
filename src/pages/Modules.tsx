@@ -111,13 +111,7 @@ useEffect(() => {
     }
   }, [isAuthenticated, isLoading, navigate]);
 
-  if (isLoading) {
-    return 
-  }
 
-  if (!isAuthenticated) {
-    return null; // effect will handle redirect
-  }
 
   const handleLogout = () => {
     logout();
@@ -176,6 +170,13 @@ useEffect(() => {
       return () => clearInterval(removeTimer);
     }
   }, [visibleNotifications]);
+    if (isLoading) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      return null; // effect will handle redirect
+    }
 
   return (
     <div className="relative h-screen w-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 overflow-x-hidden overflow-y-auto">

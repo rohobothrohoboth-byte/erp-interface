@@ -7,8 +7,7 @@ import 'react-phone-input-2/lib/style.css';
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 import { YesNo, MaritalStat, AddressType } from '../../../../../types/hr/enum';
-import type { Step2Dto } from '../../../../../types/hr/employee/empAddDto';
-import type { UUID } from 'crypto';
+import type { Step2Dto, UUID } from '../../../../../types/hr/employee/empAddDto';
 
 interface BiographicalStepProps {
   data: Partial<Step2Dto>;
@@ -88,10 +87,15 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
     onSubmit: (values) => {
       // Clear previous errors when submitting
       setSubmitError(null);
+
+      const submitData: Step2Dto = {
+        ...values,
+        birthDate: new Date(values.birthDate).toISOString(),
+      };
       
       // Scroll to top before calling onNext
       scrollToTop();
-      onNext(values);
+      onNext(submitData);
     },
   });
 
@@ -143,7 +147,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
           className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4"
         >
           <div className="flex items-center">
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
               </svg>
@@ -170,7 +174,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
         {/* Biographical Details Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-8 bg-gradient-to-b from-purple-400 to-purple-600 rounded-full"></div>
+            <div className="w-2 h-8 bg-linear-to-b from-purple-400 to-purple-600 rounded-full"></div>
             <h3 className="text-xl font-semibold text-gray-800">Biographical Details</h3>
           </div>
 
@@ -330,7 +334,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
         {/* Financial Information Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full"></div>
+            <div className="w-2 h-8 bg-linear-to-b from-blue-400 to-blue-600 rounded-full"></div>
             <h3 className="text-xl font-semibold text-gray-800">Financial Information</h3>
           </div>
 
@@ -406,7 +410,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
         {/* Address Information Section */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-8 bg-gradient-to-b from-green-400 to-green-600 rounded-full"></div>
+            <div className="w-2 h-8 bg-linear-to-b from-green-400 to-green-600 rounded-full"></div>
             <h3 className="text-xl font-semibold text-gray-800">Address Information</h3>
           </div>
 
