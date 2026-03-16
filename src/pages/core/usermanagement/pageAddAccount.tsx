@@ -23,8 +23,8 @@ export default function AddAccountPage() {
   return (
     <AddAccountStepForm
       employee={employee}
-      onBackToAccounts={() => navigate("/core/user-management")}
-      onAccountAdded={() => navigate("/core/user-management")}
+      onBackToAccounts={() => navigate("/core/users")}
+      onAccountAdded={() => navigate("/core/users")}
     />
   );
 }
