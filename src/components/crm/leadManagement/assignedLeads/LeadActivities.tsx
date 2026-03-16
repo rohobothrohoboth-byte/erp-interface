@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Plus, Phone, Mail, Calendar, MessageSquare, FileText, User } from 'lucide-react';
 import { Button } from '../../../ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../ui/card';
+import { Card, CardContent } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Textarea } from '../../../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../ui/dialog';
 import { Label } from '../../../ui/label';
 
 interface Activity {
@@ -53,7 +53,7 @@ export default function LeadActivities({ leadId }: LeadActivitiesProps) {
     }
   ]);
 
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [newActivity, setNewActivity] = useState({
     type: 'note' as Activity['type'],
     title: '',
@@ -102,7 +102,7 @@ export default function LeadActivities({ leadId }: LeadActivitiesProps) {
       };
       setActivities([activity, ...activities]);
       setNewActivity({ type: 'note', title: '', description: '' });
-      setIsAddDialogOpen(false);
+      setIsAddOpen(false);
     }
   };
 
@@ -110,10 +110,7 @@ export default function LeadActivities({ leadId }: LeadActivitiesProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Activities</h3>
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-orange-600 hover:bg-orange-700"
-        >
+        <Button onClick={() => setIsAddOpen(true)} className="bg-orange-600 hover:bg-orange-700">
           <Plus className="w-4 h-4 mr-2" />
           Add Activity
         </Button>
@@ -124,9 +121,7 @@ export default function LeadActivities({ leadId }: LeadActivitiesProps) {
           <Card key={activity.id}>
             <CardContent>
               <div className="flex items-start space-x-4">
-                <div
-                  className={`p-2 rounded-full ${getActivityColor(activity.type)}`}
-                >
+                <div className={`p-2 rounded-full ${getActivityColor(activity.type)}`}>
                   {getActivityIcon(activity.type)}
                 </div>
                 <div className="flex-1">
@@ -134,9 +129,7 @@ export default function LeadActivities({ leadId }: LeadActivitiesProps) {
                     <h4 className="font-medium">{activity.title}</h4>
                     <div className="flex items-center space-x-2">
                       {activity.status && (
-                        <Badge className={getStatusColor(activity.status)}>
-                          {activity.status}
-                        </Badge>
+                        <Badge className={getStatusColor(activity.status)}>{activity.status}</Badge>
                       )}
                       <span className="text-sm text-gray-500">
                         {new Date(activity.date).toLocaleDateString()}
@@ -155,87 +148,74 @@ export default function LeadActivities({ leadId }: LeadActivitiesProps) {
         ))}
       </div>
 
-      {/* Add Activity Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Activity</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="activityType" className="pb-1">
-                Activity Type
-              </Label>
-              <Select
-                value={newActivity.type}
-                onValueChange={(value) =>
-                  setNewActivity((prev) => ({
-                    ...prev,
-                    type: value as Activity["type"],
-                  }))
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="call">Phone Call</SelectItem>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="meeting">Meeting</SelectItem>
-                  <SelectItem value="note">Note</SelectItem>
-                  <SelectItem value="task">Task</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Add Activity Modal */}
+      {isAddOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden"
+          >
+            <div className="flex items-center gap-2 border-b px-6 py-2 sticky top-0 bg-white z-10">
+              <Plus className="w-5 h-5 text-orange-600" />
+              <h2 className="text-base font-semibold">Add Activity</h2>
             </div>
-            <div>
-              <Label htmlFor="activityTitle" className="pb-1">
-                Title
-              </Label>
-              <input
-                id="activityTitle"
-                className="w-full px-3 py-2 border rounded-md"
-                value={newActivity.title}
-                onChange={(e) =>
-                  setNewActivity((prev) => ({ ...prev, title: e.target.value }))
-                }
-                placeholder="Activity title"
-              />
+
+            <div className="px-6">
+              <div className="py-4 space-y-3">
+                <div>
+                  <Label htmlFor="activityType" className="pb-1">Activity Type</Label>
+                  <Select
+                    value={newActivity.type}
+                    onValueChange={(value) => setNewActivity(prev => ({ ...prev, type: value as Activity['type'] }))}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="call">Phone Call</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="meeting">Meeting</SelectItem>
+                      <SelectItem value="note">Note</SelectItem>
+                      <SelectItem value="task">Task</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="activityTitle" className="pb-1">Title</Label>
+                  <input
+                    id="activityTitle"
+                    className="w-full px-3 py-2 border rounded-md"
+                    value={newActivity.title}
+                    onChange={(e) => setNewActivity(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Activity title"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="activityDescription" className="pb-1">Description</Label>
+                  <Textarea
+                    id="activityDescription"
+                    value={newActivity.description}
+                    onChange={(e) => setNewActivity(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Activity description"
+                    rows={3}
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="activityDescription" className="pb-1">
-                Description
-              </Label>
-              <Textarea
-                id="activityDescription"
-                value={newActivity.description}
-                onChange={(e) =>
-                  setNewActivity((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="Activity description"
-                rows={3}
-                className="w-full px-3 py-2 border rounded-md"
-              />
+
+            <div className="border-t px-6 py-2">
+              <div className="flex justify-center items-center gap-1.5">
+                <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
+                <Button onClick={handleAddActivity} className="bg-orange-600 hover:bg-orange-700">
+                  Add Activity
+                </Button>
+              </div>
             </div>
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsAddDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleAddActivity}
-                className="bg-orange-600 hover:bg-orange-700"
-              >
-                Add Activity
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Target, Award } from 'lucide-react';
 import { Button } from '../../../ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../ui/dialog';
 import { Label } from '../../../ui/label';
-import { Input } from '../../../ui/input';
 import { Textarea } from '../../../ui/textarea';
 import { Badge } from '../../../ui/badge';
 import type { Lead } from '../../../../types/crm';
@@ -15,12 +14,9 @@ interface LeadScoringProps {
   onScoreUpdate: (leadId: string, newScore: number, scoreData: any) => void;
 }
 
-export default function LeadScoring({ 
-  lead, 
-  isOpen, 
-  onClose, 
-  onScoreUpdate 
-}: LeadScoringProps) {
+export default function LeadScoring({ lead, isOpen, onClose, onScoreUpdate }: LeadScoringProps) {
+  if (!isOpen) return null;
+
   const [interest, setInterest] = useState(10);
   const [budget, setBudget] = useState(8);
   const [authority, setAuthority] = useState(8);
@@ -28,23 +24,11 @@ export default function LeadScoring({
   const [productFit, setProductFit] = useState(8);
   const [notes, setNotes] = useState('');
 
-  // Calculate total score (max 80)
   const totalScore = interest + budget + authority + timeline + productFit;
-  // Convert to percentage for display
   const scorePercentage = Math.round((totalScore / 80) * 100);
 
   const handleSaveScore = () => {
-    const scoreData = {
-      interest,
-      budget,
-      authority,
-      timeline,
-      productFit,
-      totalScore,
-      notes,
-      scoredAt: new Date().toISOString()
-    };
-    
+    const scoreData = { interest, budget, authority, timeline, productFit, totalScore, notes, scoredAt: new Date().toISOString() };
     onScoreUpdate(lead.id, scorePercentage, scoreData);
     onClose();
   };
@@ -58,143 +42,83 @@ export default function LeadScoring({
   const scoreBadge = getScoreBadge(scorePercentage);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Target className="w-5 h-5 text-orange-600" />
-              <span>Update Lead Score</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Badge className={scoreBadge.color}>
-                {scoreBadge.label}
-              </Badge>
-              <div className="text-2xl font-bold text-orange-600">
-                {scorePercentage}%
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden"
+      >
+        <div className="flex items-center gap-2 border-b px-6 py-4 sticky top-0 bg-white z-10">
+          <Target className="w-5 h-5 text-orange-600" />
+          <h2 className="text-base font-semibold flex-1">Update Lead Score</h2>
+          <Badge className={scoreBadge.color}>{scoreBadge.label}</Badge>
+          <span className="text-xl font-bold text-orange-600">{scorePercentage}%</span>
+        </div>
+
+        <div className="px-6">
+          <div className="py-4 space-y-3">
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: 'Interest Level', value: interest, setter: setInterest, max: 20 },
+                { label: 'Budget', value: budget, setter: setBudget, max: 15 },
+                { label: 'Authority', value: authority, setter: setAuthority, max: 15 },
+                { label: 'Timeline', value: timeline, setter: setTimeline, max: 15 },
+              ].map(({ label, value, setter, max }) => (
+                <div key={label}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label className="text-sm font-medium text-gray-700">{label}</Label>
+                    <span className="text-sm font-semibold text-gray-600">{value} / {max}</span>
+                  </div>
+                  <input
+                    type="range" min={0} max={max} value={value}
+                    onChange={(e) => setter(parseInt(e.target.value))}
+                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                    style={{ accentColor: '#9ca3af', background: `linear-gradient(to right, #9ca3af ${(value/max)*100}%, #d1d5db ${(value/max)*100}%)` }}
+                  />
+                  <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                    <span>0</span><span>{max}</span>
+                  </div>
+                </div>
+              ))}
+              <div className="col-span-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <Label className="text-sm font-medium text-gray-700">Product Fit</Label>
+                  <span className="text-sm font-semibold text-gray-600">{productFit} / 15</span>
+                </div>
+                <input
+                  type="range" min={0} max={15} value={productFit}
+                  onChange={(e) => setProductFit(parseInt(e.target.value))}
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                  style={{ accentColor: '#cbcdcfff', background: `linear-gradient(to right, #9499a1ff ${(productFit/15)*100}%, #d1d5db ${(productFit/15)*100}%)` }}
+                />
+                <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                  <span>0</span><span>15</span>
+                </div>
               </div>
             </div>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          {/* Score Inputs Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Interest */}
             <div>
-              <Label htmlFor="interest" className="text-sm font-medium">
-                Interest Level
-                <span className="text-gray-500 ml-1">(0-20)</span>
+              <Label htmlFor="notes" className="text-sm font-medium">
+                Notes <span className="text-gray-500">(Optional)</span>
               </Label>
-              <Input
-                id="interest"
-                type="number"
-                min="0"
-                max="20"
-                value={interest}
-                onChange={(e) => setInterest(Math.min(20, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="mt-1.5"
-              />
+              <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any additional notes about this score..." rows={3} className="mt-1.5" />
             </div>
-
-            {/* Budget */}
-            <div>
-              <Label htmlFor="budget" className="text-sm font-medium">
-                Budget
-                <span className="text-gray-500 ml-1">(0-15)</span>
-              </Label>
-              <Input
-                id="budget"
-                type="number"
-                min="0"
-                max="15"
-                value={budget}
-                onChange={(e) => setBudget(Math.min(15, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="mt-1.5"
-              />
-            </div>
-
-            {/* Authority */}
-            <div>
-              <Label htmlFor="authority" className="text-sm font-medium">
-                Authority
-                <span className="text-gray-500 ml-1">(0-15)</span>
-              </Label>
-              <Input
-                id="authority"
-                type="number"
-                min="0"
-                max="15"
-                value={authority}
-                onChange={(e) => setAuthority(Math.min(15, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="mt-1.5"
-              />
-            </div>
-
-            {/* Timeline */}
-            <div>
-              <Label htmlFor="timeline" className="text-sm font-medium">
-                Timeline
-                <span className="text-gray-500 ml-1">(0-15)</span>
-              </Label>
-              <Input
-                id="timeline"
-                type="number"
-                min="0"
-                max="15"
-                value={timeline}
-                onChange={(e) => setTimeline(Math.min(15, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="mt-1.5"
-              />
-            </div>
-
-            {/* Product Fit */}
-            <div className="col-span-2">
-              <Label htmlFor="productFit" className="text-sm font-medium">
-                Product Fit
-                <span className="text-gray-500 ml-1">(0-15)</span>
-              </Label>
-              <Input
-                id="productFit"
-                type="number"
-                min="0"
-                max="15"
-                value={productFit}
-                onChange={(e) => setProductFit(Math.min(15, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="mt-1.5"
-              />
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <Label htmlFor="notes" className="text-sm font-medium">
-              Notes <span className="text-gray-500">(Optional)</span>
-            </Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any additional notes about this score..."
-              rows={3}
-              className="mt-1.5"
-            />
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSaveScore}
-            className="bg-orange-600 hover:bg-orange-700"
-          >
-            <Award className="w-4 h-4 mr-2" />
-            Update Score
-          </Button>
+        <div className="border-t px-6 py-2">
+          <div className="flex justify-center items-center gap-1.5">
+            <Button variant="outline" onClick={onClose}>Cancel</Button>
+            <Button onClick={handleSaveScore} className="bg-orange-600 hover:bg-orange-700">
+              <Award className="w-4 h-4 mr-2" />
+              Update Score
+            </Button>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </motion.div>
+    </div>
   );
 }
+
+

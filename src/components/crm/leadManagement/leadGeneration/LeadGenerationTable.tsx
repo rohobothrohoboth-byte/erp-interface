@@ -6,12 +6,10 @@ import { Button } from '../../../ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../ui/table';
 import { Badge } from '../../../ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../../ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../ui/dialog';
-import { Label } from '../../../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
 import { Pagination } from '../../../ui/pagination';
 import { showToast } from '../../../../layout/layout';
 import DeleteLeadModal from './DeleteLeadModal';
+import ReassignLeadModal from './ReassignLeadModal';
 import type { Lead } from '../../../../types/crm';
 
 interface LeadGenerationTableProps {
@@ -46,15 +44,6 @@ export default function LeadGenerationTable({
     return leads.slice(startIndex, endIndex);
   }, [leads, currentPage]);
   
-  // Sales reps list
-  const salesReps = [
-    'Sarah Johnson',
-    'Mike Wilson',
-    'Emily Davis',
-    'Robert Chen',
-    'Lisa Anderson'
-  ];
-
   const getStatusColor = (status: string) => {
     const statusColors: Record<string, string> = {
       'New': 'bg-orange-100 text-orange-800',
@@ -224,41 +213,19 @@ export default function LeadGenerationTable({
         itemLabel="leads"
       />
 
-      {/* Assign Rep Dialog */}
-      <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Reassign Lead</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className='space-y-2'>
-              <Label htmlFor="salesRep">Select Sales Rep</Label>
-              <Select value={selectedRep} onValueChange={setSelectedRep}>
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder="Choose a sales rep" />
-                </SelectTrigger>
-                <SelectContent>
-                  {salesReps.map((rep) => (
-                    <SelectItem key={rep} value={rep}>{rep}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleAssignSubmit}
-                disabled={!selectedRep}
-                className="bg-orange-600 hover:bg-orange-700"
-              >
-                Assign
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Reassign Lead Modal */}
+      <ReassignLeadModal
+        lead={selectedLeadForAssign}
+        isOpen={isAssignDialogOpen}
+        selectedRep={selectedRep}
+        onRepChange={setSelectedRep}
+        onConfirm={handleAssignSubmit}
+        onClose={() => {
+          setIsAssignDialogOpen(false);
+          setSelectedLeadForAssign(null);
+          setSelectedRep('');
+        }}
+      />
 
       {/* Delete Lead Modal */}
       <DeleteLeadModal

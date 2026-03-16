@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { Plus, MessageSquare, User, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Card, CardContent } from '../../../ui/card';
 import { Textarea } from '../../../ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../ui/dialog';
 import { Label } from '../../../ui/label';
 import DeleteNoteModal from './DeleteNoteModal';
 
@@ -73,8 +73,8 @@ export default function LeadNotes({ leadId }: LeadNotesProps) {
 
   const handleUpdateNote = () => {
     if (editingNote && newNoteContent.trim()) {
-      setNotes(notes.map(note => 
-        note.id === editingNote.id 
+      setNotes(notes.map(note =>
+        note.id === editingNote.id
           ? { ...note, content: newNoteContent, isPrivate, updatedAt: new Date().toISOString() }
           : note
       ));
@@ -137,9 +137,7 @@ export default function LeadNotes({ leadId }: LeadNotesProps) {
                     <User className="w-4 h-4 text-gray-400" />
                     <span className="text-sm font-medium">{note.author}</span>
                     {note.isPrivate && (
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                        Private
-                      </span>
+                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Private</span>
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
@@ -147,19 +145,10 @@ export default function LeadNotes({ leadId }: LeadNotesProps) {
                       {new Date(note.createdAt).toLocaleDateString()} at{' '}
                       {new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditNote(note)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleEditNote(note)}>
                       <Edit className="w-3 h-3" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteNote(note.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteNote(note.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50">
                       <Trash2 className="w-3 h-3" />
                     </Button>
                   </div>
@@ -177,58 +166,65 @@ export default function LeadNotes({ leadId }: LeadNotesProps) {
         )}
       </div>
 
-      {/* Add/Edit Note Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={closeDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingNote ? 'Edit Note' : 'Add Note'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div  className="space-y-2">
-              <Label htmlFor="noteContent" >Note Content</Label>
-              <Textarea
-                id="noteContent"
-                value={newNoteContent}
-                onChange={(e) => setNewNoteContent(e.target.value)}
-                placeholder="Enter your note here..."
-                rows={6}
-                className="resize-none"
-              />
+      {/* Add/Edit Note Modal */}
+      {isAddDialogOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-xl shadow-xl w-full max-w-xl overflow-hidden"
+          >
+            <div className="flex items-center gap-2 border-b px-4 py-4 sticky top-0 bg-white z-10">
+              <Plus className="w-5 h-5 text-orange-600" />
+              <h2 className="text-base font-semibold">{editingNote ? 'Edit Note' : 'Add Note'}</h2>
             </div>
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isPrivate"
-                checked={isPrivate}
-                onChange={(e) => setIsPrivate(e.target.checked)}
-                className="rounded"
-              />
-              <Label htmlFor="isPrivate" className="text-sm">
-                Make this note private (only visible to you)
-              </Label>
+
+            <div className="px-6 py-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="noteContent">Note Content</Label>
+                <Textarea
+                  id="noteContent"
+                  value={newNoteContent}
+                  onChange={(e) => setNewNoteContent(e.target.value)}
+                  placeholder="Enter your note here..."
+                  rows={6}
+                  className="resize-none"
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isPrivate"
+                  checked={isPrivate}
+                  onChange={(e) => setIsPrivate(e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor="isPrivate" className="text-sm">
+                  Make this note private (only visible to you)
+                </Label>
+              </div>
             </div>
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={closeDialog}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={editingNote ? handleUpdateNote : handleAddNote}
-                className="bg-orange-600 hover:bg-orange-700"
-                disabled={!newNoteContent.trim()}
-              >
-                {editingNote ? 'Update Note' : 'Add Note'}
-              </Button>
+
+            <div className="border-t px-6 py-2">
+              <div className="flex justify-center items-center gap-1.5">
+                <Button variant="outline" onClick={closeDialog}>Cancel</Button>
+                <Button
+                  onClick={editingNote ? handleUpdateNote : handleAddNote}
+                  className="bg-orange-600 hover:bg-orange-700"
+                  disabled={!newNoteContent.trim()}
+                >
+                  {editingNote ? 'Update Note' : 'Add Note'}
+                </Button>
+              </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </motion.div>
+        </div>
+      )}
 
       <DeleteNoteModal
         isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setDeletingNoteId(null);
-        }}
+        onClose={() => { setIsDeleteModalOpen(false); setDeletingNoteId(null); }}
         onConfirm={confirmDeleteNote}
       />
     </div>

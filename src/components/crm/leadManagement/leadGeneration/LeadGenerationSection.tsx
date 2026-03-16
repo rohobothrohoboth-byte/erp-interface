@@ -27,6 +27,8 @@ export default function LeadGenerationSection() {
         return mockLeads;
       }
     }
+    // Persist mock leads to localStorage so edit page can find them
+    localStorage.setItem('leads', JSON.stringify(mockLeads));
     return mockLeads;
   };
 

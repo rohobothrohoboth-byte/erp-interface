@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { AlertCircle, X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../ui/dialog";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { GitBranch } from "lucide-react";
 import { Button } from "../../../ui/button";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
 import { Textarea } from "../../../ui/textarea";
 import { Checkbox } from "../../../ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../ui/select";
-import { Alert, AlertDescription } from "../../../ui/alert";
 import type { RoutingRule } from "./LeadRoutingSection";
 
 interface EditRoutingRuleModalProps {
@@ -25,196 +24,84 @@ interface FormData {
   isActive: boolean;
 }
 
-const salesReps = [
-  'Sarah Johnson',
-  'Mike Wilson',
-  'Emily Davis',
-  'Robert Chen',
-  'Lisa Anderson'
-];
+const salesReps = ['Sarah Johnson', 'Mike Wilson', 'Emily Davis', 'Robert Chen', 'Lisa Anderson'];
 
-const EditRoutingRuleModal: React.FC<EditRoutingRuleModalProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  rule
-}) => {
-  const [formData, setFormData] = useState<FormData>({
-    name: "",
-    description: "",
-    assignTo: "",
-    priority: 1,
-    isActive: true
-  });
+export default function EditRoutingRuleModal({ isOpen, onClose, onSubmit, rule }: EditRoutingRuleModalProps) {
+  const [formData, setFormData] = useState<FormData>({ name: "", description: "", assignTo: "", priority: 1, isActive: true });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (rule) {
-      setFormData({
-        name: rule.name,
-        description: rule.description,
-        assignTo: rule.assignTo,
-        priority: rule.priority,
-        isActive: rule.isActive
-      });
+      setFormData({ name: rule.name, description: rule.description, assignTo: rule.assignTo, priority: rule.priority, isActive: rule.isActive });
     }
   }, [rule]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name.trim()) {
-      setError("Please enter a rule name");
-      return;
-    }
+  const handleClose = () => { setError(null); onClose(); };
 
-    if (!formData.assignTo) {
-      setError("Please select a sales rep to assign to");
-      return;
-    }
-
+  const handleSubmit = () => {
+    if (!formData.name.trim()) return setError("Please enter a rule name");
+    if (!formData.assignTo) return setError("Please select a sales rep to assign to");
     setIsSubmitting(true);
     setError(null);
-
-    try {
-      onSubmit(formData);
-      handleClose();
-    } catch (error) {
-      setError("Failed to update routing rule. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    try { onSubmit(formData); handleClose(); } catch { setError("Failed to update routing rule. Please try again."); } finally { setIsSubmitting(false); }
   };
 
-  const handleClose = () => {
-    setError(null);
-    onClose();
-  };
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Routing Rule</DialogTitle>
-        </DialogHeader>
-        
-        {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              {error}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setError(null)}
-                className="h-auto p-0 text-destructive hover:text-destructive/80"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm text-gray-500">
-                Rule Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g., Enterprise Leads"
-                required
-                disabled={isSubmitting}
-              />
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center gap-2 border-b px-6 py-2 sticky top-0 bg-white z-10">
+          <GitBranch className="w-5 h-5 text-orange-600" />
+          <h2 className="text-base font-semibold text-gray-800">Edit Routing Rule</h2>
+        </div>
+        <div className="px-6">
+          <div className="py-4 space-y-3">
+            {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded">{error}</p>}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Rule Name <span className="text-red-500">*</span></Label>
+                <Input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} placeholder="e.g., Enterprise Leads" disabled={isSubmitting} />
+              </div>
+              <div className="space-y-1">
+                <Label>Priority <span className="text-red-500">*</span></Label>
+                <Input type="number" value={formData.priority} onChange={e => setFormData(p => ({ ...p, priority: Number(e.target.value) }))} min="1" disabled={isSubmitting} />
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="priority" className="text-sm text-gray-500">
-                Priority <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="priority"
-                type="number"
-                value={formData.priority}
-                onChange={(e) => setFormData(prev => ({ ...prev, priority: Number(e.target.value) }))}
-                min="1"
-                required
-                disabled={isSubmitting}
-              />
+            <div className="space-y-1">
+              <Label>Description</Label>
+              <Textarea value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} placeholder="Describe when this rule should be applied" rows={2} disabled={isSubmitting} />
+            </div>
+            <div className="space-y-1">
+              <Label>Assign To <span className="text-red-500">*</span></Label>
+              <Select value={formData.assignTo} onValueChange={v => setFormData(p => ({ ...p, assignTo: v }))}>
+                <SelectTrigger><SelectValue placeholder="Select sales rep" /></SelectTrigger>
+                <SelectContent>
+                  {salesReps.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox id="isActive" checked={formData.isActive} onCheckedChange={c => setFormData(p => ({ ...p, isActive: c as boolean }))} disabled={isSubmitting} />
+              <Label htmlFor="isActive">Active</Label>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm text-gray-500">Description</Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe when this rule should be applied"
-              rows={2}
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="assignTo" className="text-sm text-gray-500">
-              Assign To <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.assignTo} onValueChange={(value) => setFormData(prev => ({ ...prev, assignTo: value }))}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select sales rep" />
-              </SelectTrigger>
-              <SelectContent>
-                {salesReps.map((rep) => (
-                  <SelectItem key={rep} value={rep}>{rep}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center space-x-2 pt-2">
-            <Checkbox
-              id="isActive"
-              checked={formData.isActive}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked as boolean }))}
-              disabled={isSubmitting}
-            />
-            <Label htmlFor="isActive" className="text-sm text-gray-500">Active</Label>
-          </div>
-
-          <div className="flex justify-center items-center gap-1.5 pt-4">
-            <Button 
-              type="submit" 
-              className="bg-orange-600 hover:bg-orange-700 text-white cursor-pointer px-6"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Updating...
-                </>
-              ) : (
-                "Update Rule"
-              )}
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="cursor-pointer px-6"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
-              Cancel
+        </div>
+        <div className="border-t px-6 py-2">
+          <div className="flex justify-center items-center gap-1.5">
+            <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>Cancel</Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-orange-600 hover:bg-orange-700 text-white">
+              {isSubmitting ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Updating...</> : "Update Rule"}
             </Button>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </motion.div>
+    </div>
   );
-};
-
-export default EditRoutingRuleModal;
+}

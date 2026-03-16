@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../ui/dialog';
+import { motion } from 'framer-motion';
+import { Users } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Input } from '../../../ui/input';
 import { Label } from '../../../ui/label';
@@ -13,12 +14,7 @@ interface AddLeadGroupModalProps {
   editingGroup: LeadGroup | null;
 }
 
-export default function AddLeadGroupModal({
-  isOpen,
-  onClose,
-  onSubmit,
-  editingGroup
-}: AddLeadGroupModalProps) {
+export default function AddLeadGroupModal({ isOpen, onClose, onSubmit, editingGroup }: AddLeadGroupModalProps) {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [status, setStatus] = useState<'Active' | 'Inactive'>('Active');
@@ -29,48 +25,44 @@ export default function AddLeadGroupModal({
       setCode(editingGroup.code);
       setStatus(editingGroup.status);
     } else {
-      resetForm();
+      setName(''); setCode(''); setStatus('Active');
     }
   }, [editingGroup, isOpen]);
 
-  const resetForm = () => {
-    setName('');
-    setCode('');
-    setStatus('Active');
-  };
-
   const handleSubmit = () => {
-    if (!name.trim() || !code.trim()) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    onSubmit({
-      name,
-      code,
-      status
-    });
-
-    resetForm();
+    if (!name.trim() || !code.trim()) return;
+    onSubmit({ name, code, status });
+    setName(''); setCode(''); setStatus('Active');
     onClose();
   };
 
   const handleClose = () => {
-    resetForm();
+    setName(''); setCode(''); setStatus('Active');
     onClose();
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{editingGroup ? 'Edit Lead Group' : 'Add Lead Group'}</DialogTitle>
-        </DialogHeader>
+  if (!isOpen) return null;
 
-        <div className="space-y-4">
-          {/* Name */}
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white rounded-xl shadow-xl max-w-md w-full"
+      >
+        {/* Header */}
+        <div className="flex items-center gap-2 border-b px-6 py-2">
+          <Users size={20} className="text-orange-600" />
+          <h2 className="text-lg font-bold text-gray-800">
+            {editingGroup ? 'Edit Lead Group' : 'Add Lead Group'}
+          </h2>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 py-4 space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="name">
+            <Label htmlFor="name" className="text-sm text-gray-500">
               Name <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -78,12 +70,12 @@ export default function AddLeadGroupModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., High Value Prospects"
+              className="w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
 
-          {/* Code */}
           <div className="space-y-2">
-            <Label htmlFor="code">
+            <Label htmlFor="code" className="text-sm text-gray-500">
               Code <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -92,14 +84,14 @@ export default function AddLeadGroupModal({
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               placeholder="e.g., HVP"
               maxLength={10}
+              className="w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent"
             />
           </div>
 
-          {/* Status */}
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select value={status} onValueChange={(value: 'Active' | 'Inactive') => setStatus(value)}>
-              <SelectTrigger>
+            <Label htmlFor="status" className="text-sm text-gray-500">Status</Label>
+            <Select value={status} onValueChange={(v: 'Active' | 'Inactive') => setStatus(v)}>
+              <SelectTrigger className="w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -108,21 +100,24 @@ export default function AddLeadGroupModal({
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div className="flex justify-end space-x-2 pt-4">
-            <Button variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button 
+        {/* Footer */}
+        <div className="border-t px-6 py-2">
+          <div className="flex justify-center items-center gap-1.5">
+            <Button
+              className="bg-orange-600 hover:bg-orange-700 text-white px-6"
               onClick={handleSubmit}
-              className="bg-orange-600 hover:bg-orange-700"
+              disabled={!name.trim() || !code.trim()}
             >
               {editingGroup ? 'Update' : 'Save'}
             </Button>
+            <Button variant="outline" className="px-6" onClick={handleClose}>
+              Cancel
+            </Button>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </motion.div>
+    </div>
   );
 }

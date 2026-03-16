@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Save, X, RefreshCw } from 'lucide-react';
+import { Save, RefreshCw } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Label } from '../../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
 
 interface ChangeStatusModalProps {
   isOpen: boolean;
@@ -13,14 +12,7 @@ interface ChangeStatusModalProps {
   quotation: any;
 }
 
-const statusOptions = [
-  'Draft',
-  'Pending Approval',
-  'Approved',
-  'Sent',
-  'Accepted',
-  'Rejected'
-];
+const statusOptions = ['Draft', 'Pending Approval', 'Approved', 'Sent', 'Accepted', 'Rejected'];
 
 const getStatusColor = (status: string) => {
   const colors: Record<string, string> = {
@@ -44,20 +36,12 @@ export default function ChangeStatusModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (quotation) {
-      setSelectedStatus(quotation.status);
-    }
+    if (quotation) setSelectedStatus(quotation.status);
   }, [quotation]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedStatus || selectedStatus === quotation?.status) {
-      return;
-    }
-
+  const handleSubmit = async () => {
+    if (!selectedStatus || selectedStatus === quotation?.status) return;
     setIsSubmitting(true);
-    
     try {
       await onSubmit(selectedStatus);
       onClose();
@@ -73,76 +57,64 @@ export default function ChangeStatusModal({
     onClose();
   };
 
-  if (!quotation) return null;
+  if (!isOpen || !quotation) return null;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <span>Change Quotation Status</span>
-          </DialogTitle>
-        </DialogHeader>
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div className="flex items-center gap-2 border-b px-6 py-2 sticky top-0 bg-white z-10">
+          <RefreshCw className="w-5 h-5 text-orange-600" />
+          <h2 className="text-base font-semibold text-gray-800">Change Quotation Status</h2>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
-        >
-
-          {/* Status Selection */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="status">New Status *</Label>
+        <div className="px-6">
+          <div className="py-4 space-y-3">
+            <div className="space-y-1">
+              <Label>New Status <span className="text-red-500">*</span></Label>
               <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                <SelectTrigger className="mt-1 w-full">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select new status" />
                 </SelectTrigger>
                 <SelectContent>
                   {statusOptions.map(status => (
-                    <SelectItem 
-                      key={status} 
+                    <SelectItem
+                      key={status}
                       value={status}
                       className={status === quotation.status ? 'opacity-50' : ''}
                     >
                       <span className={getStatusColor(status)}>
-                        {status}
-                        {status === quotation.status && ' (Current)'}
+                        {status}{status === quotation.status && ' (Current)'}
                       </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </div>
 
-
-            {/* Action Buttons */}
-            <div className="flex justify-center space-x-3 pt-4 ">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                <X className="w-4 h-4 mr-2" />
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                className="bg-orange-600 hover:bg-orange-700"
-                disabled={isSubmitting || !selectedStatus || selectedStatus === quotation?.status}
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4 mr-2" />
-                    Update Status
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </motion.div>
-      </DialogContent>
-    </Dialog>
+        <div className="border-t px-6 py-2">
+          <div className="mx-auto flex justify-center items-center gap-1.5">
+            <Button variant="outline" onClick={handleClose}>Cancel</Button>
+            <Button
+              onClick={handleSubmit}
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+              disabled={isSubmitting || !selectedStatus || selectedStatus === quotation?.status}
+            >
+              {isSubmitting ? (
+                <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Updating...</>
+              ) : (
+                <><Save className="w-4 h-4 mr-2" />Update Status</>
+              )}
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
   );
 }
