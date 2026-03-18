@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Edit, Trash2, FileSpreadsheet } from 'lucide-react';
+import { Plus, Edit, Trash2, FileSpreadsheet, Search } from 'lucide-react';
+import { BadgePlus } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
@@ -98,29 +99,55 @@ export default function CampaignsPage() {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
   const itemsPerPage = 10;
-  const totalItems = campaigns.length;
+  const filteredCampaigns = campaigns.filter(c =>
+    !searchTerm || c.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const totalItems = filteredCampaigns.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedCampaigns = campaigns.slice(startIndex, endIndex);
+  const paginatedCampaigns = filteredCampaigns.slice(startIndex, endIndex);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
-          <p className="text-gray-600">Create and manage marketing campaigns</p>
+      {/* Header - title only */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <h1 className="bg-gradient-to-r from-orange-500 to-orange-700 bg-clip-text text-transparent text-2xl font-bold">
+          Campaigns
+        </h1>
+      </motion.div>
+
+      {/* Search filter + Add button */}
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center gap-4"
+      >
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search campaigns..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
         </div>
-        <Button 
+        <button
           onClick={() => setIsModalOpen(true)}
-          className="bg-orange-600 hover:bg-orange-700"
+          className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <BadgePlus className="w-4 h-4" />
           New Campaign
-        </Button>
-      </div>
+        </button>
+      </motion.div>
 
       {/* Campaigns Table */}
       <motion.div

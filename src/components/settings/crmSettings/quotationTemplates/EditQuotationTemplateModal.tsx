@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { AlertCircle, X, Pencil } from "lucide-react";
 import { Button } from "../../../ui/button";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
-import { Checkbox } from "../../../ui/checkbox";
 import { Textarea } from "../../../ui/textarea";
 import { Alert, AlertDescription } from "../../../ui/alert";
 import type { QuotationTemplate } from "./QuotationTemplatesSection";
@@ -94,7 +93,7 @@ const EditQuotationTemplateModal: React.FC<EditQuotationTemplateModalProps> = ({
         className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
       >
         {/* HEADER */}
-        <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">
+        <div className="flex justify-between items-center border-b px-6 py-4 sticky top-0 bg-white z-10">
           <div className="flex items-center gap-2">
             <Pencil size={20} />
             <h2 className="text-lg font-bold text-gray-800">Edit Template</h2>
@@ -178,16 +177,7 @@ const EditQuotationTemplateModal: React.FC<EditQuotationTemplateModalProps> = ({
                 />
               </div>
 
-              <div className="flex items-center space-x-2 pt-2">
-                <Checkbox
-                  checked={formData.is_active}
-                  onCheckedChange={(c) =>
-                    setFormData((p) => ({ ...p, is_active: c as boolean }))
-                  }
-                  disabled={isSubmitting}
-                />
-                <Label className="text-sm text-gray-500">Active</Label>
-              </div>
+
             </div>
 
             {/* RIGHT */}

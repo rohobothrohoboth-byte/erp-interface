@@ -1,63 +1,16 @@
-import { motion } from "framer-motion";
-import { ArrowLeft, Target } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "../../../ui/button";
-
-// Define variants with proper TypeScript types
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: {
-      type: "spring" as const,
-      stiffness: 100,
-      damping: 15,
-    },
-  },
-};
+import { motion } from 'framer-motion';
 
 const SalesHeader = () => {
-  const navigate = useNavigate();
-
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   return (
     <motion.div
-      variants={itemVariants}
-      className="mb-4 flex flex-col sm:flex-row sm:justify-between items-start sm:items-end"
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="flex items-center justify-between"
     >
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          className="flex items-center gap-2 px-3 py-2 cursor-pointer"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm font-medium">Back</span>
-        </Button>
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex items-center gap-2"
-        >
-          <Target className="w-6 h-6 text-orange-600" />
-          <h1 className="text-2xl font-bold text-black">
-            <motion.span
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="inline-block"
-            >
-              <span className="bg-linear-to-r from-orange-600 to-orange-600 bg-clip-text text-transparent">
-                Sales 
-              </span>{" "}Management
-            </motion.span>
-          </h1>
-        </motion.div>
-      </div>
+      <h1 className="bg-gradient-to-r from-orange-500 to-orange-700 bg-clip-text text-transparent text-2xl font-bold">
+        Sales Management
+      </h1>
     </motion.div>
   );
 };

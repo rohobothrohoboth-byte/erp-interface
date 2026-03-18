@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import { AlertCircle, BadgePlus, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../ui/dialog";
 import { Button } from "../../../ui/button";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
-import { Checkbox } from "../../../ui/checkbox";
 import { Textarea } from "../../../ui/textarea";
 import { Alert, AlertDescription } from "../../../ui/alert";
 import type { QuotationTemplate } from "./QuotationTemplatesSection";
@@ -26,8 +25,7 @@ const AddQuotationTemplateModal: React.FC<AddQuotationTemplateModalProps> = ({
     title: "",
     description: "",
     termsAndConditions: "",
-    validityDays: 30,
-    is_active: true
+    validityDays: 30
   });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,8 +36,7 @@ const AddQuotationTemplateModal: React.FC<AddQuotationTemplateModalProps> = ({
       title: "",
       description: "",
       termsAndConditions: "",
-      validityDays: 30,
-      is_active: true
+      validityDays: 30
     });
     setError(null);
   };
@@ -98,7 +95,7 @@ const AddQuotationTemplateModal: React.FC<AddQuotationTemplateModalProps> = ({
             className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
           >
             {/* header */}
-            <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">
+            <div className="flex justify-between items-center border-b px-6 py-4 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-2">
                 <BadgePlus size={20} />
                 <h2 className="text-lg font-bold text-gray-800">Add New</h2>
@@ -203,25 +200,7 @@ const AddQuotationTemplateModal: React.FC<AddQuotationTemplateModalProps> = ({
                     />
                   </div>
 
-                  <div className="flex items-center space-x-2 pt-2">
-                    <Checkbox
-                      id="is_active"
-                      checked={formData.is_active}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          is_active: checked as boolean,
-                        }))
-                      }
-                      disabled={isSubmitting}
-                    />
-                    <Label
-                      htmlFor="is_active"
-                      className="text-sm text-gray-500"
-                    >
-                      Active
-                    </Label>
-                  </div>
+
                 </div>
                 <div className="space-y-2">
                   <div className="space-y-2">

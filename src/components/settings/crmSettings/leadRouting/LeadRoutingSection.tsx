@@ -137,7 +137,7 @@ const LeadRoutingSection: React.FC = () => {
         onManageConditions={handleConditionClick}
       />
 
-      {filteredRules.length === 0 && (
+      {sortedRules.length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

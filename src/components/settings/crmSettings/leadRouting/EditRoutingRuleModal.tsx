@@ -1,11 +1,10 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { GitBranch } from "lucide-react";
 import { Button } from "../../../ui/button";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
 import { Textarea } from "../../../ui/textarea";
-import { Checkbox } from "../../../ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../ui/select";
 import type { RoutingRule } from "./LeadRoutingSection";
 
@@ -57,7 +56,7 @@ export default function EditRoutingRuleModal({ isOpen, onClose, onSubmit, rule }
         exit={{ opacity: 0, scale: 0.9 }}
         className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
       >
-        <div className="flex items-center gap-2 border-b px-6 py-2 sticky top-0 bg-white z-10">
+        <div className="flex items-center gap-2 border-b px-6 py-4 sticky top-0 bg-white z-10">
           <GitBranch className="w-5 h-5 text-orange-600" />
           <h2 className="text-base font-semibold text-gray-800">Edit Routing Rule</h2>
         </div>
@@ -87,10 +86,7 @@ export default function EditRoutingRuleModal({ isOpen, onClose, onSubmit, rule }
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
-              <Checkbox id="isActive" checked={formData.isActive} onCheckedChange={c => setFormData(p => ({ ...p, isActive: c as boolean }))} disabled={isSubmitting} />
-              <Label htmlFor="isActive">Active</Label>
-            </div>
+
           </div>
         </div>
         <div className="border-t px-6 py-2">

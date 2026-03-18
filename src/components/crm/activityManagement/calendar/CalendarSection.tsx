@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
-import { Button } from '../../../ui/button';
 import { showToast } from '../../../../layout/layout';
 import { mockActivities } from '../../../../data/crmMockData';
+import CalendarHeader from './CalendarHeader';
+import CalendarSearchFilter from './CalendarSearchFilter';
 import ActivityCalendar from './ActivityCalendar';
 import ActivityForm from './ActivityForm';
 import type { Activity } from '../../../../types/crm';
@@ -13,6 +13,7 @@ export default function CalendarSection() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const handleAddActivity = (activityData: Partial<Activity>) => {
     const activity: Activity = {
@@ -74,19 +75,12 @@ export default function CalendarSection() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Activity Calendar</h1>
-          <p className="text-gray-600">View and manage activities in calendar view</p>
-        </div>
-        <Button 
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-orange-600 hover:bg-orange-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New Activity
-        </Button>
-      </div>
+      <CalendarHeader />
+      <CalendarSearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onAddClick={() => setIsAddDialogOpen(true)}
+      />
 
       <ActivityCalendar
         activities={activities}

@@ -1,12 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Edit, Trash2, Mail } from 'lucide-react';
+import { Edit, Trash2, Mail, Plus } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../ui/table';
 import { showToast } from '../../../../layout/layout';
 import AddEmailCampaignModal from '../../../crm/campaigns/AddEmailCampaignModal';
 import DeleteEmailCampaignModal from './DeleteEmailCampaignModal';
+import EmailCampaignsHeader from './EmailCampaignsHeader';
+import EmailCampaignsSearchFilter from './EmailCampaignsSearchFilter';
 import { Pagination } from '../../../ui/pagination';
 import type { EmailCampaign } from '../../../../types/campaign';
 
@@ -16,6 +18,7 @@ export default function EmailCampaignsSection() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<EmailCampaign | null>(null);
   const [deletingCampaign, setDeletingCampaign] = useState<EmailCampaign | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -101,29 +104,24 @@ export default function EmailCampaignsSection() {
     return campaign.isAllRecipients ? `All ${campaign.targetFor}s` : 'Multiple Recipients';
   };
 
-  const totalItems = emailCampaigns.length;
+  const filteredCampaigns = emailCampaigns.filter(c =>
+    !searchTerm || c.campaignName.toLowerCase().includes(searchTerm.toLowerCase()) || c.subject.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const totalItems = filteredCampaigns.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedCampaigns = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return emailCampaigns.slice(startIndex, endIndex);
-  }, [emailCampaigns, currentPage]);
+    return filteredCampaigns.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredCampaigns, currentPage]);
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Email Campaigns</h1>
-          <p className="text-gray-600">Create and manage email marketing campaigns</p>
-        </div>
-        <Button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-orange-600 hover:bg-orange-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New Email Campaign
-        </Button>
-      </div>
+      <EmailCampaignsHeader />
+      <EmailCampaignsSearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onAddClick={() => setIsModalOpen(true)}
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

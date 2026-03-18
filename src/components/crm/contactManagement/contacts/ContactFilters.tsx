@@ -1,9 +1,10 @@
-import { Search, Filter, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
+import { BadgePlus } from 'lucide-react';
 import { Input } from '../../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
-import { Card, CardContent } from '../../../ui/card';
+import { motion } from 'framer-motion';
 
 interface FilterState {
   searchTerm: string;
@@ -21,6 +22,7 @@ interface ContactFiltersProps {
   onClearFilters: () => void;
   totalCount: number;
   filteredCount: number;
+  onAddClick?: () => void;
 }
 
 const owners = [
@@ -46,7 +48,8 @@ export default function ContactFilters({
   onFiltersChange,
   onClearFilters,
   totalCount,
-  filteredCount
+  filteredCount,
+  onAddClick,
 }: ContactFiltersProps) {
   const handleFilterChange = (key: keyof FilterState, value: string | string[]) => {
     onFiltersChange({
@@ -77,9 +80,13 @@ export default function ContactFilters({
   const activeFiltersCount = getActiveFiltersCount();
 
   return (
-    <Card>
-      <CardContent>
-        <div className="space-y-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+    >
+      <div className="space-y-4">
           {/* Search and Quick Actions */}
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex-1 min-w-64">
@@ -107,6 +114,16 @@ export default function ContactFilters({
                   {activeFiltersCount}
                 </Badge>
               </Button>
+            )}
+
+            {onAddClick && (
+              <button
+                onClick={onAddClick}
+                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+              >
+                <BadgePlus className="w-4 h-4" />
+                Add Contact
+              </button>
             )}
           </div>
 
@@ -272,7 +289,6 @@ export default function ContactFilters({
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </motion.div>
   );
 }

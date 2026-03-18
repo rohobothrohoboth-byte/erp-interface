@@ -1,24 +1,15 @@
-import { Plus } from 'lucide-react';
-import { Button } from '../../../ui/button';
+import { motion } from 'framer-motion';
 
-interface ContactGroupingHeaderProps {
-  onAddGroup: () => void;
-}
-
-export default function ContactGroupingHeader({ onAddGroup }: ContactGroupingHeaderProps) {
+export default function ContactGroupingHeader() {
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Contact Grouping</h1>
-        <p className="text-gray-600 mt-1">Create and manage contact groups based on criteria</p>
-      </div>
-      <Button 
-        onClick={onAddGroup}
-        className="bg-orange-600 hover:bg-orange-700"
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add Group
-      </Button>
-    </div>
+    <motion.div
+      initial={{ y: -20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
+      <h1 className="bg-gradient-to-r from-orange-500 to-orange-700 bg-clip-text text-transparent text-2xl font-bold">
+        Contact Grouping
+      </h1>
+    </motion.div>
   );
 }

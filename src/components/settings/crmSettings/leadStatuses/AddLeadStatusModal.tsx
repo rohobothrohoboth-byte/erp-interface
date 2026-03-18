@@ -1,10 +1,9 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { motion } from "framer-motion";
 import { Tag } from "lucide-react";
 import { Button } from "../../../ui/button";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
-import { Checkbox } from "../../../ui/checkbox";
 import type { LeadStatus } from "./LeadStatusesSection";
 
 interface AddLeadStatusModalProps {
@@ -14,11 +13,11 @@ interface AddLeadStatusModalProps {
 }
 
 export default function AddLeadStatusModal({ isOpen, onClose, onSubmit }: AddLeadStatusModalProps) {
-  const [formData, setFormData] = useState({ name: "", priority: 0, is_active: true });
+  const [formData, setFormData] = useState({ name: "", priority: 0 });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const reset = () => { setFormData({ name: "", priority: 0, is_active: true }); setError(null); };
+  const reset = () => { setFormData({ name: "", priority: 0 }); setError(null); };
   const handleClose = () => { if (!isSubmitting) { reset(); onClose(); } };
 
   const handleSubmit = async () => {
@@ -33,7 +32,7 @@ export default function AddLeadStatusModal({ isOpen, onClose, onSubmit }: AddLea
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
         className="bg-white rounded-xl shadow-xl max-w-md w-full">
-        <div className="flex items-center gap-2 border-b px-6 py-2">
+        <div className="flex items-center gap-2 border-b px-6 py-4">
           <Tag className="w-5 h-5 text-orange-600" />
           <h2 className="text-base font-semibold text-gray-800">Add Lead Status</h2>
         </div>
@@ -47,10 +46,6 @@ export default function AddLeadStatusModal({ isOpen, onClose, onSubmit }: AddLea
             <div className="space-y-1">
               <Label>Priority</Label>
               <Input type="number" value={formData.priority} onChange={e => setFormData(p => ({ ...p, priority: Number(e.target.value) }))} placeholder="e.g., 1, 2, 3" min="0" disabled={isSubmitting} />
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox id="is_active" checked={formData.is_active} onCheckedChange={c => setFormData(p => ({ ...p, is_active: c as boolean }))} disabled={isSubmitting} />
-              <Label htmlFor="is_active">Active</Label>
             </div>
           </div>
         </div>

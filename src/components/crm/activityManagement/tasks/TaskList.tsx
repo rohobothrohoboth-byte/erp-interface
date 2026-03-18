@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Search, CheckSquare, User, MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react';
+import { CheckSquare, User, MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-react';
 import { Button } from '../../../ui/button';
-import { Input } from '../../../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
@@ -12,32 +11,18 @@ import { Checkbox } from '../../../ui/checkbox';
 import { Pagination } from '../../../ui/pagination';
 import TaskDetailModal from './TaskDetailModal.tsx';
 import type { Activity } from '../../../../types/crm';
+import type { TaskFilterState } from './TasksSearchFilter';
 
 interface TaskListProps {
   activities: Activity[];
+  filters: TaskFilterState;
   onStatusChange: (activityId: string, newStatus: Activity['status']) => void;
   onEdit: (activity: Activity) => void;
   onDelete: (activityId: string) => void;
 }
 
-interface FilterState {
-  searchTerm: string;
-  status: string;
-  type: string;
-  priority: string;
-  assignedTo: string;
-  dateRange: string;
-}
 
-export default function TaskList({ activities, onStatusChange, onEdit, onDelete }: TaskListProps) {
-  const [filters, setFilters] = useState<FilterState>({
-    searchTerm: '',
-    status: 'all',
-    type: 'all',
-    priority: 'all',
-    assignedTo: 'all',
-    dateRange: 'all'
-  });
+export default function TaskList({ activities, filters, onStatusChange, onEdit, onDelete }: TaskListProps) {
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<'dueDate' | 'priority' | 'status' | 'created'>('dueDate');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -57,38 +42,28 @@ export default function TaskList({ activities, onStatusChange, onEdit, onDelete 
     const matchesSearch = 
       activity.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
       activity.description.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      activity.relatedTo?.name.toLowerCase().includes(filters.searchTerm.toLowerCase());
+      (activity.relatedTo?.name ?? '').toLowerCase().includes(filters.searchTerm.toLowerCase());
     
     const matchesStatus = filters.status === 'all' || activity.status === filters.status;
     const matchesType = filters.type === 'all' || activity.type === filters.type;
-    const matchesPriority = filters.priority === 'all' || activity.priority === filters.priority;
-    const matchesAssignedTo = filters.assignedTo === 'all' || activity.assignedTo === filters.assignedTo;
     
-    // Date range filter
     const matchesDateRange = (() => {
       if (filters.dateRange === 'all') return true;
-      
       const activityDate = new Date(activity.scheduledDate);
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
       const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-      
       switch (filters.dateRange) {
-        case 'overdue':
-          return activityDate < today && activity.status !== 'Completed';
-        case 'today':
-          return activityDate >= today && activityDate < tomorrow;
-        case 'tomorrow':
-          return activityDate >= tomorrow && activityDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000);
-        case 'week':
-          return activityDate >= today && activityDate <= weekFromNow;
-        default:
-          return true;
+        case 'overdue': return activityDate < today && activity.status !== 'Completed';
+        case 'today': return activityDate >= today && activityDate < tomorrow;
+        case 'tomorrow': return activityDate >= tomorrow && activityDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000);
+        case 'week': return activityDate >= today && activityDate <= weekFromNow;
+        default: return true;
       }
     })();
     
-    return matchesSearch && matchesStatus && matchesType && matchesPriority && matchesAssignedTo && matchesDateRange;
+    return matchesSearch && matchesStatus && matchesType && matchesDateRange;
   });
 
   // Sort activities
@@ -113,21 +88,6 @@ export default function TaskList({ activities, onStatusChange, onEdit, onDelete 
     
     return sortOrder === 'asc' ? comparison : -comparison;
   });
-
-  const updateFilter = (key: keyof FilterState, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      searchTerm: '',
-      status: 'all',
-      type: 'all',
-      priority: 'all',
-      assignedTo: 'all',
-      dateRange: 'all'
-    });
-  };
 
   const handleSelectTask = (taskId: string, checked: boolean) => {
     if (checked) {
@@ -210,71 +170,6 @@ export default function TaskList({ activities, onStatusChange, onEdit, onDelete 
         animate={{ opacity: 1, y: 0 }}
         className="space-y-6"
       >
-      {/* Filters */}
-      <Card>
-        <CardContent className="px-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search tasks..."
-                value={filters.searchTerm}
-                onChange={(e) => updateFilter('searchTerm', e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <Select value={filters.status} onValueChange={(value) => updateFilter('status', value)}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="All Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="Pending">Pending</SelectItem>
-                <SelectItem value="In Progress">In Progress</SelectItem>
-                <SelectItem value="Completed">Completed</SelectItem>
-                <SelectItem value="Cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Type Filter */}
-            <Select value={filters.type} onValueChange={(value) => updateFilter('type', value)}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="All Types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="Call">Call</SelectItem>
-                <SelectItem value="Email">Email</SelectItem>
-                <SelectItem value="Meeting">Meeting</SelectItem>
-                <SelectItem value="Task">Task</SelectItem>
-                <SelectItem value="Note">Note</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Date Range Filter */}
-            <Select value={filters.dateRange} onValueChange={(value) => updateFilter('dateRange', value)}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="All Dates" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Dates</SelectItem>
-                <SelectItem value="overdue">Overdue</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="tomorrow">Tomorrow</SelectItem>
-                <SelectItem value="week">This Week</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button variant="outline" onClick={clearFilters}>
-              Clear Filters
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Bulk Actions */}
       {selectedTasks.length > 0 && (
         <Card>

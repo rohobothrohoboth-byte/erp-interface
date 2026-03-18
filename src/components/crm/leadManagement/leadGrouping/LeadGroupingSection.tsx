@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { showToast } from '../../../../layout/layout';
 import LeadGroupingHeader from './LeadGroupingHeader';
+import LeadGroupingSearchFilter from './LeadGroupingSearchFilter';
 import LeadGroupingTable from './LeadGroupingTable';
 import AddLeadGroupModal from './AddLeadGroupModal';
 import LeadGroupConditionModal from './LeadGroupConditionModal';
@@ -55,6 +56,9 @@ export default function LeadGroupingSection() {
   const [editingGroup, setEditingGroup] = useState<LeadGroup | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<LeadGroup | null>(null);
   const [deletingGroup, setDeletingGroup] = useState<LeadGroup | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const handleAddGroup = (groupData: Omit<LeadGroup, 'id' | 'leadCount' | 'createdAt' | 'updatedAt'>) => {
     const newGroup: LeadGroup = {
@@ -124,10 +128,22 @@ export default function LeadGroupingSection() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <LeadGroupingHeader onAddGroup={() => setIsAddModalOpen(true)} />
+      <LeadGroupingHeader />
+      <LeadGroupingSearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+        onAddClick={() => setIsAddModalOpen(true)}
+      />
 
       <LeadGroupingTable
-        leadGroups={leadGroups}
+        leadGroups={(() => {
+          const filtered = leadGroups.filter(g => !searchTerm || g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.code.toLowerCase().includes(searchTerm.toLowerCase()));
+          return filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+        })()}
+        currentPage={currentPage}
+        totalPages={Math.ceil(leadGroups.filter(g => !searchTerm || g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.code.toLowerCase().includes(searchTerm.toLowerCase())).length / pageSize) || 1}
+        totalItems={leadGroups.filter(g => !searchTerm || g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.code.toLowerCase().includes(searchTerm.toLowerCase())).length}
+        onPageChange={(page) => setCurrentPage(page)}
         onEdit={handleEdit}
         onDelete={handleDeleteGroup}
         onConditionClick={handleConditionClick}

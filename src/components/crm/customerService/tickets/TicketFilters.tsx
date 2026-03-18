@@ -3,7 +3,7 @@ import { Input } from '../../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
 import { Button } from '../../../ui/button';
 import { Badge } from '../../../ui/badge';
-import { Card, CardContent } from '../../../ui/card';
+import { motion } from 'framer-motion';
 
 interface FilterState {
   searchTerm: string;
@@ -54,9 +54,13 @@ export default function TicketFilters({
   ];
 
   return (
-    <Card>
-      <CardContent>
-        <div className="space-y-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+    >
+      <div className="space-y-4">
           {/* Search and Quick Actions */}
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex-1 min-w-64">
@@ -258,7 +262,6 @@ export default function TicketFilters({
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+    </motion.div>
   );
 }

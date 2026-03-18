@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { MessageSquare } from "lucide-react";
 import { Button } from "../../../ui/button";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
-import { Checkbox } from "../../../ui/checkbox";
 import { Textarea } from "../../../ui/textarea";
 import type { SMSTemplate } from "./SMSTemplatesSection";
 
@@ -39,7 +38,7 @@ export default function EditSMSTemplateModal({ isOpen, onClose, onSubmit, templa
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
         className="bg-white rounded-xl shadow-xl max-w-md w-full">
-        <div className="flex items-center gap-2 border-b px-6 py-2">
+        <div className="flex items-center gap-2 border-b px-6 py-4">
           <MessageSquare className="w-5 h-5 text-orange-600" />
           <h2 className="text-base font-semibold text-gray-800">Edit SMS Template</h2>
         </div>
@@ -55,10 +54,7 @@ export default function EditSMSTemplateModal({ isOpen, onClose, onSubmit, templa
               <Textarea value={formData.text} onChange={e => setFormData(p => ({ ...p, text: e.target.value }))} placeholder="Enter SMS message text..." rows={4} maxLength={160} disabled={isSubmitting} />
               <p className="text-xs text-gray-500">{formData.text.length}/160 characters</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Checkbox id="is_active" checked={formData.is_active} onCheckedChange={c => setFormData(p => ({ ...p, is_active: c as boolean }))} disabled={isSubmitting} />
-              <Label htmlFor="is_active">Active</Label>
-            </div>
+
           </div>
         </div>
         <div className="border-t px-6 py-2">

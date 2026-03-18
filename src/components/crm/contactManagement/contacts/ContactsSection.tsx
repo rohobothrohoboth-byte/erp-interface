@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
-import { Button } from '../../../ui/button';
 import { useNavigate } from 'react-router-dom';
 import { showToast } from '../../../../layout/layout';
 import { mockContacts } from '../../../../data/crmMockData';
@@ -193,19 +191,15 @@ export default function ContactsSection() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Contacts</h1>
-          <p className="text-gray-600">Manage your business contacts and relationships</p>
-        </div>
-        <Button 
-          onClick={() => navigate('/crm/contacts/add')}
-          className="bg-orange-600 hover:bg-orange-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Contact
-        </Button>
-      </div>
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+      >
+        <h1 className="bg-gradient-to-r from-orange-500 to-orange-700 bg-clip-text text-transparent text-2xl font-bold">
+          Contacts
+        </h1>
+      </motion.div>
 
       <ContactFilters
         filters={filters}
@@ -213,6 +207,7 @@ export default function ContactsSection() {
         onClearFilters={clearFilters}
         totalCount={contacts.length}
         filteredCount={filteredContacts.length}
+        onAddClick={() => navigate('/crm/contacts/add')}
       />
 
       <ContactList

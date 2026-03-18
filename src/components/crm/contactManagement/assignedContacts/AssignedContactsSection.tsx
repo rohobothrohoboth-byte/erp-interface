@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { mockContacts } from '../../../../data/crmMockData';
+import AssignedContactsHeader from './AssignedContactsHeader';
+import AssignedContactsSearchFilter from './AssignedContactsSearchFilter';
 import ContactList from './ContactList';
-import ContactFilters from './ContactFilters';
 import type { Contact } from '../../../../types/crm';
 
 interface FilterState {
@@ -134,17 +135,12 @@ export default function AssignedContactsSection() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Assigned Contacts</h1>
-        <p className="text-gray-600">View and manage contacts assigned to you</p>
-      </div>
+      <AssignedContactsHeader />
 
-      <ContactFilters
+      <AssignedContactsSearchFilter
         filters={filters}
         onFiltersChange={setFilters}
         onClearFilters={clearFilters}
-        totalCount={contacts.length}
-        filteredCount={filteredContacts.length}
       />
 
       <ContactList

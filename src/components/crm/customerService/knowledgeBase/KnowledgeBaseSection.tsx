@@ -1,18 +1,18 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Plus, BookOpen, Eye, ThumbsUp, ThumbsDown, Edit, Trash2, Filter, Tag, Calendar, User } from 'lucide-react';
+import { BookOpen, Eye, ThumbsUp, ThumbsDown, Tag, User } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Input } from '../../../ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../ui/card';
 import { Badge } from '../../../ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../ui/dialog';
 import { Label } from '../../../ui/label';
 import { Textarea } from '../../../ui/textarea';
 import { showToast } from '../../../../layout/layout';
+import KnowledgeBaseHeader from './KnowledgeBaseHeader';
+import KnowledgeBaseSearchFilter from './KnowledgeBaseSearchFilter';
 import type { KnowledgeBaseArticle } from '../../../../types/crm';
-
 // Mock knowledge base articles
 const mockArticles: KnowledgeBaseArticle[] = [
   {
@@ -289,62 +289,19 @@ export default function KnowledgeBase() {
       className="space-y-6"
     >
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900">Knowledge Base</h2>
-          <p className="text-gray-600">Self-service articles and documentation</p>
-        </div>
-        <Button 
-          onClick={() => setIsCreateDialogOpen(true)}
-          className="bg-red-600 hover:bg-red-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Article
-        </Button>
-      </div>
+      <KnowledgeBaseHeader />
 
-      {/* Search and Filters */}
-      <Card>
-        <CardContent className="px-6">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search articles, tags, or content..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="views">Most Viewed</SelectItem>
-                <SelectItem value="helpful">Most Helpful</SelectItem>
-                <SelectItem value="recent">Recently Updated</SelectItem>
-                <SelectItem value="title">Alphabetical</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Search + Filters + Add */}
+      <KnowledgeBaseSearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+        categories={categories}
+        onAddClick={() => setIsCreateDialogOpen(true)}
+      />
 
       {/* Articles Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

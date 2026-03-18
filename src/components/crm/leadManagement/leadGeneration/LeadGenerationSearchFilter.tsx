@@ -1,9 +1,9 @@
 import React from 'react';
-import { Search, Filter, X, Upload, Download, Plus } from 'lucide-react';
+import { Search, X, Upload, Plus } from 'lucide-react';
 import { Input } from '../../../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
 import { Button } from '../../../ui/button';
-import { Card, CardContent } from '../../../ui/card';
+import { motion } from 'framer-motion';
 import { useCRMSettings } from '../../../../hooks/useCRMSettings';
 import { useNavigate } from 'react-router-dom';
 
@@ -49,12 +49,16 @@ export default function LeadSearchFilters({
   };
   const navigate = useNavigate();
   return (
-    <Card>
-      <CardContent>
-        <div className="flex flex-col space-y-4">
-          {/* Search Bar */}
-          <div className="relative flex justify-between">
-            <div className='w-full max-w-md'>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
+    >
+      <div className="flex flex-col space-y-4">
+        {/* Search Bar */}
+        <div className="relative flex justify-between">
+          <div className='w-full max-w-md'>
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
               placeholder="Search leads by name, email, or company..."
@@ -196,7 +200,6 @@ export default function LeadSearchFilters({
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+    </motion.div>
   );
 }

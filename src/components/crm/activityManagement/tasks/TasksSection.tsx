@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
-import { Button } from '../../../ui/button';
 import { showToast } from '../../../../layout/layout';
 import { mockActivities } from '../../../../data/crmMockData';
+import TasksHeader from './TasksHeader';
+import TasksSearchFilter from './TasksSearchFilter';
+import type { TaskFilterState } from './TasksSearchFilter';
 import TaskList from './TaskList';
 import ActivityForm from './ActivityForm';
 import type { Activity } from '../../../../types/crm';
@@ -13,6 +14,12 @@ export default function TasksSection() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [filters, setFilters] = useState<TaskFilterState>({
+    searchTerm: '',
+    status: 'all',
+    type: 'all',
+    dateRange: 'all',
+  });
 
   const handleAddActivity = (activityData: Partial<Activity>) => {
     const activity: Activity = {
@@ -74,22 +81,16 @@ export default function TasksSection() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tasks & Activities</h1>
-          <p className="text-gray-600">Manage your tasks, meetings, and calls</p>
-        </div>
-        <Button 
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-orange-600 hover:bg-orange-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New Activity
-        </Button>
-      </div>
+      <TasksHeader />
+      <TasksSearchFilter
+        filters={filters}
+        onFiltersChange={setFilters}
+        onAddClick={() => setIsAddDialogOpen(true)}
+      />
 
       <TaskList
         activities={activities}
+        filters={filters}
         onStatusChange={handleStatusChange}
         onEdit={(activity) => {
           setSelectedActivity(activity);

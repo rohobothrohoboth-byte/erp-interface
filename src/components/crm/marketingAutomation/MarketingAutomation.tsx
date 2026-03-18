@@ -139,11 +139,15 @@ export default function MarketingAutomation() {
       className="space-y-6"
     >
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Marketing Automation</h1>
-          <p className="text-gray-600">Create and manage marketing campaigns</p>
-        </div>
+      <motion.div
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="flex items-center justify-between"
+      >
+        <h1 className="bg-gradient-to-r from-orange-500 to-orange-700 bg-clip-text text-transparent text-2xl font-bold">
+          Marketing Automation
+        </h1>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-orange-600 hover:bg-orange-700">
@@ -233,7 +237,7 @@ export default function MarketingAutomation() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+      </motion.div>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

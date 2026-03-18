@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Edit, Trash2, MessageSquare } from 'lucide-react';
+import { Edit, Trash2, MessageSquare } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 import { showToast } from '../../../layout/layout';
 import AddSMSCampaignModal from '../../../components/crm/campaigns/AddSMSCampaignModal';
 import DeleteSmsCampaignModal from '../../../components/crm/marketingAutomation/DeleteSmsCampaignModal';
+import SMSCampaignsHeader from '../../../components/crm/marketingAutomation/smsCampaigns/SMSCampaignsHeader';
+import SMSCampaignsSearchFilter from '../../../components/crm/marketingAutomation/smsCampaigns/SMSCampaignsSearchFilter';
 import { Pagination } from '../../../components/ui/pagination';
 import type { SMSCampaign } from '../../../types/campaign';
 
@@ -16,6 +18,7 @@ export default function SMSCampaignsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<SMSCampaign | null>(null);
   const [deletingCampaign, setDeletingCampaign] = useState<SMSCampaign | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -101,30 +104,25 @@ export default function SMSCampaignsPage() {
   };
 
   // Pagination calculations
-  const totalItems = smsCampaigns.length;
+  const filteredCampaigns = smsCampaigns.filter(c =>
+    !searchTerm || c.campaignName.toLowerCase().includes(searchTerm.toLowerCase()) || c.message.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  const totalItems = filteredCampaigns.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedCampaigns = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return smsCampaigns.slice(startIndex, endIndex);
-  }, [smsCampaigns, currentPage]);
+    return filteredCampaigns.slice(startIndex, endIndex);
+  }, [filteredCampaigns, currentPage]);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">SMS Campaigns</h1>
-          <p className="text-gray-600">Create and manage SMS marketing campaigns</p>
-        </div>
-        <Button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-orange-600 hover:bg-orange-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          New SMS Campaign
-        </Button>
-      </div>
+      <SMSCampaignsHeader />
+      <SMSCampaignsSearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        onAddClick={() => setIsModalOpen(true)}
+      />
 
       {/* SMS Campaigns Table */}
       <motion.div
@@ -141,7 +139,6 @@ export default function SMSCampaignsPage() {
               onClick={() => setIsModalOpen(true)}
               className="bg-orange-600 hover:bg-orange-700"
             >
-              <Plus className="w-4 h-4 mr-2" />
               Create SMS Campaign
             </Button>
           </div>

@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Plus } from 'lucide-react';
-import { Button } from '../../../ui/button';
 import { showToast } from '../../../../layout/layout';
 import { mockSupportTickets } from '../../../../data/crmMockData';
+import TicketsHeader from './TicketsHeader';
+import TicketsSearchFilter from './TicketsSearchFilter';
 import TicketList from './TicketList';
 import TicketFilters from './TicketFilters';
 import TicketForm from './TicketForm';
-import TicketStats from './TicketStats';
 import type { SupportTicket } from '../../../../types/crm';
 
 interface FilterState {
@@ -160,22 +159,14 @@ export default function TicketsSection() {
       className="space-y-6"
     >
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Support Tickets</h1>
-          <p className="text-gray-600">Manage and track customer support tickets</p>
-        </div>
-        <Button 
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-orange-600 hover:bg-orange-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Ticket
-        </Button>
-      </div>
+      <TicketsHeader />
 
-      {/* Stats */}
-      {/* <TicketStats tickets={tickets} /> */}
+      {/* Search + Add */}
+      <TicketsSearchFilter
+        filters={filters}
+        onFiltersChange={setFilters}
+        onAddClick={() => setIsAddDialogOpen(true)}
+      />
 
       {/* Filters */}
       <TicketFilters

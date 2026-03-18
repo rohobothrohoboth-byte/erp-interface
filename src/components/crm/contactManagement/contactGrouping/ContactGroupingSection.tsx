@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { showToast } from '../../../../layout/layout';
 import ContactGroupingHeader from './ContactGroupingHeader';
+import ContactGroupingSearchFilter from './ContactGroupingSearchFilter';
 import ContactGroupingTable from './ContactGroupingTable';
 import AddContactGroupModal from './AddContactGroupModal';
 import ContactGroupConditionModal from './ContactGroupConditionModal';
@@ -46,6 +47,9 @@ export default function ContactGroupingSection() {
   const [editingGroup, setEditingGroup] = useState<ContactGroup | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<ContactGroup | null>(null);
   const [deletingGroup, setDeletingGroup] = useState<ContactGroup | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const handleAddGroup = (groupData: Omit<ContactGroup, 'id' | 'contactCount' | 'createdAt' | 'updatedAt'>) => {
     const newGroup: ContactGroup = {
@@ -115,10 +119,22 @@ export default function ContactGroupingSection() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <ContactGroupingHeader onAddGroup={() => setIsAddModalOpen(true)} />
+      <ContactGroupingHeader />
+      <ContactGroupingSearchFilter
+        searchTerm={searchTerm}
+        onSearchChange={(val) => { setSearchTerm(val); setCurrentPage(1); }}
+        onAddClick={() => setIsAddModalOpen(true)}
+      />
 
       <ContactGroupingTable
-        contactGroups={contactGroups}
+        contactGroups={(() => {
+          const filtered = contactGroups.filter(g => !searchTerm || g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.code.toLowerCase().includes(searchTerm.toLowerCase()));
+          return filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+        })()}
+        currentPage={currentPage}
+        totalPages={Math.ceil(contactGroups.filter(g => !searchTerm || g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.code.toLowerCase().includes(searchTerm.toLowerCase())).length / pageSize) || 1}
+        totalItems={contactGroups.filter(g => !searchTerm || g.name.toLowerCase().includes(searchTerm.toLowerCase()) || g.code.toLowerCase().includes(searchTerm.toLowerCase())).length}
+        onPageChange={(page) => setCurrentPage(page)}
         onEdit={handleEdit}
         onDelete={handleDeleteGroup}
         onConditionClick={handleConditionClick}
