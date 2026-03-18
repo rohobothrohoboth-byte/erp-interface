@@ -18,9 +18,9 @@ export default function LeadGroupingSearchFilter({
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center gap-4"
+      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center gap-4 justify-between"
     >
-      <div className="relative flex-1">
+      <div className="relative flex-1 max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
         <input
           type="text"
@@ -32,7 +32,7 @@ export default function LeadGroupingSearchFilter({
       </div>
       <button
         onClick={onAddClick}
-        className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
+        className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors justify-end"
       >
         <BadgePlus className="w-4 h-4" />
         Add Lead Group

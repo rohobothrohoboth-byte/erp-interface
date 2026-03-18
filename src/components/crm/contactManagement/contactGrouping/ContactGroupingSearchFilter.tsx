@@ -18,9 +18,9 @@ export default function ContactGroupingSearchFilter({
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center gap-4"
+      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center gap- justify-between"
     >
-      <div className="relative flex-1">
+      <div className="relative flex-1 max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
         <input
           type="text"
