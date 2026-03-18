@@ -39,6 +39,14 @@ const SMSTemplatesTable: React.FC<SMSTemplatesTableProps> = ({ templates, onEdit
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
+            {paginated.length === 0 && (
+              <tr>
+                <td colSpan={5} className="p-4 text-center">
+                  <MessageSquare className="w-5 h-5 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm font-medium text-gray-500 mb-1">No SMS Templates Found</p>
+                </td>
+              </tr>
+            )}
             {paginated.map((template, index) => (
               <motion.tr
                 key={template.id}

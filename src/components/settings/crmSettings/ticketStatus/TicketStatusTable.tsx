@@ -38,6 +38,14 @@ const TicketStatusTable: React.FC<TicketStatusTableProps> = ({ statuses, onEdit,
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
+            {paginated.length === 0 && (
+              <tr>
+                <td colSpan={4} className="p-4 text-center">
+                  <Tag className="w-5 h-5 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm font-medium text-gray-500 mb-1">No Ticket Statuses Found</p>
+                </td>
+              </tr>
+            )}
             {paginated.map((status, index) => (
               <motion.tr
                 key={status.id}

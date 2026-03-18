@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Award } from "lucide-react";
 import { showToast } from "../../../../layout/layout";
 import LeadScoringHeader from "./LeadScoringHeader";
 import LeadScoringSearchFilter from "./LeadScoringSearchFilter";
@@ -118,24 +117,6 @@ const LeadScoringSection: React.FC = () => {
         onDelete={setDeletingCriteria}
         onToggleActive={handleToggleActive}
       />
-
-      {filteredCriteria.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-12 bg-white rounded-lg border"
-        >
-          <Award className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No Lead Scoring Criteria Found
-          </h3>
-          <p className="text-gray-500 mb-4">
-            {searchTerm
-              ? "No criteria match your search."
-              : "Get started by creating your first scoring criteria."}
-          </p>
-        </motion.div>
-      )}
 
       <AddScoringCriteriaModal
         isOpen={isAddModalOpen}

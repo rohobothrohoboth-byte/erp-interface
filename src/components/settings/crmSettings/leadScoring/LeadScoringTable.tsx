@@ -41,6 +41,14 @@ const LeadScoringTable: React.FC<LeadScoringTableProps> = ({ criteria, onEdit, o
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
+            {paginated.length === 0 && (
+              <tr>
+                <td colSpan={6} className="p-4 text-center">
+                  <Star className="w-5 h-5 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm font-medium text-gray-500 mb-1">No Lead Scoring Criteria Found</p>
+                </td>
+              </tr>
+            )}
             {paginated.map((item, index) => (
               <motion.tr key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }} className="hover:bg-gray-50">
                 <td className="px-4 py-2 whitespace-nowrap">

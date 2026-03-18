@@ -40,11 +40,19 @@ const LeadStatusesTable: React.FC<LeadStatusesTableProps> = ({ statuses, onEdit,
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
+            {paginated.length === 0 && (
+              <tr>
+                <td colSpan={5} className="p-4 text-center">
+                  <Tag className="w-5 h-5 mx-auto mb-2 text-gray-300" />
+                  <p className="text-sm font-medium text-gray-500 mb-1">No Lead Statuses Found</p>
+                </td>
+              </tr>
+            )}
             {paginated.map((status, index) => (
               <motion.tr key={status.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }} className="hover:bg-gray-50">
                 <td className="px-4 py-2 whitespace-nowrap">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                    <div className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
                       <Tag className="w-4 h-4 text-orange-600" />
                     </div>
                     <span className="text-sm font-medium text-gray-900">{status.name}</span>

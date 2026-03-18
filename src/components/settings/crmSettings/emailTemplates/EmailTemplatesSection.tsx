@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail } from "lucide-react";
 import { showToast } from "../../../../layout/layout";
 import EmailTemplatesHeader from "./EmailTemplatesHeader";
 import EmailTemplatesSearchFilter from "./EmailTemplatesSearchFilter";
@@ -107,24 +106,6 @@ const EmailTemplatesSection: React.FC = () => {
         onDelete={setDeletingTemplate}
         onToggleActive={handleToggleActive}
       />
-
-      {filteredTemplates.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-12 bg-white rounded-lg border"
-        >
-          <Mail className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No Email Templates Found
-          </h3>
-          <p className="text-gray-500 mb-4">
-            {searchTerm
-              ? "No templates match your search."
-              : "Get started by creating your first email template."}
-          </p>
-        </motion.div>
-      )}
 
       <AddEmailTemplateModal
         isOpen={isAddModalOpen}

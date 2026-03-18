@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { FileText } from "lucide-react";
 import { showToast } from "../../../../layout/layout";
 import QuotationTemplatesHeader from "./QuotationTemplatesHeader";
 import QuotationTemplatesSearchFilter from "./QuotationTemplatesSearchFilter";
@@ -109,24 +108,6 @@ const QuotationTemplatesSection: React.FC = () => {
         onDelete={setDeletingTemplate}
         onToggleActive={handleToggleActive}
       />
-
-      {filteredTemplates.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-12 bg-white rounded-lg border"
-        >
-          <FileText className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No Quotation Templates Found
-          </h3>
-          <p className="text-gray-500 mb-4">
-            {searchTerm
-              ? "No templates match your search."
-              : "Get started by creating your first quotation template."}
-          </p>
-        </motion.div>
-      )}
 
       <AddQuotationTemplateModal
         isOpen={isAddModalOpen}
