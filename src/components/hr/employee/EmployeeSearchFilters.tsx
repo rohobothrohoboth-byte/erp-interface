@@ -90,7 +90,7 @@ const EmployeeSearchFilters: React.FC<EmployeeSearchFiltersProps> = ({
             <Button
               onClick={handleAddEmployee}
               size="sm"
-              className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer"
+              className="flex items-center gap-2 bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer"
             >
               <BadgePlus className="w-4 h-4" />
               Add Employee

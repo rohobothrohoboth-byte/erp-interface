@@ -3,44 +3,25 @@ import { motion } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, User, Loader2, PenBox, Lock,
 } from "lucide-react";
-import DeleteEmployeeModal from "../../hr/employee/DeleteEmployeeModal";
+import type { EmployeeListDto } from '../../../types/hr/employee';
 
-interface Employee {
-  id: string;
-  code: string;
-  empFullName: string;
-  empFullNameAm: string;
-  gender: string;
-  department: string;
-  position: string;
-  branch?: string;
-  jobGrade?: string;
-  empType?: string;
-  empNature?: string;
-  photo?: string;
-  status?: "active" | "on-leave";
-  employmentDate?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  updatedBy?: string;
-  hasAccount: boolean;
-}
+
 
 interface EmployeeTableProps {
-  employees: Employee[];
+  employees: EmployeeListDto[];
   currentPage: number;
   totalPages: number;
   totalItems: number;
   onPageChange: (page: number) => void;
-  onEmployeeUpdate: (updatedEmployee: Employee) => void;
+  onEmployeeUpdate: (updatedEmployee: EmployeeListDto) => void;
   onEmployeeStatusChange: (
     employeeId: string,
     newStatus: "active" | "on-leave",
   ) => void;
   onEmployeeTerminate: (employeeId: string) => void;
   onEmployeeDelete: (employeeId: string) => void;
-  onAddAccount?: (employee: Employee) => void;
-  onEditAccount?: (employee: Employee) => void;
+  onAddAccount?: (employee: EmployeeListDto) => void;
+  onEditAccount?: (employee: EmployeeListDto) => void;
   showAddAccountButton?: boolean;
   loading?: boolean;
 }
@@ -54,21 +35,20 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   onEmployeeDelete,
   onAddAccount,
   onEditAccount,
-  showAddAccountButton = true,
   loading = false,
 }) => {
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeListDto | null>(
     null,
   );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const sortedEmployees = [...employees].sort((a, b) => {
-    const dateA = a.employmentDate || a.createdAt || "";
-    const dateB = b.employmentDate || b.createdAt || "";
+    const dateA = a.createdAt || "";
+    const dateB = b.createdAt || "";
     return new Date(dateB).getTime() - new Date(dateA).getTime();
   });
 
-  const handleDelete = (employee: Employee) => {
+  const handleDelete = (employee: EmployeeListDto) => {
     setSelectedEmployee(employee);
     setIsDeleteModalOpen(true);
   };
@@ -85,14 +65,14 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   };
 
   // Handle Add Account button click
-  const handleAddAccountClick = (employee: Employee) => {
+  const handleAddAccountClick = (employee: EmployeeListDto) => {
     if (onAddAccount) {
       onAddAccount(employee);
     }
   };
 
   // Handle Edit Account button click
-  const handleEditAccountClick = (employee: Employee) => {
+  const handleEditAccountClick = (employee: EmployeeListDto) => {
     if (onEditAccount) {
       onEditAccount(employee);
     }
@@ -169,12 +149,6 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                 </th>
                 <th
                   scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell"
-                >
-                  Job Grade
-                </th>
-                <th
-                  scope="col"
                   className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   Status
@@ -211,28 +185,29 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                       <div className="flex items-center">
                         <motion.div
                           whileHover={{ rotate: 10 }}
-                          className="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center"
+                          className="shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center"
                         >
-                          {employee.photo ? (
-                            <img
-                              src={`data:image/png;base64,${employee.photo}`}
-                              alt={employee.empFullName}
-                              className="h-10 w-10 rounded-full object-cover"
-                            />
-                          ) : (
-                            <User className="text-green-600 h-5 w-5" />
-                          )}
+                          <div className="shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                            <span className="text-emerald-600 font-medium">
+                              {employee.empFullName
+                                ?.trim()
+                                .split(" ")
+                                .slice(0, 2)
+                                .map((name) => name.charAt(0).toUpperCase())
+                                .join("")}
+                            </span>
+                          </div>
                         </motion.div>
                         <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] md:max-w-none">
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-30 md:max-w-none">
                             {employee.empFullName || "No Name"}
                           </div>
-                          <div className="text-xs text-gray-400 truncate max-w-[120px] md:max-w-none">
+                          <div className="text-xs text-gray-400 truncate max-w-30 md:max-w-none">
                             {employee.empFullNameAm ||
                               employee.empFullName ||
                               "No Name"}
                           </div>
-                          <div className="text-xs text-gray-400 truncate max-w-[120px] md:max-w-none">
+                          <div className="text-xs text-gray-400 truncate max-w-30 md:max-w-none">
                             {employee.gender || "N/A"}
                           </div>
                         </div>
@@ -240,60 +215,43 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-30">
                           {employee.code || "Not specified"}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-30">
                           {employee.branch || "Not specified"}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-30">
                           {employee.department || "Not specified"}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-30">
                           {employee.position || "Not specified"}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
-                          {employee.jobGrade || "Not specified"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 hidden xl:table-cell">
-                      <div className="flex items-center">
                         <span
-                          className={`truncate max-w-30 ${employee.status === "active" ? "text-green-600" : "text-red-600"}`}
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${employee.empState === "active" ? "bg-green-100 text-green-800 border border-green-200" : "bg-red-100 text-red-800 border border-red-200"}`}
                         >
-                          {employee.status || "Not specified"}
+                          {employee.empState || "Not specified"}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleAddAccountClick(employee)}
-                        className="p-2 rounded-full bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-colors"
-                        title="Add Account"
-                      >
-                        <Lock className="h-5 w-5" />
-                      </motion.button>
-
-                      {/* {employee.hasAccount ? (
+                      {employee.hasAccount ? (
                         // Direct Edit button for users with accounts
                         <motion.button
                           whileHover={{ scale: 1.1 }}
@@ -302,7 +260,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                           className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
                           title="Manage Account"
                         >
-                          <PenBox className="h-4 w-4" />
+                          <PenBox className="h-5 w-5" />
                         </motion.button>
                       ) : (
                         // Add Account button for users without accounts
@@ -315,7 +273,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                         >
                           <Lock className="h-5 w-5" />
                         </motion.button>
-                      )} */}
+                      )}
                     </td>
                   </motion.tr>
                 ))
@@ -376,10 +334,11 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                     <button
                       key={page}
                       onClick={() => onPageChange(page)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === page
-                        ? "z-10 bg-blue-50 border-green-500 text-green-600"
-                        : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                        }`}
+                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                        currentPage === page
+                          ? "z-10 bg-blue-50 border-green-500 text-green-600"
+                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                      }`}
                     >
                       {page}
                     </button>

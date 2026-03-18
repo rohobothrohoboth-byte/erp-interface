@@ -78,7 +78,7 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({
 
   const getEmployeeDisplayName = () => {
     if (!employee) return '';
-    return employee.fullName || '';
+    return employee.empFullName || '';
   };
 
   const getEmployeeCode = () => {

@@ -1,11 +1,31 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
-import type { EmployeeListDto } from "../../../types/hr/employee";
+// import type { EmployeeListDto } from "../../../types/hr/employee";
 import { Button } from "../../ui/button";
 
+interface Employee {
+  id: string;
+  code: string;
+  empFullName: string;
+  empFullNameAm: string;
+  gender: string;
+  department: string;
+  position: string;
+  branch?: string;
+  jobGrade?: string;
+  empType?: string;
+  empNature?: string;
+  photo?: string;
+  status?: "active" | "on-leave";
+  employmentDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
 interface DeleteEmployeeModalProps {
-  employee: EmployeeListDto | null;
+  employee: Employee | null;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (employeeId: string) => void;

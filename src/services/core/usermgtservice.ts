@@ -8,7 +8,7 @@ import type { EmployeeListDto } from "../../types/hr/employee";
 import { api } from "../api";
 
 class UsermgmtService {
-  private baseUrl = `${import.meta.env.VITE_HRMM_PROFILE_URL || "/hrm/profile/v1"}/AdminEmp`;
+  private baseUrl = `${import.meta.env.VITE_HRMM_PROFILE_URL || "/auth/v1"}/AdminEmp`;
 
   // Helper method to extract error messages
   private extractErrorMessage(error: any): string {
@@ -27,7 +27,7 @@ class UsermgmtService {
     return "An unexpected error occurred";
   }
 
-  // GET: /api/hrm/profile/v1/AdminEmp/AllEmployee
+  // GET: /api/auth/v1/AdminEmp/AllEmployee
   async getAllEmployees(): Promise<EmployeeListDto[]> {
     try {
       const response = await api.get(`${this.baseUrl}/AllEmployee`);
@@ -40,7 +40,7 @@ class UsermgmtService {
     }
   }
 
-  // POST: /api/hrm/profile/v1/AdminEmp/Step1
+  // POST: /api/auth/v1/AdminEmp/Step1
   async addEmployeeStep1(step1: Step1Dto): Promise<EmpAddRes> {
     try {
       const response = await api.post(`${this.baseUrl}/Step1`, step1, {
@@ -58,7 +58,7 @@ class UsermgmtService {
     }
   }
 
-  // GET: /api/hrm/profile/v1/AdminEmp/Step2/{id}
+  // GET: /api/auth/v1/AdminEmp/Step2/{id}
   async getEmployeeStep2Data(employeeId: UUID): Promise<BasicInfoDto> {
     try {
       const response = await api.get(`${this.baseUrl}/Step2/${employeeId}`);

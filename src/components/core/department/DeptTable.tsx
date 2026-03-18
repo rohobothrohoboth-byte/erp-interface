@@ -142,17 +142,17 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({
                       <div className="flex items-center">
                         <motion.div 
                           whileHover={{ rotate: 10 }}
-                          className="flex-shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center"
+                          className="shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center"
                         >
                           <span className="text-emerald-600 font-medium">
                             {department.name.charAt(0).toUpperCase()}
                           </span>
                         </motion.div>
                         <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] md:max-w-none">
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-30 md:max-w-none">
                             {department.name}
                           </div>
-                          <div className="text-xs text-gray-500 truncate max-w-[120px] md:max-w-none">
+                          <div className="text-xs text-gray-500 truncate max-w-30 md:max-w-none">
                             {department.nameAm}
                           </div>
                         </div>

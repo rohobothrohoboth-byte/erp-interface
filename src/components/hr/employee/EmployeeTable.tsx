@@ -219,7 +219,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                       <div className="flex items-center">
                         <motion.div
                           whileHover={{ rotate: 10 }}
-                          className="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center"
+                          className="shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center"
                         >
                           {employee.photo ? (
                             <img
@@ -228,8 +228,8 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                               className="h-10 w-10 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="shrink-0 h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                              <span className="text-orange-600 font-medium">
+                            <div className="shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                              <span className="text-emerald-600 font-medium">
                                 {employee.empFullName
                                   ?.trim()
                                   .split(" ")
@@ -241,15 +241,15 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                           )}
                         </motion.div>
                         <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] md:max-w-none">
+                          <div className="text-sm font-medium text-gray-900 truncate max-w-30 md:max-w-none">
                             {employee.empFullName || "No Name"}
                           </div>
-                          <div className="text-xs text-gray-400 truncate max-w-[120px] md:max-w-none">
+                          <div className="text-xs text-gray-400 truncate max-w-30 md:max-w-none">
                             {employee.empFullNameAm ||
                               employee.empFullName ||
                               "No Name"}
                           </div>
-                          <div className="text-xs text-gray-400 truncate max-w-[120px] md:max-w-none">
+                          <div className="text-xs text-gray-400 truncate max-w-30 md:max-w-none">
                             {employee.gender || "N/A"}
                           </div>
                         </div>
@@ -257,35 +257,35 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-30">
                           {employee.code || "Not specified"}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-30">
                           {employee.branch || "Not specified"}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-30">
                           {employee.department || "Not specified"}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-30">
                           {employee.position || "Not specified"}
                         </span>
                       </div>
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
-                        <span className="truncate max-w-[120px]">
+                        <span className="truncate max-w-30">
                           {employee.jobGrade || "Not specified"}
                         </span>
                       </div>
@@ -293,7 +293,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
                       <div className="flex items-center">
                         <span
-                          className={`truncate max-w-30 ${employee.status === "active" ? "text-green-600" : "text-red-600"}`}
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${employee.status === "active" ? "bg-green-100 text-green-800 border border-green-200" : "bg-red-100 text-red-800 border border-red-200"}`}
                         >
                           {employee.status || "Not specified"}
                         </span>

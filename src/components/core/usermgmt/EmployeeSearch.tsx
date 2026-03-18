@@ -1,73 +1,56 @@
-import React, { useState } from 'react';
-import { BadgePlus, Search, X } from "lucide-react";
-import { Button } from "../../../components/ui/button";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import React from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { BadgePlus, Search, X } from 'lucide-react';
+import { Button } from '../../ui/button';
 
-interface EmployeeSearchProps {
-  searchQuery: string;
-  onSearchChange: (value: string) => void;
-  onSearchEmployee: () => void;
+
+interface EmployeeSearchFiltersProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  filters: {
+    department: string;
+    empState: string;
+  };
+  setFilters: (filters: any) => void;
+  // employees: EmployeeListDto[];
+  onRefresh?: () => void;
+  loading?: boolean;
+  onAddEmployee?: () => void;
 }
 
-const EmployeeSearch: React.FC<EmployeeSearchProps> = ({
-  searchQuery,
-  onSearchChange,
-  onSearchEmployee,
+const EmployeeSearchFilters: React.FC<EmployeeSearchFiltersProps> = ({
+  searchTerm,
+  setSearchTerm,
+  onAddEmployee
 }) => {
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Validate code input - only allow 10 alphanumeric characters
-  const validateCode = (code: string): boolean => {
-    if (code === "") return true; 
-    return /^[a-zA-Z0-9]{0,10}$/.test(code); 
+  // Default Add Employee handler for HR module
+  const defaultHandleAddEmployee = () => {
+    navigate('/hr/employees/record/Add');
   };
 
-  const handleInputChange = (value: string) => {
-    // Only allow alphanumeric characters
-    const alphanumericValue = value.replace(/[^a-zA-Z0-9]/g, '');
-    
-    if (validateCode(alphanumericValue)) {
-      onSearchChange(alphanumericValue);
-      setError(null);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (searchQuery && searchQuery.length !== 10) {
-      setError("Code must be exactly 10 characters");
-      return;
-    }
-    
-    console.log("Searching for employee with code:", searchQuery);
-    setError(null);
-    onSearchEmployee(); // Trigger search when form is submitted
-  };
+  // Use custom handler if provided, otherwise use default
+  const handleAddEmployee = onAddEmployee || defaultHandleAddEmployee;
 
   const clearSearch = () => {
-    onSearchChange('');
-    setError(null);
+    setSearchTerm('');
   };
 
-  const handleAddEmployee = () => {
-    navigate('/core/Add-Employee');
-  };
-
-  const hasSearchTerm = searchQuery !== '';
+  const hasSearchTerm = searchTerm !== '';
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
-      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6"
+      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
     >
-      <form onSubmit={handleSubmit} className="w-full">
+      <div className="flex flex-col gap-4">
+        {/* 🔍 Search Row */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* 🔍 Search Input Container */}
+          {/* Search Input */}
           <div className="w-full lg:flex-1">
             <div className="relative w-full max-w-md">
               <label htmlFor="employee-search" className="sr-only">
@@ -80,11 +63,10 @@ const EmployeeSearch: React.FC<EmployeeSearchProps> = ({
                 id="employee-search"
                 name="employee-search"
                 type="text"
-                placeholder="Search by employee code"
-                className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md text-sm bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                value={searchQuery}
-                onChange={(e) => handleInputChange(e.target.value)}
-                maxLength={10}
+                placeholder="Search employees by name, code, department, position..."
+                className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md text-sm bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
               {/* Clear search "X" button */}
               {hasSearchTerm && (
@@ -100,30 +82,23 @@ const EmployeeSearch: React.FC<EmployeeSearchProps> = ({
                 </div>
               )}
             </div>
-            
-            {/* Error message */}
-            {error && (
-              <div className="mt-2 text-sm text-red-600">
-                {error}
-              </div>
-            )}
           </div>
 
-          {/* 🔍 Search Button and ➕ Add Employee Button */}
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+          {/* Add Employee Button */}
+          <div className="flex justify-end w-full lg:w-auto">
             <Button
               onClick={handleAddEmployee}
               size="sm"
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white w-full sm:w-auto cursor-pointer"
+              className="flex items-center gap-2 bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer"
             >
-              <BadgePlus className="h-4 w-4" />
+              <BadgePlus className="w-4 h-4" />
               Add Employee
             </Button>
           </div>
         </div>
-      </form>
+      </div>
     </motion.div>
   );
 };
 
-export default EmployeeSearch;
+export default EmployeeSearchFilters;

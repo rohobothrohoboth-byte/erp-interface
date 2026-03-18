@@ -2,17 +2,7 @@ import { motion } from "motion/react";
 import { Card } from "../../ui/card";
 import { Button } from "../../ui/button";
 import { User } from "lucide-react";
-
-interface EmpSearchRes {
-  id: string;
-  photo: string;
-  code: string;
-  fullName: string;
-  fullNameAm: string;
-  gender: string;
-  dept: string;
-  position: string;
-}
+import type { EmpSearchRes } from "../../../types/core/EmpSearchRes";
 
 interface EmployeeListProps {
   employees: EmpSearchRes[];
@@ -63,13 +53,12 @@ const EmployeeList: React.FC<EmployeeListProps> = ({
   const employee = employees[0];
 
   const {
-    photo,
     code = "EMP0012345",
-    fullName = "John Doe",
-    fullNameAm = "",
+    empFullName = "John Doe",
+    empFullNameAm = "",
     gender = "male",
     dept = "Human Resources",
-    position = "HR Manager"
+    position = "HR Manager",
   } = employee;
 
   return (
@@ -89,32 +78,30 @@ const EmployeeList: React.FC<EmployeeListProps> = ({
             <div className="md:w-2/5 space-y-4">
               {/* Photo Container */}
               <div className="relative">
-                {photo ? (
-                  <div className="w-full h-56 rounded-xl overflow-hidden border border-gray-200">
-                    <img
-                      src={`data:image/png;base64,${photo}`}
-                      // src={photo}
-                      alt={getDisplayValue(fullName, "Employee")}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement!.innerHTML = `
-                          <div class="w-full h-56 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200">
+                <div className="w-full h-56 rounded-xl overflow-hidden border border-gray-200">
+                  <img
+                    // src={`data:image/png;base64,${photo}`}
+                    // src={photo}
+                    alt={getDisplayValue(empFullName, "Employee")}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.parentElement!.innerHTML = `
+                          <div class="w-full h-56 rounded-xl bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200">
                             <div class="text-gray-600 font-bold text-3xl">
-                              ${getInitials(fullName)}
+                              ${getInitials(empFullName)}
                             </div>
                           </div>
                         `;
-                      }}
-                    />
+                    }}
+                  />
+                </div>
+
+                <div className="w-full h-56 rounded-xl bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200">
+                  <div className="text-gray-600 font-bold text-3xl">
+                    {getInitials(empFullName)}
                   </div>
-                ) : (
-                  <div className="w-full h-56 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border border-gray-200">
-                    <div className="text-gray-600 font-bold text-3xl">
-                      {getInitials(fullName)}
-                    </div>
-                  </div>
-                )}
+                </div>
 
                 {/* Code Display at Bottom */}
                 <div className="mt-4 text-center">
@@ -129,18 +116,14 @@ const EmployeeList: React.FC<EmployeeListProps> = ({
 
             {/* Right Column - Employee Details */}
             <div className="md:w-3/5 space-y-4">
-
               <div className="space-y-2">
                 <h2 className="text-xl font-bold text-gray-800">
-                  {getDisplayValue(fullName)}
+                  {getDisplayValue(empFullName)}
                 </h2>
 
-                {fullNameAm && fullNameAm.trim() !== "" && (
+                {empFullNameAm && empFullNameAm.trim() !== "" && (
                   <div className="flex items-center gap-2">
-
-                    <p className="text-gray-700 text-sm">
-                      {fullNameAm}
-                    </p>
+                    <p className="text-gray-700 text-sm">{empFullNameAm}</p>
                   </div>
                 )}
               </div>
@@ -153,7 +136,6 @@ const EmployeeList: React.FC<EmployeeListProps> = ({
                   </p>
                 </div>
               </div>
-
 
               <div className="flex items-center gap-3">
                 <div>
@@ -186,7 +168,6 @@ const EmployeeList: React.FC<EmployeeListProps> = ({
           </div>
         </div>
       </Card>
-
     </motion.div>
   );
 };

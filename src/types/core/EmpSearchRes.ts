@@ -1,14 +1,13 @@
-import type { UUID } from 'crypto';
-
-export type {UUID} 
+export type UUID = string;
 export interface EmpSearchRes {
   id: UUID;
-  photo: string;
-  code: string;
-  fullName: string;
-  fullNameAm: string;
+  empFullName: string;
+  empFullNameAm: string;
   gender: string;
+  code: string;
+  branch: string;
   dept: string;
   position: string;
+  empState: String;
   hasAccount: boolean;
 }

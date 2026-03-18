@@ -1,9 +1,10 @@
-import { type UUID } from 'crypto';
+
 import type { BaseDto } from './BaseDto';
 import type { EmpNature, EmpType, Gender, YesNo } from './enum';
-export type { UUID }
+export type  UUID = string;
 
 export interface EmployeeListDto extends BaseDto {
+  id: UUID;
   empFullName: string;
   empFullNameAm: string;
   code: string;
@@ -11,11 +12,7 @@ export interface EmployeeListDto extends BaseDto {
   branch: string;
   department: string;
   position: string;
-  jobGrade: string;
-  empType: string;
-  empNature: string;
-  workArr: string;
-  photo: string;
+  empState:String;
   hasAccount: boolean;
 }
 
