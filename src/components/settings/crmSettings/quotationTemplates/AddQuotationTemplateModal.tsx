@@ -1,6 +1,5 @@
 ﻿import React, { useState } from "react";
 import { AlertCircle, BadgePlus, X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../ui/dialog";
 import { Button } from "../../../ui/button";
 import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
@@ -25,7 +24,8 @@ const AddQuotationTemplateModal: React.FC<AddQuotationTemplateModalProps> = ({
     title: "",
     description: "",
     termsAndConditions: "",
-    validityDays: 30
+    validityDays: 30,
+    is_active: true,
   });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +36,8 @@ const AddQuotationTemplateModal: React.FC<AddQuotationTemplateModalProps> = ({
       title: "",
       description: "",
       termsAndConditions: "",
-      validityDays: 30
+      validityDays: 30,
+      is_active: true,
     });
     setError(null);
   };
@@ -100,13 +101,6 @@ const AddQuotationTemplateModal: React.FC<AddQuotationTemplateModalProps> = ({
                 <BadgePlus size={20} />
                 <h2 className="text-lg font-bold text-gray-800">Add New</h2>
               </div>
-              <button
-                onClick={handleClose}
-                className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-                disabled={isSubmitting}
-              >
-                <X size={24} />
-              </button>
             </div>
 
             {error && (

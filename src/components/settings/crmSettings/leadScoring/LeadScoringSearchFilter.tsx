@@ -43,9 +43,6 @@ const LeadScoringSearchFilter: React.FC<LeadScoringSearchFilterProps> = ({
           )}
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-sm text-gray-600">
-            Total: <span className="font-semibold">{totalPercentage}%</span>
-          </div>
           <Button onClick={onAddClick} className="bg-orange-600 hover:bg-orange-700 cursor-pointer">
             <Plus className="w-4 h-4 mr-2" />
             Add New

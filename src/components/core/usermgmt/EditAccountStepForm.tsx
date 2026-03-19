@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
-import { Shield, Key, Trash2, ArrowLeft } from "lucide-react";
+import { Shield, Key, ArrowLeft } from "lucide-react";
 import { EditAccountBasicInfoStep } from "./steps/EditAccountBasicInfoStep";
 import { MainPermissionsStep } from "./steps/MainPermissionsStep";
 import { ApiPermissionsStep } from "./steps/ApiPermissionsStep";
@@ -22,7 +22,7 @@ import DeleteAccountModal from "./DeleteAccountModal";
 const steps = [
   { id: 1, title: "Module Access", icon: Shield },
   { id: 2, title: "Menu Permissions", icon: Shield },
-  { id: 3, title: "Detailed Permissions", icon: Key },
+  { id: 3, title: "Access Permissions", icon: Key },
 ];
 
 interface EditAccountStepFormProps {
@@ -101,7 +101,7 @@ export const EditAccountStepForm: React.FC<EditAccountStepFormProps> = ({
 
   const getEmployeeDisplayName = () => {
     if (!employee) return "";
-    return employee.fullName || "";
+    return employee.empFullName || "";
   };
 
   const getEmployeeCode = () => {

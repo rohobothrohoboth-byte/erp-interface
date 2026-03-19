@@ -45,8 +45,7 @@ const QuotationTemplatesTable: React.FC<QuotationTemplatesTableProps> = ({ templ
                 <td colSpan={6} className="p-4 text-center">
                   <FileText className="w-5 h-5 mx-auto mb-2 text-gray-300" />
                   <p className="text-sm font-medium text-gray-500 mb-1">No Quotation Templates Found</p>
-                  <p className="text-sm text-gray-500">{templates.length === 0 ? 'Get started by creating your first quotation template.' : 'No templates match your search.'}</p>
-                </td>
+                                  </td>
               </tr>
             )}
             {paginated.map((template, index) => (

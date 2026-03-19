@@ -54,6 +54,11 @@ import { PageHolidayHist } from "./pages/core/pageHolidayHist";
 import ProfilePage from "./pages/profile";
 import PageAddUser from "./pages/core/usermanagement/pageAddUser";
 import PageHrSettings from "./pages/settings/hrSettings/PageHrSettings";
+import PageEvaluationType from "./pages/settings/hrSettings/Recruitment/PageEvaluationType";
+import PageEvaluationFlow from "./pages/settings/hrSettings/Recruitment/PageEvaluationFlow";
+import PageEvaluationStep from "./pages/settings/hrSettings/Recruitment/PageEvaluationStep";
+import PageJobDescription from "./pages/settings/hrSettings/Recruitment/PageJobDescription";
+import PageOnboardingTask from "./pages/settings/hrSettings/Recruitment/PageOnboardingTask";
 import PageCoreSettings from "./pages/settings/coreSettings/PageCoreSettings";
 import PageApiSettings from "./pages/settings/coreSettings/PageApiSettings";
 import PageMenuSettings from "./pages/settings/coreSettings/PageMenuSettings";
@@ -448,6 +453,26 @@ function App() {
                 element={<LeavePolicyAccrualPage />}
               />
               <Route path="/settings/hr" element={<PageHrSettings />} />
+              <Route
+                path="/settings/hr/evaluation-types"
+                element={<PageEvaluationType />}
+              />
+              <Route
+                path="/settings/hr/evaluation-flows"
+                element={<PageEvaluationFlow />}
+              />
+              <Route
+                path="/settings/hr/evaluation-flows/:flowId/steps"
+                element={<PageEvaluationStep />}
+              />
+              <Route
+                path="/settings/hr/job-descriptions"
+                element={<PageJobDescription />}
+              />
+              <Route
+                path="/settings/hr/onboarding-tasks"
+                element={<PageOnboardingTask />}
+              />
               <Route path="/hr/training" element={<Training />} />
               {/* END HR ROUTES */}
               {/* START FINANCE ROUTES */}

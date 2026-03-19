@@ -17,7 +17,7 @@ import toast from 'react-hot-toast';
 const steps = [
   { id: 1, title: 'Basic Info', icon: Lock },
   { id: 2, title: 'Menu Permissions', icon: Shield },
-  { id: 3, title: 'Detailed Permissions', icon: Key },
+  { id: 3, title: 'Access Permissions', icon: Key },
 ];
 
 interface AddAccountStepFormProps {

@@ -5,6 +5,10 @@ import {
   Award,
   Building,
   Calendar,
+  ClipboardList,
+  GitBranch,
+  FileText,
+  ClipboardCheck,
 } from 'lucide-react'
 import SettingsHeader from '../../../components/settings/SettingsHeader'
 import SettingCard from '../../../components/settings/SettingCard'
@@ -72,6 +76,46 @@ const hrSettingsCards = [
     color: "from-yellow-500 to-yellow-600",
     bgColor: "bg-yellow-50",
     iconColor: "text-yellow-600"
+  },
+  {
+    id: 6,
+    title: "Evaluation Types",
+    description: "Configure evaluation types and scoring criteria for recruitment",
+    icon: ClipboardList,
+    href: "/settings/hr/evaluation-types",
+    color: "from-green-500 to-emerald-600",
+    bgColor: "bg-green-50",
+    iconColor: "text-green-600"
+  },
+  {
+    id: 7,
+    title: "Evaluation Flows",
+    description: "Define evaluation flows and step sequences for the hiring process",
+    icon: GitBranch,
+    href: "/settings/hr/evaluation-flows",
+    color: "from-emerald-500 to-teal-600",
+    bgColor: "bg-emerald-50",
+    iconColor: "text-emerald-600"
+  },
+  {
+    id: 8,
+    title: "Job Descriptions",
+    description: "Create and manage job description templates for open positions",
+    icon: FileText,
+    href: "/settings/hr/job-descriptions",
+    color: "from-green-500 to-emerald-600",
+    bgColor: "bg-green-50",
+    iconColor: "text-green-600"
+  },
+  {
+    id: 9,
+    title: "Onboarding Tasks",
+    description: "Define onboarding task templates and sequences for new hires",
+    icon: ClipboardCheck,
+    href: "/settings/hr/onboarding-tasks",
+    color: "from-teal-500 to-green-600",
+    bgColor: "bg-teal-50",
+    iconColor: "text-teal-600"
   }
 ]
 

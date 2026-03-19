@@ -14,11 +14,11 @@ interface AddEmailTemplateModalProps {
 }
 
 export default function AddEmailTemplateModal({ isOpen, onClose, onSubmit }: AddEmailTemplateModalProps) {
-  const [formData, setFormData] = useState({ name: "", subject: "", body: "" });
+  const [formData, setFormData] = useState({ name: "", subject: "", body: "", is_active: true });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const reset = () => { setFormData({ name: "", subject: "", body: "" }); setError(null); };
+  const reset = () => { setFormData({ name: "", subject: "", body: "", is_active: true }); setError(null); };
   const handleClose = () => { if (!isSubmitting) { reset(); onClose(); } };
 
   const handleSubmit = async () => {
@@ -34,7 +34,7 @@ export default function AddEmailTemplateModal({ isOpen, onClose, onSubmit }: Add
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        className="bg-white rounded-xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center gap-2 border-b px-6 py-4 sticky top-0 bg-white z-10">
           <Mail className="w-5 h-5 text-orange-600" />
           <h2 className="text-base font-semibold text-gray-800">Add Email Template</h2>
