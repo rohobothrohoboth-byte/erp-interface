@@ -24,16 +24,49 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
 
   
   // Module-based color themes
-  const themeMap: Record<string, { bg: string; border: string; text: string }> = {
-    Inventory: { bg: 'bg-yellow-100', border: 'border-yellow-200', text: 'text-yellow-700' },
-    HR: { bg: 'bg-green-100', border: 'border-green-200', text: 'text-green-700' },
-    Core: { bg: 'bg-emerald-100', border: 'border-emerald-200', text: 'text-emerald-700' },
-    File: { bg: 'bg-emerald-100', border: 'border-emerald-200', text: 'text-emerald-700' },
-    CRM: { bg: 'bg-orange-100', border: 'border-orange-200', text: 'text-orange-700' },
-    Finance: { bg: 'bg-indigo-100', border: 'border-indigo-200', text: 'text-indigo-700' },
-    Procurement: { bg: 'bg-purple-100', border: 'border-purple-200', text: 'text-purple-700' },
-    default: { bg: 'bg-white', border: 'border-gray-200', text: 'text-gray-600' },
-  };
+  const themeMap: Record<string, { bg: string; border: string; text: string }> =
+    {
+      "mod.inv": {
+        bg: "bg-yellow-100",
+        border: "border-yellow-200",
+        text: "text-yellow-700",
+      },
+      "mod.hrm": {
+        bg: "bg-green-100",
+        border: "border-green-200",
+        text: "text-green-700",
+      },
+      "mod.core": {
+        bg: "bg-emerald-100",
+        border: "border-emerald-200",
+        text: "text-emerald-700",
+      },
+      "mod.flm": {
+        bg: "bg-emerald-100",
+        border: "border-emerald-200",
+        text: "text-emerald-700",
+      },
+      "mod.crm": {
+        bg: "bg-orange-100",
+        border: "border-orange-200",
+        text: "text-orange-700",
+      },
+      "mod.fnm": {
+        bg: "bg-indigo-100",
+        border: "border-indigo-200",
+        text: "text-indigo-700",
+      },
+      "mod.pro": {
+        bg: "bg-purple-100",
+        border: "border-purple-200",
+        text: "text-purple-700",
+      },
+      default: {
+        bg: "bg-white",
+        border: "border-gray-200",
+        text: "text-gray-600",
+      },
+    };
 
   const theme = themeMap[activeModule] || themeMap.default;
 

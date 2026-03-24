@@ -1,5 +1,4 @@
-import type { UUID } from "crypto";
-
+export type UUID = string;
 export interface ApiResponse<T> {
     success: boolean;
     message: string;
@@ -21,14 +20,15 @@ export interface AuthTokens {
 }
 
 export interface JwtPayload {
-    userId: string;
-    userName: string;
-    employeeId: UUID;
-    role: string;
-    perModule: string[];
-    perMenu: string[];
-    perApi: string[];
-    exp: number;
-    iss: string;
-    aud: string;
+  userId: string;
+  userName: string;
+  employeeId: UUID;
+  role: string;
+  perModule: string[];
+  perMenu: string[];
+  perApi: string[];
+  permissions: string;
+  exp: number;
+  iss: string;
+  aud: string;
 }

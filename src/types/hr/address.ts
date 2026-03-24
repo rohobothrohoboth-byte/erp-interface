@@ -1,7 +1,7 @@
-import type { UUID } from "crypto";
 import type { BaseDto } from "./BaseDto";
 import type { AddressType } from "./enum";
 
+export type UUID = string;
 export interface AddressListDto extends BaseDto {
     addressType: AddressType; //enum.AddressType (0/1)
     addressTypeStr: string;
