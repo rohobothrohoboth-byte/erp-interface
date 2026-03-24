@@ -30,19 +30,19 @@ export function hasPermission(
     return false;
   }
 
-  // 🔥 MODULE CHECK
+  // MODULE CHECK
   if (type === "module") {
     return parsedPermissions.some((mod) => mod.Key === permission);
   }
 
-  // 🔥 MENU CHECK
+  // MENU CHECK
   if (type === "menu") {
     return parsedPermissions.some((mod) =>
       mod.Menus?.some((menu: any) => menu.Key === permission)
     );
   }
 
-  // 🔥 API CHECK
+  // API CHECK
   if (type === "api") {
     return parsedPermissions.some((mod) =>
       mod.Menus?.some((menu: any) =>
