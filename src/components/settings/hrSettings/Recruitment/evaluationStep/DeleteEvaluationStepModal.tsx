@@ -5,15 +5,13 @@ import { Trash2 } from 'lucide-react';
 interface DeleteEvaluationStepModalProps {
   isOpen: boolean;
   stepName: string;
+  isLoading?: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }
 
 const DeleteEvaluationStepModal: React.FC<DeleteEvaluationStepModalProps> = ({
-  isOpen,
-  stepName,
-  onClose,
-  onConfirm,
+  isOpen, stepName, isLoading = false, onClose, onConfirm,
 }) => {
   return (
     <AnimatePresence>
@@ -38,19 +36,13 @@ const DeleteEvaluationStepModal: React.FC<DeleteEvaluationStepModalProps> = ({
                 </p>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
+                <button type="button" onClick={onClose} disabled={isLoading}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
                   Cancel
                 </button>
-                <button
-                  type="button"
-                  onClick={onConfirm}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
-                >
-                  Delete
+                <button type="button" onClick={onConfirm} disabled={isLoading}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50">
+                  {isLoading ? 'Deleting...' : 'Delete'}
                 </button>
               </div>
             </div>

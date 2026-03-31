@@ -4,40 +4,31 @@ import { Edit, AlertCircle } from 'lucide-react';
 import { Button } from '../../../../ui/button';
 import { Input } from '../../../../ui/input';
 import { Label } from '../../../../ui/label';
-import type { EvaluationFlowListDto, EvaluationFlowAddDto } from '../../../../../types/hr/evaluationFlow';
+import type { EvaluationFlowListDto, EvaluationFlowAddDto } from '../../../../../types/hr/recruit/evaluationFlow';
 
 interface EditEvaluationFlowModalProps {
   isOpen: boolean;
   item: EvaluationFlowListDto | null;
+  isLoading?: boolean;
   onClose: () => void;
   onSubmit: (data: EvaluationFlowAddDto) => void;
 }
 
-const EditEvaluationFlowModal: React.FC<EditEvaluationFlowModalProps> = ({ isOpen, item, onClose, onSubmit }) => {
+const EditEvaluationFlowModal: React.FC<EditEvaluationFlowModalProps> = ({ isOpen, item, isLoading = false, onClose, onSubmit }) => {
   const [formData, setFormData] = useState<EvaluationFlowAddDto>({ name: '', isGlobal: false, isActive: true });
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (item) setFormData({ name: item.name, isGlobal: item.isGlobal, isActive: item.isActive });
   }, [item]);
 
-  const handleClose = () => {
-    if (!isSubmitting) { setError(null); onClose(); }
-  };
+  const handleClose = () => { if (!isLoading) { setError(null); onClose(); } };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) { setError('Please enter a name'); return; }
-    setIsSubmitting(true);
     setError(null);
-    try {
-      await onSubmit(formData);
-    } catch {
-      setError('Failed to update evaluation flow. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    onSubmit(formData);
   };
 
   if (!isOpen || !item) return null;
@@ -70,7 +61,7 @@ const EditEvaluationFlowModal: React.FC<EditEvaluationFlowModalProps> = ({ isOpe
               id="edit-flow-name"
               value={formData.name}
               onChange={(e) => setFormData(p => ({ ...p, name: e.target.value }))}
-              disabled={isSubmitting}
+              disabled={isLoading}
             />
           </div>
 
@@ -81,7 +72,7 @@ const EditEvaluationFlowModal: React.FC<EditEvaluationFlowModalProps> = ({ isOpe
               checked={formData.isGlobal}
               onChange={(e) => setFormData(p => ({ ...p, isGlobal: e.target.checked }))}
               className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-              disabled={isSubmitting}
+              disabled={isLoading}
             />
             <Label htmlFor="edit-flow-isGlobal" className="text-sm text-gray-600 cursor-pointer">Global (applies to all positions)</Label>
           </div>
@@ -93,18 +84,18 @@ const EditEvaluationFlowModal: React.FC<EditEvaluationFlowModalProps> = ({ isOpe
               checked={formData.isActive}
               onChange={(e) => setFormData(p => ({ ...p, isActive: e.target.checked }))}
               className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-              disabled={isSubmitting}
+              disabled={isLoading}
             />
             <Label htmlFor="edit-flow-isActive" className="text-sm text-gray-600 cursor-pointer">Active</Label>
           </div>
 
           <div className="flex justify-center gap-2 pt-2 border-t">
-            <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white px-6 cursor-pointer" disabled={isSubmitting}>
-              {isSubmitting ? (
+            <Button type="submit" className="bg-green-600 hover:bg-green-700 text-white px-6 cursor-pointer" disabled={isLoading}>
+              {isLoading ? (
                 <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Saving...</>
               ) : 'Save'}
             </Button>
-            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting} className="px-6 cursor-pointer">
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading} className="px-6 cursor-pointer">
               Cancel
             </Button>
           </div>

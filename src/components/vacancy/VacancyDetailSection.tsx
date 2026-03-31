@@ -5,6 +5,7 @@ import VacancyDetailHeader from './VacancyDetailHeader';
 import VacancyDetailContent from './VacancyDetailContent';
 import VacancyApplySection from './VacancyApplySection';
 import type { Vacancy } from '../../types/vacancy';
+import type { JobAppIntAddDto } from '../../types/hr/recruit/jopApp';
 
 const VacancyDetailSection = () => {
   const { id } = useParams<{ id: string }>();
@@ -86,19 +87,11 @@ This is an excellent opportunity for career growth within our organization, offe
     setHasApplied(applied);
   };
 
-  const handleApply = (applicationData: any) => {
-    // Save application
+  const handleApply = (applicationData: JobAppIntAddDto) => {
+    // TODO: Replace with actual API call using applicationData
     const applications = JSON.parse(localStorage.getItem('vacancyApplications') || '[]');
-    const newApplication = {
-      id: Date.now().toString(),
-      vacancyId: id,
-      appliedDate: new Date().toISOString(),
-      status: 'pending',
-      ...applicationData
-    };
-    applications.push(newApplication);
+    applications.push({ vacancyId: id, appliedDate: new Date().toISOString(), ...applicationData });
     localStorage.setItem('vacancyApplications', JSON.stringify(applications));
-    
     setHasApplied(true);
   };
 

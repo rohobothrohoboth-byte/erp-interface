@@ -6,11 +6,12 @@ import { Button } from '../../../../ui/button';
 interface DeleteEvaluationFlowModalProps {
   isOpen: boolean;
   name: string;
+  isLoading?: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }
 
-const DeleteEvaluationFlowModal: React.FC<DeleteEvaluationFlowModalProps> = ({ isOpen, name, onClose, onConfirm }) => {
+const DeleteEvaluationFlowModal: React.FC<DeleteEvaluationFlowModalProps> = ({ isOpen, name, isLoading = false, onClose, onConfirm }) => {
   if (!isOpen) return null;
 
   return (
@@ -32,10 +33,10 @@ const DeleteEvaluationFlowModal: React.FC<DeleteEvaluationFlowModalProps> = ({ i
           <p className="text-sm text-red-500">This action cannot be undone.</p>
         </div>
         <div className="border-t px-6 py-4 flex justify-center gap-2">
-          <Button variant="destructive" onClick={onConfirm} className="px-6 cursor-pointer">
-            Yes, Delete
+          <Button variant="destructive" onClick={onConfirm} disabled={isLoading} className="px-6 cursor-pointer">
+            {isLoading ? 'Deleting...' : 'Yes, Delete'}
           </Button>
-          <Button variant="outline" onClick={onClose} className="px-6 cursor-pointer">
+          <Button variant="outline" onClick={onClose} disabled={isLoading} className="px-6 cursor-pointer">
             Cancel
           </Button>
         </div>

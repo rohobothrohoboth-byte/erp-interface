@@ -4,26 +4,27 @@ import { X, BadgePlus, AlertCircle } from 'lucide-react';
 import { Button } from '../../../../ui/button';
 import { Input } from '../../../../ui/input';
 import { Label } from '../../../../ui/label';
-import type { EvaluationTypeAddDto } from '../../../../../types/hr/evaluationType';
+import type { EvaluationTypeAddDto } from '../../../../../types/hr/recruit/evaluationType';
 
 interface AddEvaluationTypeModalProps {
   isOpen: boolean;
+  isLoading?: boolean;
   onClose: () => void;
   onSubmit: (data: EvaluationTypeAddDto) => void;
 }
 
-const AddEvaluationTypeModal: React.FC<AddEvaluationTypeModalProps> = ({ isOpen, onClose, onSubmit }) => {
-  const [formData, setFormData] = useState<EvaluationTypeAddDto>({ name: '', maxScore: 100, isActive: true });
+const AddEvaluationTypeModal: React.FC<AddEvaluationTypeModalProps> = ({ isOpen, isLoading = false, onClose, onSubmit }) => {
+  const [formData, setFormData] = useState<EvaluationTypeAddDto>({ name: '', maxScore: 100 });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const reset = () => {
-    setFormData({ name: '', maxScore: 100, isActive: true });
+    setFormData({ name: '', maxScore: 100});
     setError(null);
   };
 
   const handleClose = () => {
-    if (!isSubmitting) { reset(); onClose(); }
+    if (!isSubmitting && !isLoading) { reset(); onClose(); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +34,7 @@ const AddEvaluationTypeModal: React.FC<AddEvaluationTypeModalProps> = ({ isOpen,
     setIsSubmitting(true);
     setError(null);
     try {
-      await onSubmit(formData);
+      onSubmit(formData);
       reset();
     } catch {
       setError('Failed to add evaluation type. Please try again.');
@@ -92,17 +93,6 @@ const AddEvaluationTypeModal: React.FC<AddEvaluationTypeModalProps> = ({ isOpen,
               placeholder="e.g., 100"
               disabled={isSubmitting}
             />
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              id="isActive"
-              type="checkbox"
-              checked={formData.isActive}
-              onChange={(e) => setFormData(p => ({ ...p, isActive: e.target.checked }))}
-              className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-              disabled={isSubmitting}
-            />
-            <Label htmlFor="isActive" className="text-sm text-gray-600 cursor-pointer">Active</Label>
           </div>
 </div>
           <div className="flex justify-center gap-2 pt-2 border-t">

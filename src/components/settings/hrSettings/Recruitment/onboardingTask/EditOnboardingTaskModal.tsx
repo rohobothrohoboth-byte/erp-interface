@@ -4,7 +4,7 @@ import { ClipboardCheck } from 'lucide-react';
 import { Button } from '../../../../ui/button';
 import { Label } from '../../../../ui/label';
 import { Input } from '../../../../ui/input';
-import type { OnboardingTaskListDto, OnboardingTaskAddDto } from '../../../../../types/hr/onboardingTask';
+import type { OnboardingTaskListDto, OnboardingTaskAddDto } from '../../../../../types/hr/recruit/onboardingTask';
 
 interface EditOnboardingTaskModalProps {
   isOpen: boolean;

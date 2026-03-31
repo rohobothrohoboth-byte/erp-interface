@@ -113,3 +113,129 @@ export const WorkArrangement = {
   "4": 'Rotational / Roster-based'
 } as const;
 export type WorkArrangement = typeof WorkArrangement[keyof typeof WorkArrangement];
+
+export const ReviewStat = {
+  "0": 'Approve',
+  "1": 'Modify',
+  "2": 'Reject'
+} as const;
+export type ReviewStat = typeof ReviewStat[keyof typeof ReviewStat];
+
+export const JobPostingType = {
+  "0": 'Internal',
+  "1": 'External',
+  "2": 'Internal & External'
+} as const;
+export type JobPostingType = typeof JobPostingType[keyof typeof JobPostingType];
+
+export const PostingStatus = {
+  "0": 'Pending Approval',
+  "1": 'Published',
+  "2": 'Closed',
+  "3": 'On Hold',
+  "4": 'Cancelled'
+} as const;
+export type PostingStatus = typeof PostingStatus[keyof typeof PostingStatus];
+
+export const PostStatus = {
+  "0": 'Pending Approval',
+  "1": 'On Hold',
+  "2": 'Cancelled'
+} as const;
+export type PostStatus = typeof PostStatus[keyof typeof PostStatus];
+
+export const ApplicationStatus = {
+  "0": "Applied",
+  "1": "Under Review",
+  "2": "Shortlisted",
+  "3": "Rejected",
+  "4": "Withdrawn",
+  "5": "Interview Scheduled",
+  "6": "Interview Completed",
+  "7": "Offer Extended",
+  "8": "Offer Accepted",
+  "9": "Offer Rejected",
+  "10": "On Hold",
+} as const;
+export type ApplicationStatus = typeof ApplicationStatus[keyof typeof ApplicationStatus];
+
+/* =======================
+   InterviewStatus
+======================= */
+export const InterviewStatus = {
+  "0": "Scheduled",
+  "1": "In Progress",
+  "2": "Completed",
+  "3": "Cancelled",
+  "4": "Rescheduled",
+  "5": "No Show",
+} as const;
+
+export type InterviewStatus =
+  typeof InterviewStatus[keyof typeof InterviewStatus];
+
+
+/* =======================
+   OfferStatus
+======================= */
+export const OfferStatus = {
+  "0": "Draft",
+  "1": "Pending Approval",
+  "2": "Approved",
+  "3": "Rejected",
+  "4": "Extended",
+  "5": "Accepted",
+  "6": "Declined",
+  "7": "Withdrawn",
+  "8": "Expired",
+} as const;
+
+export type OfferStatus =
+  typeof OfferStatus[keyof typeof OfferStatus];
+
+
+/* =======================
+   EmployeeStatus
+======================= */
+export const EmployeeStatus = {
+  "0": "Inactive",
+  "1": "Active",
+  "2": "On Leave",
+  "3": "Suspended",
+  "4": "Terminated",
+  "5": "Retired",
+} as const;
+
+export type EmployeeStatus =
+  typeof EmployeeStatus[keyof typeof EmployeeStatus];
+
+
+/* =======================
+   ApprovalStatus
+======================= */
+export const ApprovalStatus = {
+  "0": "Pending",
+  "1": "Approved",
+  "2": "Rejected",
+  "3": "Recalled",
+  "4": "Escalated",
+} as const;
+
+export type ApprovalStatus =
+  typeof ApprovalStatus[keyof typeof ApprovalStatus];
+
+
+/* =======================
+   OnboardingStatus
+======================= */
+export const OnboardingStatus = {
+  "0": "Pending",
+  "1": "In Progress",
+  "2": "Completed",
+  "3": "On Hold",
+  "4": "Cancelled",
+} as const;
+
+export type OnboardingStatus =
+  typeof OnboardingStatus[keyof typeof OnboardingStatus];
+

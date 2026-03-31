@@ -7,7 +7,7 @@ import OnboardingTaskTable from './OnboardingTaskTable';
 import AddOnboardingTaskModal from './AddOnboardingTaskModal';
 import EditOnboardingTaskModal from './EditOnboardingTaskModal';
 import DeleteOnboardingTaskModal from './DeleteOnboardingTaskModal';
-import type { OnboardingTaskListDto, OnboardingTaskAddDto } from '../../../../../types/hr/onboardingTask';
+import type { OnboardingTaskListDto, OnboardingTaskAddDto } from '../../../../../types/hr/recruit/onboardingTask';
 
 const mockData: OnboardingTaskListDto[] = [
   {

@@ -460,146 +460,154 @@ const Sidebar: React.FC = () => {
     switch (activeModule) {
       case "mod.hrm":
         return (
-           <>
+          <>
+            <NavItem
+              to="/hr/employees/record"
+              icon={<Users size={18} />}
+              label="Employees"
+              {...theme}
+              collapsed={collapsed}
+            />
+
+            <NavGroup
+              icon={<Building2 size={18} />}
+              label="Recruitment"
+              isOpen={openGroup === "Recruitment"}
+              onToggle={() => toggleGroup("Recruitment")}
+              hoverBg={theme.hoverBg}
+              textColor={theme.textColor}
+              activeBg={theme.activeBg}
+              collapsed={collapsed}
+            >
               <NavItem
-                to="/hr/employees/record"
+                to="/hr/recruitment/list"
+                icon={<Building2 size={18} />}
+                label="Recruitment List"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+              <NavItem
+                to="/hr/recruitment/pipeline"
+                icon={<Building2 size={18} />}
+                label="Candidate Pipeline"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+              <NavItem
+                to="/hr/recruitment/onboarding"
                 icon={<Users size={18} />}
-                label="Employees"
+                label="On Boarding"
                 {...theme}
-                collapsed={collapsed}
-              />
-
-              <NavGroup
-                icon={<Building2 size={18} />}
-                label="Recruitment"
-                isOpen={openGroup === "Recruitment"}
-                onToggle={() => toggleGroup("Recruitment")}
-                hoverBg={theme.hoverBg}
-                textColor={theme.textColor}
-                activeBg={theme.activeBg}
-                collapsed={collapsed}
-              >
-                <NavItem
-                  to="/hr/recruitment/list"
-                  icon={<Building2 size={18} />}
-                  label="Recruitment List"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to="/hr/recruitment/pipeline"
-                  icon={<Building2 size={18} />}
-                  label="Candidate Pipeline"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to="/hr/recruitment/onboarding"
-                  icon={<Users size={18} />}
-                  label="On Boarding"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-              </NavGroup>
-
-              <NavGroup
-                icon={<Building2 size={18} />}
-                label="Annual Leave"
-                isOpen={openGroup === "Leave"}
-                onToggle={() => toggleGroup("Leave")}
-                hoverBg={theme.hoverBg}
-                textColor={theme.textColor}
-                activeBg={theme.activeBg}
-                collapsed={collapsed}
-              >
-                <NavItem
-                  to="/hr/leave/list"
-                  icon={<Building2 size={18} />}
-                  label="My Leave"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to="/hr/leave/form"
-                  icon={<Building2 size={18} />}
-                  label="Leave Request"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to="/hr/leave/Entitlement"
-                  icon={<Users size={18} />}
-                  label="Leave Entitlement"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-              </NavGroup>
-
-              <NavGroup
-                icon={<Building2 size={18} />}
-                label="Attendance"
-                isOpen={openGroup === "Attendance"}
-                onToggle={() => toggleGroup("Attendance")}
-                hoverBg={theme.hoverBg}
-                textColor={theme.textColor}
-                activeBg={theme.activeBg}
-                collapsed={collapsed}
-              >
-                <NavItem
-                  to="/hr/attendance/list"
-                  icon={<Building2 size={18} />}
-                  label="Attendance List"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to="/hr/shift-scheduler"
-                  icon={<Building2 size={18} />}
-                  label="Shift Schedule"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to="/hr/time-clock"
-                  icon={<Users size={18} />}
-                  label="Time clock"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-                <NavItem
-                  to="/hr/attendance/form"
-                  icon={<Users size={18} />}
-                  label="Attendance Form"
-                  {...theme}
-                  isChild
-                  collapsed={collapsed}
-                />
-              </NavGroup>
-
-              <NavItem
-                to="/hr/training"
-                icon={<GraduationCap size={18} />}
-                label="Training"
-                {...theme}
+                isChild
                 collapsed={collapsed}
               />
               <NavItem
-                to="/hr/reports"
-                icon={<FileSpreadsheet size={18} />}
-                label="Reports"
+                to="/hr/recruitment/workforce-plan"
+                icon={<ClipboardList size={18} />}
+                label="Workforce Plan"
                 {...theme}
+                isChild
                 collapsed={collapsed}
               />
-            </>
+            </NavGroup>
+
+            <NavGroup
+              icon={<Building2 size={18} />}
+              label="Annual Leave"
+              isOpen={openGroup === "Leave"}
+              onToggle={() => toggleGroup("Leave")}
+              hoverBg={theme.hoverBg}
+              textColor={theme.textColor}
+              activeBg={theme.activeBg}
+              collapsed={collapsed}
+            >
+              <NavItem
+                to="/hr/leave/list"
+                icon={<Building2 size={18} />}
+                label="My Leave"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+              <NavItem
+                to="/hr/leave/form"
+                icon={<Building2 size={18} />}
+                label="Leave Request"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+              <NavItem
+                to="/hr/leave/Entitlement"
+                icon={<Users size={18} />}
+                label="Leave Entitlement"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+            </NavGroup>
+
+            <NavGroup
+              icon={<Building2 size={18} />}
+              label="Attendance"
+              isOpen={openGroup === "Attendance"}
+              onToggle={() => toggleGroup("Attendance")}
+              hoverBg={theme.hoverBg}
+              textColor={theme.textColor}
+              activeBg={theme.activeBg}
+              collapsed={collapsed}
+            >
+              <NavItem
+                to="/hr/attendance/list"
+                icon={<Building2 size={18} />}
+                label="Attendance List"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+              <NavItem
+                to="/hr/shift-scheduler"
+                icon={<Building2 size={18} />}
+                label="Shift Schedule"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+              <NavItem
+                to="/hr/time-clock"
+                icon={<Users size={18} />}
+                label="Time clock"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+              <NavItem
+                to="/hr/attendance/form"
+                icon={<Users size={18} />}
+                label="Attendance Form"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+            </NavGroup>
+
+            <NavItem
+              to="/hr/training"
+              icon={<GraduationCap size={18} />}
+              label="Training"
+              {...theme}
+              collapsed={collapsed}
+            />
+            <NavItem
+              to="/hr/reports"
+              icon={<FileSpreadsheet size={18} />}
+              label="Reports"
+              {...theme}
+              collapsed={collapsed}
+            />
+          </>
         );
 
       case "mod.inv":

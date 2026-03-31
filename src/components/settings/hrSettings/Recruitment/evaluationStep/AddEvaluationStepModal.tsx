@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { EvaluationStepAddDto } from '../../../../../types/hr/evaluationStep';
-import type { EvaluationTypeListDto } from '../../../../../types/hr/evaluationType';
+import type { EvaluationStepAddDto } from '../../../../../types/hr/recruit/evaluationStep';
+import type { EvaluationTypeListDto } from '../../../../../types/hr/recruit/evaluationType';
 
 interface AddEvaluationStepModalProps {
   isOpen: boolean;
   flowId: string;
   evaluationTypes: EvaluationTypeListDto[];
+  isLoading?: boolean;
   onClose: () => void;
   onSubmit: (data: EvaluationStepAddDto) => void;
 }
@@ -23,6 +24,7 @@ const AddEvaluationStepModal: React.FC<AddEvaluationStepModalProps> = ({
   isOpen,
   flowId,
   evaluationTypes,
+  isLoading = false,
   onClose,
   onSubmit,
 }) => {
@@ -98,18 +100,13 @@ const AddEvaluationStepModal: React.FC<AddEvaluationStepModalProps> = ({
                 <label htmlFor="isFinal" className="text-sm font-medium text-gray-700">Is Final Step</label>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
+                <button type="button" onClick={onClose} disabled={isLoading}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
-                >
-                  Add Step
+                <button type="submit" disabled={isLoading}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50">
+                  {isLoading ? 'Adding...' : 'Add Step'}
                 </button>
               </div>
             </form>

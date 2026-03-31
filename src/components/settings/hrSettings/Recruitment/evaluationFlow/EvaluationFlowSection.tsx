@@ -7,91 +7,74 @@ import EvaluationFlowTable from './EvaluationFlowTable';
 import AddEvaluationFlowModal from './AddEvaluationFlowModal';
 import EditEvaluationFlowModal from './EditEvaluationFlowModal';
 import DeleteEvaluationFlowModal from './DeleteEvaluationFlowModal';
-import type { EvaluationFlowListDto, EvaluationFlowAddDto } from '../../../../../types/hr/evaluationFlow';
-
-const mockData: EvaluationFlowListDto[] = [
-  {
-    id: crypto.randomUUID(),
-    name: 'Standard Hiring Flow',
-    isGlobal: true,
-    isActive: true,
-    isDeleted: false,
-    rowVersion: '',
-    createdAt: new Date().toISOString(),
-    createdAtAm: '',
-    modifiedAt: new Date().toISOString(),
-    modifiedAtAm: '',
-  },
-  {
-    id: crypto.randomUUID(),
-    name: 'Technical Track',
-    isGlobal: false,
-    isActive: true,
-    isDeleted: false,
-    rowVersion: '',
-    createdAt: new Date().toISOString(),
-    createdAtAm: '',
-    modifiedAt: new Date().toISOString(),
-    modifiedAtAm: '',
-  },
-];
+import {
+  useEvaluationFlows,
+  useCreateEvaluationFlow,
+  useUpdateEvaluationFlow,
+  useDeleteEvaluationFlow,
+  useToggleEvaluationFlowStatus,
+} from '../../../../../services/hr/recruitment/evaluationFlow/evaluationFlow.queries';
+import type { EvaluationFlowListDto, EvaluationFlowAddDto } from '../../../../../types/hr/recruit/evaluationFlow';
 
 const EvaluationFlowSection: React.FC = () => {
-  const [items, setItems] = useState<EvaluationFlowListDto[]>(mockData);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<EvaluationFlowListDto | null>(null);
   const [deletingItem, setDeletingItem] = useState<EvaluationFlowListDto | null>(null);
 
+  const { data: items = [], isLoading, error } = useEvaluationFlows();
+
+  const createMutation = useCreateEvaluationFlow({
+    onSuccess: () => { showToast.success('Evaluation flow added successfully'); setIsAddOpen(false); },
+    onError: (e) => showToast.error(e.message || 'Failed to add evaluation flow'),
+  });
+
+  const updateMutation = useUpdateEvaluationFlow({
+    onSuccess: () => { showToast.success('Evaluation flow updated successfully'); setEditingItem(null); },
+    onError: (e) => showToast.error(e.message || 'Failed to update evaluation flow'),
+  });
+
+  const deleteMutation = useDeleteEvaluationFlow({
+    onSuccess: () => { showToast.success('Evaluation flow deleted successfully'); setDeletingItem(null); },
+    onError: (e) => showToast.error(e.message || 'Failed to delete evaluation flow'),
+  });
+
+  const toggleMutation = useToggleEvaluationFlowStatus({
+    onError: (e) => showToast.error(e.message || 'Failed to update status'),
+  });
+
   const filtered = items.filter(i =>
     i.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAdd = (data: EvaluationFlowAddDto) => {
-    const newItem: EvaluationFlowListDto = {
-      ...data,
-      id: crypto.randomUUID(),
-      isDeleted: false,
-      rowVersion: '',
-      createdAt: new Date().toISOString(),
-      createdAtAm: '',
-      modifiedAt: new Date().toISOString(),
-      modifiedAtAm: '',
-    };
-    setItems(prev => [...prev, newItem]);
-    showToast.success('Evaluation flow added successfully');
-    setIsAddOpen(false);
-  };
+  const handleAdd = (data: EvaluationFlowAddDto) => createMutation.mutate(data);
 
   const handleEdit = (data: EvaluationFlowAddDto) => {
     if (!editingItem) return;
-    setItems(prev => prev.map(i =>
-      i.id === editingItem.id ? { ...i, ...data, modifiedAt: new Date().toISOString() } : i
-    ));
-    showToast.success('Evaluation flow updated successfully');
-    setEditingItem(null);
+    updateMutation.mutate({ ...data, id: editingItem.id, rowVersion: editingItem.rowVersion });
   };
 
   const handleDelete = () => {
     if (!deletingItem) return;
-    setItems(prev => prev.filter(i => i.id !== deletingItem.id));
-    showToast.success('Evaluation flow deleted successfully');
-    setDeletingItem(null);
+    deleteMutation.mutate(deletingItem.id);
   };
 
   const handleToggleActive = (item: EvaluationFlowListDto) => {
-    setItems(prev => prev.map(i =>
-      i.id === item.id ? { ...i, isActive: !i.isActive } : i
-    ));
-    showToast.success(`Evaluation flow ${item.isActive ? 'deactivated' : 'activated'}`);
+    toggleMutation.mutate({ id: item.id, rowVersion: item.rowVersion, stat: !item.isActive });
   };
 
+  if (error) {
+    return (
+      <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gray-50 space-y-6 min-h-screen p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Error loading evaluation flows: {error.message}</p>
+        </div>
+      </motion.section>
+    );
+  }
+
   return (
-    <motion.section
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-gray-50 space-y-6 min-h-screen"
-    >
+    <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gray-50 space-y-6 min-h-screen">
       <EvaluationFlowHeader />
       <EvaluationFlowSearchFilter
         searchTerm={searchTerm}
@@ -100,6 +83,7 @@ const EvaluationFlowSection: React.FC = () => {
       />
       <EvaluationFlowTable
         items={filtered}
+        isLoading={isLoading}
         onEdit={setEditingItem}
         onDelete={setDeletingItem}
         onToggleActive={handleToggleActive}
@@ -107,18 +91,21 @@ const EvaluationFlowSection: React.FC = () => {
 
       <AddEvaluationFlowModal
         isOpen={isAddOpen}
+        isLoading={createMutation.isPending}
         onClose={() => setIsAddOpen(false)}
         onSubmit={handleAdd}
       />
       <EditEvaluationFlowModal
         isOpen={!!editingItem}
         item={editingItem}
+        isLoading={updateMutation.isPending}
         onClose={() => setEditingItem(null)}
         onSubmit={handleEdit}
       />
       <DeleteEvaluationFlowModal
         isOpen={!!deletingItem}
         name={deletingItem?.name || ''}
+        isLoading={deleteMutation.isPending}
         onClose={() => setDeletingItem(null)}
         onConfirm={handleDelete}
       />

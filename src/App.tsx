@@ -57,8 +57,11 @@ import PageHrSettings from "./pages/settings/hrSettings/PageHrSettings";
 import PageEvaluationType from "./pages/settings/hrSettings/Recruitment/PageEvaluationType";
 import PageEvaluationFlow from "./pages/settings/hrSettings/Recruitment/PageEvaluationFlow";
 import PageEvaluationStep from "./pages/settings/hrSettings/Recruitment/PageEvaluationStep";
-import PageJobDescription from "./pages/settings/hrSettings/Recruitment/PageJobDescription";
 import PageOnboardingTask from "./pages/settings/hrSettings/Recruitment/PageOnboardingTask";
+import PageHrRecruitmentSettings from "./pages/settings/hrSettings/Recruitment/PageHrRecruitmentSettings";
+import WorkforcePlanPage from "./pages/hr/recruitmentpage/WorkforcePlanPage";
+import JobRequisitionPage from "./pages/hr/recruitmentpage/JobRequisitionPage";
+import JobPostingPage from "./pages/hr/recruitmentpage/JobPostingPage";
 import PageCoreSettings from "./pages/settings/coreSettings/PageCoreSettings";
 import PageApiSettings from "./pages/settings/coreSettings/PageApiSettings";
 import PageMenuSettings from "./pages/settings/coreSettings/PageMenuSettings";
@@ -361,6 +364,18 @@ function App() {
                 path="/hr/recruitment/list"
                 element={<RecruitmentList />}
               />
+              <Route
+                path="/hr/recruitment/workforce-plan"
+                element={<WorkforcePlanPage />}
+              />
+              <Route
+                path="/hr/recruitment/workforce-plan/:planId/requisitions"
+                element={<JobRequisitionPage />}
+              />
+              <Route
+                path="/hr/recruitment/job-requisition/:reqId/postings"
+                element={<JobPostingPage />}
+              />
               <Route path="/hr/leave/list" element={<LeaveList />} />
               <Route path="/hr/leave/form" element={<LeaveRequestForm />} />
               <Route
@@ -454,6 +469,10 @@ function App() {
               />
               <Route path="/settings/hr" element={<PageHrSettings />} />
               <Route
+                path="/settings/hr/recruitment"
+                element={<PageHrRecruitmentSettings />}
+              />
+              <Route
                 path="/settings/hr/evaluation-types"
                 element={<PageEvaluationType />}
               />
@@ -464,10 +483,6 @@ function App() {
               <Route
                 path="/settings/hr/evaluation-flows/:flowId/steps"
                 element={<PageEvaluationStep />}
-              />
-              <Route
-                path="/settings/hr/job-descriptions"
-                element={<PageJobDescription />}
               />
               <Route
                 path="/settings/hr/onboarding-tasks"

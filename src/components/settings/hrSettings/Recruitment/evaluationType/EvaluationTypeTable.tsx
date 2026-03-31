@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ClipboardList, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../../ui/popover';
-import type { EvaluationTypeListDto } from '../../../../../types/hr/evaluationType';
+import type { EvaluationTypeListDto } from '../../../../../types/hr/recruit/evaluationType';
 
 interface EvaluationTypeTableProps {
   items: EvaluationTypeListDto[];
+  isLoading?: boolean;
   onEdit: (item: EvaluationTypeListDto) => void;
   onDelete: (item: EvaluationTypeListDto) => void;
   onToggleActive: (item: EvaluationTypeListDto) => void;
@@ -15,6 +16,7 @@ const PAGE_SIZE = 10;
 
 const EvaluationTypeTable: React.FC<EvaluationTypeTableProps> = ({
   items,
+  isLoading = false,
   onEdit,
   onDelete,
   onToggleActive,
@@ -44,7 +46,17 @@ const EvaluationTypeTable: React.FC<EvaluationTypeTableProps> = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {paginated.length === 0 && (
+            {isLoading && (
+              <tr>
+                <td colSpan={5} className="px-6 py-12 text-center">
+                  <div className="flex items-center justify-center">
+                    <div className="h-8 w-8 border-4 border-green-200 border-t-green-600 rounded-full animate-spin" />
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">Loading evaluation types...</p>
+                </td>
+              </tr>
+            )}
+            {!isLoading && paginated.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center">
                   <ClipboardList className="w-12 h-12 mx-auto mb-4 text-gray-300" />
@@ -57,7 +69,7 @@ const EvaluationTypeTable: React.FC<EvaluationTypeTableProps> = ({
                 </td>
               </tr>
             )}
-            {paginated.map((item, index) => (
+            {!isLoading && paginated.map((item, index) => (
               <motion.tr
                 key={item.id}
                 initial={{ opacity: 0, y: 10 }}

@@ -1,18 +1,22 @@
-import type { BaseDto } from './BaseDto';
+import type { BaseDto } from '../BaseDto';
+export type UUID =string;
 
-export interface EvaluationTypeListDto extends BaseDto {
+export interface EvaluationTypeListDto {
   name: string;
   maxScore: number;
   isActive: boolean;
+  isActiveStr: string;
 }
 
 export interface EvaluationTypeAddDto {
   name: string;
   maxScore: number;
-  isActive: boolean;
 }
 
 export interface EvaluationTypeModDto extends EvaluationTypeAddDto {
-  id: string;
+  id: UUID;
+  zname: string;
+  maxScore: number;
+  isActive: boolean;
   rowVersion: string;
 }

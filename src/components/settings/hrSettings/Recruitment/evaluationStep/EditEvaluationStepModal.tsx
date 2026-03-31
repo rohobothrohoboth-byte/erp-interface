@@ -1,22 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { EvaluationStepListDto, EvaluationStepAddDto } from '../../../../../types/hr/evaluationStep';
-import type { EvaluationTypeListDto } from '../../../../../types/hr/evaluationType';
+import type { EvaluationStepListDto, EvaluationStepAddDto } from '../../../../../types/hr/recruit/evaluationStep';
+import type { EvaluationTypeListDto } from '../../../../../types/hr/recruit/evaluationType';
 
 interface EditEvaluationStepModalProps {
   isOpen: boolean;
   item: EvaluationStepListDto | null;
   evaluationTypes: EvaluationTypeListDto[];
+  isLoading?: boolean;
   onClose: () => void;
   onSubmit: (data: EvaluationStepAddDto) => void;
 }
 
 const EditEvaluationStepModal: React.FC<EditEvaluationStepModalProps> = ({
-  isOpen,
-  item,
-  evaluationTypes,
-  onClose,
-  onSubmit,
+  isOpen, item, evaluationTypes, isLoading = false, onClose, onSubmit,
 }) => {
   const [form, setForm] = useState<EvaluationStepAddDto>({
     stepName: '',
@@ -103,18 +100,13 @@ const EditEvaluationStepModal: React.FC<EditEvaluationStepModalProps> = ({
                 <label htmlFor="editIsFinal" className="text-sm font-medium text-gray-700">Is Final Step</label>
               </div>
               <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                >
+                <button type="button" onClick={onClose} disabled={isLoading}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
-                >
-                  Save Changes
+                <button type="submit" disabled={isLoading}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50">
+                  {isLoading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

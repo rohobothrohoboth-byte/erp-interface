@@ -4,16 +4,17 @@ import { X, Edit, AlertCircle } from 'lucide-react';
 import { Button } from '../../../../ui/button';
 import { Input } from '../../../../ui/input';
 import { Label } from '../../../../ui/label';
-import type { EvaluationTypeListDto, EvaluationTypeAddDto } from '../../../../../types/hr/evaluationType';
+import type { EvaluationTypeListDto, EvaluationTypeAddDto } from '../../../../../types/hr/recruit/evaluationType';
 
 interface EditEvaluationTypeModalProps {
   isOpen: boolean;
   item: EvaluationTypeListDto | null;
+  isLoading?: boolean;
   onClose: () => void;
   onSubmit: (data: EvaluationTypeAddDto) => void;
 }
 
-const EditEvaluationTypeModal: React.FC<EditEvaluationTypeModalProps> = ({ isOpen, item, onClose, onSubmit }) => {
+const EditEvaluationTypeModal: React.FC<EditEvaluationTypeModalProps> = ({ isOpen, item, isLoading = false, onClose, onSubmit }) => {
   const [formData, setFormData] = useState<EvaluationTypeAddDto>({ name: '', maxScore: 100, isActive: true });
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,7 +24,7 @@ const EditEvaluationTypeModal: React.FC<EditEvaluationTypeModalProps> = ({ isOpe
   }, [item]);
 
   const handleClose = () => {
-    if (!isSubmitting) { setError(null); onClose(); }
+    if (!isSubmitting && !isLoading) { setError(null); onClose(); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +34,8 @@ const EditEvaluationTypeModal: React.FC<EditEvaluationTypeModalProps> = ({ isOpe
     setIsSubmitting(true);
     setError(null);
     try {
-      await onSubmit(formData);
+      onSubmit(formData);
+      console.log("edit ",formData);
     } catch {
       setError('Failed to update evaluation type. Please try again.');
     } finally {

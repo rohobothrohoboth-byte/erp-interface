@@ -7,48 +7,14 @@ import EvaluationStepTable from './EvaluationStepTable';
 import AddEvaluationStepModal from './AddEvaluationStepModal';
 import EditEvaluationStepModal from './EditEvaluationStepModal';
 import DeleteEvaluationStepModal from './DeleteEvaluationStepModal';
-import type { EvaluationStepListDto, EvaluationStepAddDto } from '../../../../../types/hr/evaluationStep';
-import type { EvaluationTypeListDto } from '../../../../../types/hr/evaluationType';
-
-// Mock evaluation types — replace with API call when ready
-const mockEvaluationTypes: EvaluationTypeListDto[] = [
-  {
-    id: crypto.randomUUID(),
-    name: 'Technical Interview',
-    maxScore: 100,
-    isActive: true,
-    isDeleted: false,
-    rowVersion: '',
-    createdAt: new Date().toISOString(),
-    createdAtAm: '',
-    modifiedAt: new Date().toISOString(),
-    modifiedAtAm: '',
-  },
-  {
-    id: crypto.randomUUID(),
-    name: 'HR Interview',
-    maxScore: 50,
-    isActive: true,
-    isDeleted: false,
-    rowVersion: '',
-    createdAt: new Date().toISOString(),
-    createdAtAm: '',
-    modifiedAt: new Date().toISOString(),
-    modifiedAtAm: '',
-  },
-  {
-    id: crypto.randomUUID(),
-    name: 'Practical Assessment',
-    maxScore: 80,
-    isActive: true,
-    isDeleted: false,
-    rowVersion: '',
-    createdAt: new Date().toISOString(),
-    createdAtAm: '',
-    modifiedAt: new Date().toISOString(),
-    modifiedAtAm: '',
-  },
-];
+import {
+  useEvaluationSteps,
+  useCreateEvaluationStep,
+  useUpdateEvaluationStep,
+  useDeleteEvaluationStep,
+} from '../../../../../services/hr/recruitment/evaluationStep/evaluationStep.queries';
+import { useEvaluationTypes } from '../../../../../services/hr/recruitment/evaluationType/evaluationType.queries';
+import type { EvaluationStepListDto, EvaluationStepAddDto } from '../../../../../types/hr/recruit/evaluationStep';
 
 interface EvaluationStepSectionProps {
   flowId: string;
@@ -56,69 +22,63 @@ interface EvaluationStepSectionProps {
 }
 
 const EvaluationStepSection: React.FC<EvaluationStepSectionProps> = ({ flowId, flowName }) => {
-  const [items, setItems] = useState<EvaluationStepListDto[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<EvaluationStepListDto | null>(null);
   const [deletingItem, setDeletingItem] = useState<EvaluationStepListDto | null>(null);
 
+  const { data: items = [], isLoading, error } = useEvaluationSteps(flowId);
+  const { data: evaluationTypes = [] } = useEvaluationTypes();
+
+  const createMutation = useCreateEvaluationStep({
+    onSuccess: () => { showToast.success('Step added successfully'); setIsAddOpen(false); },
+    onError: (e) => showToast.error(e.message || 'Failed to add step'),
+  });
+
+  const updateMutation = useUpdateEvaluationStep({
+    onSuccess: () => { showToast.success('Step updated successfully'); setEditingItem(null); },
+    onError: (e) => showToast.error(e.message || 'Failed to update step'),
+  });
+
+  const deleteMutation = useDeleteEvaluationStep(flowId, {
+    onSuccess: () => { showToast.success('Step deleted successfully'); setDeletingItem(null); },
+    onError: (e) => showToast.error(e.message || 'Failed to delete step'),
+  });
+
   const filtered = items.filter(i =>
     i.stepName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const resolveTypeName = (evalTypeId: string) =>
-    mockEvaluationTypes.find(t => t.id === evalTypeId)?.name ?? '';
-
-  const handleAdd = (data: EvaluationStepAddDto) => {
-    const newItem: EvaluationStepListDto = {
-      ...data,
-      id: crypto.randomUUID(),
-      evalTypeId: data.evalTypeId as ReturnType<typeof crypto.randomUUID>,
-      evaluationFlowId: flowId as ReturnType<typeof crypto.randomUUID>,
-      evalTypeName: resolveTypeName(data.evalTypeId),
-      isDeleted: false,
-      rowVersion: '',
-      createdAt: new Date().toISOString(),
-      createdAtAm: '',
-      modifiedAt: new Date().toISOString(),
-      modifiedAtAm: '',
-    };
-    setItems(prev => [...prev, newItem]);
-    showToast.success('Step added successfully');
-    setIsAddOpen(false);
-  };
+  const handleAdd = (data: EvaluationStepAddDto) =>
+    createMutation.mutate({ ...data, evaluationFlowId: flowId });
 
   const handleEdit = (data: EvaluationStepAddDto) => {
     if (!editingItem) return;
-    setItems(prev => prev.map(i =>
-      i.id === editingItem.id
-        ? {
-            ...i,
-            ...data,
-            evalTypeId: data.evalTypeId as ReturnType<typeof crypto.randomUUID>,
-            evaluationFlowId: flowId as ReturnType<typeof crypto.randomUUID>,
-            evalTypeName: resolveTypeName(data.evalTypeId),
-            modifiedAt: new Date().toISOString(),
-          }
-        : i
-    ));
-    showToast.success('Step updated successfully');
-    setEditingItem(null);
+    updateMutation.mutate({
+      ...data,
+      evaluationFlowId: flowId,
+      id: editingItem.id,
+      rowVersion: editingItem.rowVersion,
+    });
   };
 
   const handleDelete = () => {
     if (!deletingItem) return;
-    setItems(prev => prev.filter(i => i.id !== deletingItem.id));
-    showToast.success('Step deleted successfully');
-    setDeletingItem(null);
+    deleteMutation.mutate(deletingItem.id);
   };
 
+  if (error) {
+    return (
+      <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gray-50 space-y-6 min-h-screen p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Error loading steps: {error.message}</p>
+        </div>
+      </motion.section>
+    );
+  }
+
   return (
-    <motion.section
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-gray-50 space-y-6 min-h-screen"
-    >
+    <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gray-50 space-y-6 min-h-screen">
       <EvaluationStepHeader flowName={flowName} />
       <EvaluationStepSearchFilter
         searchTerm={searchTerm}
@@ -127,27 +87,30 @@ const EvaluationStepSection: React.FC<EvaluationStepSectionProps> = ({ flowId, f
       />
       <EvaluationStepTable
         items={filtered}
+        isLoading={isLoading}
         onEdit={setEditingItem}
         onDelete={setDeletingItem}
       />
-
       <AddEvaluationStepModal
         isOpen={isAddOpen}
         flowId={flowId}
-        evaluationTypes={mockEvaluationTypes}
+        evaluationTypes={evaluationTypes}
+        isLoading={createMutation.isPending}
         onClose={() => setIsAddOpen(false)}
         onSubmit={handleAdd}
       />
       <EditEvaluationStepModal
         isOpen={!!editingItem}
         item={editingItem}
-        evaluationTypes={mockEvaluationTypes}
+        evaluationTypes={evaluationTypes}
+        isLoading={updateMutation.isPending}
         onClose={() => setEditingItem(null)}
         onSubmit={handleEdit}
       />
       <DeleteEvaluationStepModal
         isOpen={!!deletingItem}
         stepName={deletingItem?.stepName ?? ''}
+        isLoading={deleteMutation.isPending}
         onClose={() => setDeletingItem(null)}
         onConfirm={handleDelete}
       />

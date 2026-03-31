@@ -3,17 +3,18 @@ import { motion } from 'framer-motion';
 import { ListOrdered, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../../ui/popover';
 import { Badge } from '../../../../ui/badge';
-import type { EvaluationStepListDto } from '../../../../../types/hr/evaluationStep';
+import type { EvaluationStepListDto } from '../../../../../types/hr/recruit/evaluationStep';
 
 interface EvaluationStepTableProps {
   items: EvaluationStepListDto[];
+  isLoading?: boolean;
   onEdit: (item: EvaluationStepListDto) => void;
   onDelete: (item: EvaluationStepListDto) => void;
 }
 
 const PAGE_SIZE = 10;
 
-const EvaluationStepTable: React.FC<EvaluationStepTableProps> = ({ items, onEdit, onDelete }) => {
+const EvaluationStepTable: React.FC<EvaluationStepTableProps> = ({ items, isLoading = false, onEdit, onDelete }) => {
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -40,7 +41,14 @@ const EvaluationStepTable: React.FC<EvaluationStepTableProps> = ({ items, onEdit
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {paginated.length === 0 && (
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">Loading steps...</p>
+                </td>
+              </tr>
+            ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center">
                   <ListOrdered className="w-12 h-12 mx-auto mb-4 text-gray-300" />
@@ -52,8 +60,8 @@ const EvaluationStepTable: React.FC<EvaluationStepTableProps> = ({ items, onEdit
                   </p>
                 </td>
               </tr>
-            )}
-            {paginated.map((item, index) => (
+            ) : null}
+            {!isLoading && paginated.map((item, index) => (
               <motion.tr
                 key={item.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -72,7 +80,7 @@ const EvaluationStepTable: React.FC<EvaluationStepTableProps> = ({ items, onEdit
                   </div>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">
-                  <span className="text-sm text-gray-700">{item.evalTypeName}</span>
+                  <span className="text-sm text-gray-700">{item.evalType ?? item.evalTypeName ?? '—'}</span>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   <Badge className={item.isFinal ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-gray-600'}>

@@ -4,10 +4,11 @@ import { GitBranch, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight, ListO
 import { Popover, PopoverTrigger, PopoverContent } from '../../../../ui/popover';
 import { Badge } from '../../../../ui/badge';
 import { useNavigate } from 'react-router-dom';
-import type { EvaluationFlowListDto } from '../../../../../types/hr/evaluationFlow';
+import type { EvaluationFlowListDto } from '../../../../../types/hr/recruit/evaluationFlow';
 
 interface EvaluationFlowTableProps {
   items: EvaluationFlowListDto[];
+  isLoading?: boolean;
   onEdit: (item: EvaluationFlowListDto) => void;
   onDelete: (item: EvaluationFlowListDto) => void;
   onToggleActive: (item: EvaluationFlowListDto) => void;
@@ -17,6 +18,7 @@ const PAGE_SIZE = 10;
 
 const EvaluationFlowTable: React.FC<EvaluationFlowTableProps> = ({
   items,
+  isLoading = false,
   onEdit,
   onDelete,
   onToggleActive,
@@ -48,7 +50,14 @@ const EvaluationFlowTable: React.FC<EvaluationFlowTableProps> = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {paginated.length === 0 && (
+            {isLoading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-12 text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">Loading evaluation flows...</p>
+                </td>
+              </tr>
+            ) : paginated.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center">
                   <GitBranch className="w-12 h-12 mx-auto mb-4 text-gray-300" />
@@ -60,8 +69,8 @@ const EvaluationFlowTable: React.FC<EvaluationFlowTableProps> = ({
                   </p>
                 </td>
               </tr>
-            )}
-            {paginated.map((item, index) => (
+            ) : null}
+            {!isLoading && paginated.map((item, index) => (
               <motion.tr
                 key={item.id}
                 initial={{ opacity: 0, y: 10 }}

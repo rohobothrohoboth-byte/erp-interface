@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ClipboardCheck, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../../ui/popover';
-import type { OnboardingTaskListDto } from '../../../../../types/hr/onboardingTask';
+import type { OnboardingTaskListDto } from '../../../../../types/hr/recruit/onboardingTask';
 
 interface OnboardingTaskTableProps {
   items: OnboardingTaskListDto[];
