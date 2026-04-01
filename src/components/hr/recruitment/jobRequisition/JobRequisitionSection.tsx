@@ -9,16 +9,18 @@ import JobRequisitionTable from './JobRequisitionTable';
 import AddJobRequisitionModal from './AddJobRequisitionModal';
 import EditJobRequisitionModal from './EditJobRequisitionModal';
 import DeleteJobRequisitionModal from './DeleteJobRequisitionModal';
+import JobRequisitionReviewModal from './JobRequisitionReviewModal';
+import AddJobPostingModal from '../jobPosting/AddJobPostingModal';
 import {
   useJobRequisitions,
   useCreateJobRequisition,
   useUpdateJobRequisition,
   useDeleteJobRequisition,
 } from '../../../../services/hr/recruitment/jobRequisition/jobRequisition.queries';
-import type { JobReqListDto, JobReqAddDto, JobReqModDto } from '../../../../types/hr/recruit/jobRequisition';
+import type { JobReqListDto, JobReqAddDto, JobReqModDto, UUID } from '../../../../types/hr/recruit/jobRequisition';
 
 interface JobRequisitionSectionProps {
-  workforcePlanId: string;
+  workforcePlanId: UUID;
   workforcePlanCode?: string;
 }
 
@@ -29,8 +31,17 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<JobReqListDto | null>(null);
   const [deletingItem, setDeletingItem] = useState<JobReqListDto | null>(null);
+  const [reviewingItem, setReviewingItem] = useState<JobReqListDto | null>(null);
+  const [postingItem, setPostingItem] = useState<JobReqListDto | null>(null);
 
-  const { data: allItems = [], isLoading, error } = useJobRequisitions();
+ const {
+   data: allItems = [],
+   isLoading,
+   error,
+ } = useJobRequisitions(workforcePlanId, {
+   search: searchTerm,
+   status: statusFilter,
+ });
 
   // Filter to only this workforce plan's requisitions
   const items = allItems.filter((i) => i.workforcePlanId === workforcePlanId);
@@ -50,12 +61,13 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
     onError: (e) => showToast.error(e.message || 'Failed to delete job requisition'),
   });
 
-  const filtered = items.filter((i) => {
-    const matchSearch = i.reqNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      i.reqReason.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = !statusFilter || i.statusStr === statusFilter;
-    return matchSearch && matchStatus;
-  });
+ const filtered = allItems.filter((i) => {
+   const matchSearch =
+     i.reqNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+     i.reqReason.toLowerCase().includes(searchTerm.toLowerCase());
+   const matchStatus = !statusFilter || i.statusStr === statusFilter;
+   return matchSearch && matchStatus;
+ });
 
   const handleAdd = (data: JobReqAddDto) =>
     createMutation.mutate({ ...data, workforcePlanId });
@@ -104,10 +116,12 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
         statusFilter={statusFilter} setStatusFilter={setStatusFilter}
         onAddClick={() => setIsAddOpen(true)}
+        onViewPostings={() => navigate(`/hr/recruitment/workforce-plan/${workforcePlanId}/postings`)}
       />
       <JobRequisitionTable
         items={filtered} isLoading={isLoading}
         onEdit={setEditingItem} onDelete={setDeletingItem}
+        onReview={setReviewingItem} onPost={setPostingItem}
       />
       <AddJobRequisitionModal
         isOpen={isAddOpen} isLoading={createMutation.isPending}
@@ -121,6 +135,16 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
       <DeleteJobRequisitionModal
         isOpen={!!deletingItem} reqNumber={deletingItem?.reqNumber ?? ''} isLoading={deleteMutation.isPending}
         onClose={() => setDeletingItem(null)} onConfirm={handleDelete}
+      />
+      <JobRequisitionReviewModal
+        isOpen={!!reviewingItem} item={reviewingItem}
+        onClose={() => setReviewingItem(null)}
+      />
+      <AddJobPostingModal
+        isOpen={!!postingItem}
+        reqId={postingItem?.id ?? ''}
+        onClose={() => setPostingItem(null)}
+        onSubmit={() => { showToast.success('Job posting created successfully'); setPostingItem(null); }}
       />
     </motion.section>
   );

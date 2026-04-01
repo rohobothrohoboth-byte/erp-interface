@@ -16,12 +16,14 @@ interface WorkforcePlanTableProps {
 const PAGE_SIZE = 10;
 
 const statusColors: Record<string, string> = {
-  Pending: 'bg-yellow-100 text-yellow-800',
+'Pending Approval': 'bg-yellow-100 text-yellow-800',
   Approve: 'bg-green-100 text-green-800',
   Approved: 'bg-green-100 text-green-800',
   Modify: 'bg-blue-100 text-blue-800',
   Reject: 'bg-red-100 text-red-800',
   Rejected: 'bg-red-100 text-red-800',
+  Cancelled: 'bg-red-100 text-red-800',
+  Closed: 'bg-red-100 text-red-800',
 };
 
 const WorkforcePlanTable: React.FC<WorkforcePlanTableProps> = ({ items, isLoading = false, onEdit, onDelete, onReview }) => {
@@ -94,22 +96,26 @@ const WorkforcePlanTable: React.FC<WorkforcePlanTableProps> = ({ items, isLoadin
                         <MoreVertical className="h-5 w-5" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-48 p-0" align="end">
+                    <PopoverContent className="w-52 p-0" align="end">
                       <div className="py-1">
-                        <button onClick={() => { onReview(item); setPopoverOpen(null); }}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
-                          <Eye size={15} /> Review
-                        </button>
-                        {(item.statusStr === 'Approve' || item.statusStr === 'Approved' || item.status === '0') && (
+                        {!(item.statusStr === 'Approve' || item.statusStr === 'Approved' || String(item.status) === '0') && (
+                          <button onClick={() => { onReview(item); setPopoverOpen(null); }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
+                            <Eye size={15} /> Review
+                          </button>
+                        )}
+                        {(item.statusStr === 'Approve' || item.statusStr === 'Approved' || String(item.status) === '0') && (
                           <button onClick={() => { navigate(`/hr/recruitment/workforce-plan/${item.id}/requisitions`); setPopoverOpen(null); }}
                             className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 text-green-700 flex items-center gap-2">
                             <FileText size={15} /> Job Requisitions
                           </button>
                         )}
-                        <button onClick={() => { onEdit(item); setPopoverOpen(null); }}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
-                          <Edit size={15} /> Edit
-                        </button>
+                        {!(item.statusStr === 'Approve' || item.statusStr === 'Approved' || String(item.status) === '0') && (
+                          <button onClick={() => { onEdit(item); setPopoverOpen(null); }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
+                            <Edit size={15} /> Edit
+                          </button>
+                        )}
                         <button onClick={() => { onDelete(item); setPopoverOpen(null); }}
                           className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
                           <Trash2 size={15} /> Delete

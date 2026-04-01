@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, MoreVertical, Edit, Trash2, Eye, Megaphone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/popover';
-import { useNavigate } from 'react-router-dom';
 import type { JobReqListDto } from '../../../../types/hr/recruit/jobRequisition';
 
 interface JobRequisitionTableProps {
@@ -10,6 +9,8 @@ interface JobRequisitionTableProps {
   isLoading?: boolean;
   onEdit: (item: JobReqListDto) => void;
   onDelete: (item: JobReqListDto) => void;
+  onReview: (item: JobReqListDto) => void;
+  onPost: (item: JobReqListDto) => void;
 }
 
 const PAGE_SIZE = 10;
@@ -21,10 +22,12 @@ const statusColors: Record<string, string> = {
   InProgress: 'bg-blue-100 text-blue-800',
 };
 
-const JobRequisitionTable: React.FC<JobRequisitionTableProps> = ({ items, isLoading = false, onEdit, onDelete }) => {
+const isApproved = (item: JobReqListDto) =>
+  item.statusStr === 'Approve' || item.statusStr === 'Approved' || String(item.status) === '0';
+
+const JobRequisitionTable: React.FC<JobRequisitionTableProps> = ({ items, isLoading = false, onEdit, onDelete, onReview, onPost }) => {
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const navigate = useNavigate();
 
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
   const paginated = items.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
@@ -86,20 +89,24 @@ const JobRequisitionTable: React.FC<JobRequisitionTableProps> = ({ items, isLoad
                     </PopoverTrigger>
                     <PopoverContent className="w-48 p-0" align="end">
                       <div className="py-1">
-                        <button onClick={() => { navigate(`/hr/recruitment/job-requisition/${item.id}/review`); setPopoverOpen(null); }}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
-                          <Eye size={15} /> Review
-                        </button>
-                        {item.statusStr === 'Approve' && (
-                          <button onClick={() => { navigate(`/hr/recruitment/job-requisition/${item.id}/postings`); setPopoverOpen(null); }}
+                        {!isApproved(item) && (
+                          <button onClick={() => { onReview(item); setPopoverOpen(null); }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
+                            <Eye size={15} /> Review
+                          </button>
+                        )}
+                        {isApproved(item) && (
+                          <button onClick={() => { onPost(item); setPopoverOpen(null); }}
                             className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 text-green-700 flex items-center gap-2">
                             <Megaphone size={15} /> Job Postings
                           </button>
                         )}
-                        <button onClick={() => { onEdit(item); setPopoverOpen(null); }}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
-                          <Edit size={15} /> Edit
-                        </button>
+                        {!isApproved(item) && (
+                          <button onClick={() => { onEdit(item); setPopoverOpen(null); }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
+                            <Edit size={15} /> Edit
+                          </button>
+                        )}
                         <button onClick={() => { onDelete(item); setPopoverOpen(null); }}
                           className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
                           <Trash2 size={15} /> Delete

@@ -1,5 +1,5 @@
 import type { BaseDto } from "../BaseDto";
-import type { EmpNature, Gender, ReviewStat } from "../enum";
+import type { EmpNature, Gender, ReqStatus } from "../enum";
 
 export type UUID = string;
 // ---------- JobReqListDto ----------
@@ -8,7 +8,7 @@ export interface JobReqListDto extends BaseDto {
   positionId: UUID;
   jobDecId: UUID;
   workforcePlanId: UUID;
-  status: ReviewStat;
+  status: ReqStatus;
   startDate: string; 
   reqNumber: string;
   reqReason: string;
@@ -22,7 +22,6 @@ export interface JobReqListDto extends BaseDto {
 
 // ---------- JobReqAddDto ----------
 export interface JobReqAddDto {
-  reqNumber: string;
   reqReason: string;
   reqPositions: number;
   budgetCode: string;

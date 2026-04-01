@@ -17,45 +17,54 @@ const extractError = (error: any): string => {
 };
 
 export const jobRequisitionApi = {
-  getAll: async (): Promise<JobReqListDto[]> => {
+  getAll: async (id: string): Promise<JobReqListDto[]> => {
     try {
-      const res = await api.get(`${BASE}/AllJobReq`);
+      const res = await api.get(`${BASE}/AllJobReq/${id}`);
       return res.data.data;
-    } catch (e) { throw new Error(extractError(e)); }
+    } catch (e) {
+      throw new Error(extractError(e));
+    }
   },
 
   getById: async (id: string): Promise<JobReqListDto> => {
     try {
       const res = await api.get(`${BASE}/GetJobReq/${id}`);
       return res.data.data;
-    } catch (e) { throw new Error(extractError(e)); }
+    } catch (e) {
+      throw new Error(extractError(e));
+    }
   },
 
   create: async (data: JobReqAddDto): Promise<JobReqListDto> => {
     try {
       const res = await api.post(`${BASE}/AddJobReq`, data);
       return res.data.data;
-    } catch (e) { throw new Error(extractError(e)); }
+    } catch (e) {
+      throw new Error(extractError(e));
+    }
   },
 
   update: async (data: JobReqModDto): Promise<JobReqListDto> => {
     try {
       const res = await api.put(`${BASE}/ModJobReq/${data.id}`, data);
       return res.data.data;
-    } catch (e) { throw new Error(extractError(e)); }
+    } catch (e) {
+      throw new Error(extractError(e));
+    }
   },
 
   delete: async (id: string): Promise<void> => {
     try {
       await api.delete(`${BASE}/DelJobReq/${id}`);
-    } catch (e) { throw new Error(extractError(e)); }
+    } catch (e) {
+      throw new Error(extractError(e));
+    }
   },
 
   // POST /Review/JobReq  body: ReviewAllDto { id, reviewById, status, comment }
-  // review: async (data: ReviewAllDto): Promise<JobReqReviewDto> => {
-  //   try {
-  //     const res = await api.post(`${REVIEW_BASE}/JobReq`, data);
-  //     return res.data.data;
-  //   } catch (e) { throw new Error(extractError(e)); }
-  // },
+  review: async (data: ReviewAllDto): Promise<void> => {
+    try {
+      await api.post(`${REVIEW_BASE}/JobReq`, data);
+    } catch (e) { throw new Error(extractError(e)); }
+  },
 };

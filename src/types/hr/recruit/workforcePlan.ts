@@ -1,10 +1,10 @@
 import type { BaseDto } from "../BaseDto";
-import type { ReviewStat } from "../enum";
+import type { ReqStatus } from "../enum";
 
 export type UUID = string;
 
 export interface WorkforcePlanListDto extends BaseDto{
-   status: ReviewStat;
+   status: ReqStatus;
   departmentId: UUID;
   periodId?: UUID;
    requistionById: UUID;

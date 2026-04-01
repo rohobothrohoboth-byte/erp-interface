@@ -239,3 +239,13 @@ export const OnboardingStatus = {
 export type OnboardingStatus =
   typeof OnboardingStatus[keyof typeof OnboardingStatus];
 
+  export const ReqStatus = {
+  "0": "Pending Approval",
+  "1": "Approved",
+  "2": "Rejected",
+  "3": "Cancelled",
+  "4": "Closed",
+} as const;
+
+export type ReqStatus =
+  typeof ReqStatus[keyof typeof ReqStatus];

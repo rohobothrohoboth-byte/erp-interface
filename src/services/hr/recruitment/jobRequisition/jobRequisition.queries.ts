@@ -1,15 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobRequisitionApi } from './jobRequisition.api';
 import { jobRequisitionKeys } from './jobRequisition.key';
-import type { JobReqListDto, JobReqAddDto, JobReqModDto, JobReqReviewDto } from '../../../../types/hr/recruit/jobRequisition';
+import type { JobReqListDto, JobReqAddDto, JobReqModDto } from '../../../../types/hr/recruit/jobRequisition';
 import type { ReviewAllDto } from '../../../../types/hr/recruit/reviewDto';
 
-export const useJobRequisitions = (filters?: { search?: string; status?: string }) => {
+export const useJobRequisitions = (
+  workforcePlanId?: string,
+  filters?: { search?: string; status?: string },
+) => {
   return useQuery<JobReqListDto[], Error>({
-    queryKey: jobRequisitionKeys.list(filters),
-    queryFn: () => jobRequisitionApi.getAll(),
-    staleTime: 0,
-    refetchOnMount: 'always',
+    queryKey: jobRequisitionKeys.list(workforcePlanId, filters),
+    queryFn: () => jobRequisitionApi.getAll(workforcePlanId!),
+    enabled: !!workforcePlanId,
+
+    staleTime: 2 * 60 * 1000,
+    refetchOnMount: false,
   });
 };
 
@@ -79,15 +84,15 @@ export const useDeleteJobRequisition = (options?: {
 };
 
 export const useReviewJobRequisition = (options?: {
-  onSuccess?: (data: JobReqReviewDto) => void;
+  onSuccess?: () => void;
   onError?: (error: Error) => void;
 }) => {
   const queryClient = useQueryClient();
-  return useMutation<JobReqReviewDto, Error, ReviewAllDto>({
+  return useMutation<void, Error, ReviewAllDto>({
     mutationFn: jobRequisitionApi.review,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.refetchQueries({ queryKey: jobRequisitionKeys.lists() });
-      options?.onSuccess?.(data);
+      options?.onSuccess?.();
     },
     onError: options?.onError,
   });

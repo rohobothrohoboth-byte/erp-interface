@@ -62,6 +62,7 @@ import PageHrRecruitmentSettings from "./pages/settings/hrSettings/Recruitment/P
 import WorkforcePlanPage from "./pages/hr/recruitmentpage/WorkforcePlanPage";
 import JobRequisitionPage from "./pages/hr/recruitmentpage/JobRequisitionPage";
 import JobPostingPage from "./pages/hr/recruitmentpage/JobPostingPage";
+import ApprovedJobRequisitionPage from "./pages/hr/recruitmentpage/ApprovedJobRequisitionPage";
 import PageCoreSettings from "./pages/settings/coreSettings/PageCoreSettings";
 import PageApiSettings from "./pages/settings/coreSettings/PageApiSettings";
 import PageMenuSettings from "./pages/settings/coreSettings/PageMenuSettings";
@@ -376,6 +377,11 @@ function App() {
                 path="/hr/recruitment/job-requisition/:reqId/postings"
                 element={<JobPostingPage />}
               />
+              <Route
+                path="/hr/recruitment/workforce-plan/:planId/postings"
+                element={<JobPostingPage />}
+              />
+              <Route path="/hr/recruitment/approved-requisitions" element={<ApprovedJobRequisitionPage />} />
               <Route path="/hr/leave/list" element={<LeaveList />} />
               <Route path="/hr/leave/form" element={<LeaveRequestForm />} />
               <Route
