@@ -62,13 +62,17 @@ This is an excellent opportunity for career growth within our organization, offe
         },
         openings: 2,
         applicants: 15,
-        benefits: [
-          'Competitive salary package',
-          'Health insurance coverage',
-          'Professional development opportunities',
-          'Flexible working hours',
-          'Annual performance bonuses',
-          'Paid time off and holidays'
+        postNumber: 'POST-2024-001',
+        jobGrade: 'Grade 8 — Senior',
+        requiredGender: 'Male/Female',
+        workArrangement: 'Hybrid',
+        keySkills: [
+          'React & TypeScript',
+          'Node.js / REST APIs',
+          'System Design & Architecture',
+          'Team Leadership & Mentoring',
+          'Agile / Scrum',
+          'CI/CD & DevOps basics'
         ]
       };
 

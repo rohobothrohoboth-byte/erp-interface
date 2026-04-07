@@ -18,6 +18,12 @@ export interface Vacancy {
   openings: number;
   applicants: number;
   benefits?: string[];
+  // New fields
+  postNumber?: string;
+  jobGrade?: string;
+  requiredGender?: string;
+  workArrangement?: string;
+  keySkills?: string[];
 }
 
 export interface VacancyApplication {

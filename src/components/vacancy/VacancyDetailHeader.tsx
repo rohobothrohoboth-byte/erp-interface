@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { MapPin, Briefcase, Calendar, Users, Clock } from 'lucide-react';
+import { MapPin, Briefcase, Calendar, Clock, Monitor } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import type { Vacancy } from '../../types/vacancy';
 
@@ -8,22 +8,12 @@ interface VacancyDetailHeaderProps {
 }
 
 const VacancyDetailHeader = ({ vacancy }: VacancyDetailHeaderProps) => {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  const getDaysRemaining = () => {
-    const today = new Date();
-    const closing = new Date(vacancy.closingDate);
-    const diff = Math.ceil((closing.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return diff;
-  };
-
-  const daysRemaining = getDaysRemaining();
+  const daysRemaining = Math.ceil(
+    (new Date(vacancy.closingDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  );
 
   return (
     <motion.div
@@ -34,19 +24,17 @@ const VacancyDetailHeader = ({ vacancy }: VacancyDetailHeaderProps) => {
       {/* Title and Status */}
       <div className="flex items-start justify-between mb-6">
         <div>
+          {vacancy.postNumber && (
+            <span className="inline-block font-mono text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded mb-2">
+              {vacancy.postNumber}
+            </span>
+          )}
           <h1 className="text-3xl font-bold text-gray-900 mb-2">{vacancy.title}</h1>
           <p className="text-lg text-gray-600">{vacancy.department}</p>
         </div>
-        <div className="flex gap-2">
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-            {vacancy.openings} {vacancy.openings === 1 ? 'Opening' : 'Openings'}
-          </Badge>
-          {daysRemaining <= 7 && (
-            <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">
-              Closing Soon
-            </Badge>
-          )}
-        </div>
+        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+          {vacancy.openings} {vacancy.openings === 1 ? 'Opening' : 'Openings'}
+        </Badge>
       </div>
 
       {/* Quick Info */}
@@ -67,6 +55,16 @@ const VacancyDetailHeader = ({ vacancy }: VacancyDetailHeaderProps) => {
           </div>
         </div>
 
+        {vacancy.workArrangement && (
+          <div className="flex items-center text-sm text-gray-600">
+            <Monitor className="w-5 h-5 mr-2 text-gray-400" />
+            <div>
+              <p className="text-xs text-gray-500">Work Arrangement</p>
+              <p className="font-medium text-gray-900">{vacancy.workArrangement}</p>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center text-sm text-gray-600">
           <Calendar className="w-5 h-5 mr-2 text-gray-400" />
           <div>
@@ -82,14 +80,6 @@ const VacancyDetailHeader = ({ vacancy }: VacancyDetailHeaderProps) => {
             <p className={`font-medium ${daysRemaining <= 7 ? 'text-orange-600' : 'text-gray-900'}`}>
               {formatDate(vacancy.closingDate)}
             </p>
-          </div>
-        </div>
-
-        <div className="flex items-center text-sm text-gray-600">
-          <Users className="w-5 h-5 mr-2 text-gray-400" />
-          <div>
-            <p className="text-xs text-gray-500">Applicants</p>
-            <p className="font-medium text-gray-900">{vacancy.applicants}</p>
           </div>
         </div>
       </div>

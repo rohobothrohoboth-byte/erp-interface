@@ -44,7 +44,12 @@ const VacanciesSection = () => {
             currency: 'ETB'
           },
           openings: 2,
-          applicants: 15
+          applicants: 15,
+          postNumber: 'POST-2024-001',
+          jobGrade: 'Level II — Senior',
+          requiredGender: 'Male/Female',
+          workArrangement: 'Hybrid',
+          keySkills: ['React', 'TypeScript', 'Node.js', 'System Design', 'Team Leadership']
         },
         {
           id: '2',
@@ -58,13 +63,14 @@ const VacanciesSection = () => {
           description: 'Seeking an experienced HR Manager...',
           requirements: ['7+ years HR experience', 'SHRM certification', 'Leadership skills'],
           responsibilities: ['Manage HR team', 'Policy development', 'Employee relations'],
-          salary: {
-            min: 70000,
-            max: 100000,
-            currency: 'ETB'
-          },
+          salary: { min: 70000, max: 100000, currency: 'ETB' },
           openings: 1,
-          applicants: 8
+          applicants: 8,
+          postNumber: 'POST-2024-002',
+          jobGrade: 'Level II — Manager',
+          requiredGender: 'Male/Female',
+          workArrangement: 'On-site',
+          keySkills: ['HR Strategy', 'Talent Acquisition', 'Labor Law', 'HRIS']
         }
       ];
       

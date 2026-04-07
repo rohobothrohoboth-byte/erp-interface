@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FileText, CheckCircle, Briefcase, DollarSign, Gift } from 'lucide-react';
+import { FileText, CheckCircle, Briefcase, DollarSign, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import type { Vacancy } from '../../types/vacancy';
 
@@ -9,11 +9,7 @@ interface VacancyDetailContentProps {
 
 const VacancyDetailContent = ({ vacancy }: VacancyDetailContentProps) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
       {/* Description */}
       <Card>
         <CardHeader>
@@ -23,9 +19,7 @@ const VacancyDetailContent = ({ vacancy }: VacancyDetailContentProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="prose prose-sm max-w-none">
-            <p className="text-gray-700 whitespace-pre-line">{vacancy.description}</p>
-          </div>
+          <p className="text-gray-700 whitespace-pre-line">{vacancy.description}</p>
         </CardContent>
       </Card>
 
@@ -39,10 +33,10 @@ const VacancyDetailContent = ({ vacancy }: VacancyDetailContentProps) => {
         </CardHeader>
         <CardContent>
           <ul className="space-y-3">
-            {vacancy.responsibilities.map((responsibility, index) => (
-              <li key={index} className="flex items-start gap-3">
+            {vacancy.responsibilities.map((r, i) => (
+              <li key={i} className="flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-700">{responsibility}</span>
+                <span className="text-gray-700">{r}</span>
               </li>
             ))}
           </ul>
@@ -59,54 +53,57 @@ const VacancyDetailContent = ({ vacancy }: VacancyDetailContentProps) => {
         </CardHeader>
         <CardContent>
           <ul className="space-y-3">
-            {vacancy.requirements.map((requirement, index) => (
-              <li key={index} className="flex items-start gap-3">
+            {vacancy.requirements.map((r, i) => (
+              <li key={i} className="flex items-start gap-3">
                 <div className="w-2 h-2 bg-green-600 rounded-full flex-shrink-0 mt-2" />
-                <span className="text-gray-700">{requirement}</span>
+                <span className="text-gray-700">{r}</span>
               </li>
             ))}
           </ul>
         </CardContent>
       </Card>
 
-      {/* Salary Range */}
+      {/* Required Skills (was Benefits) */}
+      {vacancy.keySkills && vacancy.keySkills.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-green-600" />
+              Required Skills
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {vacancy.keySkills.map((skill, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <span className="text-gray-700">{skill}</span>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Job Grade (was Compensation) */}
       {vacancy.salary && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-green-600" />
-              Compensation
+              Job Grade
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-gray-900">
-                {vacancy.salary.min.toLocaleString()} - {vacancy.salary.max.toLocaleString()}
+                {vacancy.salary.min.toLocaleString()} – {vacancy.salary.max.toLocaleString()}
               </span>
               <span className="text-gray-600">{vacancy.salary.currency} per month</span>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Benefits */}
-      {vacancy.benefits && vacancy.benefits.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gift className="w-5 h-5 text-green-600" />
-              Benefits & Perks
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {vacancy.benefits.map((benefit, index) => (
-                <li key={index} className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                  <span className="text-gray-700">{benefit}</span>
-                </li>
-              ))}
-            </ul>
+            {vacancy.jobGrade && (
+              <p className="text-sm text-gray-500 mt-1">Grade: {vacancy.jobGrade}</p>
+            )}
           </CardContent>
         </Card>
       )}

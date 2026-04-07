@@ -91,12 +91,12 @@ const VacancyApplySection = ({ vacancy, hasApplied, onApply }: VacancyApplySecti
             <Send className="w-4 h-4 mr-2" />
             Apply Now
           </Button>
-          <p className="text-xs text-center text-gray-500">
+          {/* <p className="text-xs text-center text-gray-500">
             Application deadline:{' '}
             {new Date(vacancy.closingDate).toLocaleDateString('en-US', {
               month: 'long', day: 'numeric', year: 'numeric',
             })}
-          </p>
+          </p> */}
         </CardContent>
       </Card>
 
