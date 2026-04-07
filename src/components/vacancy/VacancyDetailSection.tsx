@@ -63,7 +63,7 @@ This is an excellent opportunity for career growth within our organization, offe
         openings: 2,
         applicants: 15,
         postNumber: 'POST-2024-001',
-        jobGrade: 'Grade 8 — Senior',
+        jobGrade: 'Level I — Senior',
         requiredGender: 'Male/Female',
         workArrangement: 'Hybrid',
         keySkills: [

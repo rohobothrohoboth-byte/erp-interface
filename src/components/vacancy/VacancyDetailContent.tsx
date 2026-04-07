@@ -101,9 +101,6 @@ const VacancyDetailContent = ({ vacancy }: VacancyDetailContentProps) => {
               </span>
               <span className="text-gray-600">{vacancy.salary.currency} per month</span>
             </div>
-            {vacancy.jobGrade && (
-              <p className="text-sm text-gray-500 mt-1">Grade: {vacancy.jobGrade}</p>
-            )}
           </CardContent>
         </Card>
       )}
