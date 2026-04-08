@@ -35,12 +35,12 @@ const VacancyCard = ({ vacancy }: VacancyCardProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -8, scale: 1.02 }}
-      className="group bg-white rounded-2xl shadow-md border border-gray-200 p-6 hover:shadow-2xl hover:border-green-300 transition-all duration-300 cursor-pointer relative overflow-hidden"
+      className="group bg-white rounded-2xl shadow-md border border-gray-200 px-0 py-4 hover:shadow-2xl hover:border-green-300 transition-all duration-300 cursor-pointer relative overflow-hidden"
       onClick={() => navigate(`/vacancies/${vacancy.id}`)}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-green-50/0 to-green-50/0 group-hover:from-green-50/50 group-hover:to-blue-50/30 transition-all duration-300" />
 
-      <div className="relative z-10">
+      <div className="relative z-10 px-6 ">
         {/* Title + openings */}
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
@@ -88,19 +88,18 @@ const VacancyCard = ({ vacancy }: VacancyCardProps) => {
             </div>
           )}
           <div className="flex items-center text-sm text-gray-600">
-            <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+            <Calendar className="w-4 h-4 mr-2 text-green-600" />
             <span>Posted {formatDate(vacancy.postedDate)}</span>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          <span
-            className={`text-sm font-medium ${daysRemaining <= 7 ? "text-orange-600" : "text-gray-600"}`}
-          >
-            Deadline: {vacancy.closingDate}
-          </span>
-        </div>
+      </div>
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-2 border-t border-gray-150 px-6">
+        <span
+          className={`text-sm font-medium ${daysRemaining <= 7 ? "text-orange-600" : "text-gray-600"}`}
+        >
+          Deadline: {vacancy.closingDate}
+        </span>
       </div>
     </motion.div>
   );
