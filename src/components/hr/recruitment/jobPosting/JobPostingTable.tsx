@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Megaphone, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Megaphone, MoreVertical, Edit, Trash2, Send, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/popover';
 import type { JobPostingListDto } from '../../../../types/hr/recruit/jobPosting';
 
@@ -9,6 +9,8 @@ interface JobPostingTableProps {
   isLoading?: boolean;
   onEdit: (item: JobPostingListDto) => void;
   onDelete: (item: JobPostingListDto) => void;
+  onPublish?: (item: JobPostingListDto) => void;
+  onClose?: (item: JobPostingListDto) => void;
 }
 
 const PAGE_SIZE = 10;
@@ -26,7 +28,7 @@ const typeColors: Record<string, string> = {
   Both: 'bg-teal-100 text-teal-800',
 };
 
-const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = false, onEdit, onDelete }) => {
+const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = false, onEdit, onDelete, onPublish, onClose }) => {
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -81,7 +83,7 @@ const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = fa
                   </span>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(item.deadlineDate).toLocaleDateString()}
+                  {item.deadlineDateStr ?? '—'}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.reqAppQuan}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-right">
@@ -91,8 +93,20 @@ const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = fa
                         <MoreVertical className="h-5 w-5" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-40 p-0" align="end">
+                    <PopoverContent className="w-44 p-0" align="end">
                       <div className="py-1">
+                        {onPublish && item.statusStr !== 'Published' && item.statusStr !== 'Closed' && (
+                          <button onClick={() => { onPublish(item); setPopoverOpen(null); }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 text-green-700 flex items-center gap-2">
+                            <Send size={15} /> Publish
+                          </button>
+                        )}
+                        {onClose && item.statusStr === 'Published' && (
+                          <button onClick={() => { onClose(item); setPopoverOpen(null); }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-orange-50 text-orange-700 flex items-center gap-2">
+                            <XCircle size={15} /> Close
+                          </button>
+                        )}
                         <button onClick={() => { onEdit(item); setPopoverOpen(null); }}
                           className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
                           <Edit size={15} /> Edit

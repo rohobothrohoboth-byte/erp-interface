@@ -16,7 +16,7 @@ interface AddWorkforcePlanModalProps {
 
 const defaultForm: WorkforcePlanAddDto = {
   title: '', desc: '', startDate: '', endDate: '',
-  totalPositions: 1, periodId: undefined, requistionById: '019d19c0-ae3e-78bd-bd2a-98d36bd6e078'
+  totalPositions: 1, periodId: undefined,
 };
 
 const AddWorkforcePlanModal: React.FC<AddWorkforcePlanModalProps> = ({ isOpen, isLoading = false, onClose, onSubmit }) => {
@@ -25,13 +25,19 @@ const AddWorkforcePlanModal: React.FC<AddWorkforcePlanModalProps> = ({ isOpen, i
 
   const reset = () => setForm(defaultForm);
   const handleClose = () => { if (!isLoading) { reset(); onClose(); } };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); 
-    const formData ={
-      ...form,
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData: WorkforcePlanAddDto = {
+      title: form.title,
+      desc: form.desc || ' ',  // backend rejects empty string for required fields
       startDate: new Date(form.startDate).toISOString(),
       endDate: new Date(form.endDate).toISOString(),
-    }
-    onSubmit(formData); reset(); };
+      totalPositions: form.totalPositions,
+      periodId: form.periodId || undefined,
+    };
+    onSubmit(formData);
+    reset();
+  };
 
   return (
     <AnimatePresence>

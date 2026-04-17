@@ -1,4 +1,4 @@
-import type { BaseDto } from '../BaseDto';
+import type { BaseDto } from './BaseDto';
 
 export interface OnboardingTaskListDto extends BaseDto {
   taskName: string;

@@ -35,6 +35,16 @@ export const jobRequisitionApi = {
     }
   },
 
+  getAllWfpJobReq: async (id: string): Promise<JobReqListDto[]> => {
+    try {
+      const res = await api.get(`${BASE}/AllWfpJobReq/${id}`);
+      const raw = res.data?.data ?? res.data ?? [];
+      return Array.isArray(raw) ? raw : [raw];
+    } catch (e) {
+      throw new Error(extractError(e));
+    }
+  },
+
   create: async (data: JobReqAddDto): Promise<JobReqListDto> => {
     try {
       const res = await api.post(`${BASE}/AddJobReq`, data);

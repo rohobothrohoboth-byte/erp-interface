@@ -10,11 +10,10 @@ export const useJobRequisitions = (
 ) => {
   return useQuery<JobReqListDto[], Error>({
     queryKey: jobRequisitionKeys.list(workforcePlanId, filters),
-    queryFn: () => jobRequisitionApi.getAll(workforcePlanId!),
+    queryFn: () => jobRequisitionApi.getAllWfpJobReq(workforcePlanId!),
     enabled: !!workforcePlanId,
-
-    staleTime: 2 * 60 * 1000,
-    refetchOnMount: false,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 };
 

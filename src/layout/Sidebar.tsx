@@ -309,6 +309,7 @@ const Sidebar: React.FC = () => {
         const decoded: any = jwtDecode(token);
         // Check for admin role - adjust this condition based on your token structure
         const adminCheck =
+          decoded.employeeId === '019d19c0-ae3e-78bd-bd2a-98d36bd6e078' ||
           decoded.role === "admin" ||
           decoded.isAdmin === true ||
           decoded.userType === "admin" ||

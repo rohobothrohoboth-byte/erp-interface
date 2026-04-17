@@ -1,32 +1,28 @@
-import type { ApplicationStatus, EmpNature, Gender, JobPostingType } from "../enum";
+import type { BaseDto } from "./BaseDto";
 
-
-// common types
 export type UUID = string;
 
 /* =======================
    JobAppListDto
 ======================= */
-export interface JobAppListDto {
+export interface JobAppListDto extends BaseDto {
   appliedDate: string;
-  status: ApplicationStatus;
+  status: string;           // enum.ApplicationStatus numeric key
   statusStr: string;
   applicant: string;
   jobPostingNum: string;
   position: string;
   department: string;
   period: string;
-  appliedDateStr: string;
+  appliedDateStr?: string;
 }
 
 /* =======================
    JobAppIntAddDto
 ======================= */
 export interface JobAppIntAddDto {
-  employeeId: UUID;
   jobPostingId: UUID;
   coverLetter: string;
-  file?: File | null;
 }
 
 /* =======================
@@ -35,7 +31,6 @@ export interface JobAppIntAddDto {
 export interface JobAppIntModDto {
   id: UUID;
   coverLetter: string;
-  file?: File | null;
   rowVersion: string;
 }
 
@@ -43,7 +38,7 @@ export interface JobAppIntModDto {
    JobAppExtAddDto
 ======================= */
 export interface JobAppExtAddDto {
-  status: ApplicationStatus;
+  status: string;
   appliedDate: string;
   screeningScore: number;
   screeningComments?: string | null;
@@ -58,7 +53,7 @@ export interface JobAppExtAddDto {
 ======================= */
 export interface JobAppExtModDto {
   id: UUID;
-  status: ApplicationStatus;
+  status: string;
   appliedDate: string;
   screeningScore: number;
   screeningComments?: string | null;
@@ -100,28 +95,26 @@ export interface ApplicantJoinRow {
    JobAppInfoDto
 ======================= */
 export interface JobAppInfoDto {
-  postType: JobPostingType;
+  id: UUID;
+  postType: string;
   applicantId?: UUID | null;
   employeeId?: UUID | null;
   positionId: UUID;
   jgStepId: UUID;
   departmentId: UUID;
   periodId: UUID;
-
   jobApplicationId: UUID;
   applicant: string;
   postNumber: string;
   reqNumber: string;
   planCode: string;
-
   title: string;
   desc: string;
   qualification: string;
   keySkills: string;
   workLocation: string;
-  preGender: Gender;
-  contractType: EmpNature;
-
+  preGender: string;
+  contractType: string;
   position: string;
   jgStep: string;
   department: string;

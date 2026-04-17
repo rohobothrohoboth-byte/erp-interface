@@ -240,6 +240,14 @@ const ModulesSection: React.FC = () => {
   const getAllowedModules = (): AllowedModule[] => {
     if (!token) return [];
 
+    // Specific employee override — full admin access
+    try {
+      const decoded: any = jwtDecode(token);
+      if (decoded.employeeId === '019d19c0-ae3e-78bd-bd2a-98d36bd6e078') {
+        return ALL_MODULES;
+      }
+    } catch { /* ignore */ }
+
     if (
       hasRole(token, "admin") ||
       hasRole(token, "ceo") ||

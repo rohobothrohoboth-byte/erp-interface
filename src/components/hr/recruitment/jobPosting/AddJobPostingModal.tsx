@@ -27,7 +27,14 @@ const AddJobPostingModal: React.FC<AddJobPostingModalProps> = ({ isOpen, isLoadi
 
   const reset = () => setForm(makeDefault(reqId));
   const handleClose = () => { if (!isLoading) { reset(); onClose(); } };
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSubmit(form); reset(); };
+  const handleSubmit = () => {
+    onSubmit({
+      id: reqId,  // always use the prop directly, not form.id
+      postType: form.postType,
+      deadlineDate: form.deadlineDate ? new Date(form.deadlineDate).toISOString() : '',
+    });
+    reset();
+  };
 
   return (
     <AnimatePresence>
@@ -42,7 +49,7 @@ const AddJobPostingModal: React.FC<AddJobPostingModalProps> = ({ isOpen, isLoadi
               <Megaphone size={20} className="text-green-600" />
               <h2 className="text-lg font-bold text-gray-800">Add Job Posting</h2>
             </div>
-            <form onSubmit={handleSubmit}>
+            <div>
               <div className="p-6 space-y-4">
                 <div className="space-y-2">
                   <Label>Post Type <span className="text-red-500">*</span></Label>
@@ -62,11 +69,11 @@ const AddJobPostingModal: React.FC<AddJobPostingModalProps> = ({ isOpen, isLoadi
               </div>
               <div className="border-t px-6 py-4 bg-gray-50 rounded-b-xl flex justify-center gap-3">
                 <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading} className="px-6 cursor-pointer">Cancel</Button>
-                <Button type="submit" disabled={isLoading || !form.deadlineDate} className="bg-green-600 hover:bg-green-700 text-white px-6 cursor-pointer">
+                <Button type="button" disabled={isLoading || !form.deadlineDate} onClick={handleSubmit} className="bg-green-600 hover:bg-green-700 text-white px-6 cursor-pointer">
                   {isLoading ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Adding...</> : 'Add Posting'}
                 </Button>
               </div>
-            </form>
+            </div>
           </motion.div>
         </motion.div>
       )}

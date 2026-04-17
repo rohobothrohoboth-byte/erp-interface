@@ -17,6 +17,7 @@ import {
   useUpdateJobRequisition,
   useDeleteJobRequisition,
 } from '../../../../services/hr/recruitment/jobRequisition/jobRequisition.queries';
+import { useCreateJobPosting } from '../../../../services/hr/recruitment/jobPosting/jobPosting.queries';
 import type { JobReqListDto, JobReqAddDto, JobReqModDto, UUID } from '../../../../types/hr/recruit/jobRequisition';
 
 interface JobRequisitionSectionProps {
@@ -54,6 +55,11 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
   const updateMutation = useUpdateJobRequisition({
     onSuccess: () => { showToast.success('Job requisition updated successfully'); setEditingItem(null); },
     onError: (e) => showToast.error(e.message || 'Failed to update job requisition'),
+  });
+
+  const createPostingMutation = useCreateJobPosting({
+    onSuccess: () => { showToast.success('Job posting created successfully'); setPostingItem(null); },
+    onError: (e) => showToast.error(e.message || 'Failed to create job posting'),
   });
 
   const deleteMutation = useDeleteJobRequisition({
@@ -143,8 +149,9 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
       <AddJobPostingModal
         isOpen={!!postingItem}
         reqId={postingItem?.id ?? ''}
+        isLoading={createPostingMutation.isPending}
         onClose={() => setPostingItem(null)}
-        onSubmit={() => { showToast.success('Job posting created successfully'); setPostingItem(null); }}
+        onSubmit={(data) => createPostingMutation.mutate(data)}
       />
     </motion.section>
   );

@@ -1,4 +1,4 @@
-import type { BaseDto } from '../BaseDto';
+import type { BaseDto } from "./BaseDto";
 
 export type UUID = string;
 
@@ -23,7 +23,7 @@ export interface EvaluationFlowModDto {
   rowVersion: string;
 }
 
-export interface JobEvalFlowListDto{
+export interface JobEvalFlowListDto extends BaseDto{
 evaluationFlowId:UUID;
 jobPostingId:UUID;
 flowName:string;

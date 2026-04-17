@@ -1,15 +1,12 @@
-import type { BaseDto } from "../BaseDto";
-import type { EmpNature, Gender, ReqStatus } from "../enum";
+import type { BaseDto } from "./BaseDto";
 
 export type UUID = string;
-// ---------- JobReqListDto ----------
-export interface JobReqListDto extends BaseDto {
-  jgStepId: UUID;
-  positionId: UUID;
-  jobDecId: UUID;
-  workforcePlanId: UUID;
-  status: ReqStatus;
-  startDate: string; 
+
+/* =======================
+   WfpJobReqListDto
+======================= */
+export interface WfpJobReqListDto extends BaseDto {
+  startDate: string;
   reqNumber: string;
   reqReason: string;
   reqQuantity: number;
@@ -20,26 +17,46 @@ export interface JobReqListDto extends BaseDto {
   startDateStr: string;
 }
 
-// ---------- JobReqAddDto ----------
+/* =======================
+   JobReqListDto  
+======================= */
+export interface JobReqListDto extends BaseDto {
+  startDate: string;
+  reqNumber: string;
+  reqReason: string;
+  reqQuantity: number;
+  budgetCode: string;
+  statusStr: string;
+  position: string;
+  jgStep: string;
+  wfpCode: string;
+  startDateStr: string;
+}
+
+/* =======================
+   JobReqAddDto
+======================= */
 export interface JobReqAddDto {
   reqReason: string;
   reqPositions: number;
   budgetCode: string;
   startDate: string;
   positionId: UUID;
-  jgStepId: UUID;   
+  jgStepId: UUID;
   workforcePlanId: UUID;
-
-  title: string;
+  keyRespo: string;
   desc: string;
-  qualification: string;
+  reqQual: string;
   keySkills: string;
   workLocation: string;
-  preGender: Gender;
-  contractType: EmpNature;
+  preGender: string;   // enum.Gender numeric key
+  empNature: string;   // enum.EmpNature numeric key
+  workArr: string;     // enum.WorkArrangement numeric key
 }
 
-// ---------- JobReqModDto ----------
+/* =======================
+   JobReqModDto
+======================= */
 export interface JobReqModDto {
   id: UUID;
   reqReason: string;
@@ -47,13 +64,14 @@ export interface JobReqModDto {
   budgetCode: string;
   startDate: string;
   positionId: UUID;
-  jgStepId: UUID;   
-  title: string;
+  jgStepId: UUID;
+  keyRespo: string;
   desc: string;
-  qualification: string;
+  reqQual: string;
   keySkills: string;
   workLocation: string;
-  preGender: Gender;
-  contractType: EmpNature;
+  preGender: string;
+  empNature: string;
+  workArr: string;
   rowVersion: string;
 }

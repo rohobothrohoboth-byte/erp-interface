@@ -1,13 +1,11 @@
-import type { BaseDto } from "../BaseDto";
-import type { ReqStatus } from "../enum";
+import type { BaseDto } from "./BaseDto";
 
 export type UUID = string;
 
-export interface WorkforcePlanListDto extends BaseDto{
-   status: ReqStatus;
-  departmentId: UUID;
-  periodId?: UUID;
-   requistionById: UUID;
+/* =======================
+   WorkforcePlanListDto
+======================= */
+export interface WorkforcePlanListDto extends BaseDto {
   planCode: string;
   title: string;
   desc: string;
@@ -18,8 +16,12 @@ export interface WorkforcePlanListDto extends BaseDto{
   statusStr: string;
   department: string;
   period: string;
+  requistionBy: string;
 }
 
+/* =======================
+   WorkforcePlanAddDto
+======================= */
 export interface WorkforcePlanAddDto {
   title: string;
   desc: string;
@@ -27,19 +29,17 @@ export interface WorkforcePlanAddDto {
   endDate: string;
   totalPositions: number;
   periodId?: UUID;
-   requistionById: UUID;
 }
 
+/* =======================
+   WorkforcePlanModDto
+======================= */
 export interface WorkforcePlanModDto {
   id: UUID;
   title: string;
   desc: string;
-   startDate: Date;
-    endDate: Date;
-    totalPositions: number;
+  startDate: Date;
+  endDate: Date;
+  totalPositions: number;
   rowVersion: string;
 }
-
-
-
-

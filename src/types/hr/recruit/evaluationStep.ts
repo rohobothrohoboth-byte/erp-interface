@@ -1,4 +1,4 @@
-import type { BaseDto } from '../BaseDto';
+import type { BaseDto } from './BaseDto';
 
 export type UUID = string;
 

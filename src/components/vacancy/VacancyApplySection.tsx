@@ -3,57 +3,45 @@ import { CheckCircle, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import type { Vacancy } from '../../types/vacancy';
-import type { JobAppIntAddDto } from '../../types/hr/recruit/jopApp';
-import { getAccessToken } from '../../utils/auth.utils';
-import { jwtDecode } from 'jwt-decode';
-import type { JwtPayload } from '../../types/auth/auth.types';
+import { useCreateJobApplication } from '../../services/hr/recruitment/jobApplication/jobApplication.queries';
+import { showToast } from '../../layout/layout';
 
 interface VacancyApplySectionProps {
   vacancy: Vacancy;
   hasApplied: boolean;
-  onApply: (data: JobAppIntAddDto) => void;
+  onApply: () => void;
 }
 
 const VacancyApplySection = ({ vacancy, hasApplied, onApply }: VacancyApplySectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
+  const applyMutation = useCreateJobApplication({
+    onSuccess: () => {
+      showToast.success('Application submitted successfully');
+      // Persist to localStorage so the applied state survives page refresh
+      const applications = JSON.parse(localStorage.getItem('vacancyApplications') || '[]');
+      applications.push({ vacancyId: vacancy.id, appliedDate: new Date().toISOString() });
+      localStorage.setItem('vacancyApplications', JSON.stringify(applications));
+      setIsModalOpen(false);
+      setCoverLetter('');
+      onApply();
+    },
+    onError: (e) => showToast.error(e.message || 'Failed to submit application'),
+  });
 
-    // Get the logged-in employee's ID from the JWT token
-    const token = getAccessToken();
-    let employeeId = '';
-    if (token) {
-      try {
-        const payload = jwtDecode<JwtPayload>(token);
-        employeeId = payload.userId ?? '';
-      } catch { /* ignore */ }
-    }
-
-    const dto: JobAppIntAddDto = {
-      employeeId,
+  const handleSubmit = () => {
+    if (!coverLetter.trim()) return;
+    applyMutation.mutate({
       jobPostingId: vacancy.id,
       coverLetter,
-    };
-
-    onApply(dto);
-
-    setIsSubmitting(false);
-    setIsModalOpen(false);
-    setCoverLetter('');
+    });
   };
 
   const handleClose = () => {
-    if (!isSubmitting) {
+    if (!applyMutation.isPending) {
       setIsModalOpen(false);
       setCoverLetter('');
     }
@@ -91,16 +79,13 @@ const VacancyApplySection = ({ vacancy, hasApplied, onApply }: VacancyApplySecti
             <Send className="w-4 h-4 mr-2" />
             Apply Now
           </Button>
-          {/* <p className="text-xs text-center text-gray-500">
+          <p className="text-xs text-center text-gray-500">
             Application deadline:{' '}
-            {new Date(vacancy.closingDate).toLocaleDateString('en-US', {
-              month: 'long', day: 'numeric', year: 'numeric',
-            })}
-          </p> */}
+            {vacancy.closingDate}
+          </p>
         </CardContent>
       </Card>
 
-      {/* Application Modal */}
       <Dialog open={isModalOpen} onOpenChange={handleClose}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader className="border-b pb-3">
@@ -115,29 +100,28 @@ const VacancyApplySection = ({ vacancy, hasApplied, onApply }: VacancyApplySecti
               <textarea
                 id="coverLetter"
                 rows={8}
-                required
                 value={coverLetter}
                 onChange={(e) => setCoverLetter(e.target.value)}
-                placeholder="Write your cover letter here. Explain why you're a great fit for this position, your relevant experience, and what motivates you to apply..."
+                placeholder="Write your cover letter here..."
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none disabled:opacity-50"
-                disabled={isSubmitting}
+                disabled={applyMutation.isPending}
               />
               <p className="text-xs text-gray-400">{coverLetter.length} characters</p>
             </div>
           </div>
 
           <div className="flex justify-center gap-3 pt-2 border-t">
-            <Button variant="outline" className="px-6 cursor-pointer" onClick={handleClose} disabled={isSubmitting}>
+            <Button variant="outline" className="px-6 cursor-pointer" onClick={handleClose} disabled={applyMutation.isPending}>
               Cancel
             </Button>
             <Button
               className="px-6 bg-green-600 hover:bg-green-700 cursor-pointer"
               onClick={handleSubmit}
-              disabled={isSubmitting || !coverLetter.trim()}
+              disabled={applyMutation.isPending || !coverLetter.trim()}
             >
-              {isSubmitting ? (
-                <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />Submitting...</>
-              ) : 'Submit Application'}
+              {applyMutation.isPending
+                ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />Submitting...</>
+                : 'Submit Application'}
             </Button>
           </div>
         </DialogContent>

@@ -1,125 +1,46 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import VacancyDetailHeader from './VacancyDetailHeader';
 import VacancyDetailContent from './VacancyDetailContent';
 import VacancyApplySection from './VacancyApplySection';
-import type { Vacancy } from '../../types/vacancy';
-import type { JobAppIntAddDto } from '../../types/hr/recruit/jopApp';
+import { useVacancyDetail } from '../../services/hr/recruitment/vacancy/vacancy.queries';
 
 const VacancyDetailSection = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [vacancy, setVacancy] = useState<Vacancy | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [hasApplied, setHasApplied] = useState(false);
-
-  useEffect(() => {
-    loadVacancy();
-    checkApplicationStatus();
-  }, [id]);
-
-  const loadVacancy = async () => {
-    setLoading(true);
-    try {
-      // TODO: Replace with actual API call
-      const mockVacancy: Vacancy = {
-        id: id || '1',
-        title: 'Senior Software Engineer',
-        department: 'Engineering',
-        location: 'Addis Ababa',
-        type: 'Full-time',
-        status: 'open',
-        postedDate: '2024-02-01',
-        closingDate: '2024-03-01',
-        description: `We are seeking a talented and experienced Senior Software Engineer to join our growing engineering team. 
-        
-In this role, you will be responsible for designing, developing, and maintaining high-quality software solutions that meet our business needs. You will work closely with cross-functional teams to deliver innovative products and features.
-
-This is an excellent opportunity for career growth within our organization, offering competitive compensation and comprehensive benefits.`,
-        requirements: [
-          'Bachelor\'s degree in Computer Science or related field',
-          '5+ years of professional software development experience',
-          'Strong proficiency in React, TypeScript, and Node.js',
-          'Experience with modern web development practices and tools',
-          'Excellent problem-solving and analytical skills',
-          'Strong communication and teamwork abilities',
-          'Experience with Agile/Scrum methodologies'
-        ],
-        responsibilities: [
-          'Design and develop scalable, high-performance web applications',
-          'Lead technical discussions and provide mentorship to junior developers',
-          'Collaborate with product managers and designers to define requirements',
-          'Conduct code reviews and ensure code quality standards',
-          'Participate in architectural decisions and technical planning',
-          'Troubleshoot and resolve complex technical issues',
-          'Stay updated with emerging technologies and industry trends'
-        ],
-        salary: {
-          min: 80000,
-          max: 120000,
-          currency: 'ETB'
-        },
-        openings: 2,
-        applicants: 15,
-        postNumber: 'POST-2024-001',
-        jobGrade: 'Level I — Senior',
-        requiredGender: 'Male/Female',
-        workArrangement: 'Hybrid',
-        keySkills: [
-          'React & TypeScript',
-          'Node.js / REST APIs',
-          'System Design & Architecture',
-          'Team Leadership & Mentoring',
-          'Agile / Scrum',
-          'CI/CD & DevOps basics'
-        ]
-      };
-
-      setVacancy(mockVacancy);
-    } catch (error) {
-      console.error('Error loading vacancy:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkApplicationStatus = () => {
-    // TODO: Check if current employee has already applied
+  const [hasApplied, setHasApplied] = useState(() => {
     const applications = JSON.parse(localStorage.getItem('vacancyApplications') || '[]');
-    const applied = applications.some((app: any) => app.vacancyId === id);
-    setHasApplied(applied);
-  };
+    return applications.some((app: any) => app.vacancyId === id);
+  });
 
-  const handleApply = (applicationData: JobAppIntAddDto) => {
-    // TODO: Replace with actual API call using applicationData
+  const { data: detail, isLoading, error } = useVacancyDetail(id);
+
+  const handleApply = () => {
     const applications = JSON.parse(localStorage.getItem('vacancyApplications') || '[]');
-    applications.push({ vacancyId: id, appliedDate: new Date().toISOString(), ...applicationData });
+    applications.push({ vacancyId: id, appliedDate: new Date().toISOString() });
     localStorage.setItem('vacancyApplications', JSON.stringify(applications));
     setHasApplied(true);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4" />
           <p className="text-gray-600">Loading vacancy details...</p>
         </div>
       </div>
     );
   }
 
-  if (!vacancy) {
+  if (error || !detail) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Vacancy not found</h2>
-          <p className="text-gray-600 mb-4">The vacancy you're looking for doesn't exist.</p>
-          <button
-            onClick={() => navigate('/hr/vacancies')}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-          >
+          <button onClick={() => navigate('/vacancies')}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
             Back to Vacancies
           </button>
         </div>
@@ -127,24 +48,41 @@ This is an excellent opportunity for career growth within our organization, offe
     );
   }
 
+  // Map API detail → local Vacancy shape used by the detail components
+  const vacancy = {
+    id: detail.id,
+    title: detail.position,
+    department: detail.department,
+    location: detail.location || 'N/A',
+    type: detail.empNatureStr as any,
+    status: 'open' as const,
+    postedDate: detail.datePosted,
+    closingDate: detail.deadline,
+    description: detail.jobDesc,
+    requirements: detail.reqQual,
+    responsibilities: detail.keyRespo,
+    salary: detail.salary ? (() => {
+      const num = parseInt(detail.salary.replace(/[^0-9]/g, ''));
+      return { min: num, max: num, currency: 'ETB' };
+    })() : undefined,
+    openings: detail.numOpen,
+    applicants: 0,
+    postNumber: detail.postNumber,
+    jobGrade: detail.jobGrade,
+    requiredGender: detail.preGenderStr,
+    workArrangement: detail.workArrStr,
+    keySkills: detail.keySkills,
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       <VacancyDetailHeader vacancy={vacancy} />
-      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <VacancyDetailContent vacancy={vacancy} />
         </div>
         <div>
-          <VacancyApplySection 
-            vacancy={vacancy} 
-            hasApplied={hasApplied}
-            onApply={handleApply}
-          />
+          <VacancyApplySection vacancy={vacancy} hasApplied={hasApplied} onApply={handleApply} />
         </div>
       </div>
     </motion.div>

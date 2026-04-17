@@ -64,26 +64,6 @@ const JobRequisitionReviewModal: React.FC<JobRequisitionReviewModalProps> = ({ i
               </span>
             </div>
 
-            {/* Summary strip */}
-            <div className="px-6 py-3 bg-gray-50 border-b grid grid-cols-3 gap-3 text-xs">
-              <div>
-                <p className="text-gray-400 uppercase tracking-wider mb-0.5">Position</p>
-                <p className="font-medium text-gray-700">{item.position}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 uppercase tracking-wider mb-0.5">JG Step</p>
-                <p className="font-medium text-gray-700">{item.jgStep}</p>
-              </div>
-              <div>
-                <p className="text-gray-400 uppercase tracking-wider mb-0.5">Quantity</p>
-                <p className="font-medium text-gray-700">{item.reqQuantity}</p>
-              </div>
-              <div className="col-span-3">
-                <p className="text-gray-400 uppercase tracking-wider mb-0.5">Reason</p>
-                <p className="font-medium text-gray-700 truncate">{item.reqReason}</p>
-              </div>
-            </div>
-
             {/* Form */}
             <form onSubmit={handleSubmit}>
               <div className="p-6 space-y-4">
@@ -93,7 +73,7 @@ const JobRequisitionReviewModal: React.FC<JobRequisitionReviewModalProps> = ({ i
                     enumObject={ReviewStat}
                     value={form.status}
                     onChange={(v) => setForm(f => ({ ...f, status: v }))}
-                    placeholder="— Select decision —"
+                    placeholder="Select decision"
                     disabled={reviewMutation.isPending}
                   />
                 </div>

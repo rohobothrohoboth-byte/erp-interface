@@ -8,6 +8,15 @@ import JobPostingSearchFilter from './JobPostingSearchFilter';
 import JobPostingTable from './JobPostingTable';
 import EditJobPostingModal from './EditJobPostingModal';
 import DeleteJobPostingModal from './DeleteJobPostingModal';
+import PublishJobPostingModal from './PublishJobPostingModal';
+import {
+  useJobPostings,
+  useUpdateJobPosting,
+  useDeleteJobPosting,
+  usePublishJobPosting,
+  useCloseJobPosting,
+} from '../../../../services/hr/recruitment/jobPosting/jobPosting.queries';
+import { useJobRequisition } from '../../../../services/hr/recruitment/jobRequisition/jobRequisition.queries';
 import type { JobPostingListDto, JobPostingModDto } from '../../../../types/hr/recruit/jobPosting';
 
 interface JobPostingSectionProps {
@@ -17,35 +26,67 @@ interface JobPostingSectionProps {
 
 const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber }) => {
   const navigate = useNavigate();
-  const [items, setItems] = useState<JobPostingListDto[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [editingItem, setEditingItem] = useState<JobPostingListDto | null>(null);
   const [deletingItem, setDeletingItem] = useState<JobPostingListDto | null>(null);
+  const [publishingItem, setPublishingItem] = useState<JobPostingListDto | null>(null);
+
+  const { data: allItems = [], isLoading, error } = useJobPostings();
+  // Fetch the requisition to get its reqNumber for filtering
+  const { data: requisition } = useJobRequisition(reqId || undefined);
+
+  // Filter postings that belong to this requisition by matching reqNumber
+  const items = requisition?.reqNumber
+    ? allItems.filter(i => i.reqNumber === requisition.reqNumber)
+    : allItems;
 
   const filtered = items.filter((i) => {
     const matchSearch = i.postNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       i.reqNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = !statusFilter || i.status === statusFilter;
-    const matchType = !typeFilter || i.postType === typeFilter;
+    const matchStatus = !statusFilter || i.statusStr === statusFilter;
+    const matchType = !typeFilter || i.postTypeStr === typeFilter;
     return matchSearch && matchStatus && matchType;
   });
 
-  const handleEdit = (data: JobPostingModDto) => {
-    setItems(prev => prev.map(i =>
-      i.id === data.id ? { ...i, status: data.status, postType: data.postType, deadlineDate: data.deadlineDate } : i
-    ));
-    showToast.success('Job posting updated successfully');
-    setEditingItem(null);
-  };
+  const updateMutation = useUpdateJobPosting({
+    onSuccess: () => { showToast.success('Job posting updated successfully'); setEditingItem(null); },
+    onError: (e) => showToast.error(e.message || 'Failed to update job posting'),
+  });
 
-  const handleDelete = () => {
-    if (!deletingItem) return;
-    setItems(prev => prev.filter(i => i.id !== deletingItem.id));
-    showToast.success('Job posting deleted successfully');
-    setDeletingItem(null);
+  const deleteMutation = useDeleteJobPosting({
+    onSuccess: () => { showToast.success('Job posting deleted successfully'); setDeletingItem(null); },
+    onError: (e) => showToast.error(e.message || 'Failed to delete job posting'),
+  });
+
+  const publishMutation = usePublishJobPosting({
+    onSuccess: () => { showToast.success('Job posting published successfully'); setPublishingItem(null); },
+    onError: (e) => showToast.error(e.message || 'Failed to publish job posting'),
+  });
+
+  const closeMutation = useCloseJobPosting({
+    onSuccess: () => showToast.success('Job posting closed successfully'),
+    onError: (e) => showToast.error(e.message || 'Failed to close job posting'),
+  });
+
+  const handleEdit = (data: JobPostingModDto) => updateMutation.mutate(data);
+  const handleDelete = () => { if (!deletingItem) return; deleteMutation.mutate(deletingItem.id); };
+  const handlePublish = (item: JobPostingListDto) => setPublishingItem(item);
+  const handlePublishSubmit = (id: string, comment: string | null) => {
+    publishMutation.mutate({ id, comment });
   };
+  const handleClose = (item: JobPostingListDto) => closeMutation.mutate(item.id);
+
+  if (error) {
+    return (
+      <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gray-50 space-y-6 min-h-screen p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">Error loading job postings: {error.message}</p>
+        </div>
+      </motion.section>
+    );
+  }
 
   return (
     <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gray-50 space-y-6 min-h-screen">
@@ -63,6 +104,7 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber 
               </span>
             </h1>
             {reqNumber && <p className="text-sm text-gray-500">Requisition: {reqNumber}</p>}
+            {!reqNumber && requisition?.reqNumber && <p className="text-sm text-gray-500">Requisition: {requisition.reqNumber}</p>}
           </div>
         </div>
       </div>
@@ -72,10 +114,22 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber 
         statusFilter={statusFilter} setStatusFilter={setStatusFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
       />
-      <JobPostingTable items={filtered} onEdit={setEditingItem} onDelete={setDeletingItem} />
-      <EditJobPostingModal isOpen={!!editingItem} item={editingItem} onClose={() => setEditingItem(null)} onSubmit={handleEdit} />
+      <JobPostingTable
+        items={filtered} isLoading={isLoading}
+        onEdit={setEditingItem} onDelete={setDeletingItem}
+        onPublish={handlePublish} onClose={handleClose}
+      />
+      <EditJobPostingModal isOpen={!!editingItem} item={editingItem}
+        onClose={() => setEditingItem(null)} onSubmit={handleEdit} />
       <DeleteJobPostingModal isOpen={!!deletingItem} postNumber={deletingItem?.postNumber ?? ''}
+        isLoading={deleteMutation.isPending}
         onClose={() => setDeletingItem(null)} onConfirm={handleDelete} />
+      <PublishJobPostingModal
+        isOpen={!!publishingItem} item={publishingItem}
+        isLoading={publishMutation.isPending}
+        onClose={() => setPublishingItem(null)}
+        onSubmit={handlePublishSubmit}
+      />
     </motion.section>
   );
 };
