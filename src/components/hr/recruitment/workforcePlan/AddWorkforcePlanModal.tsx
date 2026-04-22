@@ -4,6 +4,7 @@ import { ClipboardList } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Label } from '../../../ui/label';
 import { Input } from '../../../ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
 import type { WorkforcePlanAddDto } from '../../../../types/hr/recruit/workforcePlan';
 import { usePeriods } from '../../../../services/core/period/period.queries';
 
@@ -85,19 +86,23 @@ const AddWorkforcePlanModal: React.FC<AddWorkforcePlanModalProps> = ({ isOpen, i
                 </div>
                 <div className="space-y-2">
                   <Label>Period</Label>
-                  <select
-                    value={form.periodId ?? ''}
-                    onChange={(e) => setForm(f => ({ ...f, periodId: e.target.value || undefined }))}
+                  <Select
+                    value={form.periodId ?? 'none'}
+                    onValueChange={(v) => setForm(f => ({ ...f, periodId: v === 'none' ? undefined : v }))}
                     disabled={isLoading || periodsLoading}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                   >
-                    <option value="">None</option>
-                    {periods.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} {p.fiscYear ? `(${p.fiscYear})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {periods.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} {p.fiscYear ? `(${p.fiscYear})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="border-t px-6 py-4 bg-gray-50 rounded-b-xl flex justify-center gap-3">

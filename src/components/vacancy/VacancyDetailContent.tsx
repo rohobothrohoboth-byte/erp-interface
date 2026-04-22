@@ -97,12 +97,12 @@ const VacancyDetailContent = ({ vacancy }: VacancyDetailContentProps) => {
           <CardContent>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-gray-900">
-                {vacancy.salary.min.toLocaleString()} – {vacancy.salary.max.toLocaleString()}
+                {vacancy.salary}
               </span>
-              <span className="text-gray-600">{vacancy.salary.currency} per month</span>
+              <span className="text-gray-600">per month</span>
             </div>
             {vacancy.jobGrade && (
-              <p className="text-sm text-gray-500 mt-1">Grade: {vacancy.jobGrade}</p>
+              <p className="text-sm text-gray-500 mt-1">{vacancy.jobGrade}</p>
             )}
           </CardContent>
         </Card>

@@ -150,12 +150,11 @@ export const ApplicationStatus = {
   "2": "Shortlisted",
   "3": "Rejected",
   "4": "Withdrawn",
-  "5": "Interview Scheduled",
-  "6": "Interview Completed",
-  "7": "Offer Extended",
-  "8": "Offer Accepted",
-  "9": "Offer Rejected",
-  "10": "On Hold",
+  "5": "Evaluation Passed",
+  "6": "Offer Extended",
+  "7": "Offer Accepted",
+  "8": "Offer Rejected",
+  "9": "On Hold",
 } as const;
 export type ApplicationStatus = typeof ApplicationStatus[keyof typeof ApplicationStatus];
 

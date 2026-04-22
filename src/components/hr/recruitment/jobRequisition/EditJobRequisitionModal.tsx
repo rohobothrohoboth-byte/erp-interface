@@ -7,6 +7,7 @@ import { Label } from '../../../ui/label';
 import { Input } from '../../../ui/input';
 import EnumSelect from '../../../ui/enumSelect';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
+import RichTextEditor, { htmlToPlainText } from '../../../ui/RichTextEditor';
 import type { JobReqListDto, JobReqModDto } from '../../../../types/hr/recruit/jobRequisition';
 import { Gender, EmpNature, WorkArrangement } from '../../../../types/hr/enum';
 import { nameListService } from '../../../../services/List/HrmmNameListService';
@@ -28,9 +29,13 @@ const EditJobRequisitionModal: React.FC<EditJobRequisitionModalProps> = ({
   const [form, setForm] = useState({
     reqReason: '', reqPositions: 1, budgetCode: '', startDate: '',
     positionId: '', jgStepId: '',
-    keyRespo: '', desc: '', reqQual: '', keySkills: '',
     workLocation: '', preGender: '0', empNature: '0', workArr: '0',
   });
+  // Rich text HTML state
+  const [keyRespoHtml, setKeyRespoHtml] = useState('');
+  const [reqQualHtml, setReqQualHtml] = useState('');
+  const [keySkillsHtml, setKeySkillsHtml] = useState('');
+  const [descHtml, setDescHtml] = useState('');
 
   useEffect(() => {
     if (item) {
@@ -42,9 +47,13 @@ const EditJobRequisitionModal: React.FC<EditJobRequisitionModalProps> = ({
         startDate: item.startDate?.split('T')[0] ?? '',
         positionId: '',
         jgStepId: '',
-        keyRespo: '', desc: '', reqQual: '', keySkills: '',
-        workLocation: '', preGender: '0', empNature: '0', workArr: '0',
+        workLocation: '',
+        preGender: '0', empNature: '0', workArr: '0',
       });
+      setKeyRespoHtml('');
+      setReqQualHtml('');
+      setKeySkillsHtml('');
+      setDescHtml('');
     }
   }, [item]);
 
@@ -79,8 +88,11 @@ const EditJobRequisitionModal: React.FC<EditJobRequisitionModalProps> = ({
       reqReason: form.reqReason, reqPositions: form.reqPositions,
       budgetCode: form.budgetCode, startDate: form.startDate,
       positionId: form.positionId, jgStepId: form.jgStepId,
-      keyRespo: form.keyRespo, desc: form.desc, reqQual: form.reqQual,
-      keySkills: form.keySkills, workLocation: form.workLocation,
+      keyRespo: htmlToPlainText(keyRespoHtml),
+      desc: htmlToPlainText(descHtml),
+      reqQual: htmlToPlainText(reqQualHtml),
+      keySkills: htmlToPlainText(keySkillsHtml),
+      workLocation: form.workLocation,
       preGender: form.preGender, empNature: form.empNature, workArr: form.workArr,
     });
   };
@@ -162,10 +174,6 @@ const EditJobRequisitionModal: React.FC<EditJobRequisitionModalProps> = ({
                   <Input value={form.workLocation} onChange={(e) => setForm(f => ({ ...f, workLocation: e.target.value }))} disabled={isLoading} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Qualification</Label>
-                  <Input value={form.reqQual} onChange={(e) => setForm(f => ({ ...f, reqQual: e.target.value }))} disabled={isLoading} />
-                </div>
-                <div className="space-y-2">
                   <Label>Preferred Gender</Label>
                   <EnumSelect enumObject={Gender} value={form.preGender} onChange={(v) => setForm(f => ({ ...f, preGender: v }))} placeholder="Select gender" disabled={isLoading} />
                 </div>
@@ -179,21 +187,23 @@ const EditJobRequisitionModal: React.FC<EditJobRequisitionModalProps> = ({
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <Label>Key Skills</Label>
-                  <Input value={form.keySkills} onChange={(e) => setForm(f => ({ ...f, keySkills: e.target.value }))} disabled={isLoading} />
+                  <RichTextEditor value={keySkillsHtml} onChange={setKeySkillsHtml}
+                    placeholder="e.g. React, TypeScript, Node.js..." disabled={isLoading} minHeight="90px" />
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <Label>Key Responsibilities</Label>
-                  <textarea rows={3} value={form.keyRespo}
-                    onChange={(e) => setForm(f => ({ ...f, keyRespo: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none disabled:opacity-50"
-                    disabled={isLoading} />
+                  <RichTextEditor value={keyRespoHtml} onChange={setKeyRespoHtml}
+                    placeholder="List key responsibilities..." disabled={isLoading} minHeight="110px" />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <Label>Required Qualifications</Label>
+                  <RichTextEditor value={reqQualHtml} onChange={setReqQualHtml}
+                    placeholder="e.g. BSc Computer Science, 3+ years experience..." disabled={isLoading} minHeight="90px" />
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <Label>Description</Label>
-                  <textarea rows={3} value={form.desc}
-                    onChange={(e) => setForm(f => ({ ...f, desc: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none disabled:opacity-50"
-                    disabled={isLoading} />
+                  <RichTextEditor value={descHtml} onChange={setDescHtml}
+                    placeholder="Describe the role..." disabled={isLoading} minHeight="90px" />
                 </div>
               </div>
             )}

@@ -520,6 +520,14 @@ const Sidebar: React.FC = () => {
                 isChild
                 collapsed={collapsed}
               />
+              <NavItem
+                to="/hr/recruitment/applicants"
+                icon={<Users size={18} />}
+                label="Applicants"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
             </NavGroup>
 
             <NavGroup

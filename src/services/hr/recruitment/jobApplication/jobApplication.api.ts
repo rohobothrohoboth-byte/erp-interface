@@ -1,9 +1,9 @@
-import { api } from '../../../api';
+import axios from 'axios';
 import { getAccessToken } from '../../../../utils/auth.utils';
 import { jwtDecode } from 'jwt-decode';
 import type { JwtPayload } from '../../../../types/auth/auth.types';
 
-const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobApp`;
+const BASE = `${import.meta.env.VITE_GATEWAY_URL || 'http://localhost:1212'}${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobApp`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;
@@ -14,44 +14,72 @@ const extractError = (error: any): string => {
 
 const getEmployeeId = (): string => {
   try {
-    const token = getAccessToken();
+    // Try js-cookie first, then fall back to document.cookie directly
+    const token = getAccessToken() || (() => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split('; accessToken=');
+      return parts.length === 2 ? parts.pop()?.split(';').shift() || '' : '';
+    })();
     if (!token) return '';
     const payload = jwtDecode<JwtPayload>(token);
     return payload.employeeId ?? '';
   } catch { return ''; }
 };
 
+// Raw axios — no interceptors that touch FormData
+const rawPost = async (url: string, formData: FormData) => {
+  const token = getAccessToken();
+  return axios.post(url, formData, {
+    withCredentials: true,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      // no Content-Type — let browser set multipart boundary
+    },
+  });
+};
+
+const rawPut = async (url: string, formData: FormData) => {
+  const token = getAccessToken();
+  return axios.put(url, formData, {
+    withCredentials: true,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+};
+
 export const jobApplicationApi = {
-  // POST /InternalApp  multipart/form-data
-  create: async (data: { jobPostingId: string; coverLetter: string }): Promise<void> => {
+  create: async (data: { jobPostingId: string; coverLetter: string; file?: File | null }): Promise<void> => {
     try {
+      const empId = getEmployeeId();
+      console.log('[JobApp] EmployeeId from token:', empId);
       const formData = new FormData();
-      formData.append('EmployeeId', getEmployeeId());
+      formData.append('EmployeeId', empId);
       formData.append('JobPostingId', data.jobPostingId);
       formData.append('CoverLetter', data.coverLetter);
-      await api.post(`${BASE}/InternalApp`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      if (data.file) formData.append('File', data.file);
+      await rawPost(`${BASE}/InternalApp`, formData);
     } catch (e) { throw new Error(extractError(e)); }
   },
 
-  // PUT /InternalMod/{id}  multipart/form-data
-  update: async (data: { id: string; coverLetter: string; rowVersion: string }): Promise<void> => {
+  update: async (data: { id: string; coverLetter: string; rowVersion: string; file?: File | null }): Promise<void> => {
     try {
       const formData = new FormData();
       formData.append('Id', data.id);
       formData.append('CoverLetter', data.coverLetter);
       formData.append('RowVersion', data.rowVersion);
-      await api.put(`${BASE}/InternalMod/${data.id}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      if (data.file) formData.append('File', data.file);
+      await rawPut(`${BASE}/InternalMod/${data.id}`, formData);
     } catch (e) { throw new Error(extractError(e)); }
   },
 
-  // DELETE /InternalDel/{id}
   delete: async (id: string): Promise<void> => {
     try {
-      await api.delete(`${BASE}/InternalDel/${id}`);
+      const token = getAccessToken();
+      await axios.delete(`${BASE}/InternalDel/${id}`, {
+        withCredentials: true,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
     } catch (e) { throw new Error(extractError(e)); }
   },
 };

@@ -7,6 +7,7 @@ import { Label } from '../../../ui/label';
 import { Input } from '../../../ui/input';
 import EnumSelect from '../../../ui/enumSelect';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
+import RichTextEditor, { htmlToPlainText } from '../../../ui/RichTextEditor';
 import type { JobReqAddDto } from '../../../../types/hr/recruit/jobRequisition';
 import { Gender, EmpNature, WorkArrangement } from '../../../../types/hr/enum';
 import { nameListService } from '../../../../services/List/HrmmNameListService';
@@ -33,6 +34,11 @@ const AddJobRequisitionModal: React.FC<AddJobRequisitionModalProps> = ({
   const [form, setForm] = useState<JobReqAddDto>(makeDefault(workforcePlanId));
   const [step, setStep] = useState(1);
   const [jobGradeId, setJobGradeId] = useState('');
+  // Rich text HTML state (converted to plain text on submit)
+  const [keyRespoHtml, setKeyRespoHtml] = useState('');
+  const [reqQualHtml, setReqQualHtml] = useState('');
+  const [keySkillsHtml, setKeySkillsHtml] = useState('');
+  const [descHtml, setDescHtml] = useState('');
 
   const { data: positions = [] } = useQuery({
     queryKey: ['positionNames'],
@@ -55,14 +61,31 @@ const AddJobRequisitionModal: React.FC<AddJobRequisitionModalProps> = ({
     staleTime: 5 * 60 * 1000,
   });
 
-  const reset = () => { setForm(makeDefault(workforcePlanId)); setStep(1); setJobGradeId(''); };
+  const reset = () => {
+    setForm(makeDefault(workforcePlanId));
+    setStep(1);
+    setJobGradeId('');
+    setKeyRespoHtml('');
+    setReqQualHtml('');
+    setKeySkillsHtml('');
+    setDescHtml('');
+  };
   const handleClose = () => { if (!isLoading) { reset(); onClose(); } };
 
   // Step 1 validation — no form required attrs, manual check
   const step1Valid = !!(form.reqReason && form.budgetCode && form.startDate && form.positionId && form.jgStepId);
 
   const handleNext = () => { if (step1Valid) setStep(2); };
-  const handleSubmit = () => { onSubmit(form); reset(); };
+  const handleSubmit = () => {
+    onSubmit({
+      ...form,
+      keyRespo: htmlToPlainText(keyRespoHtml),
+      reqQual: htmlToPlainText(reqQualHtml),
+      keySkills: htmlToPlainText(keySkillsHtml),
+      desc: htmlToPlainText(descHtml),
+    });
+    reset();
+  };
 
   return (
     <AnimatePresence>
@@ -70,9 +93,9 @@ const AddJobRequisitionModal: React.FC<AddJobRequisitionModalProps> = ({
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4"
           onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}>
-          <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <motion.div initial={{ opacity: 0, scale: 0.75, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.75, y: 20 }} transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
 
             {/* Header */}
             <div className="flex items-center gap-3 border-b px-6 py-4 sticky top-0 bg-white z-10">
@@ -156,12 +179,6 @@ const AddJobRequisitionModal: React.FC<AddJobRequisitionModalProps> = ({
                     placeholder="e.g. Addis Ababa" disabled={isLoading} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Qualification</Label>
-                  <Input value={form.reqQual}
-                    onChange={(e) => setForm(f => ({ ...f, reqQual: e.target.value }))}
-                    placeholder="e.g. BSc Computer Science" disabled={isLoading} />
-                </div>
-                <div className="space-y-2">
                   <Label>Preferred Gender</Label>
                   <EnumSelect enumObject={Gender} value={form.preGender}
                     onChange={(v) => setForm(f => ({ ...f, preGender: v }))}
@@ -179,43 +196,61 @@ const AddJobRequisitionModal: React.FC<AddJobRequisitionModalProps> = ({
                     onChange={(v) => setForm(f => ({ ...f, workArr: v }))}
                     placeholder="Select arrangement" disabled={isLoading} />
                 </div>
-                <div className="md:col-span-2 space-y-2">
+                <div className=" space-y-2">
                   <Label>Key Skills</Label>
-                  <Input value={form.keySkills}
-                    onChange={(e) => setForm(f => ({ ...f, keySkills: e.target.value }))}
-                    placeholder="e.g. React, TypeScript, Node.js" disabled={isLoading} />
+                  <RichTextEditor
+                    value={keySkillsHtml}
+                    onChange={setKeySkillsHtml}
+                    placeholder="e.g. React, TypeScript, Node.js..."
+                    disabled={isLoading}
+                    minHeight="70px"
+                  />
                 </div>
-                <div className="md:col-span-2 space-y-2">
+                <div className=" space-y-2">
                   <Label>Key Responsibilities</Label>
-                  <textarea rows={3} value={form.keyRespo}
-                    onChange={(e) => setForm(f => ({ ...f, keyRespo: e.target.value }))}
+                  <RichTextEditor
+                    value={keyRespoHtml}
+                    onChange={setKeyRespoHtml}
                     placeholder="List key responsibilities..."
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none disabled:opacity-50"
-                    disabled={isLoading} />
+                    disabled={isLoading}
+                    minHeight="70px"
+                  />
                 </div>
-                <div className="md:col-span-2 space-y-2">
+                <div className=" space-y-2">
+                  <Label>Required Qualifications</Label>
+                  <RichTextEditor
+                    value={reqQualHtml}
+                    onChange={setReqQualHtml}
+                    placeholder="e.g. BSc Computer Science, 3+ years experience..."
+                    disabled={isLoading}
+                    minHeight="70px"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label>Description</Label>
-                  <textarea rows={3} value={form.desc}
-                    onChange={(e) => setForm(f => ({ ...f, desc: e.target.value }))}
+                  <RichTextEditor
+                    value={descHtml}
+                    onChange={setDescHtml}
                     placeholder="Describe the role..."
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none disabled:opacity-50"
-                    disabled={isLoading} />
+                    disabled={isLoading}
+                    minHeight="70px"
+                  />
                 </div>
               </div>
             )}
 
             {/* Footer — no form, all buttons are type="button" */}
-            <div className="border-t px-6 py-4 bg-gray-50 rounded-b-xl flex justify-between items-center">
-              <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading} className="px-6 cursor-pointer">
-                Cancel
-              </Button>
-              <div className="flex gap-2">
-                {step === 2 && (
+            <div className="relative border-t px-6 py-4 bg-gray-50 rounded-b-xl flex justify-center items-center">
+              {step === 2 && (
                   <Button type="button" variant="outline" onClick={() => setStep(1)} disabled={isLoading}
-                    className="px-4 cursor-pointer flex items-center gap-1">
+                    className=" absolute left-6  px-4 cursor-pointer flex items-center gap-1">
                     <ChevronLeft size={16} /> Back
                   </Button>
                 )}
+              <div className="flex gap-2 items-center justify-center">
+                <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading} className="px-6 cursor-pointer">
+                Cancel
+              </Button>
                 {step === 1 ? (
                   <Button type="button" onClick={handleNext} disabled={!step1Valid || isLoading}
                     className="bg-green-600 hover:bg-green-700 text-white px-6 cursor-pointer flex items-center gap-1">

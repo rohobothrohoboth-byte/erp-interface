@@ -87,6 +87,21 @@ export const usePublishJobPosting = (options?: {
   });
 };
 
+export const usePublishAllJobPosting = (options?: {
+  onSuccess?: () => void;
+  onError?: (e: Error) => void;
+}) => {
+  const queryClient = useQueryClient();
+  return useMutation<void, Error, { id: string; comment: string | null }>({
+    mutationFn: jobPostingApi.publishAll,
+    onSuccess: () => {
+      queryClient.refetchQueries({ queryKey: jobPostingKeys.lists() });
+      options?.onSuccess?.();
+    },
+    onError: options?.onError,
+  });
+};
+
 export const useCloseJobPosting = (options?: {
   onSuccess?: () => void;
   onError?: (e: Error) => void;

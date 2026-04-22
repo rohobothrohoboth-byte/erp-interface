@@ -7,7 +7,7 @@ export const useCreateJobApplication = (options?: {
   onError?: (e: Error) => void;
 }) => {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, { jobPostingId: string; coverLetter: string }>({
+  return useMutation<void, Error, { jobPostingId: string; coverLetter: string; file?: File | null }>({
     mutationFn: jobApplicationApi.create,
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: jobApplicationKeys.lists() });

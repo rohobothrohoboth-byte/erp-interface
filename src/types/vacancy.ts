@@ -10,11 +10,7 @@ export interface Vacancy {
   description: string;
   requirements: string[];
   responsibilities: string[];
-  salary?: {
-    min: number;
-    max: number;
-    currency: string;
-  };
+  salary?: string;
   openings: number;
   applicants: number;
   benefits?: string[];

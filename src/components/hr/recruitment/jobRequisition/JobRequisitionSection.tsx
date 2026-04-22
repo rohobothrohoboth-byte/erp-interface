@@ -17,7 +17,7 @@ import {
   useUpdateJobRequisition,
   useDeleteJobRequisition,
 } from '../../../../services/hr/recruitment/jobRequisition/jobRequisition.queries';
-import { useCreateJobPosting } from '../../../../services/hr/recruitment/jobPosting/jobPosting.queries';
+import { useCreateJobPosting, useCreateAllJobPosting } from '../../../../services/hr/recruitment/jobPosting/jobPosting.queries';
 import type { JobReqListDto, JobReqAddDto, JobReqModDto, UUID } from '../../../../types/hr/recruit/jobRequisition';
 
 interface JobRequisitionSectionProps {
@@ -34,6 +34,7 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
   const [deletingItem, setDeletingItem] = useState<JobReqListDto | null>(null);
   const [reviewingItem, setReviewingItem] = useState<JobReqListDto | null>(null);
   const [postingItem, setPostingItem] = useState<JobReqListDto | null>(null);
+  const [isBulkPostOpen, setIsBulkPostOpen] = useState(false);
 
  const {
    data: allItems = [],
@@ -60,6 +61,11 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
   const createPostingMutation = useCreateJobPosting({
     onSuccess: () => { showToast.success('Job posting created successfully'); setPostingItem(null); },
     onError: (e) => showToast.error(e.message || 'Failed to create job posting'),
+  });
+
+  const createAllPostingMutation = useCreateAllJobPosting({
+    onSuccess: () => { showToast.success('All job postings created successfully'); setIsBulkPostOpen(false); },
+    onError: (e) => showToast.error(e.message || 'Failed to create all job postings'),
   });
 
   const deleteMutation = useDeleteJobRequisition({
@@ -123,6 +129,8 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
         statusFilter={statusFilter} setStatusFilter={setStatusFilter}
         onAddClick={() => setIsAddOpen(true)}
         onViewPostings={() => navigate(`/hr/recruitment/workforce-plan/${workforcePlanId}/postings`)}
+        onPostAll={() => setIsBulkPostOpen(true)}
+        isPostAllLoading={createAllPostingMutation.isPending}
       />
       <JobRequisitionTable
         items={filtered} isLoading={isLoading}
@@ -152,6 +160,14 @@ const JobRequisitionSection: React.FC<JobRequisitionSectionProps> = ({ workforce
         isLoading={createPostingMutation.isPending}
         onClose={() => setPostingItem(null)}
         onSubmit={(data) => createPostingMutation.mutate(data)}
+      />
+      {/* Post All — uses workforcePlanId, calls AddAllJobPosting */}
+      <AddJobPostingModal
+        isOpen={isBulkPostOpen}
+        reqId={workforcePlanId}
+        isLoading={createAllPostingMutation.isPending}
+        onClose={() => setIsBulkPostOpen(false)}
+        onSubmit={(data) => createAllPostingMutation.mutate({ ...data, id: workforcePlanId })}
       />
     </motion.section>
   );

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { CheckCircle, Send } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { CheckCircle, Send, Upload, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -17,16 +17,15 @@ interface VacancyApplySectionProps {
 const VacancyApplySection = ({ vacancy, hasApplied, onApply }: VacancyApplySectionProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const applyMutation = useCreateJobApplication({
+   const applyMutation = useCreateJobApplication({
     onSuccess: () => {
       showToast.success('Application submitted successfully');
-      // Persist to localStorage so the applied state survives page refresh
-      const applications = JSON.parse(localStorage.getItem('vacancyApplications') || '[]');
-      applications.push({ vacancyId: vacancy.id, appliedDate: new Date().toISOString() });
-      localStorage.setItem('vacancyApplications', JSON.stringify(applications));
       setIsModalOpen(false);
       setCoverLetter('');
+      setCvFile(null);
       onApply();
     },
     onError: (e) => showToast.error(e.message || 'Failed to submit application'),
@@ -34,9 +33,14 @@ const VacancyApplySection = ({ vacancy, hasApplied, onApply }: VacancyApplySecti
 
   const handleSubmit = () => {
     if (!coverLetter.trim()) return;
+    console.log("Submitting application:");
+  console.log("jobPostingId:", vacancy.id);
+  console.log("coverLetter:", coverLetter);
+  console.log("file:", cvFile);
     applyMutation.mutate({
       jobPostingId: vacancy.id,
       coverLetter,
+      file: cvFile,
     });
   };
 
@@ -44,6 +48,7 @@ const VacancyApplySection = ({ vacancy, hasApplied, onApply }: VacancyApplySecti
     if (!applyMutation.isPending) {
       setIsModalOpen(false);
       setCoverLetter('');
+      setCvFile(null);
     }
   };
 
@@ -99,7 +104,7 @@ const VacancyApplySection = ({ vacancy, hasApplied, onApply }: VacancyApplySecti
               </Label>
               <textarea
                 id="coverLetter"
-                rows={8}
+                rows={6}
                 value={coverLetter}
                 onChange={(e) => setCoverLetter(e.target.value)}
                 placeholder="Write your cover letter here..."
@@ -107,6 +112,36 @@ const VacancyApplySection = ({ vacancy, hasApplied, onApply }: VacancyApplySecti
                 disabled={applyMutation.isPending}
               />
               <p className="text-xs text-gray-400">{coverLetter.length} characters</p>
+            </div>
+
+            {/* CV Upload */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">CV / Resume</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx"
+                className="hidden"
+                disabled={applyMutation.isPending}
+                onChange={(e) => setCvFile(e.target.files?.[0] ?? null)}
+              />
+              {cvFile ? (
+                <div className="flex items-center gap-2 border border-green-300 bg-green-50 rounded-lg px-3 py-2">
+                  <Upload className="w-4 h-4 text-green-600 shrink-0" />
+                  <span className="text-sm text-green-700 truncate flex-1">{cvFile.name}</span>
+                  <button type="button" onClick={() => { setCvFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                    className="text-gray-400 hover:text-red-500 cursor-pointer">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => fileInputRef.current?.click()}
+                  disabled={applyMutation.isPending}
+                  className="w-full border-2 border-dashed border-gray-300 rounded-lg px-3 py-4 text-sm text-gray-500 hover:border-green-400 hover:text-green-600 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2">
+                  <Upload className="w-4 h-4" />
+                  Click to upload CV (PDF, DOC, DOCX)
+                </button>
+              )}
             </div>
           </div>
 

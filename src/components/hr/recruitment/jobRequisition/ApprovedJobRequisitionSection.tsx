@@ -5,10 +5,12 @@ import { Button } from '../../../ui/button';
 import { showToast } from '../../../../layout/layout';
 import JobRequisitionTable from './JobRequisitionTable';
 import AddJobPostingModal from '../jobPosting/AddJobPostingModal';
+import PostAllModal from '../jobPosting/PostAllModal';
 import { useJobRequisitions } from '../../../../services/hr/recruitment/jobRequisition/jobRequisition.queries';
+import { useCreateJobPosting, useCreateAllJobPosting } from '../../../../services/hr/recruitment/jobPosting/jobPosting.queries';
 import type { JobReqListDto } from '../../../../types/hr/recruit/jobRequisition';
+import type { JobPostingAddDto } from '../../../../types/hr/recruit/jobPosting';
 
-// Dummy no-op handlers — approved items can't be edited/reviewed/deleted from this view
 const noop = () => {};
 
 const ApprovedJobRequisitionSection: React.FC = () => {
@@ -16,12 +18,10 @@ const ApprovedJobRequisitionSection: React.FC = () => {
   const [postingItem, setPostingItem] = useState<JobReqListDto | null>(null);
   const [isBulkPostOpen, setIsBulkPostOpen] = useState(false);
 
-  // Fetch all requisitions — we filter client-side for approved ones
-  // Pass a dummy workforcePlanId of 'all' and handle in the API or filter here
   const { data: allItems = [], isLoading } = useJobRequisitions('all');
 
   const approvedItems = allItems.filter((i) =>
-    i.statusStr === 'Approve' || i.statusStr === 'Approved' || String(i.status) === '0'
+    i.statusStr === 'Approve' || i.statusStr === 'Approved'
   );
 
   const filtered = approvedItems.filter((i) =>
@@ -29,21 +29,33 @@ const ApprovedJobRequisitionSection: React.FC = () => {
     i.reqReason.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const createMutation = useCreateJobPosting({
+    onSuccess: () => { showToast.success('Job posting created successfully'); setPostingItem(null); },
+    onError: (e) => showToast.error(e.message || 'Failed to create job posting'),
+  });
+
+  const createAllMutation = useCreateAllJobPosting({
+    onSuccess: () => { showToast.success('All job postings created successfully'); setIsBulkPostOpen(false); },
+    onError: (e) => showToast.error(e.message || 'Failed to create all job postings'),
+  });
+
+  const handleSingleSubmit = (data: JobPostingAddDto) => createMutation.mutate(data);
+
+  const handleBulkSubmit = (wfpId: string, postType: string, deadlineDate: string) => {
+    createAllMutation.mutate({ id: wfpId, postType, deadlineDate });
+  };
+
   return (
     <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-gray-50 space-y-6 min-h-screen">
-      {/* Header */}
       <div className="flex items-center gap-2">
         <Megaphone className="w-6 h-6 text-green-600" />
-        <div>
-          <h1 className="text-2xl font-bold">
-            <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-              Approved Job Requisitions
-            </span>
-          </h1>
-        </div>
+        <h1 className="text-2xl font-bold">
+          <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+            Approved Job Requisitions
+          </span>
+        </h1>
       </div>
 
-      {/* Search filter — employee style */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}
         className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -66,12 +78,15 @@ const ApprovedJobRequisitionSection: React.FC = () => {
               </div>
             )}
           </div>
-          <div className="flex justify-end">
-            <Button onClick={() => setIsBulkPostOpen(true)} size="sm"
-              className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer">
-              <Megaphone className="w-4 h-4" /> Post All
-            </Button>
-          </div>
+          <Button
+            onClick={() => setIsBulkPostOpen(true)}
+            disabled={createAllMutation.isPending}
+            size="sm"
+            className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer"
+          >
+            <Megaphone className="w-4 h-4" />
+            {createAllMutation.isPending ? 'Posting...' : 'Post All'}
+          </Button>
         </div>
       </motion.div>
 
@@ -81,20 +96,19 @@ const ApprovedJobRequisitionSection: React.FC = () => {
         onPost={setPostingItem}
       />
 
-      {/* Single post modal */}
       <AddJobPostingModal
         isOpen={!!postingItem}
         reqId={postingItem?.id ?? ''}
+        isLoading={createMutation.isPending}
         onClose={() => setPostingItem(null)}
-        onSubmit={() => { showToast.success('Job posting created successfully'); setPostingItem(null); }}
+        onSubmit={handleSingleSubmit}
       />
 
-      {/* Bulk post modal — sends a special "all" signal or the first approved req's workforcePlanId */}
-      <AddJobPostingModal
+      <PostAllModal
         isOpen={isBulkPostOpen}
-        reqId={approvedItems[0]?.workforcePlanId ?? ''}
+        isLoading={createAllMutation.isPending}
         onClose={() => setIsBulkPostOpen(false)}
-        onSubmit={() => { showToast.success('All job postings created successfully'); setIsBulkPostOpen(false); }}
+        onSubmit={handleBulkSubmit}
       />
     </motion.section>
   );

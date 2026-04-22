@@ -9,11 +9,13 @@ import JobPostingTable from './JobPostingTable';
 import EditJobPostingModal from './EditJobPostingModal';
 import DeleteJobPostingModal from './DeleteJobPostingModal';
 import PublishJobPostingModal from './PublishJobPostingModal';
+import JpEvalFlowModal from './JpEvalFlowModal';
 import {
   useJobPostings,
   useUpdateJobPosting,
   useDeleteJobPosting,
   usePublishJobPosting,
+  usePublishAllJobPosting,
   useCloseJobPosting,
 } from '../../../../services/hr/recruitment/jobPosting/jobPosting.queries';
 import { useJobRequisition } from '../../../../services/hr/recruitment/jobRequisition/jobRequisition.queries';
@@ -32,6 +34,8 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber 
   const [editingItem, setEditingItem] = useState<JobPostingListDto | null>(null);
   const [deletingItem, setDeletingItem] = useState<JobPostingListDto | null>(null);
   const [publishingItem, setPublishingItem] = useState<JobPostingListDto | null>(null);
+  const [publishAllOpen, setPublishAllOpen] = useState(false);
+  const [evalFlowItem, setEvalFlowItem] = useState<JobPostingListDto | null>(null);
 
   const { data: allItems = [], isLoading, error } = useJobPostings();
   // Fetch the requisition to get its reqNumber for filtering
@@ -65,6 +69,11 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber 
     onError: (e) => showToast.error(e.message || 'Failed to publish job posting'),
   });
 
+  const publishAllMutation = usePublishAllJobPosting({
+    onSuccess: () => { showToast.success('All job postings published successfully'); setPublishAllOpen(false); },
+    onError: (e) => showToast.error(e.message || 'Failed to publish all job postings'),
+  });
+
   const closeMutation = useCloseJobPosting({
     onSuccess: () => showToast.success('Job posting closed successfully'),
     onError: (e) => showToast.error(e.message || 'Failed to close job posting'),
@@ -75,6 +84,10 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber 
   const handlePublish = (item: JobPostingListDto) => setPublishingItem(item);
   const handlePublishSubmit = (id: string, comment: string | null) => {
     publishMutation.mutate({ id, comment });
+  };
+  // Publish all — id is the workforcePlanId (from the requisition)
+  const handlePublishAllSubmit = (_id: string, comment: string | null) => {
+    publishAllMutation.mutate({ id: reqId, comment });
   };
   const handleClose = (item: JobPostingListDto) => closeMutation.mutate(item.id);
 
@@ -113,11 +126,14 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber 
         searchTerm={searchTerm} setSearchTerm={setSearchTerm}
         statusFilter={statusFilter} setStatusFilter={setStatusFilter}
         typeFilter={typeFilter} setTypeFilter={setTypeFilter}
+        onPublishAll={() => setPublishAllOpen(true)}
+        isPublishAllLoading={publishAllMutation.isPending}
       />
       <JobPostingTable
         items={filtered} isLoading={isLoading}
         onEdit={setEditingItem} onDelete={setDeletingItem}
         onPublish={handlePublish} onClose={handleClose}
+        onEvalFlow={setEvalFlowItem}
       />
       <EditJobPostingModal isOpen={!!editingItem} item={editingItem}
         onClose={() => setEditingItem(null)} onSubmit={handleEdit} />
@@ -129,6 +145,19 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber 
         isLoading={publishMutation.isPending}
         onClose={() => setPublishingItem(null)}
         onSubmit={handlePublishSubmit}
+      />
+      {/* Publish All — passes workforcePlanId (reqId) to PublishAllJobPosting */}
+      <PublishJobPostingModal
+        isOpen={publishAllOpen}
+        item={publishAllOpen ? { id: reqId, postNumber: 'All Postings', reqNumber: requisition?.reqNumber ?? '', statusStr: '', postTypeStr: '', reqAppQuan: '' } as any : null}
+        isLoading={publishAllMutation.isPending}
+        onClose={() => setPublishAllOpen(false)}
+        onSubmit={handlePublishAllSubmit}
+      />
+      <JpEvalFlowModal
+        isOpen={!!evalFlowItem}
+        posting={evalFlowItem}
+        onClose={() => setEvalFlowItem(null)}
       />
     </motion.section>
   );

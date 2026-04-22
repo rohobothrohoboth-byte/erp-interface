@@ -61,10 +61,7 @@ const VacancyDetailSection = () => {
     description: detail.jobDesc,
     requirements: detail.reqQual,
     responsibilities: detail.keyRespo,
-    salary: detail.salary ? (() => {
-      const num = parseInt(detail.salary.replace(/[^0-9]/g, ''));
-      return { min: num, max: num, currency: 'ETB' };
-    })() : undefined,
+    salary: detail.salary,
     openings: detail.numOpen,
     applicants: 0,
     postNumber: detail.postNumber,

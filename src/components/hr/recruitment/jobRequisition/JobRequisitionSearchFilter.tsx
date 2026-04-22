@@ -11,10 +11,12 @@ interface JobRequisitionSearchFilterProps {
   setStatusFilter: (v: string) => void;
   onAddClick: () => void;
   onViewPostings: () => void;
+  onPostAll?: () => void;
+  isPostAllLoading?: boolean;
 }
 
 const JobRequisitionSearchFilter: React.FC<JobRequisitionSearchFilterProps> = ({
-  searchTerm, setSearchTerm, statusFilter, setStatusFilter, onAddClick, onViewPostings,
+  searchTerm, setSearchTerm, statusFilter, setStatusFilter, onAddClick, onViewPostings, onPostAll, isPostAllLoading,
 }) => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}
     className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
@@ -40,16 +42,6 @@ const JobRequisitionSearchFilter: React.FC<JobRequisitionSearchFilterProps> = ({
             </div>
           )}
         </div>
-        {/* <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500"
-        >
-          <option value="">All Statuses</option>
-          {Object.entries(ReviewStat).map(([key, label]) => (
-            <option key={key} value={label}>{label}</option>
-          ))}
-        </select> */}
       </div>
       {/* Action buttons */}
       <div className="flex items-center gap-2 justify-end">
@@ -57,6 +49,13 @@ const JobRequisitionSearchFilter: React.FC<JobRequisitionSearchFilterProps> = ({
           className="flex items-center gap-2 border-green-600 text-green-700 hover:bg-green-50 cursor-pointer">
           <Megaphone className="w-4 h-4" /> Job Postings
         </Button>
+        {onPostAll && (
+          <Button onClick={onPostAll} size="sm" disabled={isPostAllLoading} variant="outline"
+            className="flex items-center gap-2 border-blue-600 text-blue-700 hover:bg-blue-50 cursor-pointer">
+            <Megaphone className="w-4 h-4" />
+            {isPostAllLoading ? 'Posting...' : 'Post All'}
+          </Button>
+        )}
         <Button onClick={onAddClick} size="sm"
           className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer">
           <Plus className="w-4 h-4" /> Add Requisition

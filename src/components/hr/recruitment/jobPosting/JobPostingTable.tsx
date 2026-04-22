@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Megaphone, MoreVertical, Edit, Trash2, Send, XCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Megaphone, MoreVertical, Edit, Trash2, Send, XCircle, ChevronLeft, ChevronRight, ClipboardCheck } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/popover';
 import type { JobPostingListDto } from '../../../../types/hr/recruit/jobPosting';
 
@@ -11,6 +11,7 @@ interface JobPostingTableProps {
   onDelete: (item: JobPostingListDto) => void;
   onPublish?: (item: JobPostingListDto) => void;
   onClose?: (item: JobPostingListDto) => void;
+  onEvalFlow?: (item: JobPostingListDto) => void;
 }
 
 const PAGE_SIZE = 10;
@@ -28,7 +29,7 @@ const typeColors: Record<string, string> = {
   Both: 'bg-teal-100 text-teal-800',
 };
 
-const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = false, onEdit, onDelete, onPublish, onClose }) => {
+const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = false, onEdit, onDelete, onPublish, onClose, onEvalFlow }) => {
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -111,6 +112,12 @@ const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = fa
                           className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
                           <Edit size={15} /> Edit
                         </button>
+                        {onEvalFlow && (
+                          <button onClick={() => { onEvalFlow(item); setPopoverOpen(null); }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50 text-blue-700 flex items-center gap-2">
+                            <ClipboardCheck size={15} /> Eval Flow
+                          </button>
+                        )}
                         <button onClick={() => { onDelete(item); setPopoverOpen(null); }}
                           className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
                           <Trash2 size={15} /> Delete

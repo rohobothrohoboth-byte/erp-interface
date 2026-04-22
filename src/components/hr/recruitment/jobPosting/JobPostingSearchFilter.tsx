@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Search, X } from 'lucide-react';
-import { PostingStatus, JobPostingType } from '../../../../types/hr/enum';
+import { Search, X, Send } from 'lucide-react';
+import { Button } from '../../../ui/button';
 
 interface JobPostingSearchFilterProps {
   searchTerm: string;
@@ -10,15 +10,17 @@ interface JobPostingSearchFilterProps {
   setStatusFilter: (v: string) => void;
   typeFilter: string;
   setTypeFilter: (v: string) => void;
+  onPublishAll?: () => void;
+  isPublishAllLoading?: boolean;
 }
 
 const JobPostingSearchFilter: React.FC<JobPostingSearchFilterProps> = ({
   searchTerm, setSearchTerm, statusFilter, setStatusFilter, typeFilter, setTypeFilter,
+  onPublishAll, isPublishAllLoading,
 }) => (
   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}
     className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-    <div className="flex flex-col sm:flex-row gap-3 items-center">
-      {/* Search */}
+    <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
       <div className="relative w-full max-w-md">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400" />
@@ -38,22 +40,13 @@ const JobPostingSearchFilter: React.FC<JobPostingSearchFilterProps> = ({
           </div>
         )}
       </div>
-      {/* Status */}
-      {/* <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}
-        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500">
-        <option value="">All Statuses</option>
-        {Object.entries(PostingStatus).map(([key, label]) => (
-          <option key={key} value={key}>{label}</option>
-        ))}
-      </select> */}
-      {/* Type */}
-      {/* <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}
-        className="border border-gray-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500">
-        <option value="">All Types</option>
-        {Object.entries(JobPostingType).map(([key, label]) => (
-          <option key={key} value={key}>{label}</option>
-        ))}
-      </select> */}
+      {onPublishAll && (
+        <Button onClick={onPublishAll} size="sm" disabled={isPublishAllLoading}
+          className="flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer whitespace-nowrap">
+          <Send className="w-4 h-4" />
+          {isPublishAllLoading ? 'Publishing...' : 'Publish All'}
+        </Button>
+      )}
     </div>
   </motion.div>
 );
