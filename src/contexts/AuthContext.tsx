@@ -6,7 +6,6 @@ import {
   type ReactNode,
 } from "react";
 import { getAccessToken, login, refresh, logout } from "../utils/auth.utils";
-import { useLocation } from "react-router-dom";
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -40,11 +39,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 }, []);;
 
 const handleLogin = async (username: string, password: string) => {
-  setIsLoading(true);
   await login(username, password);
   const token = getAccessToken();
   setIsAuthenticated(!!token);
-  setIsLoading(false);
 };
 
   const handleLogout = () => {

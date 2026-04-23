@@ -1,17 +1,12 @@
 import { cn } from "../lib/utils";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "../components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "../components/ui/field";
 import { Input } from "../components/ui/input";
-import { Alert, AlertDescription } from "../components/ui/alert";
 import { BorderBeam } from "../components/ui/border-beam";
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { AlertCircle } from "lucide-react";
 
 type LoginFormProps = {
   className?: string;
@@ -24,7 +19,6 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
   const { login } = useAuth();
-  const navigate = useNavigate();
   // Auto-clear alert after 6 seconds
   useEffect(() => {
     if (alertMessage) {
@@ -47,7 +41,7 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
     setAlertMessage(null);
 
     try {
-      await login(code, password)
+      await login(code, password);
     } catch (error: any) {
       console.error("Login failed:", error);
 
@@ -76,14 +70,17 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
                 </p>
               </div>
 
-              {/* Alert placed here */}
+              {/* Error banner */}
               {alertMessage && (
-                <Alert
-                  variant="destructive"
-                  className=" animate-in fade-in slide-in-from-top-5 duration-300 p-2!"
-                >
-                  <AlertDescription>{alertMessage}</AlertDescription>
-                </Alert>
+                <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <AlertCircle
+                    size={16}
+                    className="text-red-500 shrink-0 mt-0.5"
+                  />
+                  <p className="text-sm text-red-700 font-medium leading-snug">
+                    {alertMessage}
+                  </p>
+                </div>
               )}
 
               <Field>
