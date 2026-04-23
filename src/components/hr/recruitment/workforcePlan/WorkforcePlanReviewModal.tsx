@@ -37,7 +37,6 @@ const WorkforcePlanReviewModal: React.FC<WorkforcePlanReviewModalProps> = ({ isO
     if (!item) return;
     reviewMutation.mutate({
       id: item.id,
-      reviewById: item.requistionById,
       appCount: form.appCount,
       status: form.status as any,
       comment: form.comment,

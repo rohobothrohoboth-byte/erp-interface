@@ -12,6 +12,16 @@ export const useJobPostings = () => {
   });
 };
 
+export const useJobPostingsByWfp = (wfpId: string) => {
+  return useQuery<JobPostingListDto[], Error>({
+    queryKey: [...jobPostingKeys.lists(), 'wfp', wfpId],
+    queryFn: () => jobPostingApi.getByWfp(wfpId),
+    enabled: !!wfpId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+  });
+};
+
 export const useCreateJobPosting = (options?: {
   onSuccess?: () => void;
   onError?: (e: Error) => void;

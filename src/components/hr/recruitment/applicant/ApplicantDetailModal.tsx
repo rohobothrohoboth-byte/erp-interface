@@ -35,9 +35,6 @@ const ApplicantDetailModal: React.FC<ApplicantDetailModalProps> = ({ applicantId
                 <h2 className="text-lg font-bold text-gray-800">Applicant Details</h2>
                 {data && <p className="text-xs text-gray-500">{data.applicant} · {data.postNumber}</p>}
               </div>
-              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 cursor-pointer">
-                <X size={18} />
-              </button>
             </div>
 
             {isLoading ? (
@@ -105,7 +102,7 @@ const ApplicantDetailModal: React.FC<ApplicantDetailModalProps> = ({ applicantId
               <div className="p-8 text-center text-gray-500">No details found.</div>
             )}
 
-            <div className="border-t px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end">
+            <div className="border-t px-6 py-4 bg-gray-50 rounded-b-xl flex justify-center">
               <Button variant="outline" onClick={onClose} className="cursor-pointer">Close</Button>
             </div>
           </motion.div>

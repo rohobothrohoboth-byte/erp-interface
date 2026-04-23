@@ -9,6 +9,7 @@ export const useJpEvalFlows = (postId: string) =>
     queryFn: () => jpEvalFlowApi.getByPost(postId),
     enabled: !!postId,
     staleTime: 0,
+    refetchOnMount: 'always',
   });
 
 export const useCreateJpEvalFlow = (options?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
@@ -16,7 +17,7 @@ export const useCreateJpEvalFlow = (options?: { onSuccess?: () => void; onError?
   return useMutation<void, Error, JpEvalFlowAddDto>({
     mutationFn: jpEvalFlowApi.create,
     onSuccess: (_, vars) => {
-      qc.refetchQueries({ queryKey: jpEvalFlowKeys.byPost(vars.jobPostingId) });
+      qc.invalidateQueries({ queryKey: jpEvalFlowKeys.byPost(vars.jobPostingId), refetchType: 'all' });
       options?.onSuccess?.();
     },
     onError: options?.onError,
@@ -28,7 +29,7 @@ export const useUpdateJpEvalFlow = (postId: string, options?: { onSuccess?: () =
   return useMutation<void, Error, JpEvalFlowModDto>({
     mutationFn: jpEvalFlowApi.update,
     onSuccess: () => {
-      qc.refetchQueries({ queryKey: jpEvalFlowKeys.byPost(postId) });
+      qc.invalidateQueries({ queryKey: jpEvalFlowKeys.byPost(postId), refetchType: 'all' });
       options?.onSuccess?.();
     },
     onError: options?.onError,
@@ -38,11 +39,16 @@ export const useUpdateJpEvalFlow = (postId: string, options?: { onSuccess?: () =
 export const useDeleteJpEvalFlow = (postId: string, options?: { onSuccess?: () => void; onError?: (e: Error) => void }) => {
   const qc = useQueryClient();
   return useMutation<void, Error, string>({
-    mutationFn: jpEvalFlowApi.delete,
-    onSuccess: () => {
-      qc.refetchQueries({ queryKey: jpEvalFlowKeys.byPost(postId) });
+    mutationFn: (id) => jpEvalFlowApi.delete(id),
+     onSuccess: (_, deletedId) => {
+      qc.setQueryData<JpEvalFlowListDto[]>(
+        jpEvalFlowKeys.byPost(postId),
+        (old) => old?.filter(item => item.id !== deletedId) ?? []
+      );
+
       options?.onSuccess?.();
     },
+
     onError: options?.onError,
   });
 };

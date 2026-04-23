@@ -3,7 +3,7 @@ import type {
   JobReqAddDto,
   JobReqModDto,
 } from '../../../../types/hr/recruit/jobRequisition';
-import type { ReviewAllDto } from '../../../../types/hr/recruit/reviewDto';
+import type {  ReviewDto } from '../../../../types/hr/recruit/reviewDto';
 import { api } from '../../../api';
 
 const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobReq`;
@@ -72,9 +72,10 @@ export const jobRequisitionApi = {
   },
 
   // POST /Review/JobReq  body: ReviewAllDto { id, reviewById, status, comment }
-  review: async (data: ReviewAllDto): Promise<void> => {
+  review: async (data: ReviewDto): Promise<void> => {
     try {
       await api.post(`${REVIEW_BASE}/JobReq`, data);
     } catch (e) { throw new Error(extractError(e)); }
   },
+  
 };

@@ -1,4 +1,4 @@
-import type { JobPostingListDto, JobPostingAddDto, JobPostingModDto } from '../../../../types/hr/recruit/jobPosting';
+import type { JobPostingListDto, JobPostingAddDto, JobPostingModDto, JobPostingViewDto } from '../../../../types/hr/recruit/jobPosting';
 import { api } from '../../../api';
 
 const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobPosting`;
@@ -76,6 +76,14 @@ export const jobPostingApi = {
   publishAll: async (data: { id: string; comment: string | null }): Promise<void> => {
     try {
       await api.post(`${BASE}/PublishAllJobPosting`, { id: data.id, comment: data.comment });
+    } catch (e) { throw new Error(extractError(e)); }
+  },
+
+  // GET /JobPostByWfp/{id} — postings for a workforce plan
+  getByWfp: async (wfpId: string): Promise<JobPostingListDto[]> => {
+    try {
+      const res = await api.get(`${BASE}/JobPostByWfp/${wfpId}`);
+      return normalizeArray(res.data?.data ?? res.data ?? []);
     } catch (e) { throw new Error(extractError(e)); }
   },
 

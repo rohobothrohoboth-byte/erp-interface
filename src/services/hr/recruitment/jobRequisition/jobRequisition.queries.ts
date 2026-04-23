@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobRequisitionApi } from './jobRequisition.api';
 import { jobRequisitionKeys } from './jobRequisition.key';
 import type { JobReqListDto, JobReqAddDto, JobReqModDto } from '../../../../types/hr/recruit/jobRequisition';
-import type { ReviewAllDto } from '../../../../types/hr/recruit/reviewDto';
+import type {  ReviewDto } from '../../../../types/hr/recruit/reviewDto';
 
 export const useJobRequisitions = (
   workforcePlanId?: string,
@@ -87,7 +87,7 @@ export const useReviewJobRequisition = (options?: {
   onError?: (error: Error) => void;
 }) => {
   const queryClient = useQueryClient();
-  return useMutation<void, Error, ReviewAllDto>({
+  return useMutation<void, Error, ReviewDto>({
     mutationFn: jobRequisitionApi.review,
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: jobRequisitionKeys.lists() });

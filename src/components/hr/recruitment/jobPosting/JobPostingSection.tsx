@@ -12,6 +12,7 @@ import PublishJobPostingModal from './PublishJobPostingModal';
 import JpEvalFlowModal from './JpEvalFlowModal';
 import {
   useJobPostings,
+  useJobPostingsByWfp,
   useUpdateJobPosting,
   useDeleteJobPosting,
   usePublishJobPosting,
@@ -23,10 +24,11 @@ import type { JobPostingListDto, JobPostingModDto } from '../../../../types/hr/r
 
 interface JobPostingSectionProps {
   reqId: string;
+  planId?: string;
   reqNumber?: string;
 }
 
-const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber }) => {
+const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, planId = '', reqNumber }) => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -37,14 +39,20 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, reqNumber 
   const [publishAllOpen, setPublishAllOpen] = useState(false);
   const [evalFlowItem, setEvalFlowItem] = useState<JobPostingListDto | null>(null);
 
-  const { data: allItems = [], isLoading, error } = useJobPostings();
-  // Fetch the requisition to get its reqNumber for filtering
+  // When planId is present (coming from WFP), use the dedicated WFP endpoint
+  // When reqId is present (coming from job requisition), fetch all and filter by reqNumber
+  const wfpQuery = useJobPostingsByWfp(planId);
+  const allQuery = useJobPostings();
   const { data: requisition } = useJobRequisition(reqId || undefined);
 
-  // Filter postings that belong to this requisition by matching reqNumber
-  const items = requisition?.reqNumber
-    ? allItems.filter(i => i.reqNumber === requisition.reqNumber)
-    : allItems;
+  const isLoading = planId ? wfpQuery.isLoading : allQuery.isLoading;
+  const error = planId ? wfpQuery.error : allQuery.error;
+
+  const items = planId
+    ? (wfpQuery.data ?? [])
+    : requisition?.reqNumber
+      ? (allQuery.data ?? []).filter(i => i.reqNumber === requisition.reqNumber)
+      : (allQuery.data ?? []);
 
   const filtered = items.filter((i) => {
     const matchSearch = i.postNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||

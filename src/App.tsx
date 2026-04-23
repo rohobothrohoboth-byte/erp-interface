@@ -64,6 +64,7 @@ import JobRequisitionPage from "./pages/hr/recruitmentpage/JobRequisitionPage";
 import JobPostingPage from "./pages/hr/recruitmentpage/JobPostingPage";
 import ApprovedJobRequisitionPage from "./pages/hr/recruitmentpage/ApprovedJobRequisitionPage";
 import ApplicantsPage from "./pages/hr/recruitmentpage/ApplicantsPage";
+import JpEvalFlowPage from "./pages/hr/recruitmentpage/JpEvalFlowPage";
 import PageCoreSettings from "./pages/settings/coreSettings/PageCoreSettings";
 import PageApiSettings from "./pages/settings/coreSettings/PageApiSettings";
 import PageMenuSettings from "./pages/settings/coreSettings/PageMenuSettings";
@@ -384,6 +385,8 @@ function App() {
               />
               <Route path="/hr/recruitment/approved-requisitions" element={<ApprovedJobRequisitionPage />} />
               <Route path="/hr/recruitment/applicants" element={<ApplicantsPage />} />
+              <Route path="/hr/recruitment/job-posting/:postId/eval-flow" element={<JpEvalFlowPage />} />
+              <Route path="/hr/recruitment/job-posting/:postId/eval-flow/:postNumber" element={<JpEvalFlowPage />} />
               <Route path="/hr/leave/list" element={<LeaveList />} />
               <Route path="/hr/leave/form" element={<LeaveRequestForm />} />
               <Route

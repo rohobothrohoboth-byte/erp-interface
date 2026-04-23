@@ -8,6 +8,7 @@ import { showToast } from '../../../../layout/layout';
 import { useReviewJobRequisition } from '../../../../services/hr/recruitment/jobRequisition/jobRequisition.queries';
 import { ReviewStat } from '../../../../types/hr/enum';
 import type { JobReqListDto } from '../../../../types/hr/recruit/jobRequisition';
+import { Input } from '../../../ui/input';
 
 interface JobRequisitionReviewModalProps {
   isOpen: boolean;
@@ -15,7 +16,7 @@ interface JobRequisitionReviewModalProps {
   onClose: () => void;
 }
 
-const defaultForm = { status: '', comment: '' };
+const defaultForm = { status: '', comment: '', appCount: 0 };
 
 const JobRequisitionReviewModal: React.FC<JobRequisitionReviewModalProps> = ({ isOpen, item, onClose }) => {
   const [form, setForm] = useState(defaultForm);
@@ -35,9 +36,9 @@ const JobRequisitionReviewModal: React.FC<JobRequisitionReviewModalProps> = ({ i
     e.preventDefault();
     if (!item) return;
     reviewMutation.mutate({
-      id: item.id,
-      reviewById: item.requistionById ?? item.id, // fallback; replace with actual reviewer ID from auth
+      id: item.id, // fallback; replace with actual reviewer ID from auth
       status: form.status as any,
+      appCount: form.appCount,
       comment: form.comment,
     });
   };
@@ -67,6 +68,12 @@ const JobRequisitionReviewModal: React.FC<JobRequisitionReviewModalProps> = ({ i
             {/* Form */}
             <form onSubmit={handleSubmit}>
               <div className="p-6 space-y-4">
+                 <div className="space-y-2">
+                                  <Label>Approved Positions</Label>
+                                  <Input type="number" min={0} value={form.appCount}
+                                    onChange={(e) => setForm(f => ({ ...f, appCount: parseInt(e.target.value) || 0 }))}
+                                    disabled={reviewMutation.isPending} />
+                                </div>
                 <div className="space-y-2">
                   <Label>Decision <span className="text-red-500">*</span></Label>
                   <EnumSelect

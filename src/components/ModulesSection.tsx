@@ -258,14 +258,9 @@ const ModulesSection: React.FC = () => {
     }
 
     const perms = parsePermissions();
-
-    return perms.map((mod) => ({
-      label: mod.L,
-      key: mod.K,
-      path: `/${mod.K.replace("mod.", "")}`,
-      icon: <BarChart3 size={24} />,
-      color: "from-purple-500 via-purple-400 to-pink-400",
-    }));
+    return perms
+    .map((mod) => ALL_MODULES.find((m) => m.key === mod.K))
+    .filter((m): m is AllowedModule => Boolean(m));
   };
 
   const allowedModules: AllowedModule[] = getAllowedModules();
