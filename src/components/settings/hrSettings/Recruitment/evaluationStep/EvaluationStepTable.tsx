@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ListOrdered, MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../../ui/popover';
 import { Badge } from '../../../../ui/badge';
 import type { EvaluationStepListDto } from '../../../../../types/hr/recruit/evaluationStep';
@@ -35,6 +35,7 @@ const EvaluationStepTable: React.FC<EvaluationStepTableProps> = ({ items, isLoad
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Step Name</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evaluation Type</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score Range</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Final Step</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -43,15 +44,14 @@ const EvaluationStepTable: React.FC<EvaluationStepTableProps> = ({ items, isLoad
           <tbody className="bg-white divide-y divide-gray-200">
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-3" />
                   <p className="text-sm text-gray-500">Loading steps...</p>
                 </td>
               </tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
-                  <ListOrdered className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <td colSpan={7} className="px-6 py-12 text-center">
                   <p className="text-sm font-medium text-gray-900 mb-1">No Steps Found</p>
                   <p className="text-sm text-gray-500">
                     {items.length === 0
@@ -80,7 +80,10 @@ const EvaluationStepTable: React.FC<EvaluationStepTableProps> = ({ items, isLoad
                   </div>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">
-                  <span className="text-sm text-gray-700">{item.evalType ?? item.evalTypeName ?? '—'}</span>
+                  <span className="text-sm text-gray-700">{item.evalType ?? '—'}</span>
+                </td>
+                <td className="px-4 py-2 whitespace-nowrap">
+                  <span className="text-sm text-gray-700 font-mono">{item.minScore ?? 0} – {item.maxScore ?? 100}</span>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   <Badge className={item.isFinal ? 'bg-emerald-100 text-emerald-800' : 'bg-yellow-100 text-gray-600'}>
@@ -88,7 +91,7 @@ const EvaluationStepTable: React.FC<EvaluationStepTableProps> = ({ items, isLoad
                   </Badge>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(item.createdAt).toLocaleDateString()}
+                  {item.CreatedAt ? new Date(item.CreatedAt).toLocaleDateString() : '—'}
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap text-right">
                   <Popover open={popoverOpen === item.id} onOpenChange={(o) => setPopoverOpen(o ? item.id : null)}>

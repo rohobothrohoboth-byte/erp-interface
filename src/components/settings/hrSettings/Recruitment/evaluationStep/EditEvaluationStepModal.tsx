@@ -18,6 +18,8 @@ const EditEvaluationStepModal: React.FC<EditEvaluationStepModalProps> = ({
   const [form, setForm] = useState<EvaluationStepAddDto>({
     stepName: '',
     stepOrder: 1,
+    maxScore: 100,
+    minScore: 0,
     isFinal: false,
     evalTypeId: '',
     evaluationFlowId: '',
@@ -28,9 +30,11 @@ const EditEvaluationStepModal: React.FC<EditEvaluationStepModalProps> = ({
       setForm({
         stepName: item.stepName,
         stepOrder: item.stepOrder,
+        maxScore: item.maxScore ?? 100,
+        minScore: item.minScore ?? 0,
         isFinal: item.isFinal,
-        evalTypeId: item.evalTypeId,
-        evaluationFlowId: item.evaluationFlowId,
+        evalTypeId: item.evalTypeId ?? '',
+        evaluationFlowId: item.evaluationFlowId ?? '',
       });
     }
   }, [item]);
@@ -88,6 +92,20 @@ const EditEvaluationStepModal: React.FC<EditEvaluationStepModalProps> = ({
                     <option key={et.id} value={et.id}>{et.name}</option>
                   ))}
                 </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Min Score</label>
+                  <input type="number" min={0} value={form.minScore}
+                    onChange={e => setForm(f => ({ ...f, minScore: Number(e.target.value) }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Score</label>
+                  <input type="number" min={1} value={form.maxScore}
+                    onChange={e => setForm(f => ({ ...f, maxScore: Number(e.target.value) }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input

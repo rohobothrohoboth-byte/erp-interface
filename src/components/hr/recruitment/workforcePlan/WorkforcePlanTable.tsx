@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ClipboardList, MoreVertical, Edit, Trash2, Eye, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ClipboardList, MoreVertical, Edit, Trash2, Eye, FileText, Megaphone, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/popover';
 import { useNavigate } from 'react-router-dom';
 import type { WorkforcePlanListDto } from '../../../../types/hr/recruit/workforcePlan';
@@ -108,6 +108,12 @@ const WorkforcePlanTable: React.FC<WorkforcePlanTableProps> = ({ items, isLoadin
                           <button onClick={() => { navigate(`/hr/recruitment/workforce-plan/${item.id}/requisitions`); setPopoverOpen(null); }}
                             className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 text-green-700 flex items-center gap-2">
                             <FileText size={15} /> Job Requisitions
+                          </button>
+                        )}
+                        {(item.statusStr === 'Approve' || item.statusStr === 'Approved' || String(item.status) === '0') && (
+                          <button onClick={() => { navigate(`/hr/recruitment/workforce-plan/${item.id}/postings`); setPopoverOpen(null); }}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 text-green-700 flex items-center gap-2">
+                            <Megaphone size={15} /> Job Postings
                           </button>
                         )}
                         {!(item.statusStr === 'Approve' || item.statusStr === 'Approved' || String(item.status) === '0') && (

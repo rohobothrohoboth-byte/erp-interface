@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, ClipboardCheck, Plus, CheckCircle2, Circle,
-  X, ChevronRight, Trash2, Edit,
+  X, Trash2, Edit,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../../ui/button';
@@ -19,7 +19,7 @@ import { evaluationStepApi } from '../../../../services/hr/recruitment/evaluatio
 import type { JpEvalFlowListDto } from '../../../../types/hr/recruit/jpEvalFlow';
 import type { EvaluationFlowListDto } from '../../../../types/hr/recruit/evaluationFlow';
 
-interface StepRow { stepName: string; stepOrder: number; isFinal: boolean; evalTypeId: string; }
+interface StepRow { stepName: string; stepOrder: number; isFinal: boolean; evalTypeId: string; minScore: number; maxScore: number; }
 
 // ── Fetch and cache steps per flow ─────────────────────────────────────────
 const useFlowSteps = (flowId: string) => {
@@ -120,7 +120,7 @@ const JpEvalFlowSection: React.FC = () => {
   // Create form
   const [newFlowName, setNewFlowName] = useState('');
   const [newFlowGlobal, setNewFlowGlobal] = useState(false);
-  const [newSteps, setNewSteps] = useState<StepRow[]>([{ stepName: '', stepOrder: 0, isFinal: false, evalTypeId: '' }]);
+  const [newSteps, setNewSteps] = useState<StepRow[]>([{ stepName: '', stepOrder: 0, isFinal: false, evalTypeId: '', minScore: 0, maxScore: 100 }]);
   const [createEffectiveFrom, setCreateEffectiveFrom] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -146,7 +146,7 @@ const JpEvalFlowSection: React.FC = () => {
   const resetRight = () => {
     setRightMode('empty'); setSelectedFlow(null); setEditingItem(null);
     setEffectiveFrom(''); setNewFlowName(''); setNewFlowGlobal(false);
-    setNewSteps([{ stepName: '', stepOrder: 0, isFinal: false, evalTypeId: '' }]);
+    setNewSteps([{ stepName: '', stepOrder: 0, isFinal: false, evalTypeId: '', minScore: 0, maxScore: 100 }]);
     setCreateEffectiveFrom('');
   };
 
@@ -189,7 +189,7 @@ const JpEvalFlowSection: React.FC = () => {
     finally { setIsCreating(false); }
   };
 
-  const addNewStep = () => setNewSteps(s => [...s, { stepName: '', stepOrder: 0, isFinal: false, evalTypeId: '' }]);
+  const addNewStep = () => setNewSteps(s => [...s, { stepName: '', stepOrder: 0, isFinal: false, evalTypeId: '', minScore: 0, maxScore: 100 }]);
   const removeNewStep = (i: number) => setNewSteps(s => s.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, stepOrder: idx + 1 })));
   const updateNewStep = (i: number, field: keyof StepRow, val: any) => setNewSteps(s => s.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
 
@@ -428,6 +428,16 @@ const JpEvalFlowSection: React.FC = () => {
                               <input type="checkbox" checked={s.isFinal} onChange={e => updateNewStep(i, 'isFinal', e.target.checked)} disabled={isCreating} className="w-3.5 h-3.5 rounded accent-green-600 cursor-pointer" />
                               <span className="text-xs text-gray-500">Final step</span>
                             </label>
+                            <div className="col-span-2 grid grid-cols-2 gap-2">
+                              <div className="space-y-0.5">
+                                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Min Score</span>
+                                <Input type="number" min={0} value={s.minScore} onChange={e => updateNewStep(i, 'minScore', Number(e.target.value))} disabled={isCreating} className="h-8 text-sm" />
+                              </div>
+                              <div className="space-y-0.5">
+                                <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">Max Score</span>
+                                <Input type="number" min={1} value={s.maxScore} onChange={e => updateNewStep(i, 'maxScore', Number(e.target.value))} disabled={isCreating} className="h-8 text-sm" />
+                              </div>
+                            </div>
                           </div>
                           {newSteps.length > 1 && (
                             <button type="button" onClick={() => removeNewStep(i)} disabled={isCreating} className="text-gray-400 hover:text-red-500 cursor-pointer pt-1 shrink-0"><X size={14} /></button>

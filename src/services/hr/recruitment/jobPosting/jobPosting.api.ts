@@ -65,20 +65,6 @@ export const jobPostingApi = {
     } catch (e) { throw new Error(extractError(e)); }
   },
 
-  // POST /PublishJobPosting — body: { id, comment }
-  publish: async (data: { id: string; comment: string | null }): Promise<void> => {
-    try {
-      await api.post(`${BASE}/PublishJobPosting`, { id: data.id, comment: data.comment });
-    } catch (e) { throw new Error(extractError(e)); }
-  },
-
-  // POST /PublishAllJobPosting — bulk publish for a plan
-  publishAll: async (data: { id: string; comment: string | null }): Promise<void> => {
-    try {
-      await api.post(`${BASE}/PublishAllJobPosting`, { id: data.id, comment: data.comment });
-    } catch (e) { throw new Error(extractError(e)); }
-  },
-
   // GET /JobPostByWfp/{id} — postings for a workforce plan
   getByWfp: async (wfpId: string): Promise<JobPostingListDto[]> => {
     try {
@@ -87,10 +73,4 @@ export const jobPostingApi = {
     } catch (e) { throw new Error(extractError(e)); }
   },
 
-  // POST /CloseJobPosting/{id}
-  close: async (id: string): Promise<void> => {
-    try {
-      await api.post(`${BASE}/CloseJobPosting/${id}`);
-    } catch (e) { throw new Error(extractError(e)); }
-  },
 };

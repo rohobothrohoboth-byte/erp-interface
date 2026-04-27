@@ -15,6 +15,8 @@ interface AddEvaluationStepModalProps {
 const defaultForm: EvaluationStepAddDto = {
   stepName: '',
   stepOrder: 1,
+  maxScore: 100,
+  minScore: 0,
   isFinal: false,
   evalTypeId: '',
   evaluationFlowId: '',
@@ -88,6 +90,20 @@ const AddEvaluationStepModal: React.FC<AddEvaluationStepModalProps> = ({
                     <option key={et.id} value={et.id}>{et.name}</option>
                   ))}
                 </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Min Score</label>
+                  <input type="number" min={0} value={form.minScore}
+                    onChange={e => setForm(f => ({ ...f, minScore: Number(e.target.value) }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Max Score</label>
+                  <input type="number" min={1} value={form.maxScore}
+                    onChange={e => setForm(f => ({ ...f, maxScore: Number(e.target.value) }))}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500" />
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <input

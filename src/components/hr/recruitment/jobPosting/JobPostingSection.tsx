@@ -15,12 +15,10 @@ import {
   useJobPostingsByWfp,
   useUpdateJobPosting,
   useDeleteJobPosting,
-  usePublishJobPosting,
-  usePublishAllJobPosting,
-  useCloseJobPosting,
 } from '../../../../services/hr/recruitment/jobPosting/jobPosting.queries';
 import { useJobRequisition } from '../../../../services/hr/recruitment/jobRequisition/jobRequisition.queries';
 import type { JobPostingListDto, JobPostingModDto } from '../../../../types/hr/recruit/jobPosting';
+import { useCloseJobPosting, usePublishAllJobPosting, usePublishJobPosting } from '../../../../services/hr/recruitment/JobPublish/jobPublish.queries';
 
 interface JobPostingSectionProps {
   reqId: string;
@@ -39,8 +37,6 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, planId = '
   const [publishAllOpen, setPublishAllOpen] = useState(false);
   const [evalFlowItem, setEvalFlowItem] = useState<JobPostingListDto | null>(null);
 
-  // When planId is present (coming from WFP), use the dedicated WFP endpoint
-  // When reqId is present (coming from job requisition), fetch all and filter by reqNumber
   const wfpQuery = useJobPostingsByWfp(planId);
   const allQuery = useJobPostings();
   const { data: requisition } = useJobRequisition(reqId || undefined);
@@ -142,6 +138,7 @@ const JobPostingSection: React.FC<JobPostingSectionProps> = ({ reqId, planId = '
         onEdit={setEditingItem} onDelete={setDeletingItem}
         onPublish={handlePublish} onClose={handleClose}
         onEvalFlow={setEvalFlowItem}
+        onRowClick={planId ? (item) => navigate(`/hr/recruitment/job-posting/${item.id}/dashboard/${encodeURIComponent(item.postNumber)}`) : undefined}
       />
       <EditJobPostingModal isOpen={!!editingItem} item={editingItem}
         onClose={() => setEditingItem(null)} onSubmit={handleEdit} />

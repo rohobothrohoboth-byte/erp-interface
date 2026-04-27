@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Megaphone, MoreVertical, Edit, Trash2, Send, XCircle, ChevronLeft, ChevronRight, ClipboardCheck } from 'lucide-react';
+import { Megaphone, MoreVertical, Edit, Trash2, Send, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/popover';
 import type { JobPostingListDto } from '../../../../types/hr/recruit/jobPosting';
@@ -13,6 +13,8 @@ interface JobPostingTableProps {
   onPublish?: (item: JobPostingListDto) => void;
   onClose?: (item: JobPostingListDto) => void;
   onEvalFlow?: (item: JobPostingListDto) => void;
+  /** When provided, rows become clickable and navigate to dashboard */
+  onRowClick?: (item: JobPostingListDto) => void;
 }
 
 const PAGE_SIZE = 10;
@@ -30,7 +32,7 @@ const typeColors: Record<string, string> = {
   Both: 'bg-teal-100 text-teal-800',
 };
 
-const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = false, onEdit, onDelete, onPublish, onClose, onEvalFlow }) => {
+const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = false, onEdit, onDelete, onPublish, onClose, onEvalFlow, onRowClick }) => {
   const navigate = useNavigate();
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,7 +67,9 @@ const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = fa
               </td></tr>
             ) : paginated.map((item, index) => (
               <motion.tr key={item.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03 }} className="hover:bg-gray-50">
+                transition={{ delay: index * 0.03 }}
+                className={`hover:bg-gray-50 ${onRowClick ? 'cursor-pointer' : ''}`}
+                onClick={onRowClick ? () => onRowClick(item) : undefined}>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
@@ -89,7 +93,7 @@ const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = fa
                   {item.deadlineDateStr ?? '—'}
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">{item.reqAppQuan}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-right">
+                <td className="px-4 py-3 whitespace-nowrap text-right" onClick={e => e.stopPropagation()}>
                   <Popover open={popoverOpen === item.id} onOpenChange={(o) => setPopoverOpen(o ? item.id : null)}>
                     <PopoverTrigger asChild>
                       <button className="text-gray-500 hover:text-gray-800 p-1 rounded-full hover:bg-gray-100">
@@ -104,25 +108,10 @@ const JobPostingTable: React.FC<JobPostingTableProps> = ({ items, isLoading = fa
                             <Send size={15} /> Publish
                           </button>
                         )}
-                        {onClose && item.statusStr === 'Published' && (
-                          <button onClick={() => { onClose(item); setPopoverOpen(null); }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-orange-50 text-orange-700 flex items-center gap-2">
-                            <XCircle size={15} /> Close
-                          </button>
-                        )}
                         <button onClick={() => { onEdit(item); setPopoverOpen(null); }}
                           className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 text-gray-700 flex items-center gap-2">
                           <Edit size={15} /> Edit
                         </button>
-                        {onEvalFlow && (
-                          <button onClick={() => {
-                              navigate(`/hr/recruitment/job-posting/${item.id}/eval-flow/${encodeURIComponent(item.postNumber)}`);
-                              setPopoverOpen(null);
-                            }}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-green-50 text-green-700 flex items-center gap-2">
-                            <ClipboardCheck size={15} /> Eval Flow
-                          </button>
-                        )}
                         <button onClick={() => { onDelete(item); setPopoverOpen(null); }}
                           className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
                           <Trash2 size={15} /> Delete

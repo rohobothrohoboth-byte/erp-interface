@@ -65,6 +65,9 @@ import JobPostingPage from "./pages/hr/recruitmentpage/JobPostingPage";
 import ApprovedJobRequisitionPage from "./pages/hr/recruitmentpage/ApprovedJobRequisitionPage";
 import ApplicantsPage from "./pages/hr/recruitmentpage/ApplicantsPage";
 import JpEvalFlowPage from "./pages/hr/recruitmentpage/JpEvalFlowPage";
+import JobPostingDashboardPage from "./pages/hr/recruitmentpage/JobPostingDashboardPage";
+import PostApplicantsPage from "./pages/hr/recruitmentpage/PostApplicantsPage";
+import ApplicantEvaluationPageWrapper from "./pages/hr/recruitmentpage/ApplicantEvaluationPageWrapper";
 import PageCoreSettings from "./pages/settings/coreSettings/PageCoreSettings";
 import PageApiSettings from "./pages/settings/coreSettings/PageApiSettings";
 import PageMenuSettings from "./pages/settings/coreSettings/PageMenuSettings";
@@ -383,10 +386,42 @@ function App() {
                 path="/hr/recruitment/workforce-plan/:planId/postings"
                 element={<JobPostingPage />}
               />
-              <Route path="/hr/recruitment/approved-requisitions" element={<ApprovedJobRequisitionPage />} />
-              <Route path="/hr/recruitment/applicants" element={<ApplicantsPage />} />
-              <Route path="/hr/recruitment/job-posting/:postId/eval-flow" element={<JpEvalFlowPage />} />
-              <Route path="/hr/recruitment/job-posting/:postId/eval-flow/:postNumber" element={<JpEvalFlowPage />} />
+              <Route
+                path="/hr/recruitment/approved-requisitions"
+                element={<ApprovedJobRequisitionPage />}
+              />
+              <Route
+                path="/hr/recruitment/applicants"
+                element={<ApplicantsPage />}
+              />
+              <Route
+                path="/hr/recruitment/job-posting/:postId/eval-flow"
+                element={<JpEvalFlowPage />}
+              />
+              <Route
+                path="/hr/recruitment/job-posting/:postId/eval-flow/:postNumber"
+                element={<JpEvalFlowPage />}
+              />
+              <Route
+                path="/hr/recruitment/job-posting/:postId/dashboard"
+                element={<JobPostingDashboardPage />}
+              />
+              <Route
+                path="/hr/recruitment/job-posting/:postId/dashboard/:postNumber"
+                element={<JobPostingDashboardPage />}
+              />
+              <Route
+                path="/hr/recruitment/job-posting/:postId/applicants/:postNumber"
+                element={<PostApplicantsPage />}
+              />
+              <Route
+                path="/hr/recruitment/job-posting/:postId/applicants"
+                element={<PostApplicantsPage />}
+              />
+              <Route
+                path="/hr/recruitment/applicant/:applicantId/evaluate"
+                element={<ApplicantEvaluationPageWrapper />}
+              />
               <Route path="/hr/leave/list" element={<LeaveList />} />
               <Route path="/hr/leave/form" element={<LeaveRequestForm />} />
               <Route
