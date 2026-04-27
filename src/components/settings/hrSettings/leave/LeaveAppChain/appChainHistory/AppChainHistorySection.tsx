@@ -123,6 +123,7 @@ const AppChainHisotrySection: React.FC<LeaveAppChainHistorySectionProps> = ({
         const statusPayload = {
           id: appChain.id,
           stat: !appChain.isActive,
+          rowVersion:appChain.rowVersion,
         };
         await changeStatus.mutateAsync(statusPayload);
         // Refetch data instead of manual state update to ensure consistency

@@ -53,7 +53,7 @@ const LeavePolicyConfigHistorySection: FC<
     const searchLower = searchTerm.toLowerCase();
     return (
       config.accrualFrequencyStr.toLowerCase().includes(searchLower) ||
-      config.createdDate?.toLowerCase().includes(searchLower) ||
+      config.createdAt?.toLowerCase().includes(searchLower) ||
       (config.isActive ? 'active' : 'inactive').includes(searchLower)
     );
   });
@@ -103,6 +103,7 @@ const LeavePolicyConfigHistorySection: FC<
       await statusChangeMutation.mutateAsync({
         id: config.id,
         stat: !config.isActive,
+        rowVersion:config.rowVersion,
       });
       refetch();
     } catch (err) {
@@ -111,12 +112,10 @@ const LeavePolicyConfigHistorySection: FC<
   };
   const handleCloseDeleteModal = () => setDeletingLeavePolicyConfig(null);
 
-  const handleDeleteLeavePolicyConfig = async () => {
+  const handleDeleteLeavePolicyConfig = async (leavePolicyConfigId: UUID) => {
     if (!deletingLeavePolicyConfig) return;
     try {
-      await deleteMutation.mutateAsync({
-        id: deletingLeavePolicyConfig.id,
-      });
+      await deleteMutation.mutateAsync(leavePolicyConfigId);
       refetch();
       handleCloseDeleteModal();
     } catch (err) {

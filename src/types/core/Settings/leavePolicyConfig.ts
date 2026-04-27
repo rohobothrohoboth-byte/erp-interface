@@ -1,7 +1,6 @@
-import type { UUID } from 'crypto';
 import type { BaseDto } from '../../hr/BaseDto';
 
-export type { UUID };
+export type UUID  = string;
 
 export interface LeavePolicyConfigListDto extends BaseDto {
   annualEntitlement: number;
