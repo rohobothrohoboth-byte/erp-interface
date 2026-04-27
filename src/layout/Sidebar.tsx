@@ -1276,10 +1276,13 @@ const Sidebar: React.FC = () => {
             collapsed={collapsed}
           />
 
-          {/* Render menus based on admin status */}
-          {isAdmin
+          {/* Render menus based on admin status (uncomment when needed)*/}
+          {/* {isAdmin
             ? renderAdminMenus()
-            : hasDynamicMenus && renderDynamicMenus(menus)}
+            : hasDynamicMenus && renderDynamicMenus(menus)} */}
+
+          {/* { for now render for all users until role based module access is implemented} */}
+          {renderAdminMenus()}
         </div>
       </div>
 

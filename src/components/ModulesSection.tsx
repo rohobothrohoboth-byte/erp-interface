@@ -262,8 +262,9 @@ const ModulesSection: React.FC = () => {
     .map((mod) => ALL_MODULES.find((m) => m.key === mod.K))
     .filter((m): m is AllowedModule => Boolean(m));
   };
-
-  const allowedModules: AllowedModule[] = getAllowedModules();
+// to make role based module access work uncomment the below
+  // const allowedModules: AllowedModule[] = getAllowedModules();
+  const allowedModules: AllowedModule[] = ALL_MODULES;
 
   if (allowedModules.length === 0) {
     return (
