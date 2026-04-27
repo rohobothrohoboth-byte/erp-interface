@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { useModule } from '../ModuleContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from '../components/ui/dropdown-menu';
 import { useNavigate } from "react-router";
-import { useAuth } from '../contexts/AuthContext';
+import { useAuthStore } from '../stores/auth.store';
 
 
 interface HeaderProps {
@@ -15,7 +15,9 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
   const { activeModule } = useModule();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const userName = useAuthStore((s) => s.userName);
+  const role = useAuthStore((s) => s.role);
+  const logout = useAuthStore((s) => s.logout);
 
   const handleLogout = () => {
     logout();
@@ -98,11 +100,13 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
         </button>
 
         <div className="flex items-center border-l border-gray-200 pl-4 ml-2">
-          <div className="mr-3 text-right hidden sm:block">
-            <p className={`text-sm font-medium ${theme.text}`}>John Smith</p>
-            <p className="text-xs text-gray-500">
-              {activeModule || "HR"} Manager
+           <div className="mr-3 text-right hidden sm:block">
+            <p className={`text-sm font-medium ${theme.text}`}>
+              {userName || "User"}
             </p>
+            {/* <p className="text-xs text-gray-500">
+              {role || "Role"}
+            </p> */}
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger className="rounded-full">

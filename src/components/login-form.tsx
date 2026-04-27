@@ -5,8 +5,8 @@ import { Field, FieldGroup, FieldLabel } from "../components/ui/field";
 import { Input } from "../components/ui/input";
 import { BorderBeam } from "../components/ui/border-beam";
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext";
 import { AlertCircle } from "lucide-react";
+import { useAuthStore } from "../stores/auth.store";
 
 type LoginFormProps = {
   className?: string;
@@ -17,8 +17,9 @@ export function LoginForm({ className, ...props }: LoginFormProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
-
-  const { login } = useAuth();
+  
+  const login = useAuthStore((s) => s.login);
+  
   // Auto-clear alert after 6 seconds
   useEffect(() => {
     if (alertMessage) {

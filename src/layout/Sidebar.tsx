@@ -47,12 +47,13 @@ import {
   History,
 } from "lucide-react";
 import { useModule } from "../ModuleContext";
-import { jwtDecode } from "jwt-decode";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "../components/ui/popover";
+import { useAuthStore } from "../stores/auth.store";
+import { useSidebarStore } from "../stores/sidebar.store";
 
 /* ================= TYPES ================= */
 
@@ -279,70 +280,23 @@ const NavGroup = ({
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const { activeModule } = useModule();
-  const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const [collapsed, setCollapsed] = useState(() => {
-    const saved = localStorage.getItem("sidebarCollapsed");
-    return saved ? JSON.parse(saved) : false;
-  });
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem("sidebarCollapsed", JSON.stringify(collapsed));
-  }, [collapsed]);
+const collapsed = useSidebarStore((s) => s.collapsed);
+const openGroups = useSidebarStore((s) => s.openGroups);
 
-  useEffect(() => {
-    setOpenGroup(null);
-  }, [activeModule]);
+const toggleSidebar = useSidebarStore((s) => s.toggleCollapsed);
+const toggleGroup = useSidebarStore((s) => s.toggleGroup);
 
-  const getCookie = (name: string): string => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    return parts.length === 2 ? parts.pop()?.split(";").shift() || "" : "";
-  };
+const openGroup = openGroups[activeModule];
 
-  const token = getCookie("accessToken") || "";
+ const { employeeId, role, permissions, userName, isAuthenticated } =
+  useAuthStore();
 
   // Check if user is admin
-  useEffect(() => {
-    if (token) {
-      try {
-        const decoded: any = jwtDecode(token);
-        // Check for admin role - adjust this condition based on your token structure
-        const adminCheck =
-          decoded.employeeId === '019d19c0-ae3e-78bd-bd2a-98d36bd6e078' ||
-          decoded.role === "admin" ||
-          decoded.isAdmin === true ||
-          decoded.userType === "admin" ||
-          (decoded.permissions &&
-            JSON.parse(decoded.permissions || "[]").some(
-              (p: any) => p.K === "admin",
-            ));
+const isAdmin = 
+  role === "admin" || 
+  employeeId === "019d19c0-ae3e-78bd-bd2a-98d36bd6e078";
 
-        setIsAdmin(adminCheck);
-      } catch (error) {
-        console.error("Error decoding token:", error);
-        setIsAdmin(false);
-      }
-    }
-  }, [token]);
-
-  // Get menus from token for non-admin users
-  const getMenus = (): MenuItem[] => {
-    if (!token || isAdmin) return [];
-
-    try {
-      const decoded: any = jwtDecode(token);
-      const permissions = JSON.parse(decoded.permissions || "[]");
-
-      const currentModule = permissions.find(
-        (m: MenuItem) => m.K === activeModule,
-      );
-
-      return currentModule?.M || [];
-    } catch {
-      return [];
-    }
-  };
 
   const getIcon = (iconType?: string) => {
     // Return appropriate icon based on type or default
@@ -402,13 +356,6 @@ const Sidebar: React.FC = () => {
 
   const theme = themeMap[activeModule] || themeMap.default;
 
-  const toggleGroup = (groupLabel: string) => {
-    setOpenGroup((prev) => (prev === groupLabel ? null : groupLabel));
-  };
-
-  const toggleSidebar = () => {
-    setCollapsed(!collapsed);
-  };
 
   // Render dynamic menus from token (for non-admin users)
   const renderDynamicMenus = (menus: MenuItem[]) => {
@@ -422,7 +369,7 @@ const Sidebar: React.FC = () => {
             icon={getIcon(menu.I)}
             label={menu.L}
             isOpen={openGroup === menu.L}
-            onToggle={() => toggleGroup(menu.L)}
+            onToggle={() => toggleGroup(activeModule, menu.L)}
             {...theme}
             collapsed={collapsed}
             activeBg={theme.activeBg}
@@ -474,7 +421,7 @@ const Sidebar: React.FC = () => {
               icon={<Building2 size={18} />}
               label="Recruitment"
               isOpen={openGroup === "Recruitment"}
-              onToggle={() => toggleGroup("Recruitment")}
+              onToggle={() => toggleGroup(activeModule,"Recruitment")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -534,7 +481,7 @@ const Sidebar: React.FC = () => {
               icon={<Building2 size={18} />}
               label="Annual Leave"
               isOpen={openGroup === "Leave"}
-              onToggle={() => toggleGroup("Leave")}
+              onToggle={() => toggleGroup(activeModule,"Leave")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -570,7 +517,7 @@ const Sidebar: React.FC = () => {
               icon={<Building2 size={18} />}
               label="Attendance"
               isOpen={openGroup === "Attendance"}
-              onToggle={() => toggleGroup("Attendance")}
+              onToggle={() => toggleGroup(activeModule,"Attendance")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -717,7 +664,7 @@ const Sidebar: React.FC = () => {
               icon={<Trophy size={18} />}
               label="Lead Management"
               isOpen={openGroup === "LeadManagement"}
-              onToggle={() => toggleGroup("LeadManagement")}
+              onToggle={() => toggleGroup(activeModule,"LeadManagement")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -758,7 +705,7 @@ const Sidebar: React.FC = () => {
               icon={<Users size={18} />}
               label="Contact Management"
               isOpen={openGroup === "Contacts"}
-              onToggle={() => toggleGroup("Contacts")}
+              onToggle={() => toggleGroup(activeModule,"Contacts")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -795,7 +742,7 @@ const Sidebar: React.FC = () => {
               icon={<BarChart4 size={18} />}
               label="Sales Management"
               isOpen={openGroup === "Sales"}
-              onToggle={() => toggleGroup("Sales")}
+              onToggle={() => toggleGroup(activeModule,"Sales")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -830,7 +777,7 @@ const Sidebar: React.FC = () => {
               icon={<FileSpreadsheet size={18} />}
               label="Marketing Automation"
               isOpen={openGroup === "Marketing"}
-              onToggle={() => toggleGroup("Marketing")}
+              onToggle={() => toggleGroup(activeModule,"Marketing")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -866,7 +813,7 @@ const Sidebar: React.FC = () => {
               icon={<Calendar size={18} />}
               label="Customer Service"
               isOpen={openGroup === "CustomerService"}
-              onToggle={() => toggleGroup("CustomerService")}
+              onToggle={() => toggleGroup(activeModule,"CustomerService")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -893,7 +840,7 @@ const Sidebar: React.FC = () => {
               icon={<ClipboardList size={18} />}
               label="Activity Management"
               isOpen={openGroup === "Activities"}
-              onToggle={() => toggleGroup("Activities")}
+              onToggle={() => toggleGroup(activeModule,"Activities")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -949,7 +896,7 @@ const Sidebar: React.FC = () => {
               icon={<FileText size={18} />}
               label="General Ledger"
               isOpen={openGroup === "General Ledger"}
-              onToggle={() => toggleGroup("General Ledger")}
+              onToggle={() => toggleGroup(activeModule,"General Ledger")}
               {...theme}
               collapsed={collapsed}
             >
@@ -996,7 +943,7 @@ const Sidebar: React.FC = () => {
               icon={<DollarSign size={18} />}
               label="Accounts Payable"
               isOpen={openGroup === "Accounts Payable"}
-              onToggle={() => toggleGroup("Accounts Payable")}
+              onToggle={() => toggleGroup(activeModule,"Accounts Payable")}
               {...theme}
               collapsed={collapsed}
             >
@@ -1021,7 +968,7 @@ const Sidebar: React.FC = () => {
               icon={<DollarSign size={18} />}
               label="Accounts Receivable"
               isOpen={openGroup === "Accounts Receivable"}
-              onToggle={() => toggleGroup("Accounts Receivable")}
+              onToggle={() => toggleGroup(activeModule,"Accounts Receivable")}
               {...theme}
               collapsed={collapsed}
             >
@@ -1114,7 +1061,7 @@ const Sidebar: React.FC = () => {
               icon={<Folder size={18} />}
               label="Folders"
               isOpen={openGroup === "FileFolders"}
-              onToggle={() => toggleGroup("FileFolders")}
+              onToggle={() => toggleGroup(activeModule,"FileFolders")}
               {...theme}
               collapsed={collapsed}
             >
@@ -1147,7 +1094,7 @@ const Sidebar: React.FC = () => {
               icon={<File size={18} />}
               label="Documents"
               isOpen={openGroup === "FileDocuments"}
-              onToggle={() => toggleGroup("FileDocuments")}
+              onToggle={() => toggleGroup(activeModule,"FileDocuments")}
               {...theme}
               collapsed={collapsed}
             >
@@ -1191,7 +1138,9 @@ const Sidebar: React.FC = () => {
     }
   };
 
-  const menus = getMenus();
+const parsedPermissions = permissions || [];
+const menus =
+  parsedPermissions.find((m: MenuItem) => m.K === activeModule)?.M || [];
   const hasDynamicMenus = menus && menus.length > 0;
 
   return (

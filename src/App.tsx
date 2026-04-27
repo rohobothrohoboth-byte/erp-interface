@@ -74,7 +74,8 @@ import PageMenuSettings from "./pages/settings/coreSettings/PageMenuSettings";
 import FileDashboard from "./pages/modules/File";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useAuth } from "./contexts/AuthContext";
+import { useAuthStore } from "./stores/auth.store";
+import { useEffect } from "react";
 import LeavePolicy from "./pages/settings/hrSettings/Leave/leavePolicy";
 import LeavePolicyConfig from "./pages/settings/hrSettings/Leave/leavePolicyConfig";
 import LeaveAppChainHistory from "./pages/settings/hrSettings/Leave/LeaveAppChainHistory";
@@ -175,7 +176,13 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const { isAuthenticated } = useAuth();
+  const init = useAuthStore((s) => s.init);
+
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
     <ModuleProvider>

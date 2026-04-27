@@ -12,16 +12,10 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { BorderBeam } from "../components/ui/border-beam";
-import { hasRole } from "../utils/jwt.utils";
-import { jwtDecode } from "jwt-decode";
+import { useAuthStore } from "../stores/auth.store";
 
 /* ================= TYPES ================= */
 
-interface BackendModule {
-  K: string;
-  L: string;
-  M: any[];
-}
 
 interface AllowedModule {
   label: string;
@@ -165,25 +159,8 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
 /* ================= MAIN COMPONENT ================= */
 
 const ModulesSection: React.FC = () => {
-  const getCookie = (name: string): string => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    return parts.length === 2 ? parts.pop()?.split(";").shift() || "" : "";
-  };
+const { token, role, employeeId, permissions } = useAuthStore();
 
-  const token = getCookie("accessToken") || getCookie("access_token") || "";
-
-  const parsePermissions = (): BackendModule[] => {
-    if (!token) return [];
-
-    try {
-      const decoded: any = jwtDecode(token);
-      return JSON.parse(decoded.permissions || "[]");
-    } catch (e) {
-      console.error("Permission parse error", e);
-      return [];
-    }
-  };
 
   const ALL_MODULES: AllowedModule[] = [
     {
@@ -239,28 +216,24 @@ const ModulesSection: React.FC = () => {
 
   const getAllowedModules = (): AllowedModule[] => {
     if (!token) return [];
-
-    // Specific employee override — full admin access
-    try {
-      const decoded: any = jwtDecode(token);
-      if (decoded.employeeId === '019d19c0-ae3e-78bd-bd2a-98d36bd6e078') {
-        return ALL_MODULES;
-      }
-    } catch { /* ignore */ }
+  
+  if (employeeId === "019d19c0-ae3e-78bd-bd2a-98d36bd6e078") {
+    return ALL_MODULES;
+  }
 
     if (
-      hasRole(token, "admin") ||
-      hasRole(token, "ceo") ||
-      hasRole(token, "vice.ceo") ||
-      hasRole(token, "auditor")
+       role === "admin" ||
+  role === "ceo" ||
+  role === "vice.ceo" ||
+  role === "auditor"
     ) {
       return ALL_MODULES;
     }
 
-    const perms = parsePermissions();
-    return perms
-    .map((mod) => ALL_MODULES.find((m) => m.key === mod.K))
-    .filter((m): m is AllowedModule => Boolean(m));
+   const parsedPermissions = permissions || [];
+   return parsedPermissions
+  .map((mod) => ALL_MODULES.find((m) => m.key === mod.K))
+.filter((m): m is AllowedModule => !!m);
   };
 // to make role based module access work uncomment the below
   // const allowedModules: AllowedModule[] = getAllowedModules();
@@ -288,18 +261,21 @@ const ModulesSection: React.FC = () => {
       `}</style>
 
       <div className="relative grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl w-full">
-        {allowedModules.map((module, index) => (
-          <div
-            key={module.key}
-            className="relative animate-in fade-in slide-in-from-bottom-4 duration-700"
-            style={{
-              animationDelay: `${index * 150}ms`,
-              animationFillMode: "both",
-            }}
-          >
-            <ModuleCard {...module} moduleKey={module.key} />
-          </div>
-        ))}
+        {allowedModules.map((module, index) => {
+          const { key, ...moduleProps } = module;
+          return (
+            <div
+              key={key}
+              className="relative animate-in fade-in slide-in-from-bottom-4 duration-700"
+              style={{
+                animationDelay: `${index * 150}ms`,
+                animationFillMode: "both",
+              }}
+            >
+              <ModuleCard {...moduleProps} moduleKey={key} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -14,9 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { getAccessToken } from "../utils/auth.utils";
-import { hasRole } from "../utils/jwt.utils";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuthStore } from "../stores/auth.store";
 
 interface Notification {
   id: number;
@@ -93,7 +91,13 @@ const mockTasks: Task[] = [
 
 function Modules() {
   const navigate = useNavigate();
-const { logout, isAuthenticated, isLoading } = useAuth();
+ const { 
+    logout, 
+    isAuthenticated, 
+    isLoading, 
+    role, 
+    employeeId 
+  } = useAuthStore();
   const [visibleNotifications, setVisibleNotifications] = useState<
     Notification[]
   >([]);
@@ -118,17 +122,14 @@ useEffect(() => {
     navigate("/login", { replace: true });
   };
 
-  // Get token and check roles
-  const token = getAccessToken();
-  const isAdmin = token ? hasRole(token, "admin") : false;
-  const isCEO = token ? hasRole(token, "ceo") : false;
-  const isViceCEO = token
-    ? hasRole(token, "vice.ceo") || hasRole(token, "vice_ceo")
-    : false;
-  const isAuditor = token ? hasRole(token, "auditor") : false;
+    const isAdmin = role === "admin";
+  const isCEO = role === "ceo";
+  const isViceCEO = role === "vice.ceo" || role === "vice_ceo";
+  const isAuditor = role === "auditor";
+    const isSuperAdmin = employeeId === "019d19c0-ae3e-78bd-bd2a-98d36bd6e078";
 
   // Hide sidebars for admin, CEO, vice CEO, and auditor roles
-  const hideSidebars = isAdmin || isCEO || isViceCEO || isAuditor;
+  const hideSidebars = isAdmin || isCEO || isViceCEO || isAuditor || isSuperAdmin;
 
   useEffect(() => {
     document.title = selectedModule ? `RST | ${selectedModule}` : "RST";
@@ -263,7 +264,8 @@ useEffect(() => {
           }`}
         >
           <div className="relative w-full h-full min-h-[600px]">
-            <ModulesSection onModuleSelect={handleModuleSelect} />
+            {/* <ModulesSection onModuleSelect={handleModuleSelect} /> */}
+              <ModulesSection />
           </div>
         </div>
         {/* Right Panel - Notifications (Hidden for admin/executive roles) */}

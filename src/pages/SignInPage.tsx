@@ -1,11 +1,12 @@
 import React from "react";
 import { LoginForm } from "../components/login-form";
-import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { useAuthStore } from "../stores/auth.store";
 
 const SignInPage: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const isAuthenticated = useAuthStore(s => s.isAuthenticated);
+  const isLoading = useAuthStore(s => s.isLoading);
   const navigate = useNavigate();
 
   useEffect(() => {

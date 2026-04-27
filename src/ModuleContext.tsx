@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthProvider } from './contexts/AuthContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 type ModuleContextType = {
@@ -41,11 +40,9 @@ export const ModuleProvider: React.FC<{children: React.ReactNode}> = ({ children
 
   return (
     <QueryClientProvider client={queryClient}>
-    <AuthProvider>
       <ModuleContext.Provider value={{ activeModule, setActiveModule }}>
         {children}
       </ModuleContext.Provider>
-    </AuthProvider>
     </QueryClientProvider>
   );
 };

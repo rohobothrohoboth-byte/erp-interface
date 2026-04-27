@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { getAccessToken } from '../../../../utils/auth.utils';
-import { jwtDecode } from 'jwt-decode';
-import type { JwtPayload } from '../../../../types/auth/auth.types';
+import { useAuthStore } from '../../../../stores/auth.store';
 
 const BASE = `${import.meta.env.VITE_GATEWAY_URL || 'http://localhost:1212'}${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobApp`;
 
@@ -10,25 +9,21 @@ const extractError = (error: any): string => {
   if (error.response?.data?.errors)
     return (Object.values(error.response.data.errors) as string[][]).flat().join(', ');
   return error.message || 'An unexpected error occurred';
+
+  
 };
 
-const getEmployeeId = (): string => {
-  try {
-    // Try js-cookie first, then fall back to document.cookie directly
-    const token = getAccessToken() || (() => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split('; accessToken=');
-      return parts.length === 2 ? parts.pop()?.split(';').shift() || '' : '';
-    })();
-    if (!token) return '';
-    const payload = jwtDecode<JwtPayload>(token);
-    return payload.employeeId ?? '';
-  } catch { return ''; }
+const getAuth = () => {
+  const state = useAuthStore.getState();
+  return {
+    token: state.token,
+    empId: state.employeeId || ''
+  };
 };
 
 // Raw axios — no interceptors that touch FormData
 const rawPost = async (url: string, formData: FormData) => {
-  const token = getAccessToken();
+    const { token } = getAuth();
   return axios.post(url, formData, {
     withCredentials: true,
     headers: {
@@ -39,7 +34,7 @@ const rawPost = async (url: string, formData: FormData) => {
 };
 
 const rawPut = async (url: string, formData: FormData) => {
-  const token = getAccessToken();
+    const { token } = getAuth();
   return axios.put(url, formData, {
     withCredentials: true,
     headers: {
@@ -51,8 +46,8 @@ const rawPut = async (url: string, formData: FormData) => {
 export const jobApplicationApi = {
   create: async (data: { jobPostingId: string; coverLetter: string; file?: File | null }): Promise<void> => {
     try {
-      const empId = getEmployeeId();
-      console.log('[JobApp] EmployeeId from token:', empId);
+       const { empId } = getAuth();
+      console.log('[JobApp] EmployeeId from Zustand Store:', empId);
       const formData = new FormData();
       formData.append('EmployeeId', empId);
       formData.append('JobPostingId', data.jobPostingId);

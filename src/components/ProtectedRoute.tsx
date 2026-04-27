@@ -1,8 +1,9 @@
-import { useAuth } from "../contexts/AuthContext"; // Adjust path
 import { Outlet, Navigate } from "react-router-dom";
+import { useAuthStore } from "../stores/auth.store";
 
 function ProtectedRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const  isAuthenticated= useAuthStore((s) => s.isAuthenticated); 
+   const isLoading = useAuthStore((s) => s.isLoading);
 
   if (isLoading) return <div>Loading...</div>;
 
