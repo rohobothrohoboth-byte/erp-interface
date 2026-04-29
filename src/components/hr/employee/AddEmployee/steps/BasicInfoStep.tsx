@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
-import * as yup from 'yup';
 import { motion } from 'framer-motion';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import { ProfilePictureUpload } from './ProfileUpload';
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
-import { Gender, EmpType, EmpNature, WorkArrangement } from '../../../../../types/hr/enum';
+import { Gender, EmpType, EmpNature, WorkArrangement, MaritalStat, AddressType } from '../../../../../types/hr/enum';
 import type { Step1Dto, UUID } from '../../../../../types/hr/employee/empAddDto';
 import { amharicRegex } from '../../../../../utils/amharic-regex';
 import List from '../../../../List/list';
@@ -14,6 +15,8 @@ import type { ListItem } from '../../../../../types/List/list';
 import type { NameListDto } from '../../../../../types/hr/NameListDto';
 import type { NameListItem } from '../../../../../types/NameList/nameList';
 import { jgStepService } from '../../../../../services/core/settings/ModHrm/JgStepService';
+import { zodValidate } from '../../../../../schemas/hr/employee/validateSchema';
+import { basicInfoSchema } from '../../../../../schemas/hr/employee/basicInfoSchema';
 
 interface BasicInfoStepProps {
   data: Partial<Step1Dto & { branchId: UUID }>;
@@ -21,25 +24,6 @@ interface BasicInfoStepProps {
   onBack: () => void;
   loading?: boolean;
 }
-
-const validationSchema = yup.object({
-  firstName: yup.string().required("First name is required"),
-  firstNameAm: yup.string().required("First name (Amharic) is required"),
-  middleName: yup.string().required("Middle name is required"),
-  middleNameAm: yup.string().required("Middle name (Amharic) is required"),
-  lastName: yup.string().required("Last name is required"),
-  lastNameAm: yup.string().required("Last name (Amharic) is required"),
-  nationality: yup.string().required("Nationality is required"),
-  gender: yup.string().required("Gender is required"),
-  employmentDate: yup.string().required("Employment date is required"),
-  branchId: yup.string().required("Branch is required"),
-  jobGradeId: yup.string().required("Job grade is required"),
-  jgStepId: yup.string().required("Job grade step is required"),
-  positionId: yup.string().required("Position is required"),
-  departmentId: yup.string().required("Department is required"),
-  employmentType: yup.string().required("Employment type is required"),
-  employmentNature: yup.string().required("Employment nature is required"),
-});
 
 export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   data,
@@ -57,6 +41,9 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   const [loadingJobGrades, setLoadingJobGrades] = useState(false);
   const [loadingJobGradeSteps, setLoadingJobGradeSteps] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [branchError, setBranchError] = useState<string | null>(null);
+  const [departmentError, setDepartmentError] = useState<string | null>(null);
+  const [jobGradeError, setJobGradeError] = useState<string | null>(null);
 
   // Scroll to top function
   const scrollToTop = () => {
@@ -86,6 +73,8 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       lastNameAm: data.lastNameAm || '',
       nationality: data.nationality || '',
       gender: data.gender || '' as Gender,
+      birthDate: data.birthDate || '',
+      maritalStatus: data.maritalStatus || '' as MaritalStat,
       employmentDate: getDefaultEmploymentDate(),
       branchId: data.branchId || '' as UUID,
       jobGradeId: data.jobGradeId || '' as UUID,
@@ -95,9 +84,22 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       employmentType: data.employmentType || '' as EmpType,
       employmentNature: data.employmentNature || '' as EmpNature,
       workArrangement: data.workArrangement || '' as WorkArrangement,
+      addressType: data.addressType || '' as AddressType,
+            country: data.country || '',
+            region: data.region || '',
+            subcity: data.subcity || '',
+            zone: data.zone || '',
+            woreda: data.woreda || '',
+            kebele: data.kebele || '',
+            houseNo: data.houseNo || '',
+            telephone: data.telephone || '',
+            poBox: data.poBox || '',
+            fax: data.fax || '',
+            email: data.email || '',
+            website: data.website || '',
       File: data.File || null,
     },
-    validationSchema,
+    validate: zodValidate(basicInfoSchema),
     enableReinitialize: true,
     validateOnMount: false, // Disable validation on mount
     onSubmit: async (values) => {
@@ -130,7 +132,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         }
       } catch (error) {
         console.error('Error fetching branches:', error);
-        setSubmitError('Failed to load branches');
+        setBranchError('Failed to load branches. Please refresh.');
       } finally {
         setLoadingBranches(false);
       }
@@ -153,7 +155,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         }
       } catch (error) {
         console.error('Error fetching departments:', error);
-        setSubmitError('Failed to load departments');
+        setDepartmentError('Failed to load departments. Please refresh.');
       } finally {
         setLoadingDepartments(false);
       }
@@ -185,7 +187,6 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         }
       } catch (error) {
         console.error('Error fetching positions by department:', error);
-        setSubmitError('Failed to load positions');
         setPositions([]);
       } finally {
         setLoadingPositions(false);
@@ -208,7 +209,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         }
       } catch (error) {
         console.error('Error fetching job grades:', error);
-        setSubmitError('Failed to load job grades');
+        setJobGradeError('Failed to load job grades. Please refresh.');
       } finally {
         setLoadingJobGrades(false);
       }
@@ -235,7 +236,6 @@ useEffect(() => {
       }
     } catch (error) {
       console.error("Error fetching job grade steps:", error);
-      setSubmitError("Failed to load job grade steps");
       setJobGradeSteps([]);
     } finally {
       setLoadingJobGradeSteps(false);
@@ -338,6 +338,10 @@ useEffect(() => {
 
   const handleProfilePictureRemove = () => {
     formik.setFieldValue('File', null);
+  };
+
+  const handlePhoneChange = (value: string) => {
+    formik.setFieldValue('telephone', value);
   };
 
   // Helper function to safely get error messages (kept for display purposes only)
@@ -672,6 +676,56 @@ useEffect(() => {
               </div>
             )}
           </div>
+{/* Birth Date */}
+        <div className="space-y-2">
+          <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">
+            Birth Date *
+          </label>
+          <Input
+            id="birthDate"
+            name="birthDate"
+            type="date"
+            value={formik.values.birthDate}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+              getErrorMessage('birthDate') ? "border-red-500" : "border-gray-300"
+            }`}
+            disabled={loading}
+          />
+          {getErrorMessage('birthDate') && (
+            <div className="text-red-500 text-xs mt-1">{getErrorMessage('birthDate')}</div>
+          )}
+        </div>
+
+ {/* Marital Status */}
+            <div className="space-y-2">
+              <label htmlFor="maritalStatus" className="block text-sm font-medium text-gray-700 mb-1">
+                Marital Status *
+              </label>
+              <Select
+                value={formik.values.maritalStatus}
+                onValueChange={(value: MaritalStat) => formik.setFieldValue('maritalStatus', value)}
+                disabled={loading}
+              >
+                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                  getErrorMessage('maritalStatus') ? "border-red-500" : "border-gray-300"
+                }`}>
+                  <SelectValue placeholder="Select marital status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(MaritalStat).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>
+                      {value}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {getErrorMessage('maritalStatus') && (
+                <div className="text-red-500 text-xs mt-1">{getErrorMessage('maritalStatus')}</div>
+              )}
+            </div>
+
         </div>
 
         {/* Employment Details Section */}
@@ -698,6 +752,9 @@ useEffect(() => {
               {loadingBranches && (
                 <p className="text-sm text-gray-500">Loading branches...</p>
               )}
+              {branchError && (
+                <p className="text-sm text-amber-600">{branchError}</p>
+              )}
               {getErrorMessage("branchId") && (
                 <div className="text-red-500 text-xs mt-1">
                   {getErrorMessage("branchId")}
@@ -723,6 +780,9 @@ useEffect(() => {
               />
               {loadingDepartments && (
                 <p className="text-sm text-gray-500">Loading departments...</p>
+              )}
+              {departmentError && (
+                <p className="text-sm text-amber-600">{departmentError}</p>
               )}
               {getErrorMessage("departmentId") && (
                 <div className="text-red-500 text-xs mt-1">
@@ -813,6 +873,9 @@ useEffect(() => {
               />
               {loadingJobGrades && (
                 <p className="text-sm text-gray-500">Loading job grades...</p>
+              )}
+              {jobGradeError && (
+                <p className="text-sm text-amber-600">{jobGradeError}</p>
               )}
               {getErrorMessage("jobGradeId") && (
                 <div className="text-red-500 text-xs mt-1">
@@ -961,6 +1024,300 @@ useEffect(() => {
             </div>
           </div>
         </div>
+
+          {/* Address Information Section */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-2 h-8 bg-linear-to-b from-green-400 to-green-600 rounded-full"></div>
+                    <h3 className="text-xl font-semibold text-gray-800">Address Information</h3>
+                  </div>
+        
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {/* Address Type */}
+                    <div className="space-y-2">
+                      <label htmlFor="addressType" className="block text-sm font-medium text-gray-700 mb-1">
+                        Address Type *
+                      </label>
+                      <Select
+          value={formik.values.addressType}
+          onValueChange={(value: AddressType) => formik.setFieldValue('addressType', value)}
+          disabled={loading}
+        >
+          <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+            getErrorMessage('addressType') ? "border-red-500" : "border-gray-300"
+          }`}>
+            <SelectValue placeholder="Select address type" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.entries(AddressType).map(([key, value]) => {
+              const isWorkPlace = key === "1" || value === 'Work Place';
+              return (
+                <SelectItem 
+                  key={key} 
+                  value={key}
+                  disabled={isWorkPlace}
+                  className={isWorkPlace ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{value}</span>
+                  </div>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+                      {getErrorMessage('addressType') && (
+                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('addressType')}</div>
+                      )}
+                    </div>
+        
+                    {/* Country */}
+                    <div className="space-y-2">
+                      <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                        Country *
+                      </label>
+                      <Input
+                        id="country"
+                        name="country"
+                        value={formik.values.country}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                          getErrorMessage('country') ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Ethiopia"
+                        disabled={loading}
+                      />
+                      {getErrorMessage('country') && (
+                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('country')}</div>
+                      )}
+                    </div>
+        
+                    {/* Region */}
+                    <div className="space-y-2">
+                      <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
+                        Region *
+                      </label>
+                      <Input
+                        id="region"
+                        name="region"
+                        value={formik.values.region}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                          getErrorMessage('region') ? "border-red-500" : "border-gray-300"
+                        }`}
+                        placeholder="Addis Ababa"
+                        disabled={loading}
+                      />
+                      {getErrorMessage('region') && (
+                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('region')}</div>
+                      )}
+                    </div>
+        
+                    {/* Telephone */}
+                    <div className="space-y-2">
+                      <label htmlFor="telephone" className="block text-sm font-medium text-gray-700 mb-1">
+                        Telephone *
+                      </label>
+                      <div className={`w-full border rounded-md transition-colors duration-200 ${
+                        getErrorMessage('telephone') ? "border-red-500" : "border-gray-300"
+                      }`}>
+                        <PhoneInput
+                          country={'et'} // Default to Ethiopia
+                          value={formik.values.telephone}
+                          onChange={handlePhoneChange}
+                          disabled={loading}
+                          inputProps={{
+                            name: "telephone",
+                            onBlur: formik.handleBlur,
+                            disabled: loading
+                          }}
+                          inputStyle={{
+                            width: '100%',
+                            height: '42px',
+                            paddingLeft: '48px',
+                            outline: 'none',
+                            fontSize: '14px',
+                            borderRadius: '6px',
+                            border: 'none',
+                            ...(loading && { backgroundColor: '#f3f4f6', cursor: 'not-allowed' })
+                          }}
+                          buttonStyle={{
+                            border: 'none',
+                            borderRight: '1px solid #ccc',
+                            borderRadius: '6px 0 0 6px',
+                            backgroundColor: '#f8f9fa',
+                            ...(loading && { cursor: 'not-allowed' })
+                          }}
+                          containerStyle={{
+                            width: '100%'
+                          }}
+                          dropdownStyle={{
+                            borderRadius: '6px'
+                          }}
+                        />
+                      </div>
+                      {getErrorMessage('telephone') && (
+                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('telephone')}</div>
+                      )}
+                    </div>
+        
+                    {/* Subcity - Optional */}
+                    <div className="space-y-2">
+                      <label htmlFor="subcity" className="block text-sm font-medium text-gray-700 mb-1">
+                        Subcity
+                      </label>
+                      <Input
+                        id="subcity"
+                        name="subcity"
+                        value={formik.values.subcity}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        placeholder="Kirkos"
+                        disabled={loading}
+                      />
+                    </div>
+        
+                    {/* Zone - Optional */}
+                    <div className="space-y-2">
+                      <label htmlFor="zone" className="block text-sm font-medium text-gray-700 mb-1">
+                        Zone
+                      </label>
+                      <Input
+                        id="zone"
+                        name="zone"
+                        value={formik.values.zone}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        placeholder="Zone 3"
+                        disabled={loading}
+                      />
+                    </div>
+        
+                    {/* Woreda - Optional */}
+                    <div className="space-y-2">
+                      <label htmlFor="woreda" className="block text-sm font-medium text-gray-700 mb-1">
+                        Woreda
+                      </label>
+                      <Input
+                        id="woreda"
+                        name="woreda"
+                        value={formik.values.woreda}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        placeholder="08"
+                        disabled={loading}
+                      />
+                    </div>
+        
+                    {/* Kebele - Optional */}
+                    <div className="space-y-2">
+                      <label htmlFor="kebele" className="block text-sm font-medium text-gray-700 mb-1">
+                        Kebele
+                      </label>
+                      <Input
+                        id="kebele"
+                        name="kebele"
+                        value={formik.values.kebele}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        placeholder="09"
+                        disabled={loading}
+                      />
+                    </div>
+        
+                    {/* House Number - Optional */}
+                    <div className="space-y-2">
+                      <label htmlFor="houseNo" className="block text-sm font-medium text-gray-700 mb-1">
+                        House Number
+                      </label>
+                      <Input
+                        id="houseNo"
+                        name="houseNo"
+                        value={formik.values.houseNo}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        placeholder="H-123"
+                        disabled={loading}
+                      />
+                    </div>
+        
+                    {/* P.O. Box - Optional */}
+                    <div className="space-y-2">
+                      <label htmlFor="poBox" className="block text-sm font-medium text-gray-700 mb-1">
+                        P.O. Box
+                      </label>
+                      <Input
+                        id="poBox"
+                        name="poBox"
+                        value={formik.values.poBox}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        placeholder="1234"
+                        disabled={loading}
+                      />
+                    </div>
+        
+                    {/* Fax - Optional */}
+                    <div className="space-y-2">
+                      <label htmlFor="fax" className="block text-sm font-medium text-gray-700 mb-1">
+                        Fax
+                      </label>
+                      <Input
+                        id="fax"
+                        name="fax"
+                        value={formik.values.fax}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        placeholder="+251111223344"
+                        disabled={loading}
+                      />
+                    </div>
+        
+                    {/* Email - Optional */}
+                    <div className="space-y-2">
+                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                        Email
+                      </label>
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={formik.values.email}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        placeholder="example@email.com"
+                        disabled={loading}
+                      />
+                    </div>
+        
+                    {/* Website - Optional */}
+                    <div className="space-y-2">
+                      <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+                        Website
+                      </label>
+                      <Input
+                        id="website"
+                        name="website"
+                        value={formik.values.website}
+                        onChange={formik.handleChange}
+                        onBlur={formik.handleBlur}
+                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        placeholder="https://example.com"
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+                </div>
 
         {/* Profile Picture Section - Moved to bottom with increased size */}
         <div className="mt-8">

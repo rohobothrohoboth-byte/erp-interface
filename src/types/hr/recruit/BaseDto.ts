@@ -1,5 +1,7 @@
+import type { UUID } from 'crypto';
 
-export type UUID = string;
+export type { UUID };
+
 
 export interface BaseDto{
 id: UUID;

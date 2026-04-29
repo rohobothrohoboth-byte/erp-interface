@@ -3,13 +3,13 @@ import { motion } from "framer-motion";
 import { CheckCircle, User, Printer } from "lucide-react";
 import type {
   Step1Dto,
-  BasicInfoDto,
+  EmpAddPrintDto,
 } from "../../../../types/hr/employee/empAddDto";
 import type { UUID } from "crypto";
 
 interface BasicInfoReviewStepProps {
   step1Data: Step1Dto & { branchId: UUID };
-  step2Data: BasicInfoDto | null;
+  step2Data: EmpAddPrintDto | null;
   photo?: string | null;
   onBack: () => void;
   onConfirm: () => void;
@@ -297,6 +297,42 @@ export const BasicInfoReviewStep: React.FC<BasicInfoReviewStepProps> = ({
                       "Not provided"}
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Extra fields — Birth Date, Marital Status, Address */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-100">
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Birth Date
+                </label>
+                <p className="text-gray-900 font-medium">
+                  {step2Data?.birthDate || step1Data.birthDate || "Not provided"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Marital Status
+                </label>
+                <p className="text-gray-900 font-medium">
+                  {step2Data?.maritalStatus || step1Data.maritalStatus || "Not provided"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Address
+                </label>
+                <p className="text-gray-900 font-medium">
+                  {step2Data?.address || "Not provided"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Telephone
+                </label>
+                <p className="text-gray-900 font-medium">
+                  {step2Data?.telephone || step1Data.telephone || "Not provided"}
+                </p>
               </div>
             </div>
           </div>

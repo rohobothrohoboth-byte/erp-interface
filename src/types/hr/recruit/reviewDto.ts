@@ -1,6 +1,7 @@
 import type { ReviewStat } from "../enum";
-export type UUID = string;
+import type { UUID } from 'crypto';
 
+export type { UUID };
 export interface ReviewDto {
   id: UUID;
   appCount: number;

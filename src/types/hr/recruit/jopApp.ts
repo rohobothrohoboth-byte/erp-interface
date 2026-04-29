@@ -1,6 +1,7 @@
 import type { BaseDto } from "./BaseDto";
+import type { UUID } from 'crypto';
 
-export type UUID = string;
+export type { UUID };
 
 /* =======================
    JobAppListDto

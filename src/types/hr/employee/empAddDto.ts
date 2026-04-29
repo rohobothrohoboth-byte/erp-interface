@@ -1,7 +1,8 @@
 
 import type { AddressType, EmpNature, EmpType, Gender, MaritalStat, WorkArrangement, YesNo } from "../enum";
+import type { UUID } from 'crypto';
 
-export type UUID =string;
+export type { UUID };
 export interface Step1Dto {
     firstName: string;
     firstNameAm: string;
@@ -20,20 +21,10 @@ export interface Step1Dto {
     employmentNature: EmpNature;
     workArrangement: WorkArrangement;
     File: File | null; // Fixed: proper File type
-}
-
-export interface Step2Dto {
     birthDate: string;
-    birthLocation: string;
-    motherFullName: string;
-    hasBirthCert: YesNo;
-    hasMarriageCert: YesNo;
     maritalStatus: MaritalStat;
-    employeeId: UUID;
-    tin: string;
-    bankAccountNo: string;
-    pensionNumber: string;
-    addressType: AddressType;
+
+      addressType: AddressType;
     // addressTypeStr: string;
     country: string;
     region: string;
@@ -49,39 +40,10 @@ export interface Step2Dto {
     website: string;
 }
 
-export interface Step3Dto {
-  firstName: string;
-  firstNameAm: string;
-  middleName: string;
-  middleNameAm: string; // Fixed: was liddleNameAm
-  lastName: string;
-  lastNameAm: string;
-  nationality: string;
-  gender: Gender;
-  relation: string;
-  addressType: AddressType;
-  country: string;
-  region: string;
-  subcity: string;
-  zone: string;
-  woreda: string;
-  kebele: string;
-  houseNo: string;
-  telephone: string;
-  poBox: string;
-  fax: string;
-  email: string;
-  website: string;
-  employeeId: UUID;
-}
-
-export interface Step4Dto {
+export interface Step2Dto {
     firstName: string;
-    firstNameAm: string;
-    middleName: string;
-    middleNameAm: string; // Fixed: was liddleNameAm
+    middleName: string; // Fixed: was liddleNameAm
     lastName: string;
-    lastNameAm: string;
     nationality: string;
     gender: Gender;
     relation: string;
@@ -95,14 +57,94 @@ export interface Step4Dto {
     kebele: string;
     houseNo: string;
     telephone: string;
-    poBox: string;
-    fax: string;
-    email: string;
-    website: string;
-    File: File | null; // Fixed: proper File type
+    poBox?: string;
+    fax?: string;
+    email?: string;
+    website?: string;
+    File?: File | null; // Fixed: proper File type
 }
 
-export interface Step5Dto {
+// export interface Step2Dto {
+//     birthDate: string;
+//     birthLocation: string;
+//     motherFullName: string;
+//     hasBirthCert: YesNo;
+//     hasMarriageCert: YesNo;
+//     maritalStatus: MaritalStat;
+//     employeeId: UUID;
+//     tin: string;
+//     bankAccountNo: string;
+//     pensionNumber: string;
+//     addressType: AddressType;
+//     // addressTypeStr: string;
+//     country: string;
+//     region: string;
+//     subcity: string;
+//     zone: string;
+//     woreda: string;
+//     kebele: string;
+//     houseNo: string;
+//     telephone: string;
+//     poBox: string;
+//     fax: string;
+//     email: string;
+//     website: string;
+// }
+
+// export interface Step3Dto {
+//   firstName: string;
+//   firstNameAm: string;
+//   middleName: string;
+//   middleNameAm: string; // Fixed: was liddleNameAm
+//   lastName: string;
+//   lastNameAm: string;
+//   nationality: string;
+//   gender: Gender;
+//   relation: string;
+//   addressType: AddressType;
+//   country: string;
+//   region: string;
+//   subcity: string;
+//   zone: string;
+//   woreda: string;
+//   kebele: string;
+//   houseNo: string;
+//   telephone: string;
+//   poBox: string;
+//   fax: string;
+//   email: string;
+//   website: string;
+//   employeeId: UUID;
+// }
+
+// export interface Step4Dto {
+//     firstName: string;
+//     firstNameAm: string;
+//     middleName: string;
+//     middleNameAm: string; // Fixed: was liddleNameAm
+//     lastName: string;
+//     lastNameAm: string;
+//     nationality: string;
+//     gender: Gender;
+//     relation: string;
+//     employeeId: UUID;
+//     addressType: AddressType;
+//     country: string;
+//     region: string;
+//     subcity: string;
+//     zone: string;
+//     woreda: string;
+//     kebele: string;
+//     houseNo: string;
+//     telephone: string;
+//     poBox: string;
+//     fax: string;
+//     email: string;
+//     website: string;
+//     File: File | null; // Fixed: proper File type
+// }
+
+export interface EmpAddPrintDto {
     // Basic Info
     employeeId: UUID; //Employee
     photo: string;
@@ -136,13 +178,13 @@ export interface Step5Dto {
     telephone: string;
 
     // Emergency Contact
-    conFullName: string;
-    conFullNameAm: string;
-    conNationality: string;
-    conGender: string;
-    conRelation: string;
-    conAddress: string;
-    conTelephone: string;
+    // conFullName: string;
+    // conFullNameAm: string;
+    // conNationality: string;
+    // conGender: string;
+    // conRelation: string;
+    // conAddress: string;
+    // conTelephone: string;
 
     // Guarantor
     guaFullName: string;

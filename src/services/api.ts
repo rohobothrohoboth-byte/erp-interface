@@ -68,8 +68,8 @@ api.interceptors.request.use(async (config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
 
-  // 🔥 convert dates globally
-  if (config.data) {
+  // 🔥 convert dates globally (skip FormData — it can't be iterated)
+  if (config.data && !(config.data instanceof FormData)) {
     config.data = convertDatesToUtc(config.data);
   }
 

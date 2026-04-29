@@ -1,106 +1,76 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, User, Printer } from "lucide-react";
 import { BasicInfoStep } from "../../../components/hr/employee/AddEmployee/steps/BasicInfoStep";
 import { BasicInfoReviewStep } from "../../../components/core/usermgmt/AddEmployee/InfoReviewStep";
-import type {
-  Step1Dto,
-  BasicInfoDto,
-} from "../../../types/hr/employee/empAddDto";
+import { AddEmployeeStepHeader } from "../../../components/core/usermgmt/AddEmployee/AddUserEmployeeHeader";
+import type { Step1Dto, EmpAddPrintDto } from "../../../types/hr/employee/empAddDto";
 import type { UUID } from "crypto";
 import { usermgmtService } from "../../../services/core/usermgtservice";
+import { useEmpAddStore } from "../../../stores/hr/empAdd.store";
+
+const steps = [
+  { id: 1, title: 'Basic Info', icon: User },
+  { id: 2, title: 'Print', icon: Printer },
+];
 
 function PageAddUser() {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [basicInfoData, setBasicInfoData] = useState<
-    Partial<Step1Dto & { branchId: UUID, jobGradeStepId: UUID }>
-  >({});
-  const [employeeId, setEmployeeId] = useState<UUID | null>(null);
-  const [step2Data, setStep2Data] = useState<BasicInfoDto | null>(null);
+  const {
+    adminEmployeeId,
+    adminCurrentStep,
+    setAdminEmployeeId,
+    setAdminStep,
+    resetAdmin,
+  } = useEmpAddStore();
+
+  const [currentStep, setCurrentStep] = useState(adminCurrentStep);
+  const [basicInfoData, setBasicInfoData] = useState<Partial<Step1Dto & { branchId: UUID; jobGradeStepId: UUID }>>({});
+  const [step2Data, setStep2Data] = useState<EmpAddPrintDto | null>(null);
   const [photoData, setPhotoData] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Handle back to employees list
-  const handleBackToEmployees = () => {
-    navigate(-1);
+  const goToStep = (step: number) => {
+    setCurrentStep(step);
+    setAdminStep(step);
   };
 
-  // Handle going back from review to basic info
-  const handleBackToBasicInfo = () => {
-    setCurrentStep(1);
-    setError(null);
-  };
+  const handleBackToEmployees = () => navigate(-1);
+  const handleBackToBasicInfo = () => { goToStep(1); setError(null); };
 
-  // Handle when Basic Info step is completed
-  const handleBasicInfoComplete = async (
-    data: Step1Dto & { branchId: UUID },
-  ) => {
+  const handleBasicInfoComplete = async (data: Step1Dto & { branchId: UUID }) => {
     setIsLoading(true);
     setError(null);
-
     try {
-      // Store the data locally first
       setBasicInfoData(data);
-
-      // If a file is uploaded, create a preview
       if (data.File) {
         const reader = new FileReader();
-        reader.onloadend = () => {
-          setPhotoData(reader.result as string);
-        };
+        reader.onloadend = () => setPhotoData(reader.result as string);
         reader.readAsDataURL(data.File);
       }
-
-      // Call the API to create employee (Step 1)
       const result = await usermgmtService.addEmployeeStep1(data);
-
-      console.log("Employee Step 1 completed successfully:", result);
-
-      // Store the employee ID from the response
-      setEmployeeId(result.id);
-
-      // Fetch Step 2 data using the employee ID
-      const step2Response = await usermgmtService.getEmployeeStep2Data(
-        result.id,
-      );
-
-      console.log("Employee Step 2 data fetched successfully:", step2Response);
-
-      // Store the Step 2 data
+      setAdminEmployeeId(result.id);
+      const step2Response = await usermgmtService.getEmployeeStep2Data(result.id);
       setStep2Data(step2Response);
-
-      // Move to review step
-      setCurrentStep(2);
+      goToStep(2);
     } catch (err: any) {
-      console.error("Failed to create employee or fetch Step 2 data:", err);
-      setError(err.message || "Failed to create employee. Please try again.");
+      setError(err.message || 'Failed to create employee. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle confirmation and save
   const handleConfirmAndSave = async () => {
     setIsLoading(true);
     setError(null);
-
     try {
-      // Show success
       setSaveSuccess(true);
-
-      // Redirect after 2 seconds
-      setTimeout(() => {
-        navigate("/core/users");
-      }, 2000);
+      resetAdmin();
+      setTimeout(() => navigate("/core/users"), 2000);
     } catch (err: any) {
-      console.error("Failed to complete employee creation:", err);
-      setError(
-        err.message ||
-          "Failed to complete employee creation. Please try again.",
-      );
+      setError(err.message || "Failed to complete employee creation. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -349,7 +319,17 @@ function PageAddUser() {
 
   return (
     <section className="w-full bg-gray-50 overflow-auto">
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Step Header */}
+        <AddEmployeeStepHeader
+          steps={steps}
+          currentStep={currentStep}
+          onStepClick={(step) => { if (step < currentStep) goToStep(step); }}
+          onBack={handleBackToEmployees}
+          title="Add New Employee"
+          backButtonText="Back to Employees"
+        />
+
         {/* Error Display */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4">
@@ -390,7 +370,7 @@ function PageAddUser() {
         )}
 
         {/* Step Content */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 px-6 py-4">
           {currentStep === 1 ? (
             <BasicInfoStep
               data={basicInfoData}

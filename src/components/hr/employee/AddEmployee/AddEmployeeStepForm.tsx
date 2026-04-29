@@ -1,21 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { User, FileText, Users, Shield, CheckCircle } from 'lucide-react';
+import { User, Shield, CheckCircle } from 'lucide-react';
 import { BasicInfoStep } from './steps/BasicInfoStep';
-import { BiographicalStep } from './steps/BiograohicalStep';
-import { EmergencyContactStep } from './steps/EmergencyContactStep';
 import { GuarantorStep } from './steps/GurantorStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { AddEmployeeStepHeader } from './AddEmployeeStepHeader';
 import { empService } from '../../../../services/hr/employee/empService';
-import type { Step1Dto, Step2Dto, Step3Dto, Step4Dto, Step5Dto, EmpAddRes, UUID } from '../../../../types/hr/employee/empAddDto';
+import type { Step1Dto, Step2Dto, EmpAddRes, UUID } from '../../../../types/hr/employee/empAddDto';
+import { useEmpAddStore } from '../../../../stores/hr/empAdd.store';
 
 const steps = [
   { id: 1, title: 'Basic Info', icon: User },
-  { id: 2, title: 'Biographical', icon: FileText },
-  { id: 3, title: 'Emergency Contact', icon: Users },
-  { id: 4, title: 'Guarantor', icon: Shield },
-  { id: 5, title: 'Print', icon: CheckCircle },
+  // { id: 2, title: 'Biographical', icon: FileText },
+  // { id: 3, title: 'Emergency Contact', icon: Users },
+  { id: 2, title: 'Guarantor', icon: Shield },
+  { id: 3, title: 'Print', icon: CheckCircle },
 ];
 
 interface AddEmployeeStepFormProps {
@@ -27,18 +26,26 @@ export const AddEmployeeStepForm: React.FC<AddEmployeeStepFormProps> = ({
   onBackToEmployees,
   onEmployeeAdded,
 }) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState({
-    step1: {},
-    step2: {},
-    step3: {},
-    step4: {},
-  });
-  const [employeeId, setEmployeeId] = useState<UUID | undefined>(undefined);
+  const {
+    hrEmployeeId,
+    hrCurrentStep,
+    setHrEmployeeId,
+    setHrStep,
+    resetHr,
+  } = useEmpAddStore();
+
+  const [currentStep, setCurrentStep] = useState(hrCurrentStep);
+  const [formData, setFormData] = useState({ step1: {}, step4: {} });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
   const stepContentRef = useRef<HTMLDivElement>(null);
+
+  // Keep store in sync with local step
+  const goToStep = (step: number) => {
+    setCurrentStep(step);
+    setHrStep(step);
+  };
 
   // Scroll to top when step changes
   useEffect(() => {
@@ -67,232 +74,71 @@ export const AddEmployeeStepForm: React.FC<AddEmployeeStepFormProps> = ({
 
   // Clear all temporary data
   const clearTemporaryData = () => {
-    localStorage.removeItem('employeeFormData');
-    localStorage.removeItem('employeeId');
-    setFormData({
-      step1: {},
-      step2: {},
-      step3: {},
-      step4: {},
-    });
-    setEmployeeId(undefined);
+    resetHr();
+    setFormData({ step1: {}, step4: {} });
     setCurrentStep(1);
   };
 
-  // Handle Step 1 submission with service call
-  const handleStep1Submit = async (step1Data: Step1Dto & { branchId: UUID, jobGradeStepId: UUID }) => {
+  const handleStep1Submit = async (step1Data: Step1Dto & { branchId: UUID }) => {
     setLoading(true);
     setError(null);
-
     try {
       const result: EmpAddRes = await empService.empAddStep1(step1Data);
-
-      console.log('Employee created successfully:', result.id);
-      setEmployeeId(result.id);
-
-      const updatedFormData = {
-        ...formData,
-        step1: step1Data,
-      };
-
-      setFormData(updatedFormData);
-      localStorage.setItem('employeeFormData', JSON.stringify(updatedFormData));
-      localStorage.setItem('employeeId', result.id);
-
+      setHrEmployeeId(result.id);
+      setFormData((prev) => ({ ...prev, step1: step1Data }));
       scrollToTop();
-      setCurrentStep(prev => prev + 1);
+      goToStep(2);
     } catch (error) {
-      console.error('Failed to create employee:', error);
-      setError(
-        error instanceof Error
-          ? error.message
-          : 'Failed to create employee. Please try again.'
-      );
+      setError(error instanceof Error ? error.message : 'Failed to create employee. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
   // Handle Step 2 submission with service call
-  const handleStep2Submit = async (step2Data: Step2Dto) => {
-    if (!employeeId) {
-      setError('Employee ID is missing. Please complete Step 1 first to create an employee record.');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const step2DataWithEmployeeId: Step2Dto = {
-        ...step2Data,
-        employeeId: employeeId
-      };
-
-      const result: EmpAddRes = await empService.empAddStep2(step2DataWithEmployeeId);
-
-      console.log('Biographical info added successfully:', result);
-
-      const updatedFormData = {
-        ...formData,
-        step2: step2Data,
-      };
-
-      setFormData(updatedFormData);
-      localStorage.setItem('employeeFormData', JSON.stringify(updatedFormData));
-
-      scrollToTop();
-      setCurrentStep(prev => prev + 1);
-    } catch (error) {
-      console.error('Failed to add biographical info:', error);
-      setError('Failed to save biographical information. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleStep2Submit = async (step2Data: Step2Dto) => { ... };
 
   // Handle Step 3 submission with service call
-  const handleStep3Submit = async (step3Data: Step3Dto) => {
-    if (!employeeId) {
-      setError('Employee ID is missing. Please complete Step 1 first to create an employee record.');
+  // const handleStep3Submit = async (step3Data: Step3Dto) => { ... };
+
+  const handleStep4Submit = async (step4Data: Step2Dto) => {
+    if (!hrEmployeeId) {
+      setError('Employee ID is missing. Please complete Step 1 first.');
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
-      const step3DataWithEmployeeId: Step3Dto = {
-        ...step3Data,
-        employeeId: employeeId
-      };
-
-      const result: EmpAddRes = await empService.empAddStep3(step3DataWithEmployeeId);
-
-      console.log('Emergency contact added successfully:', result);
-
-      const updatedFormData = {
-        ...formData,
-        step3: step3Data,
-      };
-
-      setFormData(updatedFormData);
-      localStorage.setItem('employeeFormData', JSON.stringify(updatedFormData));
-
-      scrollToTop();
-      setCurrentStep(prev => prev + 1);
-    } catch (error) {
-      console.error('Failed to update emergency contact:', error);
-      setError('Failed to save emergency contact information. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle Step 4 submission with service call
-  const handleStep4Submit = async (step4Data: Step4Dto) => {
-    if (!employeeId) {
-      setError('Employee ID is missing. Please complete Step 1 first to create an employee record.');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const step4DataWithEmployeeId: Step4Dto = {
-        ...step4Data,
-        employeeId: employeeId
-      };
-
-      const result: EmpAddRes = await empService.empAddStep4(step4DataWithEmployeeId);
-
+      const result: EmpAddRes = await empService.empAddStep4({ ...step4Data, employeeId: hrEmployeeId });
       console.log('Guarantor added successfully:', result);
-
-      const updatedFormData = {
-        ...formData,
-        step4: step4Data,
-      };
-
-      setFormData(updatedFormData);
-      localStorage.setItem('employeeFormData', JSON.stringify(updatedFormData));
-
+      setFormData((prev) => ({ ...prev, step4: step4Data }));
       scrollToTop();
-      setCurrentStep(prev => prev + 1);
+      goToStep(3);
     } catch (error) {
-      console.error('Failed to update guarantor info:', error);
       setError('Failed to save guarantor information. Please try again.');
     } finally {
       setLoading(false);
     }
   };
-
-  // Handle Step 5 submission with service call - UPDATED to clear temporary data
-  const handleStep5Submit = async (step5Data: Step5Dto) => {
-    if (!employeeId) {
-      setError('Employee ID is missing. Please complete Step 1 first to create an employee record.');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Call the Step 5 service to complete employee submission
-      const result: EmpAddRes = await empService.submitEmployee(step5Data);
-
-      console.log('Employee submission completed successfully:', result);
-
-      // Clear all temporary data after successful submission
-      clearTemporaryData();
-
-      // Call the parent callback with the result
-      onEmployeeAdded(result);
-    } catch (error) {
-      console.error('Failed to complete employee submission:', error);
-      setError('Failed to complete employee submission. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleStep5Submit = async () => { ... };
 
   const handleBack = () => {
     scrollToTop();
     if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
+      goToStep(currentStep - 1);
     } else {
-      // When going back from step 1, clear temporary data if user wants to start fresh
       clearTemporaryData();
       onBackToEmployees();
     }
   };
 
-  // Handle back to employees without clearing data (for temporary saving)
   const handleBackToEmployees = () => {
-    // Don't clear data when going back temporarily - allow user to continue later
     onBackToEmployees();
   };
 
-  // Load saved form data and employee ID on component mount
   useEffect(() => {
-    const savedFormData = localStorage.getItem('employeeFormData');
-    const savedEmployeeId = localStorage.getItem('employeeId');
-
-    if (savedFormData) {
-      try {
-        const parsedData = JSON.parse(savedFormData);
-        setFormData(parsedData);
-      } catch (error) {
-        console.error('Error loading saved form data:', error);
-      }
-    }
-
-    if (savedEmployeeId) {
-      setEmployeeId(savedEmployeeId as UUID);
-    }
-
     scrollToTop();
-  }, []);
+  }, [currentStep]);
 
   const renderStep = () => {
     switch (currentStep) {
@@ -305,43 +151,25 @@ export const AddEmployeeStepForm: React.FC<AddEmployeeStepFormProps> = ({
             loading={loading}
           />
         );
+      // case 2: BiographicalStep — commented out
+      // case 3: EmergencyContactStep — commented out
       case 2:
-        return (
-          <BiographicalStep
-            data={formData.step2}
-            onNext={handleStep2Submit}
-            onBack={handleBack}
-            employeeId={employeeId}
-            loading={loading}
-          />
-        );
-      case 3:
-        return (
-          <EmergencyContactStep
-            data={formData.step3}
-            onNext={handleStep3Submit}
-            onBack={handleBack}
-            employeeId={employeeId}
-            loading={loading}
-          />
-        );
-      case 4:
         return (
           <GuarantorStep
             data={formData.step4}
             onNext={handleStep4Submit}
             onBack={handleBack}
-            employeeId={employeeId}
+            employeeId={hrEmployeeId as UUID}
             loading={loading}
           />
         );
-      case 5:
+      case 3:
         return (
           <ReviewStep
-            employeeId={employeeId}
-            onSubmit={handleStep5Submit}
+            employeeId={hrEmployeeId as any}
             onBack={handleBack}
             loading={loading}
+            onClearTempData={() => { clearTemporaryData(); onEmployeeAdded({ id: hrEmployeeId }); }}
           />
         );
       default:

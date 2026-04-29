@@ -248,3 +248,16 @@ export type OnboardingStatus =
 
 export type ReqStatus =
   typeof ReqStatus[keyof typeof ReqStatus];
+
+  export const EmpState = {
+  "0": "Pending",
+  "1": "Approved",
+  "2": "Active",
+  "3": "Under Probation",
+  "4": "Terminated",
+  "5": "StandBy",
+  "6": "Retired",
+  "7": "On Leave",
+} as const;
+
+export type EmpState = typeof EmpState[keyof typeof EmpState];

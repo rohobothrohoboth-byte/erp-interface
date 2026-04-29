@@ -88,7 +88,7 @@ export const AddEmployeeStepHeader: React.FC<AddEmployeeStepHeaderProps> = ({
                             a 15.9155 15.9155 0 0 1 0 31.831
                             a 15.9155 15.9155 0 0 1 0 -31.831"
                           fill="none"
-                          stroke={isCompleted ? "#10B981" : isCurrent ? "#3B82F6" : "transparent"}
+                          stroke={isCompleted ? "#10B981" : isCurrent ? "#EF4444" : "transparent"}
                           strokeWidth="3"
                           strokeDasharray="100"
                           strokeDashoffset={isCompleted ? "0" : isCurrent ? "25" : "100"}
@@ -105,12 +105,12 @@ export const AddEmployeeStepHeader: React.FC<AddEmployeeStepHeaderProps> = ({
                         isCompleted
                           ? 'bg-green-500 border-green-500 text-white shadow-lg shadow-green-200 cursor-pointer hover:shadow-xl hover:shadow-green-300'
                           : isCurrent
-                          ? 'border-blue-500 bg-white text-blue-600 shadow-lg shadow-blue-100 cursor-default'
+                          ? 'border-red-500 bg-white text-red-600 shadow-lg shadow-red-100 cursor-default'
                           : isUpcoming
                           ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-default'
                           : 'border-gray-200 bg-white text-gray-400 cursor-pointer'
                       } ${
-                        isCurrent ? 'scale-110 ring-4 ring-blue-50' : 'scale-100'
+                        isCurrent ? 'scale-110 ring-4 ring-red-50' : 'scale-100'
                       } ${isClickable ? 'hover:scale-105 hover:shadow-lg' : ''}`}
                       disabled={!isClickable}
                     >
@@ -126,7 +126,7 @@ export const AddEmployeeStepHeader: React.FC<AddEmployeeStepHeaderProps> = ({
                           isCompleted
                             ? 'bg-white text-green-600 border-green-500'
                             : isCurrent
-                            ? 'bg-blue-500 text-white border-white'
+                            ? 'bg-red-500 text-white border-white'
                             : 'bg-gray-200 text-gray-500 border-gray-300'
                         }`}
                       >
@@ -151,7 +151,7 @@ export const AddEmployeeStepHeader: React.FC<AddEmployeeStepHeaderProps> = ({
                         isCompleted
                           ? 'text-green-600'
                           : isCurrent
-                          ? 'text-blue-500'
+                          ? 'text-red-500'
                           : 'text-gray-400'
                       }`}
                     >
@@ -169,7 +169,7 @@ export const AddEmployeeStepHeader: React.FC<AddEmployeeStepHeaderProps> = ({
                           isCompleted 
                             ? 'bg-green-500 w-full' 
                             : isCurrent 
-                            ? 'bg-blue-500 w-1/2' 
+                            ? 'bg-red-500 w-1/2' 
                             : 'bg-transparent w-0'
                         }`}
                       />
@@ -185,7 +185,7 @@ export const AddEmployeeStepHeader: React.FC<AddEmployeeStepHeaderProps> = ({
                     )}
                     {isCurrent && (
                       <motion.div 
-                        className="absolute top-1/2 left-1/2 w-2 h-2 bg-blue-400 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-blue-300"
+                        className="absolute top-1/2 left-1/2 w-2 h-2 bg-red-400 rounded-full -translate-x-1/2 -translate-y-1/2 shadow-lg shadow-red-300"
                         animate={{ y: [-2, 2, -2] }}
                         transition={{ repeat: Infinity, duration: 0.8 }}
                       />
