@@ -24,7 +24,7 @@ const ethPhone = z
 // Email: must contain exactly one @, at least one . after @, no spaces
 const emailField = z
   .string()
-  .optional()
+  .min(1,"Please enter an email")
   .refine(
     (val) => {
       if (!val || val.trim() === '') return true; // optional
@@ -72,21 +72,21 @@ export const basicInfoSchema = z.object({
   jgStepId:         z.string().min(1, 'Please select a job grade step'),
   employmentType:   z.string().min(1, 'Please select an employment type'),
   employmentNature: z.string().min(1, 'Please select an employment nature'),
-  workArrangement:  z.string().optional(),
+  workArrangement:  z.string().min(1, 'Please select a work arrangement'),
   addressType:      z.string().min(1, 'Please select an address type'),
   country:          z.string().min(1, 'Please enter a country'),
   region:           z.string().min(1, 'Please enter a region'),
   telephone:        ethPhone,
-  subcity:          z.string().optional(),
+  subcity:          z.string().min(1, 'Please enter a subcity'),
   zone:             z.string().optional(),
-  woreda:           z.string().optional(),
+  woreda:           z.string().min(1, 'Please enter a woreda'),
   kebele:           z.string().optional(),
-  houseNo:          z.string().optional(),
+  houseNo:          z.string().min(1, 'Please enter a house number'),
   poBox:            z.string().optional(),
   fax:              z.string().optional(),
   email:            emailField,
   website:          z.string().optional(),
-  File:             z.instanceof(File).nullable().optional(),
+  File:             z.instanceof(File).nullable(),
 });
 
 export type BasicInfoFormValues = z.infer<typeof basicInfoSchema>;

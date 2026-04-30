@@ -418,8 +418,8 @@ useEffect(() => {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Personal Information Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-3">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-2 h-8 bg-linear-to-b from-green-400 to-green-600 rounded-full"></div>
               <h3 className="text-xl font-semibold text-gray-800">
@@ -434,7 +434,7 @@ useEffect(() => {
               htmlFor="firstName"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              First Name (English) *
+              First Name (English) <span className="text-red-500">*</span>
             </label>
             <Input
               id="firstName"
@@ -458,43 +458,13 @@ useEffect(() => {
             )}
           </div>
 
-          {/* ስም */}
-          <div className="space-y-2">
-            <label
-              htmlFor="firstNameAm"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              ስም *
-            </label>
-            <Input
-              id="firstNameAm"
-              name="firstNameAm"
-              type="text"
-              value={formik.values.firstNameAm}
-              onChange={(e) => handleAmharicInputChange(e, "firstNameAm")}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("firstNameAm")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="አየለ"
-              disabled={loading}
-            />
-            {getErrorMessage("firstNameAm") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("firstNameAm")}
-              </div>
-            )}
-          </div>
-
           {/* Middle Name (English) */}
           <div className="space-y-2">
             <label
               htmlFor="middleName"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Middle Name (English) *
+              Middle Name (English)  <span className="text-red-500">*</span>
             </label>
             <Input
               id="middleName"
@@ -518,43 +488,13 @@ useEffect(() => {
             )}
           </div>
 
-          {/* የአባት ስም */}
-          <div className="space-y-2">
-            <label
-              htmlFor="middleNameAm"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              የአባት ስም *
-            </label>
-            <Input
-              id="middleNameAm"
-              name="middleNameAm"
-              type="text"
-              value={formik.values.middleNameAm}
-              onChange={(e) => handleAmharicInputChange(e, "middleNameAm")}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("middleNameAm")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="በቀለ"
-              disabled={loading}
-            />
-            {getErrorMessage("middleNameAm") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("middleNameAm")}
-              </div>
-            )}
-          </div>
-
           {/* Last Name (English) */}
           <div className="space-y-2">
             <label
               htmlFor="lastName"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Last Name (English) *
+              Last Name (English)  <span className="text-red-500">*</span>
             </label>
             <Input
               id="lastName"
@@ -578,13 +518,73 @@ useEffect(() => {
             )}
           </div>
 
+          {/* ስም */}
+          <div className="space-y-2">
+            <label
+              htmlFor="firstNameAm"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              ስም <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="firstNameAm"
+              name="firstNameAm"
+              type="text"
+              value={formik.values.firstNameAm}
+              onChange={(e) => handleAmharicInputChange(e, "firstNameAm")}
+              onBlur={formik.handleBlur}
+              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                getErrorMessage("firstNameAm")
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
+              placeholder="አየለ"
+              disabled={loading}
+            />
+            {getErrorMessage("firstNameAm") && (
+              <div className="text-red-500 text-xs mt-1">
+                {getErrorMessage("firstNameAm")}
+              </div>
+            )}
+          </div>
+
+          {/* የአባት ስም */}
+          <div className="space-y-2">
+            <label
+              htmlFor="middleNameAm"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              የአባት ስም  <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="middleNameAm"
+              name="middleNameAm"
+              type="text"
+              value={formik.values.middleNameAm}
+              onChange={(e) => handleAmharicInputChange(e, "middleNameAm")}
+              onBlur={formik.handleBlur}
+              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                getErrorMessage("middleNameAm")
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
+              placeholder="በቀለ"
+              disabled={loading}
+            />
+            {getErrorMessage("middleNameAm") && (
+              <div className="text-red-500 text-xs mt-1">
+                {getErrorMessage("middleNameAm")}
+              </div>
+            )}
+          </div>
+
           {/* የአያት ስም */}
           <div className="space-y-2">
             <label
               htmlFor="lastNameAm"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              የአያት ስም *
+              የአያት ስም  <span className="text-red-500">*</span>
             </label>
             <Input
               id="lastNameAm"
@@ -614,7 +614,7 @@ useEffect(() => {
               htmlFor="gender"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Gender *
+              Gender  <span className="text-red-500">*</span>
             </label>
             <Select
               value={formik.values.gender}
@@ -653,7 +653,7 @@ useEffect(() => {
               htmlFor="nationality"
               className="block text-sm font-medium text-gray-700 mb-1"
             >
-              Nationality *
+              Nationality <span className="text-red-500">*</span>
             </label>
             <Input
               id="nationality"
@@ -679,7 +679,7 @@ useEffect(() => {
 {/* Birth Date */}
         <div className="space-y-2">
           <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">
-            Birth Date *
+            Birth Date  <span className="text-red-500">*</span>
           </label>
           <Input
             id="birthDate"
@@ -701,7 +701,7 @@ useEffect(() => {
  {/* Marital Status */}
             <div className="space-y-2">
               <label htmlFor="maritalStatus" className="block text-sm font-medium text-gray-700 mb-1">
-                Marital Status *
+                Marital Status <span className="text-red-500">*</span>
               </label>
               <Select
                 value={formik.values.maritalStatus}
@@ -752,9 +752,9 @@ useEffect(() => {
               {loadingBranches && (
                 <p className="text-sm text-gray-500">Loading branches...</p>
               )}
-              {branchError && (
+              {/* {branchError && (
                 <p className="text-sm text-amber-600">{branchError}</p>
-              )}
+              )} */}
               {getErrorMessage("branchId") && (
                 <div className="text-red-500 text-xs mt-1">
                   {getErrorMessage("branchId")}
@@ -768,7 +768,11 @@ useEffect(() => {
                 items={departmentListItems}
                 selectedValue={formik.values.departmentId}
                 onSelect={handleDepartmentSelect}
-                label="Select Department"
+                label={
+  <>
+    Select Department <span className="text-red-500">*</span>
+  </>
+}
                 placeholder={
                   departments.length === 0
                     ? "No departments available"
@@ -781,9 +785,9 @@ useEffect(() => {
               {loadingDepartments && (
                 <p className="text-sm text-gray-500">Loading departments...</p>
               )}
-              {departmentError && (
+              {/* {departmentError && (
                 <p className="text-sm text-amber-600">{departmentError}</p>
-              )}
+              )} */}
               {getErrorMessage("departmentId") && (
                 <div className="text-red-500 text-xs mt-1">
                   {getErrorMessage("departmentId")}
@@ -797,7 +801,11 @@ useEffect(() => {
                 items={positionListItems}
                 selectedValue={formik.values.positionId}
                 onSelect={handlePositionSelect}
-                label="Select Position"
+               label={
+  <>
+    Select Position <span className="text-red-500">*</span>
+  </>
+}
                 placeholder={
                   !formik.values.departmentId
                     ? "Select a department first"
@@ -867,7 +875,11 @@ useEffect(() => {
                 items={jobGradeListItems}
                 selectedValue={formik.values.jobGradeId}
                 onSelect={handleJobGradeSelect}
-                label="Select Job Grade"
+              label={
+  <>
+    Select Job Grade <span className="text-red-500">*</span>
+  </>
+}
                 placeholder="Select a job grade"
                 disabled={loadingJobGrades || loading}
               />
@@ -890,8 +902,11 @@ useEffect(() => {
                 items={jobGradeStepsListItems}
                 selectedValue={formik.values.jgStepId}
                 onSelect={handleJobGradeStepSelect}
-                label="Select Job Grade Step"
-                placeholder="Select a job grade step"
+label={
+  <>
+    Select  Job Grade Step <span className="text-red-500">*</span>
+  </>
+}                placeholder="Select a job grade step"
                 disabled={loadingJobGradeSteps || loading}
               />
               {loadingJobGradeSteps && (
@@ -912,7 +927,7 @@ useEffect(() => {
                 htmlFor="employmentType"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Employment Type *
+                Employment Type  <span className="text-red-500">*</span>
               </label>
               <Select
                 value={formik.values.employmentType}
@@ -951,7 +966,7 @@ useEffect(() => {
                 htmlFor="employmentNature"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Employment Nature *
+                Employment Nature  <span className="text-red-500">*</span>
               </label>
               <Select
                 value={formik.values.employmentNature}
@@ -990,7 +1005,7 @@ useEffect(() => {
                 htmlFor="employmentNature"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Work Arrangement *
+                Work Arrangement  <span className="text-red-500">*</span>
               </label>
               <Select
                 value={formik.values.workArrangement}
@@ -1036,7 +1051,7 @@ useEffect(() => {
                     {/* Address Type */}
                     <div className="space-y-2">
                       <label htmlFor="addressType" className="block text-sm font-medium text-gray-700 mb-1">
-                        Address Type *
+                        Address Type <span className="text-red-500">*</span>
                       </label>
                       <Select
           value={formik.values.addressType}
@@ -1074,7 +1089,7 @@ useEffect(() => {
                     {/* Country */}
                     <div className="space-y-2">
                       <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                        Country *
+                        Country  <span className="text-red-500">*</span>
                       </label>
                       <Input
                         id="country"
@@ -1096,7 +1111,7 @@ useEffect(() => {
                     {/* Region */}
                     <div className="space-y-2">
                       <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
-                        Region *
+                        Region  <span className="text-red-500">*</span>
                       </label>
                       <Input
                         id="region"
@@ -1118,7 +1133,7 @@ useEffect(() => {
                     {/* Telephone */}
                     <div className="space-y-2">
                       <label htmlFor="telephone" className="block text-sm font-medium text-gray-700 mb-1">
-                        Telephone *
+                        Telephone  <span className="text-red-500">*</span>
                       </label>
                       <div className={`w-full border rounded-md transition-colors duration-200 ${
                         getErrorMessage('telephone') ? "border-red-500" : "border-gray-300"
@@ -1163,10 +1178,10 @@ useEffect(() => {
                       )}
                     </div>
         
-                    {/* Subcity - Optional */}
+                    {/* Subcity  */}
                     <div className="space-y-2">
                       <label htmlFor="subcity" className="block text-sm font-medium text-gray-700 mb-1">
-                        Subcity
+                        Subcity  <span className="text-red-500">*</span>
                       </label>
                       <Input
                         id="subcity"
@@ -1174,10 +1189,15 @@ useEffect(() => {
                         value={formik.values.subcity}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        className={`w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                          getErrorMessage('subcity') ? "border-red-500" : "border-gray-300"
+                        }`}
                         placeholder="Kirkos"
                         disabled={loading}
                       />
+                       {getErrorMessage('subcity') && (
+                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('subcity')}</div>
+                      )}
                     </div>
         
                     {/* Zone - Optional */}
@@ -1197,10 +1217,10 @@ useEffect(() => {
                       />
                     </div>
         
-                    {/* Woreda - Optional */}
+                    {/* Woreda  */}
                     <div className="space-y-2">
                       <label htmlFor="woreda" className="block text-sm font-medium text-gray-700 mb-1">
-                        Woreda
+                        Woreda  <span className="text-red-500">*</span>
                       </label>
                       <Input
                         id="woreda"
@@ -1208,10 +1228,15 @@ useEffect(() => {
                         value={formik.values.woreda}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        className={`w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200  ${
+                          getErrorMessage('woreda') ? "border-red-500" : "border-gray-300"
+                        }`}
                         placeholder="08"
                         disabled={loading}
                       />
+                       {getErrorMessage('woreda') && (
+                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('woreda')}</div>
+                      )}
                     </div>
         
                     {/* Kebele - Optional */}
@@ -1231,10 +1256,10 @@ useEffect(() => {
                       />
                     </div>
         
-                    {/* House Number - Optional */}
+                    {/* House Number  */}
                     <div className="space-y-2">
                       <label htmlFor="houseNo" className="block text-sm font-medium text-gray-700 mb-1">
-                        House Number
+                        House Number  <span className="text-red-500">*</span>
                       </label>
                       <Input
                         id="houseNo"
@@ -1242,10 +1267,15 @@ useEffect(() => {
                         value={formik.values.houseNo}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        className={`w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                          getErrorMessage('houseNo') ? "border-red-500" : "border-gray-300"
+                        }`}
                         placeholder="H-123"
                         disabled={loading}
                       />
+                       {getErrorMessage('houseNo') && (
+                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('houseNo')}</div>
+                      )}
                     </div>
         
                     {/* P.O. Box - Optional */}
@@ -1282,10 +1312,10 @@ useEffect(() => {
                       />
                     </div>
         
-                    {/* Email - Optional */}
+                    {/* Email  */}
                     <div className="space-y-2">
                       <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                        Email
+                        Email  <span className="text-red-500">*</span>
                       </label>
                       <Input
                         id="email"
@@ -1294,10 +1324,15 @@ useEffect(() => {
                         value={formik.values.email}
                         onChange={formik.handleChange}
                         onBlur={formik.handleBlur}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                        className={`w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
+                          getErrorMessage('email') ? "border-red-500" : "border-gray-300"
+                        }`}
                         placeholder="example@email.com"
                         disabled={loading}
                       />
+                       {getErrorMessage('email') && (
+                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('email')}</div>
+                      )}
                     </div>
         
                     {/* Website - Optional */}
@@ -1338,6 +1373,7 @@ useEffect(() => {
                 onProfilePictureRemove={handleProfilePictureRemove}
                 size="large"
               />
+
             </div>
           </div>
         </div>

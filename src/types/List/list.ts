@@ -11,7 +11,7 @@ export interface ListProps {
   items: ListItem[];
   selectedValue?: UUID;
   onSelect: (item: ListItem) => void;
-  label?: string;
+  label?: React.ReactNode;
   placeholder?: string;
   disabled?: boolean;
   className?: string;

@@ -29,15 +29,15 @@ export interface Step1Dto {
     country: string;
     region: string;
     subcity: string;
-    zone: string;
+    zone?: string;
     woreda: string;
-    kebele: string;
+    kebele?: string;
     houseNo: string;
     telephone: string;
-    poBox: string;
-    fax: string;
+    poBox?: string;
+    fax?: string;
     email: string;
-    website: string;
+    website?: string;
 }
 
 export interface Step2Dto {
