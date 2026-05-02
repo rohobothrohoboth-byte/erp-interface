@@ -10,6 +10,8 @@ import {
 import { useProfileStore } from '../stores/profile/profile.store';
 import { InlineEditCard } from '../components/profile/InlineEditCard';
 import { EditableField } from '../components/profile/EditableField';
+import { EmpPhotoCircle } from '../components/ui/EmpPhoto';
+import type { EmpPhotoRes } from '../types/hr/employee/empPhoto';
 
 // Static (HR-managed) employee data
 const empData = {
@@ -64,6 +66,15 @@ const Field = ({ label, value, icon }: { label: string; value?: string; icon?: R
   </div>
 );
 
+const DEMO_PHOTO: EmpPhotoRes = {
+  id: 'demo-id',
+  fileName: 'demo.png',
+  contentType: 'image/png',
+  photoSize: '1 KB',
+  photo: 'https://github.com/shadcn.png',
+};
+
+
 const ReadCard = ({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
     <div className="flex items-center gap-2 mb-5">
@@ -90,8 +101,8 @@ function OverviewTab() {
   const statCards = [
     { icon: <Clock className="h-5 w-5" />, label: 'Tenure',        value: `${tenure} yrs`,  color: 'text-green-600',  bg: 'bg-green-50'  },
     { icon: <Star className="h-5 w-5" />,  label: 'Performance',   value: '4.5 / 5',         color: 'text-yellow-600', bg: 'bg-yellow-50' },
-    { icon: <Award className="h-5 w-5" />, label: 'Certifications', value: '2',               color: 'text-blue-600',   bg: 'bg-blue-50'   },
-    { icon: <Users className="h-5 w-5" />, label: 'Team Members',  value: '2',               color: 'text-purple-600', bg: 'bg-purple-50' },
+    { icon: <Award className="h-5 w-5" />, label: 'Training', value: '2',               color: 'text-blue-600',   bg: 'bg-blue-50'   },
+    { icon: <Users className="h-5 w-5" />, label: 'Attendance',  value: '2',               color: 'text-purple-600', bg: 'bg-purple-50' },
   ];
 
   return (
@@ -364,9 +375,12 @@ function ProfilePage() {
           <div className="absolute top-1/3 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-green-200 blur-[90px] opacity-30" />
         </div>
         <div className="relative z-10 text-center py-10 px-6 flex flex-col items-center">
-          <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl overflow-hidden bg-gradient-to-br from-green-100 to-blue-100 hover:scale-105 transition-transform duration-300">
-            <img src={empData.photo} alt={empData.fullName} className="w-full h-full object-cover" />
+          <div className=" rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-green-100 to-blue-100 hover:scale-105 transition-transform duration-300">
+           <EmpPhotoCircle size={80} photo={DEMO_PHOTO}/>
+            {/* <img src={empData.photo} alt={empData.fullName} className="w-full h-full object-cover" /> */}
           </div>
+
+
           <h1 className="mt-4 text-3xl font-bold text-gray-900 tracking-tight">{empData.fullName}</h1>
           <p className="text-gray-500 mt-0.5 text-sm">{empData.fullNameAm}</p>
           <p className="text-green-600 font-semibold mt-1">{empData.position}</p>

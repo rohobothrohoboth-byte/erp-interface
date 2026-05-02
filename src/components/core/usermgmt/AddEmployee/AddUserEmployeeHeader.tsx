@@ -1,8 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
-import { Button } from '../../../ui/button';
-import { ArrowLeft, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
 interface Step {
   id: number;
@@ -14,43 +13,24 @@ interface AddEmployeeStepHeaderProps {
   steps: Step[];
   currentStep: number;
   onStepClick: (step: number) => void;
-  onBack?: () => void;
   title?: string;
-  backButtonText?: string;
 }
 
 export const AddEmployeeStepHeader: React.FC<AddEmployeeStepHeaderProps> = ({
   steps,
   currentStep,
   onStepClick,
-  onBack,
   title = 'Add Employee',
-  backButtonText = 'Back to Employees',
 }) => {
   return (
     <div className="space-y-8 mb-8">
       {/* Modern Header - Only show if onBack is provided */}
-      {onBack && (
-        <div className="flex items-center justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBack}
-            className="cursor-pointer hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="font-medium text-gray-700">{backButtonText}</span>
-          </Button>
-          
           <div className="text-center flex-1">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-green-500 via-green-700 to-green-800 bg-clip-text text-transparent mb-2 tracking-tight">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-green-500 via-green-700 to-green-800 bg-clip-text text-transparent  tracking-tight">
               {title}
             </h1>
           </div>
-          
-          <div className="w-40"></div> {/* Spacer for balance */}
-        </div>
-      )}
+    
 
       {/* 2-Step Progress Indicator */}
       <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 px-8 py-4">

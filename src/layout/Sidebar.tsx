@@ -652,6 +652,7 @@ const isAdmin =
               icon={<Users size={18} />}
               label="User Management"
               {...theme}
+              matchPaths={["/core/add-employee"]}
               collapsed={collapsed}
             />
           </>

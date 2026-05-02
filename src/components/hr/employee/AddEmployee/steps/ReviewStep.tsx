@@ -5,6 +5,8 @@ import type { EmpAddPrintDto } from '../../../../../types/hr/employee/empAddDto'
 import type { UUID } from 'crypto';
 import { empService } from '../../../../../services/hr/employee/empService';
 import { useNavigate } from 'react-router-dom';
+import { EmpPhotoRect } from '../../../../ui/EmpPhoto';
+import type { EmpPhotoRes } from '../../../../../types/hr/employee/empPhoto';
 
 interface ReviewStepProps {
   employeeId?: UUID;
@@ -121,6 +123,14 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
     }, 50);
   };
 
+  const DEMO_PHOTO: EmpPhotoRes = {
+    id: 'demo-id',
+    fileName: 'demo.png',
+    contentType: 'image/png',
+    photoSize: '1 KB',
+    photo: 'https://github.com/shadcn.png',
+  };
+  
   if (fetchLoading) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.3 }} className="space-y-8">
@@ -173,7 +183,8 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
               <div className="border-dashed border-2 rounded-lg px-4 py-2 flex flex-col items-center justify-center mb-4">
                 <div className="photo-section">
                   {reviewData.photo ? (
-                    <img src={`data:image/png;base64,${reviewData.photo}`} alt="Employee Profile" className="employee-photo" />
+                    // <img src={`data:image/png;base64,${reviewData.photo}`} alt="Employee Profile" className="employee-photo" />
+                      <EmpPhotoRect photo={DEMO_PHOTO} width={200} height={250}/>
                   ) : (
                     <div className="placeholder-photo"><User className="w-12 h-12 text-gray-400" /></div>
                   )}

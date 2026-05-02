@@ -132,9 +132,7 @@ export const AddEmployeeStepForm: React.FC<AddEmployeeStepFormProps> = ({
     }
   };
 
-  const handleBackToEmployees = () => {
-    onBackToEmployees();
-  };
+  
 
   useEffect(() => {
     scrollToTop();
@@ -183,9 +181,7 @@ export const AddEmployeeStepForm: React.FC<AddEmployeeStepFormProps> = ({
         <AddEmployeeStepHeader
           steps={steps}
           currentStep={currentStep}
-          onBack={handleBackToEmployees}
           title="Add New Employee"
-          backButtonText="Back to Employees"
         />
 
         {/* Error Display */}

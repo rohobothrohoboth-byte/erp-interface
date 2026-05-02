@@ -259,7 +259,7 @@ const UserManagement: React.FC = () => {
   };
 
   const handleAddEmployee = () => {
-    window.location.href = "/core/Add-Employee";
+    navigate("/core/add-employee");
   };
 
   const handleRefreshEmployees = () => {

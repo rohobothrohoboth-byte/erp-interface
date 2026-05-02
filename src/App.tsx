@@ -661,7 +661,7 @@ function App() {
               />
               {/* <Route path='/core/hierarchy' element={<HierarchyOverview />} /> */}
               <Route path="/core/users" element={<UserOverview />} />
-              <Route path="/core/Add-Employee" element={<PageAddUser />} />
+              <Route path="/core/add-employee" element={<PageAddUser />} />
               <Route
                 path="/core/user-management/add/:empId"
                 element={<AddAccountPage />}

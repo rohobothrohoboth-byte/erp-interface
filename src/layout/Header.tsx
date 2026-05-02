@@ -1,10 +1,12 @@
 import React from 'react';
-import { Bell, HelpCircle, Menu } from 'lucide-react';
+import { Bell, HelpCircle, Menu, ImageIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { useModule } from '../ModuleContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from '../components/ui/dropdown-menu';
 import { useNavigate } from "react-router";
 import { useAuthStore } from '../stores/auth.store';
+import { EmpPhotoCircle } from '../components/ui/EmpPhoto';
+import type { EmpPhotoRes } from '../types/hr/employee/empPhoto';
 
 
 interface HeaderProps {
@@ -23,6 +25,15 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
     logout();
     navigate("/login", { replace: true });
   };
+
+  const DEMO_PHOTO: EmpPhotoRes = {
+  id: 'demo-id',
+  fileName: 'demo.png',
+  contentType: 'image/png',
+  photoSize: '1 KB',
+  photo: 'https://github.com/shadcn.png',
+};
+
 
   
   // Module-based color themes
@@ -110,11 +121,11 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger className="rounded-full">
-              <Avatar>
-                {" "}
+              {/* <Avatar>
                 <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>CN</AvatarFallback>{" "}
-              </Avatar>
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar> */}
+              <EmpPhotoCircle photo={DEMO_PHOTO} size={32}/>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuLabel>My Account</DropdownMenuLabel>

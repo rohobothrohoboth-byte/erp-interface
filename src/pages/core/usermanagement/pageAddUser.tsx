@@ -325,9 +325,7 @@ function PageAddUser() {
           steps={steps}
           currentStep={currentStep}
           onStepClick={(step) => { if (step < currentStep) goToStep(step); }}
-          onBack={handleBackToEmployees}
           title="Add New Employee"
-          backButtonText="Back to Employees"
         />
 
         {/* Error Display */}

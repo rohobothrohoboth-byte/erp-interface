@@ -6,6 +6,8 @@ import type {
   EmpAddPrintDto,
 } from "../../../../types/hr/employee/empAddDto";
 import type { UUID } from "crypto";
+import {  EmpPhotoRect } from "../../../ui/EmpPhoto";
+import type { EmpPhotoRes } from "../../../../types/hr/employee/empPhoto";
 
 interface BasicInfoReviewStepProps {
   step1Data: Step1Dto & { branchId: UUID };
@@ -27,6 +29,15 @@ export const BasicInfoReviewStep: React.FC<BasicInfoReviewStepProps> = ({
   loading = false,
 }) => {
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const DEMO_PHOTO: EmpPhotoRes = {
+  id: 'demo-id',
+  fileName: 'demo.png',
+  contentType: 'image/png',
+  photoSize: '1 KB',
+  photo: 'https://github.com/shadcn.png',
+};
+
 
   // Scroll to top function
   const scrollToTop = () => {
@@ -140,11 +151,12 @@ export const BasicInfoReviewStep: React.FC<BasicInfoReviewStepProps> = ({
             <div className="border-dashed border-2 rounded-lg px-4 py-2 flex flex-col items-center justify-center mb-4">
               <div className="photo-section">
                 {step2Data?.photo ? (
-                  <img
-                    src={step2Data.photo}
-                    alt="Employee Profile"
-                    className="employee-photo"
-                  />
+                  // <img
+                  //   src={step2Data.photo}
+                  //   alt="Employee Profile"
+                  //   className="employee-photo"
+                  // />
+                  <EmpPhotoRect photo={DEMO_PHOTO} width={200} height={250}/>
                 ) : photo ? (
                   <img
                     src={`data:image/png;base64,${photo}`}
