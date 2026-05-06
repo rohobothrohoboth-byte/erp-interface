@@ -156,7 +156,7 @@ export const BasicInfoReviewStep: React.FC<BasicInfoReviewStepProps> = ({
                   //   alt="Employee Profile"
                   //   className="employee-photo"
                   // />
-                  <EmpPhotoRect photo={DEMO_PHOTO} width={200} height={250}/>
+                  <EmpPhotoRect photo={DEMO_PHOTO} width={200} height={250} name={fullName || undefined}/>
                 ) : photo ? (
                   <img
                     src={`data:image/png;base64,${photo}`}

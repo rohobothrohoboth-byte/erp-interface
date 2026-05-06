@@ -4,9 +4,21 @@ import type { EmpPhotoRes } from '../../types/hr/employee/empPhoto';
 
 interface EmpPhotoProps {
   photo?: EmpPhotoRes | null;
+  name?: string;        // used for initials fallback
   size?: number;        // px, default 80
   className?: string;
 }
+
+/** Extract up to 2 initials from a name string */
+const getInitials = (name?: string): string => {
+  if (!name?.trim()) return '';
+  return name
+    .trim()
+    .split(' ')
+    .slice(0, 2)
+    .map((n) => n.charAt(0).toUpperCase())
+    .join('');
+};
 
 /** Safely resolve image source */
 const imgSrc = (photo: EmpPhotoRes) => {
@@ -21,6 +33,7 @@ const imgSrc = (photo: EmpPhotoRes) => {
 /** Circle Avatar */
 export const EmpPhotoCircle: React.FC<EmpPhotoProps> = ({
   photo,
+  name,
   size = 32,
   className = '',
 }) => {
@@ -28,6 +41,7 @@ export const EmpPhotoCircle: React.FC<EmpPhotoProps> = ({
   const dim = `${size}px`;
 
   const showImage = photo?.photo && !error;
+  const initials = getInitials(name);
 
   return (
     <div
@@ -37,11 +51,18 @@ export const EmpPhotoCircle: React.FC<EmpPhotoProps> = ({
       {showImage ? (
         <img
           src={imgSrc(photo!)}
-          alt={photo?.fileName || 'Employee photo'}
+          alt={name || photo?.fileName || 'Employee photo'}
           className="w-full h-full object-cover"
           loading="lazy"
           onError={() => setError(true)}
         />
+      ) : initials ? (
+        <span
+          className="text-emerald-600 font-semibold select-none"
+          style={{ fontSize: size * 0.35 }}
+        >
+          {initials}
+        </span>
       ) : (
         <User
           className="text-green-600"
@@ -57,13 +78,15 @@ export const EmpPhotoRect: React.FC<
   EmpPhotoProps & { width?: number; height?: number }
 > = ({
   photo,
-  width = 48, // 80 X 100 for medium
+  name,
+  width = 48,
   height = 60,
   className = '',
 }) => {
   const [error, setError] = React.useState(false);
 
   const showImage = photo?.photo && !error;
+  const initials = getInitials(name);
 
   return (
     <div
@@ -73,11 +96,18 @@ export const EmpPhotoRect: React.FC<
       {showImage ? (
         <img
           src={imgSrc(photo!)}
-          alt={photo?.fileName || 'Employee photo'}
+          alt={name || photo?.fileName || 'Employee photo'}
           className="w-full h-full object-cover"
           loading="lazy"
           onError={() => setError(true)}
         />
+      ) : initials ? (
+        <span
+          className="text-emerald-600 font-semibold select-none"
+          style={{ fontSize: width * 0.28 }}
+        >
+          {initials}
+        </span>
       ) : (
         <User
           className="text-green-600"

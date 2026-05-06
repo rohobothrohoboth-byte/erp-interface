@@ -10,10 +10,11 @@ interface InlineEditCardProps {
   onCancel: () => void;
   onSave: () => void;
   children: React.ReactNode;
+  actionOverride?: React.ReactNode;
 }
 
 export const InlineEditCard: React.FC<InlineEditCardProps> = ({
-  title, icon, isEditing, isSaving, onEdit, onCancel, onSave, children,
+  title, icon, isEditing, isSaving, onEdit, onCancel, onSave, children, actionOverride,
 }) => (
   <div className={`bg-white rounded-2xl border shadow-sm p-6 transition-all duration-200 ${
     isEditing ? 'border-green-300 shadow-green-100' : 'border-gray-100'
@@ -27,13 +28,15 @@ export const InlineEditCard: React.FC<InlineEditCardProps> = ({
         <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{title}</h3>
       </div>
       {!isEditing && (
-        <button
-          onClick={onEdit}
-          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-green-600 transition-colors px-2 py-1 rounded-lg hover:bg-green-50"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-          Edit
-        </button>
+        actionOverride ?? (
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-green-600 transition-colors px-2 py-1 rounded-lg hover:bg-green-50"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            Edit
+          </button>
+        )
       )}
     </div>
 

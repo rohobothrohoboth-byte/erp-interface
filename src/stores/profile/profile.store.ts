@@ -41,6 +41,14 @@ export interface GuarantorData {
   fileType?: string;
 }
 
+export interface FamilyMember {
+  id: string;
+  fullName: string;
+  nationality: string;
+  gender: string;
+  relation: string;
+}
+
 // Which card is currently in edit mode — only one at a time
 type EditingSection = 'biographical' | 'financial' | 'emergency' | null;
 
@@ -49,6 +57,7 @@ interface ProfileState {
   financial: FinancialData;
   emergency: EmergencyContactData;
   guarantor: GuarantorData;
+  family: FamilyMember[];
   editingSection: EditingSection;
   savingSection: EditingSection;
   guarantorModalOpen: boolean;
@@ -60,7 +69,9 @@ interface ProfileState {
   saveBiographical: (data: BiographicalData) => Promise<void>;
   saveFinancial: (data: FinancialData) => Promise<void>;
   saveEmergency: (data: EmergencyContactData) => Promise<void>;
-  // saveGuarantor: (data: GuarantorData) => Promise<void>;
+  addFamilyMember: (member: Omit<FamilyMember, 'id'>) => void;
+  updateFamilyMember: (id: string, member: Omit<FamilyMember, 'id'>) => void;
+  deleteFamilyMember: (id: string) => void;
 }
 
 export const useProfileStore = create<ProfileState>((set, get) => ({
@@ -106,6 +117,7 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
   editingSection: null,
   savingSection: null,
   guarantorModalOpen: false,
+  family: [],
 
   setEditingSection: (section) => set({ editingSection: section }),
   setSavingSection: (section) => set({ savingSection: section }),
@@ -140,6 +152,19 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
     } finally {
       set({ savingSection: null });
     }
+  },
+
+  addFamilyMember: (member) => {
+    const id = crypto.randomUUID();
+    set((s) => ({ family: [...s.family, { id, ...member }] }));
+  },
+
+  updateFamilyMember: (id, member) => {
+    set((s) => ({ family: s.family.map((m) => m.id === id ? { id, ...member } : m) }));
+  },
+
+  deleteFamilyMember: (id) => {
+    set((s) => ({ family: s.family.filter((m) => m.id !== id) }));
   },
 
   // saveGuarantor: async (data) => {

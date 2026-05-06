@@ -11,7 +11,7 @@ export default function VacanciesPage() {
   const isDetailView = !!id;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-green-50/30 to-blue-50/30">
+    <div className="h-full bg-gradient-to-br from-gray-50 via-green-50/30 to-blue-50/30 overflow-y-auto ">
       <VacancyHeader
         backTo={isDetailView ? "/vacancies" : "/modules"}
         backLabel={isDetailView ? "Back to Vacancies" : "Back to Modules"}

@@ -125,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
                 <AvatarImage src="https://github.com/shadcn.png" />
                 <AvatarFallback>CN</AvatarFallback>
               </Avatar> */}
-              <EmpPhotoCircle photo={DEMO_PHOTO} size={32}/>
+              <EmpPhotoCircle photo={DEMO_PHOTO} size={32} name={userName || undefined}/>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
