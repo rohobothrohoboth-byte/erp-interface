@@ -311,15 +311,43 @@ function BiographicalTab() {
   const ActionBtn = ({ hasData, onEdit }: { hasData: boolean; onEdit: () => void }) => (
     <button
       onClick={onEdit}
-      className={`flex items-center gap-1.5 text-xs font-medium transition-colors px-2.5 py-1 rounded-lg ${
-        hasData
-          ? 'text-green-600 bg-green-50 hover:bg-green-100'
-          : 'text-green-600 bg-green-50 hover:bg-green-100'
-      }`}
+      className="flex items-center gap-1.5 text-xs font-medium transition-colors px-2.5 py-1 rounded-lg text-green-600 bg-green-50 hover:bg-green-100"
     >
       {hasData ? <><Pencil className="w-3.5 h-3.5" />Edit</> : <><Plus className="w-3.5 h-3.5" />Add</>}
     </button>
   );
+
+  // Conditional file upload shown when cert answer is Yes
+  const CertUpload = ({ fileKey, nameKey, label }: {
+    fileKey: 'birthCertFile' | 'marriageCertFile';
+    nameKey: 'birthCertFileName' | 'marriageCertFileName';
+    label: string;
+  }) => {
+    const fileName = bioForm[nameKey];
+    return (
+      <div className="col-span-2 flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">{label}</label>
+        <label className="flex items-center gap-3 cursor-pointer border border-dashed border-green-300 bg-green-50/40 rounded-xl px-4 py-3 hover:bg-green-50 transition-colors">
+          <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+            <FileText className="w-4 h-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            {fileName
+              ? <p className="text-sm font-medium text-gray-800 truncate">{fileName}</p>
+              : <p className="text-sm text-gray-400">Click to upload file</p>
+            }
+            <p className="text-xs text-gray-400 mt-0.5">PDF, JPG, PNG accepted</p>
+          </div>
+          <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null;
+              setBioForm((p) => ({ ...p, [fileKey]: file, [nameKey]: file?.name ?? '' }));
+            }}
+          />
+        </label>
+      </div>
+    );
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -337,22 +365,54 @@ function BiographicalTab() {
         {!bioHasData && !bioEditing ? (
           <p className="text-sm text-gray-400 italic">No personal details added yet.</p>
         ) : (
-          <Grid>
-            {!bioEditing && (
-              <>
-                <Field label="Birth Date" value={empData.birthDate} />
-                <Field label="Marital Status" value={empData.maritalStatus} />
-              </>
-            )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
             <EditableField label="Birth Location" value={bioForm.birthLocation} isEditing={bioEditing}
               onChange={(v) => setBioForm((p) => ({ ...p, birthLocation: v }))} placeholder="Addis Ababa" />
             <EditableField label="Mother's Full Name" value={bioForm.motherFullName} isEditing={bioEditing}
               onChange={(v) => setBioForm((p) => ({ ...p, motherFullName: v }))} placeholder="Full name" />
-            <EditableField label="Has Birth Certificate" value={bioForm.hasBirthCert} isEditing={bioEditing}
-              type="select" options={YES_NO} onChange={(v) => setBioForm((p) => ({ ...p, hasBirthCert: v }))} />
-            <EditableField label="Has Marriage Certificate" value={bioForm.hasMarriageCert} isEditing={bioEditing}
-              type="select" options={YES_NO} onChange={(v) => setBioForm((p) => ({ ...p, hasMarriageCert: v }))} />
-          </Grid>
+
+            {/* Birth Certificate */}
+            {bioEditing ? (
+              <>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Has Birth Certificate</label>
+                  <Select value={bioForm.hasBirthCert || ''} onValueChange={(v) => setBioForm((p) => ({ ...p, hasBirthCert: v }))}>
+                    <SelectTrigger className="w-full h-8 text-sm border-gray-200"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {bioForm.hasBirthCert === 'Yes' && (
+                  <CertUpload fileKey="birthCertFile" nameKey="birthCertFileName" label="Upload Birth Certificate" />
+                )}
+              </>
+            ) : (
+              <Field label="Has Birth Certificate" value={bioForm.hasBirthCert} />
+            )}
+
+            {/* Marriage Certificate */}
+            {bioEditing ? (
+              <>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Has Marriage Certificate</label>
+                  <Select value={bioForm.hasMarriageCert || ''} onValueChange={(v) => setBioForm((p) => ({ ...p, hasMarriageCert: v }))}>
+                    <SelectTrigger className="w-full h-8 text-sm border-gray-200"><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Yes">Yes</SelectItem>
+                      <SelectItem value="No">No</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {bioForm.hasMarriageCert === 'Yes' && (
+                  <CertUpload fileKey="marriageCertFile" nameKey="marriageCertFileName" label="Upload Marriage Certificate" />
+                )}
+              </>
+            ) : (
+              <Field label="Has Marriage Certificate" value={bioForm.hasMarriageCert} />
+            )}
+          </div>
         )}
       </InlineEditCard>
 
@@ -416,11 +476,8 @@ function EmergencyTab() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-5">
           <EditableField label="First Name" value={form.firstName} isEditing={isEditing} onChange={(v) => set('firstName', v)} />
-          <EditableField label="ስም" value={form.firstNameAm} isEditing={isEditing} onChange={(v) => set('firstNameAm', v)} />
           <EditableField label="Middle Name" value={form.middleName} isEditing={isEditing} onChange={(v) => set('middleName', v)} />
-          <EditableField label="የአባት ስም" value={form.middleNameAm} isEditing={isEditing} onChange={(v) => set('middleNameAm', v)} />
           <EditableField label="Last Name" value={form.lastName} isEditing={isEditing} onChange={(v) => set('lastName', v)} />
-          <EditableField label="የአያት ስም" value={form.lastNameAm} isEditing={isEditing} onChange={(v) => set('lastNameAm', v)} />
           <EditableField label="Nationality" value={form.nationality} isEditing={isEditing} onChange={(v) => set('nationality', v)} />
           <EditableField label="Gender" value={form.gender} isEditing={isEditing} type="select"
             options={[{ key: 'Male', label: 'Male' }, { key: 'Female', label: 'Female' }]}
@@ -457,15 +514,49 @@ const LabeledSelect = ({ label, value, onChange, options, placeholder = 'Select'
   </div>
 );
 
+// Standalone form fields — defined outside FamilyTab to avoid remount on every render
+const GENDER_OPTS = [{ key: 'Male', label: 'Male' }, { key: 'Female', label: 'Female' }];
+const RELATION_OPTS = ['Spouse', 'Child', 'Parent', 'Sibling', 'Other'].map((r) => ({ key: r, label: r }));
+
+function FamilyMemberFields({
+  form,
+  setForm,
+}: {
+  form: typeof EMPTY_FAMILY;
+  setForm: React.Dispatch<React.SetStateAction<typeof EMPTY_FAMILY>>;
+}) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Full Name</label>
+        <input
+          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+          value={form.fullName}
+          onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
+          placeholder="Full name"
+        />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Nationality</label>
+        <input
+          className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
+          value={form.nationality}
+          onChange={(e) => setForm((p) => ({ ...p, nationality: e.target.value }))}
+          placeholder="Ethiopian"
+        />
+      </div>
+      <LabeledSelect label="Gender" value={form.gender} onChange={(v) => setForm((p) => ({ ...p, gender: v }))} options={GENDER_OPTS} />
+      <LabeledSelect label="Relation" value={form.relation} onChange={(v) => setForm((p) => ({ ...p, relation: v }))} options={RELATION_OPTS} />
+    </div>
+  );
+}
+
 function FamilyTab() {
   const { family, addFamilyMember, updateFamilyMember, deleteFamilyMember } = useProfileStore();
   const [openId, setOpenId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
   const [form, setForm] = useState(EMPTY_FAMILY);
-
-  const genderOpts = [{ key: 'Male', label: 'Male' }, { key: 'Female', label: 'Female' }];
-  const relationOpts = ['Spouse', 'Child', 'Parent', 'Sibling', 'Other'].map((r) => ({ key: r, label: r }));
 
   const startEdit = (m: typeof family[0]) => {
     setForm({ fullName: m.fullName, nationality: m.nationality, gender: m.gender, relation: m.relation });
@@ -486,20 +577,16 @@ function FamilyTab() {
     setAddingNew(false);
   };
 
-  const MemberForm = () => (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Full Name</label>
-        <input className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
-          value={form.fullName} onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))} placeholder="Full name" />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Nationality</label>
-        <input className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-green-300"
-          value={form.nationality} onChange={(e) => setForm((p) => ({ ...p, nationality: e.target.value }))} placeholder="Ethiopian" />
-      </div>
-      <LabeledSelect label="Gender" value={form.gender} onChange={(v) => setForm((p) => ({ ...p, gender: v }))} options={genderOpts} />
-      <LabeledSelect label="Relation" value={form.relation} onChange={(v) => setForm((p) => ({ ...p, relation: v }))} options={relationOpts} />
+  const formActions = (onCancel: () => void, onSave: () => void) => (
+    <div className="flex justify-end gap-2 mt-4">
+      <button onClick={onCancel}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
+        <X className="w-3.5 h-3.5" />Cancel
+      </button>
+      <button onClick={onSave}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors">
+        <Check className="w-3.5 h-3.5" />Save
+      </button>
     </div>
   );
 
@@ -518,26 +605,17 @@ function FamilyTab() {
             onClick={() => { setForm(EMPTY_FAMILY); setAddingNew(true); setEditingId(null); }}
             className="flex items-center gap-1.5 text-xs font-medium text-green-600 bg-green-50 hover:bg-green-100 transition-colors px-2.5 py-1 rounded-lg"
           >
-            <Plus className="w-3.5 h-3.5" />Add Member
+            <Plus className="w-3.5 h-3.5" />Add Family
           </button>
         )}
       </div>
 
       {/* Add new form */}
       {addingNew && (
-        <div className="mb-4 p-4 rounded-xl border border-green-200 bg-green-50/40">
+        <div className="mb-4 p-4 rounded-xl border border-green-200 bg-white">
           <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-3">New Family Member</p>
-          <MemberForm />
-          <div className="flex justify-end gap-2 mt-4">
-            <button onClick={() => { setAddingNew(false); setForm(EMPTY_FAMILY); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
-              <X className="w-3.5 h-3.5" />Cancel
-            </button>
-            <button onClick={saveNew}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors">
-              <Check className="w-3.5 h-3.5" />Save
-            </button>
-          </div>
+          <FamilyMemberFields form={form} setForm={setForm} />
+          {formActions(() => { setAddingNew(false); setForm(EMPTY_FAMILY); }, saveNew)}
         </div>
       )}
 
@@ -585,17 +663,8 @@ function FamilyTab() {
                 <div className="px-4 pb-4 border-t border-gray-100 pt-3">
                   {isEditingThis ? (
                     <>
-                      <MemberForm />
-                      <div className="flex justify-end gap-2 mt-4">
-                        <button onClick={cancelEdit}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
-                          <X className="w-3.5 h-3.5" />Cancel
-                        </button>
-                        <button onClick={saveEdit}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors">
-                          <Check className="w-3.5 h-3.5" />Save
-                        </button>
-                      </div>
+                      <FamilyMemberFields form={form} setForm={setForm} />
+                      {formActions(cancelEdit, saveEdit)}
                     </>
                   ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

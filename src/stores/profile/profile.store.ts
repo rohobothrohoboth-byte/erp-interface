@@ -4,7 +4,11 @@ export interface BiographicalData {
   birthLocation: string;
   motherFullName: string;
   hasBirthCert: string;
+  birthCertFile?: File | null;
+  birthCertFileName?: string;
   hasMarriageCert: string;
+  marriageCertFile?: File | null;
+  marriageCertFileName?: string;
 }
 
 export interface FinancialData {
