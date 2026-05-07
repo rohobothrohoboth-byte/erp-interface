@@ -184,7 +184,16 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
                 <div className="photo-section">
                   {reviewData.photo ? (
                     // <img src={`data:image/png;base64,${reviewData.photo}`} alt="Employee Profile" className="employee-photo" />
-                      <EmpPhotoRect photo={DEMO_PHOTO} width={200} height={250}/>
+                      <div
+                           className="rounded-xl overflow-hidden bg-gradient-to-br from-green-100 to-blue-100 flex items-center justify-center shrink-0 border border-gray-100"
+                           style={{ width: `200px`, height: `250px` }}
+                         >
+                             <img
+                               src={`data:image/png;base64,${reviewData.photo}`} alt="Employee Profile"
+                               className="w-full h-full object-cover"
+                               loading="lazy"
+                             />
+                         </div>
                   ) : (
                     <div className="placeholder-photo"><User className="w-12 h-12 text-gray-400" /></div>
                   )}
