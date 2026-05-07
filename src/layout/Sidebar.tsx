@@ -45,6 +45,7 @@ import {
   Wallet,
   Layers,
   History,
+  Target,
 } from "lucide-react";
 import { useModule } from "../ModuleContext";
 import {
@@ -341,6 +342,16 @@ const isAdmin =
       textColor: "text-emerald-700",
       activeBg: "bg-emerald-50",
       hoverBg: "hover:bg-emerald-50/50",
+    },
+    "mod.plan": {
+      textColor: "text-indigo-700",
+      activeBg: "bg-indigo-50",
+      hoverBg: "hover:bg-indigo-50/50",
+    },
+    "mod.prj": {
+      textColor: "text-yellow-700",
+      activeBg: "bg-yellow-50",
+      hoverBg: "hover:bg-yellow-50/50",
     },
     Logo: {
       textColor: "text-cyan-700",
@@ -652,7 +663,7 @@ const isAdmin =
               icon={<Users size={18} />}
               label="User Management"
               {...theme}
-              matchPaths={["/core/add-employee"]}
+              matchPaths={["/core/add-employee", "/core/user-management/add/:empId", "/core/user-management/edit/:empId"]}
               collapsed={collapsed}
             />
           </>
@@ -1134,6 +1145,117 @@ const isAdmin =
           </>
         );
 
+      case "mod.plan":
+        return (
+          <>
+            <NavItem
+              to="/plandev/plans"
+              icon={<ClipboardList size={18} />}
+              label="Strategic Plans"
+              {...theme}
+              collapsed={collapsed}
+            />
+            <NavGroup
+              icon={<Target size={18} />}
+              label="Initiatives"
+              isOpen={openGroup === "PlanInitiatives"}
+              onToggle={() => toggleGroup(activeModule, "PlanInitiatives")}
+              {...theme}
+              collapsed={collapsed}
+            >
+              <NavItem
+                to="/plandev/initiatives/active"
+                icon={<CheckCircle2 size={18} />}
+                label="Active"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+              <NavItem
+                to="/plandev/initiatives/review"
+                icon={<Eye size={18} />}
+                label="Under Review"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+            </NavGroup>
+            <NavItem
+              to="/plandev/calendar"
+              icon={<Calendar size={18} />}
+              label="Planning Calendar"
+              {...theme}
+              collapsed={collapsed}
+            />
+            <NavItem
+              to="/plandev/reports"
+              icon={<BarChart4 size={18} />}
+              label="Reports"
+              {...theme}
+              collapsed={collapsed}
+            />
+          </>
+        );
+
+      case "mod.prj":
+        return (
+          <>
+            <NavItem
+              to="/project-management/projects"
+              icon={<Briefcase size={18} />}
+              label="Projects"
+              {...theme}
+              collapsed={collapsed}
+            />
+            <NavGroup
+              icon={<ClipboardList size={18} />}
+              label="Tasks"
+              isOpen={openGroup === "PrjTasks"}
+              onToggle={() => toggleGroup(activeModule, "PrjTasks")}
+              {...theme}
+              collapsed={collapsed}
+            >
+              <NavItem
+                to="/project-management/tasks/my"
+                icon={<CheckCircle2 size={18} />}
+                label="My Tasks"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+              <NavItem
+                to="/project-management/tasks/all"
+                icon={<FileText size={18} />}
+                label="All Tasks"
+                {...theme}
+                isChild
+                collapsed={collapsed}
+              />
+            </NavGroup>
+            <NavItem
+              to="/project-management/milestones"
+              icon={<Network size={18} />}
+              label="Milestones"
+              {...theme}
+              collapsed={collapsed}
+            />
+            <NavItem
+              to="/project-management/team"
+              icon={<Users size={18} />}
+              label="Team"
+              {...theme}
+              collapsed={collapsed}
+            />
+            <NavItem
+              to="/project-management/reports"
+              icon={<BarChart4 size={18} />}
+              label="Reports"
+              {...theme}
+              collapsed={collapsed}
+            />
+          </>
+        );
+
       default:
         return null;
     }
@@ -1217,7 +1339,11 @@ const menus =
                           ? "/procurement"
                           : activeModule === "mod.flm"
                             ? "/file"
-                            : "/dashboard"
+                            : activeModule === "mod.plan"
+                              ? "/plandev"
+                              : activeModule === "mod.prj"
+                                ? "/project-management"
+                                : "/dashboard"
             }
             icon={<LayoutDashboard size={18} />}
             label="Dashboard"

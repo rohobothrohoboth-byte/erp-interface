@@ -261,3 +261,20 @@ export type ReqStatus =
 } as const;
 
 export type EmpState = typeof EmpState[keyof typeof EmpState];
+
+export const Relation = {
+  "0": "Spouse",
+  "1": "Child",
+  "2": "Parent",
+  "3": "Sibling",
+  "4": "Grandparent",
+  "5": "Grandchild",
+  "6": "Aunt/Uncle",
+  "7": "Niece/Nephew",
+  "8": "Cousin",
+  "9": "In-Law",
+  "10": "Guardian",
+  "11": "Other",
+} as const;
+
+export type Relation = typeof Relation[keyof typeof Relation];

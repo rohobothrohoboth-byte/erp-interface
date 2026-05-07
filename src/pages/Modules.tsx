@@ -216,9 +216,17 @@ useEffect(() => {
                   <Bell className="h-6 w-6 text-gray-700" />
                 </button>
                 {shownNotificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                    {shownNotificationCount}
-                  </span>
+
+              <span className="absolute -top-0.5 -right-0.5 flex">
+              
+              {/* Ping */}
+              <span className="absolute inline-flex h-4 w-4 rounded-full bg-red-400 opacity-75 animate-ping"></span>
+
+              {/* Badge */}
+              <span className="relative min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                {shownNotificationCount}
+              </span>
+            </span>
                 )}
               </div>
 

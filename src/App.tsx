@@ -72,6 +72,8 @@ import PageCoreSettings from "./pages/settings/coreSettings/PageCoreSettings";
 import PageApiSettings from "./pages/settings/coreSettings/PageApiSettings";
 import PageMenuSettings from "./pages/settings/coreSettings/PageMenuSettings";
 import FileDashboard from "./pages/modules/File";
+import PlanDevDashboard from "./pages/modules/PlanDev";
+import ProjectManagementDashboard from "./pages/modules/ProjectManagement";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuthStore } from "./stores/auth.store";
@@ -203,8 +205,12 @@ function App() {
               <Route path="/crm" element={<CRMDashboard />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/procurement" element={<Procurement />} />
-              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/file" element={<FileDashboard />} />
+              <Route path="/plandev" element={<PlanDevDashboard />} />
+              <Route
+                path="/project-management"
+                element={<ProjectManagementDashboard />}
+              />
               {/* End MENU ROUTES */}
               {/* START CRM ROUTES */}
               <Route
@@ -688,10 +694,13 @@ function App() {
             </Route>
           </Route>
           {/* END CORE ROUTES */}
-          {/*START CORE ROUTES */}
 
-          {/* Modules route at /menu */}
-          <Route path="/modules" element={<Modules />} />
+          <Route element={<ProtectedRoute />}>
+            {/* Modules route at /modules */}
+            <Route path="/modules" element={<Modules />} />
+            {/* Emp Profile */}
+            <Route path="/profile" element={<ProfilePage />} />
+          </Route>
 
           {/* Standalone Vacancies Routes */}
           <Route path="/vacancies" element={<VacanciesPage />} />

@@ -10,6 +10,8 @@ import {
   CreditCard,
   Cpu,
   ChevronRight,
+  ClipboardList,
+  BriefcaseBusiness,
 } from "lucide-react";
 import { BorderBeam } from "../components/ui/border-beam";
 import { useAuthStore } from "../stores/auth.store";
@@ -170,19 +172,13 @@ const { token, role, employeeId, permissions } = useAuthStore();
       icon: <Users size={24} />,
       color: "from-blue-500 via-blue-400 to-cyan-400",
     },
+    
     {
-      label: "CRM",
-      key: "mod.crm",
-      path: "/crm",
-      icon: <BarChart3 size={24} />,
-      color: "from-purple-500 via-purple-400 to-pink-400",
-    },
-    {
-      label: "File",
-      key: "mod.flm",
-      path: "/file",
-      icon: <FileText size={24} />,
-      color: "from-emerald-500 via-emerald-400 to-teal-400",
+      label: "Finance",
+      key: "mod.fnm",
+      path: "/finance",
+      icon: <CreditCard size={24} />,
+      color: "from-green-500 via-green-400 to-lime-400",
     },
     {
       label: "Inventory",
@@ -199,11 +195,18 @@ const { token, role, employeeId, permissions } = useAuthStore();
       color: "from-rose-500 via-rose-400 to-red-400",
     },
     {
-      label: "Finance",
-      key: "mod.fnm",
-      path: "/finance",
-      icon: <CreditCard size={24} />,
-      color: "from-green-500 via-green-400 to-lime-400",
+      label: "CRM",
+      key: "mod.crm",
+      path: "/crm",
+      icon: <BarChart3 size={24} />,
+      color: "from-purple-500 via-purple-400 to-pink-400",
+    },
+    {
+      label: "File",
+      key: "mod.flm",
+      path: "/file",
+      icon: <FileText size={24} />,
+      color: "from-emerald-500 via-emerald-400 to-teal-400",
     },
     {
       label: "Core",
@@ -212,6 +215,20 @@ const { token, role, employeeId, permissions } = useAuthStore();
       icon: <Cpu size={24} />,
       color: "from-gray-700 via-gray-600 to-gray-500",
     },
+    {
+  label: "Plan & Development",
+  key: "mod.plan",
+  path: "/plandev",
+  icon: <ClipboardList size={24} />,
+  color: "from-indigo-600 via-indigo-500 to-sky-400",
+},
+{
+  label: "Project Management",
+  key: "mod.prj",
+  path: "/project-management",
+  icon: <BriefcaseBusiness size={24} />,
+  color: "from-yellow-500 via-yellow-400 to-amber-300",
+}
   ];
 
   const getAllowedModules = (): AllowedModule[] => {
