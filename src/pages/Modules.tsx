@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { useAuthStore } from "../stores/auth.store";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 
 interface Notification {
   id: number;
@@ -52,7 +53,6 @@ function Modules() {
   const { logout, isAuthenticated, isLoading, role, employeeId } = useAuthStore();
 
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [notifOpen, setNotifOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -110,46 +110,53 @@ function Modules() {
               </Button>
 
               {/* Notification bell with popover */}
-              <div className="relative">
-                <button
-                  onClick={() => setNotifOpen((o) => !o)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
-                >
-                  <Bell className="h-6 w-6 text-gray-700" />
-                  <span className="absolute -top-0.5 -right-0.5 flex">
-                    <span className="absolute inline-flex h-4 w-4 rounded-full bg-red-400 opacity-75 animate-ping" />
-                    <span className="relative min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                      {initialNotifications.length}
-                    </span>
-                  </span>
-                </button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="p-2 rounded-full hover:bg-gray-100 transition-colors relative">
+                    <Bell className="h-6 w-6 text-gray-700" />
 
-                {notifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                      <span className="text-sm font-semibold text-gray-800">Notifications</span>
-                      <button
-                        onClick={() => setNotifOpen(false)}
-                        className="text-xs text-gray-400 hover:text-gray-600"
-                      >
-                        Close
-                      </button>
-                    </div>
-                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
-                      {initialNotifications.map((n) => (
-                        <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
-                          <span className="text-xl mt-0.5">{n.icon}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-800 truncate">{n.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{n.description}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">{n.time}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    <span className="absolute -top-0.5 -right-0.5 flex">
+                      <span className="absolute inline-flex h-4 w-4 rounded-full bg-red-400 opacity-75 animate-ping" />
+                      <span className="relative min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {initialNotifications.length}
+                      </span>
+                    </span>
+                  </button>
+                </PopoverTrigger>
+
+                <PopoverContent
+                  align="end"
+                  className="w-80 p-0 rounded-2xl overflow-hidden"
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                    <span className="text-sm font-semibold text-gray-800">
+                      Notifications
+                    </span>
                   </div>
-                )}
-              </div>
+
+                  <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                    {initialNotifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                      >
+                        <span className="text-xl mt-0.5">{n.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">
+                            {n.name}
+                          </p>
+                          <p className="text-xs text-gray-500 truncate">
+                            {n.description}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-0.5">
+                            {n.time}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
 
               <DropdownMenu>
                 <DropdownMenuTrigger>
@@ -161,8 +168,12 @@ function Modules() {
                 <DropdownMenuContent>
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>Profile</DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    Logout
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -171,7 +182,7 @@ function Modules() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto h-full flex items-start md:items-center pt-32 md:pt-20 px-4 gap-6 pb-20">
+      <div className="container mx-auto h-full flex items-start md:items-center pt-32 md:pt-20 px-4 gap-6">
         {/* Modules — left, takes remaining space */}
         <div className="flex-1 min-w-0 h-full">
           <div className="relative w-full h-full min-h-[600px]">
@@ -181,7 +192,7 @@ function Modules() {
 
         {/* Calendar — right panel, hidden for admin/executive roles */}
         {!hideSidebars && (
-          <div className="w-72 shrink-0 h-full overflow-y-auto">
+          <div className="w-72 shrink-0  h-full min-h-0">
             <Calendar tasks={tasks} onTaskToggle={toggleTaskCompletion} />
           </div>
         )}
