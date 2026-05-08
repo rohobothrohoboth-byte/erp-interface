@@ -2,6 +2,7 @@ import { create } from "zustand";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { loginApi, refreshTokenApi } from "../services/auth.api";
+import { queryClient } from "../lib/queryClient";
 import type { JwtPayload } from "../types/auth/auth.types";
 interface Module {
   K: string; 
@@ -99,7 +100,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: () => {
     Cookies.remove("accessToken", { path: "/" });
     Cookies.remove("expiresAt", { path: "/" });
-
+    queryClient.clear();
     get().clearToken();
   },
 

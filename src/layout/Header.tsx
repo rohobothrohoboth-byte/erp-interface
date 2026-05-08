@@ -1,6 +1,5 @@
-import React from 'react';
-import { Bell, HelpCircle, Menu, ImageIcon } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import React, { useState } from 'react';
+import { Bell, HelpCircle, Menu } from 'lucide-react';
 import { useModule } from '../ModuleContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from '../components/ui/dropdown-menu';
 import { useNavigate } from "react-router";
@@ -14,12 +13,20 @@ interface HeaderProps {
   isMobile: boolean;
 }
 
+const MOCK_NOTIFICATIONS = [
+  { id: 1, name: "Payment received",       description: "New finance transaction completed",    time: "15m ago", icon: "💸" },
+  { id: 2, name: "New employee onboarded", description: "John Doe joined the HR system",        time: "1h ago",  icon: "👤" },
+  { id: 3, name: "Inventory low",          description: "Stock for Product X is running low",   time: "2h ago",  icon: "⚠️" },
+  { id: 4, name: "CRM update",             description: "New lead added in the sales pipeline", time: "3h ago",  icon: "📈" },
+  { id: 5, name: "System alert",           description: "Scheduled maintenance tonight at 10PM", time: "5h ago", icon: "🔧" },
+];
+
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
   const { activeModule } = useModule();
   const navigate = useNavigate();
   const userName = useAuthStore((s) => s.userName);
-  const role = useAuthStore((s) => s.role);
   const logout = useAuthStore((s) => s.logout);
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -100,10 +107,39 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
 
       <div className="flex items-center space-x-4">
         <div className="relative">
-          <button className="p-2 rounded-full text-gray-500 hover:bg-gray-100 relative">
+          <button
+            onClick={() => setNotifOpen((o) => !o)}
+            className="p-2 rounded-full text-gray-500 hover:bg-gray-100 relative"
+          >
             <Bell size={20} />
             <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-error-500 ring-2 ring-white" />
           </button>
+
+          {notifOpen && (
+            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                <span className="text-sm font-semibold text-gray-800">Notifications</span>
+                <button
+                  onClick={() => setNotifOpen(false)}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                {MOCK_NOTIFICATIONS.map((n) => (
+                  <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                    <span className="text-xl mt-0.5">{n.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-800 truncate">{n.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{n.description}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{n.time}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <button className="p-2 rounded-full text-gray-500 hover:bg-gray-100">

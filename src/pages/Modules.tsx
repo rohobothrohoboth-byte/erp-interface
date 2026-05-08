@@ -1,5 +1,4 @@
 import ModulesSection from "../components/ModulesSection";
-import { AnimatedList } from "../components/magicui/animated-list";
 import { useNavigate } from "react-router";
 import { useState, useEffect, useCallback } from "react";
 import { Bell, Briefcase } from "lucide-react";
@@ -32,152 +31,55 @@ interface Task {
 }
 
 const initialNotifications: Notification[] = [
-  {
-    id: 1,
-    name: "Payment received",
-    description: "New finance transaction completed",
-    time: "15m ago",
-    icon: "💸",
-  },
-  {
-    id: 2,
-    name: "New employee onboarded",
-    description: "John Doe joined the HR system",
-    time: "1h ago",
-    icon: "👤",
-  },
-  {
-    id: 3,
-    name: "Inventory low",
-    description: "Stock for Product X is running low",
-    time: "2h ago",
-    icon: "⚠️",
-  },
-  {
-    id: 4,
-    name: "CRM update",
-    description: "New lead added in the sales pipeline",
-    time: "3h ago",
-    icon: "📈",
-  },
-  {
-    id: 5,
-    name: "System alert",
-    description: "Scheduled maintenance tonight at 10PM",
-    time: "5h ago",
-    icon: "🔧",
-  },
-  {
-    id: 6,
-    name: "Server Restarted",
-    description: "Backend server restarted successfully",
-    time: "6h ago",
-    icon: "🔄",
-  },
-  {
-    id: 7,
-    name: "Bug fixed",
-    description: "Issue #234 resolved in dev branch",
-    time: "7h ago",
-    icon: "🐛",
-  },
+  { id: 1, name: "Payment received",      description: "New finance transaction completed",   time: "15m ago", icon: "💸" },
+  { id: 2, name: "New employee onboarded", description: "John Doe joined the HR system",       time: "1h ago",  icon: "👤" },
+  { id: 3, name: "Inventory low",          description: "Stock for Product X is running low",  time: "2h ago",  icon: "⚠️" },
+  { id: 4, name: "CRM update",             description: "New lead added in the sales pipeline", time: "3h ago", icon: "📈" },
+  { id: 5, name: "System alert",           description: "Scheduled maintenance tonight at 10PM", time: "5h ago", icon: "🔧" },
+  { id: 6, name: "Server Restarted",       description: "Backend server restarted successfully", time: "6h ago", icon: "🔄" },
+  { id: 7, name: "Bug fixed",              description: "Issue #234 resolved in dev branch",   time: "7h ago",  icon: "🐛" },
 ];
+
 const mockTasks: Task[] = [
-  { id: 1, title: "Team Meeting", time: "10:00 AM", completed: false },
-  { id: 2, title: "Client Presentation", time: "2:30 PM", completed: true },
-  { id: 3, title: "Project Deadline", time: "4:00 PM", completed: false },
-  { id: 4, title: "Review Reports", time: "5:30 PM", completed: false },
+  { id: 1, title: "Team Meeting",        time: "10:00 AM", completed: false },
+  { id: 2, title: "Client Presentation", time: "2:30 PM",  completed: true  },
+  { id: 3, title: "Project Deadline",    time: "4:00 PM",  completed: false },
+  { id: 4, title: "Review Reports",      time: "5:30 PM",  completed: false },
 ];
 
 function Modules() {
   const navigate = useNavigate();
- const { 
-    logout, 
-    isAuthenticated, 
-    isLoading, 
-    role, 
-    employeeId 
-  } = useAuthStore();
-  const [visibleNotifications, setVisibleNotifications] = useState<
-    Notification[]
-  >([]);
-  const [allNotifications, setAllNotifications] =
-    useState<Notification[]>(initialNotifications);
-  const [shownNotificationCount, setShownNotificationCount] =
-    useState<number>(0);
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const { logout, isAuthenticated, isLoading, role, employeeId } = useAuthStore();
 
-useEffect(() => {
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      console.log("Modules → not authenticated → redirect to login");
       navigate("/login", { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
-
-
 
   const handleLogout = () => {
     logout();
     navigate("/login", { replace: true });
   };
 
-    const isAdmin = role === "admin";
-  const isCEO = role === "ceo";
-  const isViceCEO = role === "vice.ceo" || role === "vice_ceo";
-  const isAuditor = role === "auditor";
-    const isSuperAdmin = employeeId === "019d19c0-ae3e-78bd-bd2a-98d36bd6e078";
-
-  // Hide sidebars for admin, CEO, vice CEO, and auditor roles
+  const isAdmin    = role === "admin";
+  const isCEO      = role === "ceo";
+  const isViceCEO  = role === "vice.ceo" || role === "vice_ceo";
+  const isAuditor  = role === "auditor";
+  const isSuperAdmin = employeeId === "019d19c0-ae3e-78bd-bd2a-98d36bd6e078";
   const hideSidebars = isAdmin || isCEO || isViceCEO || isAuditor || isSuperAdmin;
 
-  useEffect(() => {
-    document.title = selectedModule ? `RST | ${selectedModule}` : "RST";
-  }, [selectedModule]);
-
-  const handleModuleSelect = useCallback((moduleName: string) => {
-    setSelectedModule(moduleName);
-  }, []);
-
   const toggleTaskCompletion = useCallback((taskId: number) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task,
-      ),
+    setTasks((prev) =>
+      prev.map((t) => (t.id === taskId ? { ...t, completed: !t.completed } : t))
     );
   }, []);
 
-  useEffect(() => {
-    const showTimer = setInterval(() => {
-      if (allNotifications.length > 0) {
-        const nextNotification = allNotifications[0];
-        setVisibleNotifications((prev) => [nextNotification, ...prev]);
-        setAllNotifications((prev) => prev.slice(1));
-        setShownNotificationCount((prev) => prev + 1);
-      } else {
-        clearInterval(showTimer);
-      }
-    }, 1000);
-
-    return () => clearInterval(showTimer);
-  }, [allNotifications]);
-
-  useEffect(() => {
-    if (visibleNotifications.length > 0) {
-      const removeTimer = setInterval(() => {
-        setVisibleNotifications((prev) => prev.slice(0, -1));
-      }, 20000);
-
-      return () => clearInterval(removeTimer);
-    }
-  }, [visibleNotifications]);
-    if (isLoading) {
-      return;
-    }
-
-    if (!isAuthenticated) {
-      return null; // effect will handle redirect
-    }
+  if (isLoading) return null;
+  if (!isAuthenticated) return null;
 
   return (
     <div className="relative h-screen w-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 overflow-x-hidden overflow-y-auto">
@@ -185,21 +87,18 @@ useEffect(() => {
       <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-white/90 to-transparent backdrop-blur-sm py-4">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Centered Title (Desktop) */}
             <div className="flex-1 text-center">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 drop-shadow">
                 Welcome to the{" "}
                 <i className="text-blue-500 relative not-italic">
                   RST
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 sm:w-20 h-1 bg-gradient-to-r from-blue-400 to-blue-300 rounded-full"></div>
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 sm:w-20 h-1 bg-gradient-to-r from-blue-400 to-blue-300 rounded-full" />
                 </i>{" "}
                 <span className="text-blue-500">ERP</span>
               </h1>
             </div>
 
-            {/* Header Controls */}
             <div className="flex flex-wrap items-center justify-center md:justify-end gap-3">
-              {/* Vacancies Button (Original Green Style) */}
               <Button
                 variant="outline"
                 size="sm"
@@ -210,27 +109,48 @@ useEffect(() => {
                 <span className="font-medium">Vacancies</span>
               </Button>
 
-              {/* Notification */}
+              {/* Notification bell with popover */}
               <div className="relative">
-                <button className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                <button
+                  onClick={() => setNotifOpen((o) => !o)}
+                  className="p-2 rounded-full hover:bg-gray-100 transition-colors relative"
+                >
                   <Bell className="h-6 w-6 text-gray-700" />
+                  <span className="absolute -top-0.5 -right-0.5 flex">
+                    <span className="absolute inline-flex h-4 w-4 rounded-full bg-red-400 opacity-75 animate-ping" />
+                    <span className="relative min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {initialNotifications.length}
+                    </span>
+                  </span>
                 </button>
-                {shownNotificationCount > 0 && (
 
-              <span className="absolute -top-0.5 -right-0.5 flex">
-              
-              {/* Ping */}
-              <span className="absolute inline-flex h-4 w-4 rounded-full bg-red-400 opacity-75 animate-ping"></span>
-
-              {/* Badge */}
-              <span className="relative min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                {shownNotificationCount}
-              </span>
-            </span>
+                {notifOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                      <span className="text-sm font-semibold text-gray-800">Notifications</span>
+                      <button
+                        onClick={() => setNotifOpen(false)}
+                        className="text-xs text-gray-400 hover:text-gray-600"
+                      >
+                        Close
+                      </button>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                      {initialNotifications.map((n) => (
+                        <div key={n.id} className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer">
+                          <span className="text-xl mt-0.5">{n.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-800 truncate">{n.name}</p>
+                            <p className="text-xs text-gray-500 truncate">{n.description}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{n.time}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
 
-              {/* Avatar */}
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <Avatar>
@@ -241,12 +161,8 @@ useEffect(() => {
                 <DropdownMenuContent>
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout}>
-                    Logout
-                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>Profile</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -255,60 +171,18 @@ useEffect(() => {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto h-full flex items-start md:items-center pt-32 md:pt-28 px-4">
-        {" "}
-        {/* Left Panel - Calendar (Hidden for admin/executive roles) */}
-        {!hideSidebars && (
-          <div className="w-1/4 h-full pr-8">
-            <div className="h-full overflow-y-auto">
-              <Calendar tasks={tasks} onTaskToggle={toggleTaskCompletion} />
-            </div>
-          </div>
-        )}
-        {/* Center Panel - Modules Section */}
-        <div
-          className={`flex items-center justify-center ${
-            hideSidebars ? "w-full max-w-7xl mx-auto" : "flex-1"
-          }`}
-        >
+      <div className="container mx-auto h-full flex items-start md:items-center pt-32 md:pt-20 px-4 gap-6 pb-20">
+        {/* Modules — left, takes remaining space */}
+        <div className="flex-1 min-w-0 h-full">
           <div className="relative w-full h-full min-h-[600px]">
-            {/* <ModulesSection onModuleSelect={handleModuleSelect} /> */}
-              <ModulesSection />
+            <ModulesSection />
           </div>
         </div>
-        {/* Right Panel - Notifications (Hidden for admin/executive roles) */}
+
+        {/* Calendar — right panel, hidden for admin/executive roles */}
         {!hideSidebars && (
-          <div className="w-1/4 pl-8 h-full">
-            <div className="h-full flex flex-col">
-              {/* Notification List with Scroll */}
-              <div className="flex-1 overflow-y-auto">
-                <div className="bg-transparent rounded-2xl p-6 relative">
-                  <div className="relative">
-                    <AnimatedList>
-                      {visibleNotifications.map((notification) => (
-                        <div
-                          key={notification.id}
-                          className="flex items-center gap-3 p-3 rounded-xl bg-white/70 hover:bg-white transition-all duration-200 cursor-pointer mb-3 animate-in slide-in-from-right-96 fade-in duration-300"
-                        >
-                          <div className="text-2xl">{notification.icon}</div>
-                          <div className="flex flex-col">
-                            <h3 className="font-medium text-gray-800">
-                              {notification.name}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {notification.description}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {notification.time}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </AnimatedList>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="w-72 shrink-0 h-full overflow-y-auto">
+            <Calendar tasks={tasks} onTaskToggle={toggleTaskCompletion} />
           </div>
         )}
       </div>

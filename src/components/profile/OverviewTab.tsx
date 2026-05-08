@@ -37,18 +37,12 @@ export function OverviewTab() {
   if (error) return <ProfileError message={error.message} />;
   if (!data) return null;
 
-  const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+  const currentMonth = data.attendMonth ?? new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
 
-  // Parse attendance — handles "95%", "95", or numeric
-  const attendRaw = (data as any).attendance ?? (data as any).attendPer ?? 0;
-  const attendPct = typeof attendRaw === 'string'
-    ? parseInt(attendRaw, 10) || 0
-    : Number(attendRaw);
+  const attendPct = Number(data.attendPer) || 0;
   const workingDays = 23;
   const filledDays = Math.round((attendPct / 100) * workingDays);
-  const attendDisplay = typeof attendRaw === 'string' && attendRaw.includes('%')
-    ? attendRaw
-    : `${attendPct}%`;
+  const attendDisplay = `${attendPct}%`;
 
   const statCards = [
     { icon: <Clock className="h-5 w-5" />, label: 'Tenure',      value: data.tenure,   color: 'text-green-600',  bg: 'bg-green-50'  },

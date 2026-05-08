@@ -194,6 +194,20 @@ const { token, role, employeeId, permissions } = useAuthStore();
       icon: <ShoppingCart size={24} />,
       color: "from-rose-500 via-rose-400 to-red-400",
     },
+      {
+  label: "Plan & Development",
+  key: "mod.plan",
+  path: "/plandev",
+  icon: <ClipboardList size={24} />,
+  color: "from-indigo-600 via-indigo-500 to-sky-400",
+},
+{
+  label: "Project Management",
+  key: "mod.prj",
+  path: "/project-management",
+  icon: <BriefcaseBusiness size={24} />,
+  color: "from-yellow-500 via-yellow-400 to-amber-300",
+},
     {
       label: "CRM",
       key: "mod.crm",
@@ -215,20 +229,7 @@ const { token, role, employeeId, permissions } = useAuthStore();
       icon: <Cpu size={24} />,
       color: "from-gray-700 via-gray-600 to-gray-500",
     },
-    {
-  label: "Plan & Development",
-  key: "mod.plan",
-  path: "/plandev",
-  icon: <ClipboardList size={24} />,
-  color: "from-indigo-600 via-indigo-500 to-sky-400",
-},
-{
-  label: "Project Management",
-  key: "mod.prj",
-  path: "/project-management",
-  icon: <BriefcaseBusiness size={24} />,
-  color: "from-yellow-500 via-yellow-400 to-amber-300",
-}
+  
   ];
 
   const getAllowedModules = (): AllowedModule[] => {

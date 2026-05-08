@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Users, Plus, Pencil, Trash2, ChevronDown, Check, X } from 'lucide-react';
+import { useProfileFamily } from '../../services/profile/profile.queries';
 import { useProfileStore } from '../../stores/profile/profile.store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Field } from './shared';
+import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
 import { Relation } from '../../types/hr/enum';
 
 const EMPTY_FAMILY = { firstName: '', middleName: '', lastName: '', nationality: '', gender: '', relation: '' };
@@ -53,9 +55,9 @@ function FamilyMemberFields({
 }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <TextInput label="First Name"  value={form.firstName}  onChange={(v) => setForm((p) => ({ ...p, firstName: v }))}  placeholder="First name" />
-      <TextInput label="Middle Name" value={form.middleName} onChange={(v) => setForm((p) => ({ ...p, middleName: v }))} placeholder="Middle name" />
-      <TextInput label="Last Name"   value={form.lastName}   onChange={(v) => setForm((p) => ({ ...p, lastName: v }))}   placeholder="Last name" />
+      <TextInput label="First Name"  value={form.firstName}   onChange={(v) => setForm((p) => ({ ...p, firstName: v }))}   placeholder="First name" />
+      <TextInput label="Middle Name" value={form.middleName}  onChange={(v) => setForm((p) => ({ ...p, middleName: v }))}  placeholder="Middle name" />
+      <TextInput label="Last Name"   value={form.lastName}    onChange={(v) => setForm((p) => ({ ...p, lastName: v }))}    placeholder="Last name" />
       <TextInput label="Nationality" value={form.nationality} onChange={(v) => setForm((p) => ({ ...p, nationality: v }))} placeholder="Ethiopian" />
       <LabeledSelect label="Gender"   value={form.gender}   onChange={(v) => setForm((p) => ({ ...p, gender: v }))}   options={GENDER_OPTS} />
       <LabeledSelect label="Relation" value={form.relation} onChange={(v) => setForm((p) => ({ ...p, relation: v }))} options={RELATION_OPTS} />
@@ -64,16 +66,20 @@ function FamilyMemberFields({
 }
 
 export function FamilyTab() {
-  const { family, addFamilyMember, updateFamilyMember, deleteFamilyMember } = useProfileStore();
+  const { data, isLoading, error } = useProfileFamily();
+  const { addFamilyMember, updateFamilyMember, deleteFamilyMember } = useProfileStore();
+
   const [openId, setOpenId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
   const [form, setForm] = useState(EMPTY_FAMILY);
 
+  const members = data?.family ?? [];
+
   const getFullName = (m: { firstName: string; middleName: string; lastName: string }) =>
     [m.firstName, m.middleName, m.lastName].filter(Boolean).join(' ') || '—';
 
-  const startEdit = (m: typeof family[0]) => {
+  const startEdit = (m: typeof members[0]) => {
     setForm({ firstName: m.firstName, middleName: m.middleName, lastName: m.lastName, nationality: m.nationality, gender: m.gender, relation: m.relation });
     setEditingId(m.id);
     setOpenId(m.id);
@@ -105,9 +111,11 @@ export function FamilyTab() {
     </div>
   );
 
+  if (isLoading) return <ProfileSkeleton rows={3} />;
+  if (error) return <ProfileError message={error.message} />;
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
@@ -125,7 +133,6 @@ export function FamilyTab() {
         )}
       </div>
 
-      {/* Add new form */}
       {addingNew && (
         <div className="mb-4 p-4 rounded-xl border border-green-200 bg-white">
           <p className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-3">New Family Member</p>
@@ -134,14 +141,12 @@ export function FamilyTab() {
         </div>
       )}
 
-      {/* Empty state */}
-      {family.length === 0 && !addingNew && (
+      {members.length === 0 && !addingNew && (
         <p className="text-sm text-gray-400 italic">No family members added yet.</p>
       )}
 
-      {/* Accordion list */}
       <div className="space-y-2">
-        {family.map((m) => {
+        {members.map((m) => {
           const isOpen = openId === m.id;
           const isEditingThis = editingId === m.id;
           const fullName = getFullName(m);

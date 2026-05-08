@@ -3,10 +3,10 @@ import type {
   ProfileInfoDto,
   ProfileCardDto,
   ProfileBasicDto,
-  ProfileSalaryDto,
-  ProfileAddressDto,
   ProfileBioDto,
   ProfilePhotoDto,
+  ProfileEmContactDto,
+  ProfileFamilyDto,
   EmpLeaveBalDto,
 } from '../../types/profile/profile.types';
 
@@ -34,13 +34,13 @@ const get = async <T>(endpoint: string): Promise<T> => {
 };
 
 export const profileApi = {
-  getPhoto:       (): Promise<ProfilePhotoDto>     => get('GetEmpPhoto'),
-  getInfo:        (): Promise<ProfileInfoDto>      => get('GetProfileInfo'),
-  getCard:        (): Promise<ProfileCardDto>      => get('GetProfileCard'),
-  getBasic:       (): Promise<ProfileBasicDto>     => get('GetProBasic'),
-  getSalary:      (): Promise<ProfileSalaryDto>    => get('GetProSalary'),
-  getAddress:     (): Promise<ProfileAddressDto>   => get('GetProAddress'),
-  getBio:         (): Promise<ProfileBioDto>       => get('GetProBio'),
+  getPhoto:        (): Promise<ProfilePhotoDto>      => get('GetEmpPhoto'),
+  getInfo:         (): Promise<ProfileInfoDto>       => get('GetProfileInfo'),
+  getCard:         (): Promise<ProfileCardDto>       => get('GetProOverview'),
+  getBasic:        (): Promise<ProfileBasicDto>      => get('GetProBasic'),
+  getBio:          (): Promise<ProfileBioDto>        => get('GetProBio'),
+  getEmContact:    (): Promise<ProfileEmContactDto>  => get('GetProEmContact'),
+  getFamily:       (): Promise<ProfileFamilyDto>     => get('GetProFamily'),
   getLeaveBalance: async (): Promise<EmpLeaveBalDto[]> => {
     try {
       const res = await api.get(`${LEAVE_BASE}/MyLeaveBalance`);

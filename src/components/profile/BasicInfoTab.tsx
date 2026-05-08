@@ -1,16 +1,11 @@
 import React from 'react';
 import { User, Briefcase, Landmark, MapPin, Phone, Mail, Globe } from 'lucide-react';
-import { useProfileBasic, useProfileSalary, useProfileAddress } from '../../services/profile/profile.queries';
+import { useProfileBasic } from '../../services/profile/profile.queries';
 import { ReadCard, Grid, Field } from './shared';
 import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
 
 export function BasicInfoTab() {
-  const basic   = useProfileBasic();
-  const salary  = useProfileSalary();
-  const address = useProfileAddress();
-
-  const isLoading = basic.isLoading || salary.isLoading || address.isLoading;
-  const err = basic.error ?? salary.error ?? address.error;
+  const { data: b, isLoading, error } = useProfileBasic();
 
   if (isLoading) return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -18,11 +13,8 @@ export function BasicInfoTab() {
     </div>
   );
 
-  if (err) return <ProfileError message={err.message} />;
-
-  const b = basic.data!;
-  const s = salary.data!;
-  const a = address.data!;
+  if (error) return <ProfileError message={error.message} />;
+  if (!b) return null;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -49,12 +41,12 @@ export function BasicInfoTab() {
 
       <ReadCard title="Salary Information" icon={<Landmark className="w-4 h-4" />}>
         <Grid>
-          <Field label="Job Grade"          value={s.jobGrade} />
-          <Field label="Job Grade Step"     value={s.jgStep} />
-          <Field label="Basic Salary"       value={s.salary} />
-          <Field label="Currency"           value={s.currency} />
-          <Field label="Payment Frequency"  value={s.salaryPayFreq} />
-          <Field label="Effective Date"     value={s.effectiveFromStr} />
+          <Field label="Job Grade"          value={b.jobGrade} />
+          <Field label="Job Grade Step"     value={b.jgStep} />
+          <Field label="Basic Salary"       value={b.salary} />
+          <Field label="Currency"           value={b.currency} />
+          <Field label="Payment Frequency"  value={b.salaryPayFreq} />
+          <Field label="Effective Date"     value={b.effectiveFromStr} />
         </Grid>
       </ReadCard>
 
@@ -68,22 +60,22 @@ export function BasicInfoTab() {
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Address & Contact</h3>
           </div>
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-            {a.addressTypeStr}
+            {b.addressTypeStr}
           </span>
         </div>
         <Grid>
-          <Field label="Country"   value={a.country} />
-          <Field label="Region"    value={a.region} />
-          <Field label="Subcity"   value={a.subcity} />
-          <Field label="Zone"      value={a.zone} />
-          <Field label="Woreda"    value={a.woreda} />
-          <Field label="Kebele"    value={a.kebele} />
-          <Field label="House No." value={a.houseNo} />
-          <Field label="P.O. Box"  value={a.poBox} />
-          <Field label="Telephone" value={a.telephone} icon={<Phone className="w-3 h-3" />} />
-          <Field label="Fax"       value={a.fax} />
-          <Field label="Email"     value={a.email} icon={<Mail className="w-3 h-3" />} />
-          <Field label="Website"   value={a.website} icon={<Globe className="w-3 h-3" />} />
+          <Field label="Country"   value={b.country} />
+          <Field label="Region"    value={b.region} />
+          <Field label="Subcity"   value={b.subcity} />
+          <Field label="Zone"      value={b.zone} />
+          <Field label="Woreda"    value={b.woreda} />
+          <Field label="Kebele"    value={b.kebele} />
+          <Field label="House No." value={b.houseNo} />
+          <Field label="P.O. Box"  value={b.poBox} />
+          <Field label="Telephone" value={b.telephone} icon={<Phone className="w-3 h-3" />} />
+          <Field label="Fax"       value={b.fax} />
+          <Field label="Email"     value={b.email} icon={<Mail className="w-3 h-3" />} />
+          <Field label="Website"   value={b.website} icon={<Globe className="w-3 h-3" />} />
         </Grid>
       </div>
     </div>

@@ -75,7 +75,8 @@ import FileDashboard from "./pages/modules/File";
 import PlanDevDashboard from "./pages/modules/PlanDev";
 import ProjectManagementDashboard from "./pages/modules/ProjectManagement";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
 import { useAuthStore } from "./stores/auth.store";
 import { useEffect } from "react";
 import LeavePolicy from "./pages/settings/hrSettings/Leave/leavePolicy";
@@ -167,15 +168,6 @@ import EditAccountPage from "./pages/core/usermanagement/pageEditAccount";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PagePaymentApprovalChain from "./pages/settings/FinanceSettings/PagePaymentApprovalChain";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
-    },
-  },
-});
 
 function App() {
   const init = useAuthStore((s) => s.init);
