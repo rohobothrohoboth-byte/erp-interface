@@ -50,9 +50,6 @@ export function BiographicalTab() {
     }
   }, [bio]);
 
-  const bioHasData = !!(bio?.birthLocation || bio?.motherFullName);
-  const finHasData = !!(bio?.tin || bio?.bankAccountNo || bio?.pensionNumber);
-
   const handleSaveBio = async () => {
     await saveBiographical(bioForm);
     queryClient.invalidateQueries({ queryKey: profileKeys.bio() });
@@ -63,12 +60,14 @@ export function BiographicalTab() {
     queryClient.invalidateQueries({ queryKey: profileKeys.bio() });
   };
 
-  const ActionBtn = ({ hasData, onEdit }: { hasData: boolean; onEdit: () => void }) => (
+  const ActionBtn = ({ onEdit }: { onEdit: () => void }) => (
     <button
       onClick={onEdit}
       className="flex items-center gap-1.5 text-xs font-medium transition-colors px-2.5 py-1 rounded-lg text-green-600 bg-green-50 hover:bg-green-100"
     >
-      {hasData ? <><Pencil className="w-3.5 h-3.5" />Edit</> : <><Plus className="w-3.5 h-3.5" />Add</>}
+      {" "}
+      <Pencil className="w-3.5 h-3.5" />
+      Edit
     </button>
   );
 
@@ -119,62 +118,124 @@ export function BiographicalTab() {
         title="Personal Details"
         icon={<FileText className="w-4 h-4" />}
         isEditing={bioEditing}
-        isSaving={savingSection === 'biographical'}
-        onEdit={() => { setBioForm({ birthLocation: bio?.birthLocation ?? '', motherFullName: bio?.motherFullName ?? '', hasBirthCert: bio?.hasBirthCertStr ?? '', hasMarriageCert: bio?.hasMarriageCertStr ?? '' }); setEditingSection('biographical'); }}
+        isSaving={savingSection === "biographical"}
+        onEdit={() => {
+          setBioForm({
+            birthLocation: bio?.birthLocation ?? "",
+            motherFullName: bio?.motherFullName ?? "",
+            hasBirthCert: bio?.hasBirthCertStr ?? "",
+            hasMarriageCert: bio?.hasMarriageCertStr ?? "",
+          });
+          setEditingSection("biographical");
+        }}
         onCancel={() => setEditingSection(null)}
         onSave={handleSaveBio}
-        actionOverride={!bioEditing ? <ActionBtn hasData={bioHasData} onEdit={() => { setBioForm({ birthLocation: bio?.birthLocation ?? '', motherFullName: bio?.motherFullName ?? '', hasBirthCert: bio?.hasBirthCertStr ?? '', hasMarriageCert: bio?.hasMarriageCertStr ?? '' }); setEditingSection('biographical'); }} /> : undefined}
+        actionOverride={
+          !bioEditing ? (
+            <ActionBtn
+              onEdit={() => {
+                setBioForm({
+                  birthLocation: bio?.birthLocation ?? "",
+                  motherFullName: bio?.motherFullName ?? "",
+                  hasBirthCert: bio?.hasBirthCertStr ?? "",
+                  hasMarriageCert: bio?.hasMarriageCertStr ?? "",
+                });
+
+                setEditingSection("biographical");
+              }}
+            />
+          ) : undefined
+        }
       >
-        {!bioHasData && !bioEditing ? (
-          <p className="text-sm text-gray-400 italic">No personal details added yet.</p>
-        ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
-            <EditableField label="Birth Location" value={bioForm.birthLocation} isEditing={bioEditing}
-              onChange={(v) => setBioForm((p) => ({ ...p, birthLocation: v }))} placeholder="Addis Ababa" />
-            <EditableField label="Mother's Full Name" value={bioForm.motherFullName} isEditing={bioEditing}
-              onChange={(v) => setBioForm((p) => ({ ...p, motherFullName: v }))} placeholder="Full name" />
+            <EditableField
+              label="Birth Location"
+              value={bioForm.birthLocation}
+              isEditing={bioEditing}
+              onChange={(v) => setBioForm((p) => ({ ...p, birthLocation: v }))}
+              placeholder="Addis Ababa"
+            />
+            <EditableField
+              label="Mother's Full Name"
+              value={bioForm.motherFullName}
+              isEditing={bioEditing}
+              onChange={(v) => setBioForm((p) => ({ ...p, motherFullName: v }))}
+              placeholder="Full name"
+            />
 
             {bioEditing ? (
               <>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Has Birth Certificate</label>
-                  <Select value={bioForm.hasBirthCert || ''} onValueChange={(v) => setBioForm((p) => ({ ...p, hasBirthCert: v }))}>
-                    <SelectTrigger className="w-full h-8 text-sm border-gray-200"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    Has Birth Certificate
+                  </label>
+                  <Select
+                    value={bioForm.hasBirthCert || ""}
+                    onValueChange={(v) =>
+                      setBioForm((p) => ({ ...p, hasBirthCert: v }))
+                    }
+                  >
+                    <SelectTrigger className="w-full h-8 text-sm border-gray-200">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Yes">Yes</SelectItem>
                       <SelectItem value="No">No</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                {bioForm.hasBirthCert === 'Yes' && (
-                  <CertUpload fileKey="birthCertFile" nameKey="birthCertFileName" label="Upload Birth Certificate" />
+                {bioForm.hasBirthCert === "Yes" && (
+                  <CertUpload
+                    fileKey="birthCertFile"
+                    nameKey="birthCertFileName"
+                    label="Upload Birth Certificate"
+                  />
                 )}
               </>
             ) : (
-              <Field label="Has Birth Certificate" value={bio?.hasBirthCertStr} />
+              <Field
+                label="Has Birth Certificate"
+                value={bio?.hasBirthCertStr}
+              />
             )}
 
             {bioEditing ? (
               <>
                 <div className="flex flex-col gap-1">
-                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Has Marriage Certificate</label>
-                  <Select value={bioForm.hasMarriageCert || ''} onValueChange={(v) => setBioForm((p) => ({ ...p, hasMarriageCert: v }))}>
-                    <SelectTrigger className="w-full h-8 text-sm border-gray-200"><SelectValue placeholder="Select" /></SelectTrigger>
+                  <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                    Has Marriage Certificate
+                  </label>
+                  <Select
+                    value={bioForm.hasMarriageCert || ""}
+                    onValueChange={(v) =>
+                      setBioForm((p) => ({ ...p, hasMarriageCert: v }))
+                    }
+                  >
+                    <SelectTrigger className="w-full h-8 text-sm border-gray-200">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Yes">Yes</SelectItem>
                       <SelectItem value="No">No</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                {bioForm.hasMarriageCert === 'Yes' && (
-                  <CertUpload fileKey="marriageCertFile" nameKey="marriageCertFileName" label="Upload Marriage Certificate" />
+                {bioForm.hasMarriageCert === "Yes" && (
+                  <CertUpload
+                    fileKey="marriageCertFile"
+                    nameKey="marriageCertFileName"
+                    label="Upload Marriage Certificate"
+                  />
                 )}
               </>
             ) : (
-              <Field label="Has Marriage Certificate" value={bio?.hasMarriageCertStr} />
+              <Field
+                label="Has Marriage Certificate"
+                value={bio?.hasMarriageCertStr}
+              />
             )}
           </div>
-        )}
+        
       </InlineEditCard>
 
       {/* Financial Information */}
@@ -182,24 +243,56 @@ export function BiographicalTab() {
         title="Financial Information"
         icon={<Landmark className="w-4 h-4" />}
         isEditing={finEditing}
-        isSaving={savingSection === 'financial'}
-        onEdit={() => { setFinForm({ tin: bio?.tin ?? '', bankAccountNo: bio?.bankAccountNo ?? '', pensionNumber: bio?.pensionNumber ?? '' }); setEditingSection('financial'); }}
+        isSaving={savingSection === "financial"}
+        onEdit={() => {
+          setFinForm({
+            tin: bio?.tin ?? "",
+            bankAccountNo: bio?.bankAccountNo ?? "",
+            pensionNumber: bio?.pensionNumber ?? "",
+          });
+          setEditingSection("financial");
+        }}
         onCancel={() => setEditingSection(null)}
         onSave={handleSaveFin}
-        actionOverride={!finEditing ? <ActionBtn hasData={finHasData} onEdit={() => { setFinForm({ tin: bio?.tin ?? '', bankAccountNo: bio?.bankAccountNo ?? '', pensionNumber: bio?.pensionNumber ?? '' }); setEditingSection('financial'); }} /> : undefined}
+        actionOverride={
+          !finEditing ? (
+            <ActionBtn
+              onEdit={() => {
+                setFinForm({
+                  tin: bio?.tin ?? "",
+                  bankAccountNo: bio?.bankAccountNo ?? "",
+                  pensionNumber: bio?.pensionNumber ?? "",
+                });
+
+                setEditingSection("financial");
+              }}
+            />
+          ) : undefined
+        }
       >
-        {!finHasData && !finEditing ? (
-          <p className="text-sm text-gray-400 italic">No financial information added yet.</p>
-        ) : (
           <Grid>
-            <EditableField label="TIN Number" value={finForm.tin} isEditing={finEditing}
-              onChange={(v) => setFinForm((p) => ({ ...p, tin: v }))} placeholder="123456789" />
-            <EditableField label="Bank Account No." value={finForm.bankAccountNo} isEditing={finEditing}
-              onChange={(v) => setFinForm((p) => ({ ...p, bankAccountNo: v }))} placeholder="100023456789" />
-            <EditableField label="Pension Number" value={finForm.pensionNumber} isEditing={finEditing}
-              onChange={(v) => setFinForm((p) => ({ ...p, pensionNumber: v }))} placeholder="PEN-12345" />
+            <EditableField
+              label="TIN Number"
+              value={finForm.tin}
+              isEditing={finEditing}
+              onChange={(v) => setFinForm((p) => ({ ...p, tin: v }))}
+              placeholder="123456789"
+            />
+            <EditableField
+              label="Bank Account No."
+              value={finForm.bankAccountNo}
+              isEditing={finEditing}
+              onChange={(v) => setFinForm((p) => ({ ...p, bankAccountNo: v }))}
+              placeholder="100023456789"
+            />
+            <EditableField
+              label="Pension Number"
+              value={finForm.pensionNumber}
+              isEditing={finEditing}
+              onChange={(v) => setFinForm((p) => ({ ...p, pensionNumber: v }))}
+              placeholder="PEN-12345"
+            />
           </Grid>
-        )}
       </InlineEditCard>
     </div>
   );
