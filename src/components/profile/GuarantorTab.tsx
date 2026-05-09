@@ -1,5 +1,4 @@
-import React from 'react';
-import { Shield, FileText, MapPin, Mail, Globe } from 'lucide-react';
+import { Shield, FileText, MapPin } from 'lucide-react';
 import { useProfileStore } from '../../stores/profile/profile.store';
 import { ReadCard, Grid, Field } from './shared';
 
@@ -20,7 +19,7 @@ export function GuarantorTab() {
             <Field label="Gender"      value={guarantor?.gender} />
             <Field label="Relation"    value={guarantor?.relation} />
             <Field label="Telephone"   value={guarantor?.telephone} />
-            <Field label="Email"       value={guarantor?.email} icon={<Mail className="w-3 h-3" />} />
+            <Field label="Email"       value={guarantor?.email} />
           </Grid>
         </ReadCard>
 
@@ -58,7 +57,7 @@ export function GuarantorTab() {
             <Field label="House No."    value={guarantor.houseNo} />
             <Field label="P.O. Box"     value={guarantor.poBox} />
             <Field label="Fax"          value={guarantor.fax} />
-            <Field label="Website"      value={guarantor.website} icon={<Globe className="w-3 h-3" />} />
+            <Field label="Website"      value={guarantor.website} />
           </Grid>
         </div>
       </div>

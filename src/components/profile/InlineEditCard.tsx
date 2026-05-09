@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Pencil, X, Check, Loader2 } from 'lucide-react';
 
 interface InlineEditCardProps {
@@ -13,7 +13,7 @@ interface InlineEditCardProps {
   actionOverride?: React.ReactNode;
 }
 
-export const InlineEditCard: React.FC<InlineEditCardProps> = ({
+export const InlineEditCard = memo<InlineEditCardProps>(({
   title, icon, isEditing, isSaving, onEdit, onCancel, onSave, children, actionOverride,
 }) => (
   <div className={`bg-white rounded-2xl border shadow-sm p-6 transition-all duration-200 ${
@@ -70,4 +70,4 @@ export const InlineEditCard: React.FC<InlineEditCardProps> = ({
       </div>
     )}
   </div>
-);
+));

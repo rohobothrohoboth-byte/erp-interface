@@ -1,5 +1,4 @@
-import React from 'react';
-import { User, Briefcase, Landmark, MapPin, Phone, Mail, Globe } from 'lucide-react';
+import { User, Briefcase, Landmark, MapPin } from 'lucide-react';
 import { useProfileBasic } from '../../services/profile/profile.queries';
 import { ReadCard, Grid, Field } from './shared';
 import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
@@ -72,10 +71,10 @@ export function BasicInfoTab() {
           <Field label="Kebele"    value={b.kebele} />
           <Field label="House No." value={b.houseNo} />
           <Field label="P.O. Box"  value={b.poBox} />
-          <Field label="Telephone" value={b.telephone} icon={<Phone className="w-3 h-3" />} />
+          <Field label="Telephone" value={b.telephone} />
           <Field label="Fax"       value={b.fax} />
-          <Field label="Email"     value={b.email} icon={<Mail className="w-3 h-3" />} />
-          <Field label="Website"   value={b.website} icon={<Globe className="w-3 h-3" />} />
+          <Field label="Email"     value={b.email} />
+          <Field label="Website"   value={b.website} />
         </Grid>
       </div>
     </div>

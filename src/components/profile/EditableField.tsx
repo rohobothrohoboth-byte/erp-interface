@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 interface EditableFieldProps {
   label: string;
@@ -10,7 +10,7 @@ interface EditableFieldProps {
   placeholder?: string;
 }
 
-export const EditableField: React.FC<EditableFieldProps> = ({
+export const EditableField = memo<EditableFieldProps>(({
   label, value, isEditing, onChange, type = 'text', options = [], placeholder,
 }) => (
   <div className="flex flex-col gap-1">
@@ -40,4 +40,4 @@ export const EditableField: React.FC<EditableFieldProps> = ({
       <span className="text-sm font-medium text-gray-800">{value || '—'}</span>
     )}
   </div>
-);
+));

@@ -1,30 +1,14 @@
-import React, { useState } from "react"
-
+import React from "react"
 import { cn } from "../../lib/utils"
 
-/**
- * InteractiveGridPattern is a component that renders a grid pattern with interactive squares.
- *
- * @param width - The width of each square.
- * @param height - The height of each square.
- * @param squares - The number of squares in the grid. The first element is the number of horizontal squares, and the second element is the number of vertical squares.
- * @param className - The class name of the grid.
- * @param squaresClassName - The class name of the squares.
- */
 interface InteractiveGridPatternProps extends React.SVGProps<SVGSVGElement> {
   width?: number
   height?: number
-  squares?: [number, number] // [horizontal, vertical]
+  squares?: [number, number]
   className?: string
   squaresClassName?: string
 }
 
-/**
- * The InteractiveGridPattern component.
- *
- * @see InteractiveGridPatternProps for the props interface.
- * @returns A React component.
- */
 export function InteractiveGridPattern({
   width = 40,
   height = 40,
@@ -34,7 +18,6 @@ export function InteractiveGridPattern({
   ...props
 }: InteractiveGridPatternProps) {
   const [horizontal, vertical] = squares
-  const [hoveredSquare, setHoveredSquare] = useState<number | null>(null)
 
   return (
     <svg
@@ -57,12 +40,9 @@ export function InteractiveGridPattern({
             width={width}
             height={height}
             className={cn(
-              "stroke-gray-400/30 transition-all duration-100 ease-in-out [&:not(:hover)]:duration-1000",
-              hoveredSquare === index ? "fill-gray-300/30" : "fill-transparent",
+              "fill-transparent stroke-gray-400/30 transition-all duration-100 ease-in-out [&:not(:hover)]:duration-1000",
               squaresClassName
             )}
-            onMouseEnter={() => setHoveredSquare(index)}
-            onMouseLeave={() => setHoveredSquare(null)}
           />
         )
       })}

@@ -84,21 +84,27 @@ function Modules() {
   return (
     <div className="relative h-screen w-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 overflow-x-hidden overflow-y-auto">
       {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-white/90 to-transparent backdrop-blur-sm py-4">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-white/90 to-transparent backdrop-blur-sm py-3">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex-1 text-center">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 drop-shadow">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 text-center hidden sm:block">
+              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 drop-shadow">
                 Welcome to the{" "}
                 <i className="text-blue-500 relative not-italic">
                   RST
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-16 sm:w-20 h-1 bg-gradient-to-r from-blue-400 to-blue-300 rounded-full" />
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-12 sm:w-16 h-1 bg-gradient-to-r from-blue-400 to-blue-300 rounded-full" />
                 </i>{" "}
                 <span className="text-blue-500">ERP</span>
               </h1>
             </div>
+            {/* Mobile title — compact */}
+            <div className="flex-1 sm:hidden">
+              <h1 className="text-lg font-bold text-gray-800">
+                <span className="text-blue-500">RST</span> ERP
+              </h1>
+            </div>
 
-            <div className="flex flex-wrap items-center justify-center md:justify-end gap-3">
+            <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant="outline"
                 size="sm"
@@ -168,7 +174,7 @@ function Modules() {
                 <DropdownMenuContent>
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  <DropdownMenuItem onSelect={() => navigate("/profile")}>
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout}>
@@ -176,26 +182,65 @@ function Modules() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+          {/* <Popover>
+  <PopoverTrigger asChild>
+    <button>
+      <Avatar>
+        <AvatarImage src="https://github.com/shadcn.png" />
+        <AvatarFallback>CN</AvatarFallback>
+      </Avatar>
+    </button>
+  </PopoverTrigger>
+
+  <PopoverContent
+    align="end"
+    className="w-32 p-1 rounded-xl"
+  >
+    <div className="px-3 py-2 text-xs font-semibold text-gray-500">
+      My Account
+    </div>
+
+    <div className="h-px bg-gray-200 my-1" />
+
+    <div className="flex flex-col">
+      <button
+        onClick={() => navigate("/profile")}
+        className="text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors"
+      >
+        Profile
+      </button>
+
+      <button
+        onClick={handleLogout}
+        className="text-left px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
+      >
+        Logout
+      </button>
+    </div>
+  </PopoverContent>
+</Popover> */}
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto h-full flex items-start md:items-center pt-32 md:pt-20 px-4 gap-6">
-        {/* Modules — left, takes remaining space */}
-        <div className="flex-1 min-w-0 h-full">
-          <div className="relative w-full h-full min-h-[600px]">
-            <ModulesSection />
+      <div className="container mx-auto pt-28 md:pt-24 lg:pt-20 px-4 pb-8">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-6 h-full">
+          {/* Modules — full width on mobile/tablet, flex-1 on desktop */}
+          <div className="flex-1 min-w-0">
+            <div className="relative w-full min-h-[500px]">
+              <ModulesSection />
+            </div>
           </div>
-        </div>
 
-        {/* Calendar — right panel, hidden for admin/executive roles */}
-        {!hideSidebars && (
-          <div className="w-72 shrink-0  h-full min-h-0">
-            <Calendar tasks={tasks} onTaskToggle={toggleTaskCompletion} />
-          </div>
-        )}
+          {/* Calendar — right panel on desktop, full width below on mobile/tablet */}
+          {!hideSidebars && (
+            <div className="w-full lg:w-72 lg:shrink-0 lg:sticky lg:top-24 lg:h-[calc(100vh-7rem)] lg:flex lg:flex-col">
+              <Calendar tasks={tasks} onTaskToggle={toggleTaskCompletion} />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -80,7 +80,7 @@ export default function Calendar({ tasks, onTaskToggle }: CalendarProps) {
   };
 
   return (
-    <div className="w-full h-full min-h-0 p-6 border-r border-gray-200 bg-white/50 backdrop-blur-sm flex flex-col">
+    <div className="w-full h-full min-h-0 p-6 border-r border-gray-200 bg-white/50 backdrop-blur-sm flex flex-col lg:rounded-xl lg:border lg:border-gray-200 lg:shadow-sm lg:overflow-hidden">
       {/* Calendar Section */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
