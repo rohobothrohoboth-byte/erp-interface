@@ -9,6 +9,7 @@ import type {
   ProfileEmContactDto,
   ProfileFamilyDto,
   EmpLeaveBalDto,
+  EmpGuarantyaDto,
 } from '../../types/profile/profile.types';
 
 // ── Query key factory ──────────────────────────────────────────────────────
@@ -21,6 +22,7 @@ export const profileKeys = {
   bio:          () => [...profileKeys.all, 'bio']          as const,
   emContact:    () => [...profileKeys.all, 'emContact']    as const,
   family:       () => [...profileKeys.all, 'family']       as const,
+  gurantor:       () => [...profileKeys.all, 'gurantor']       as const,
   leaveBalance: () => [...profileKeys.all, 'leaveBalance'] as const,
 } as const;
 
@@ -33,4 +35,5 @@ export const useProfileBasic   = () => useQuery<ProfileBasicDto,      Error>({ q
 export const useProfileBio     = () => useQuery<ProfileBioDto,        Error>({ queryKey: profileKeys.bio(),          queryFn: profileApi.getBio,          staleTime: STALE });
 export const useProfileEmContact = () => useQuery<ProfileEmContactDto, Error>({ queryKey: profileKeys.emContact(),   queryFn: profileApi.getEmContact,    staleTime: STALE });
 export const useProfileFamily  = () => useQuery<ProfileFamilyDto,     Error>({ queryKey: profileKeys.family(),       queryFn: profileApi.getFamily,       staleTime: STALE });
+export const useEmpGurantor  = () => useQuery<EmpGuarantyaDto | null, Error>({ queryKey: profileKeys.gurantor(), queryFn: profileApi.getGurantor, staleTime: STALE });
 export const useLeaveBalance   = () => useQuery<EmpLeaveBalDto[],     Error>({ queryKey: profileKeys.leaveBalance(), queryFn: profileApi.getLeaveBalance, staleTime: STALE, enabled: true });

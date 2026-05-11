@@ -1,12 +1,21 @@
 import { Shield, FileText, MapPin } from 'lucide-react';
-import { useProfileStore } from '../../stores/profile/profile.store';
+import { useEmpGurantor } from '../../services/profile/profile.queries';
 import { ReadCard, Grid, Field } from './shared';
+import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
 
 export function GuarantorTab() {
-  const { guarantor } = useProfileStore();
+  const { data: g, isLoading, error } = useEmpGurantor();
 
-  const fullName = [guarantor?.firstName, guarantor?.middleName, guarantor?.lastName]
-    .filter(Boolean).join(' ') || '—';
+  if (isLoading) return (
+    <div className="flex flex-col lg:flex-row gap-6 items-start">
+      <div className="flex flex-col gap-6 flex-1 w-full">
+        <ProfileSkeleton rows={3} />
+        <ProfileSkeleton rows={2} />
+      </div>
+      <div className="flex-1 w-full"><ProfileSkeleton rows={5} /></div>
+    </div>
+  );
+  if (error) return <ProfileError message={error.message} />;
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 items-start">
@@ -14,20 +23,20 @@ export function GuarantorTab() {
       <div className="flex flex-col gap-6 flex-1 w-full">
         <ReadCard title="Guarantor Details" icon={<Shield className="w-4 h-4" />}>
           <Grid>
-            <Field label="Full Name"   value={fullName} />
-            <Field label="Nationality" value={guarantor?.nationality} />
-            <Field label="Gender"      value={guarantor?.gender} />
-            <Field label="Relation"    value={guarantor?.relation} />
-            <Field label="Telephone"   value={guarantor?.telephone} />
-            <Field label="Email"       value={guarantor?.email} />
+            <Field label="Full Name"   value={g?.fullName} />
+            <Field label="Nationality" value={g?.nationality} />
+            <Field label="Gender"      value={g?.gender} />
+            <Field label="Relation"    value={g?.relation} />
+            <Field label="Telephone"   value={g?.telephone} />
+            <Field label="Email"       value={g?.email} />
           </Grid>
         </ReadCard>
 
         <ReadCard title="Guarantor Document" icon={<FileText className="w-4 h-4" />}>
           <Grid>
-            <Field label="File Name" value={guarantor.fileName} />
-            <Field label="File Type" value={guarantor.fileType} />
-            <Field label="File Size" value={guarantor.fileSize} />
+            <Field label="File Name" value={g?.fileName} />
+            <Field label="File Type" value={g?.contentType} />
+            <Field label="File Size" value={g?.fileSizeStr} />
           </Grid>
         </ReadCard>
       </div>
@@ -42,22 +51,23 @@ export function GuarantorTab() {
               </div>
               <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Address</h3>
             </div>
-            <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-              {guarantor.addressType || '—'}
-            </span>
+            {g?.addressType && (
+              <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
+                {g.addressType}
+              </span>
+            )}
           </div>
           <Grid>
-            {/* <Field label="Address Type" value={guarantor.addressType} /> */}
-            <Field label="Country"      value={guarantor.country} />
-            <Field label="Region"       value={guarantor.region} />
-            <Field label="Subcity"      value={guarantor.subcity} />
-            <Field label="Zone"         value={guarantor.zone} />
-            <Field label="Woreda"       value={guarantor.woreda} />
-            <Field label="Kebele"       value={guarantor.kebele} />
-            <Field label="House No."    value={guarantor.houseNo} />
-            <Field label="P.O. Box"     value={guarantor.poBox} />
-            <Field label="Fax"          value={guarantor.fax} />
-            <Field label="Website"      value={guarantor.website} />
+            <Field label="Country"   value={g?.country} />
+            <Field label="Region"    value={g?.region} />
+            <Field label="Subcity"   value={g?.subcity} />
+            <Field label="Zone"      value={g?.zone} />
+            <Field label="Woreda"    value={g?.woreda} />
+            <Field label="Kebele"    value={g?.kebele} />
+            <Field label="House No." value={g?.houseNo} />
+            <Field label="P.O. Box"  value={g?.poBox} />
+            <Field label="Fax"       value={g?.fax} />
+            <Field label="Website"   value={g?.website} />
           </Grid>
         </div>
       </div>

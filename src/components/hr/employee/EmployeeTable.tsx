@@ -14,6 +14,7 @@ import {
 import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover';
 import DeleteEmployeeModal from './DeleteEmployeeModal';
 import type { EmpState } from '../../../types/hr/enum';
+import { useNavigate } from 'react-router';
 
 interface Employee {
   id: string;
@@ -71,15 +72,17 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     return new Date(dateB).getTime() - new Date(dateA).getTime();
   });
 
+  const navigate = useNavigate();
+
   const handleViewDetails = (employee: Employee) => {
     sessionStorage.setItem('selectedEmployee', JSON.stringify(employee));
     sessionStorage.setItem('currentModule', 'HR');
-    window.location.href = `/hr/employees/${employee.id}`;
+    navigate(`/hr/employees/${employee.id}`);
   };
 
   const handleEdit = (employee: Employee) => {
     sessionStorage.setItem('selectedEmployee', JSON.stringify(employee));
-    window.location.href = `/hr/employees/edit/${employee.id}`;
+    navigate(`/hr/employees/edit/${employee.id}`);
     setPopoverOpen(null);
   };
 

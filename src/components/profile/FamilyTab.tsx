@@ -1,16 +1,24 @@
-import React, { useState } from 'react';
-import { Users, Plus, Pencil, Trash2, ChevronDown, Check, X } from 'lucide-react';
-import { useProfileFamily } from '../../services/profile/profile.queries';
+import { useState } from 'react';
+import { Users, Plus, Pencil, Trash2, ChevronDown, Check, X, Loader2 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useProfileFamily, profileKeys } from '../../services/profile/profile.queries';
 import { useProfileStore } from '../../stores/profile/profile.store';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Field } from './shared';
 import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
-import { Relation } from '../../types/hr/enum';
+import { Relation, Gender } from '../../types/hr/enum';
+import type { ProFamilyList } from '../../types/profile/profile.types';
 
 const EMPTY_FAMILY = { firstName: '', middleName: '', lastName: '', nationality: '', gender: '', relation: '' };
 
-const GENDER_OPTS = [{ key: 'Male', label: 'Male' }, { key: 'Female', label: 'Female' }];
-const RELATION_OPTS = Object.values(Relation).map((r) => ({ key: r, label: r }));
+const GENDER_OPTS = Object.entries(Gender).map(([key, label]) => ({ key, label }));
+const RELATION_OPTS = Object.entries(Relation).map(([key, label]) => ({ key, label }));
+
+// reverse lookup: label → numeric key (for pre-populating selects from API string values)
+const relationKey = (label: string) =>
+  Object.entries(Relation).find(([, v]) => v === label)?.[0] ?? label;
+const genderKey = (label: string) =>
+  Object.entries(Gender).find(([, v]) => v === label)?.[0] ?? label;
 
 const LabeledSelect = ({ label, value, onChange, options }: {
   label: string; value: string;
@@ -66,47 +74,76 @@ function FamilyMemberFields({
 }
 
 export function FamilyTab() {
+  const queryClient = useQueryClient();
   const { data, isLoading, error } = useProfileFamily();
-  const { addFamilyMember, updateFamilyMember, deleteFamilyMember } = useProfileStore();
+  const { addFamily, updateFamily, deleteFamily } = useProfileStore();
 
   const [openId, setOpenId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(EMPTY_FAMILY);
 
   const members = data?.family ?? [];
 
-  const getFullName = (m: { firstName: string; middleName: string; lastName: string }) =>
-    [m.firstName, m.middleName, m.lastName].filter(Boolean).join(' ') || '—';
+  const getFullName = (m: Pick<ProFamilyList, 'fullName' | 'firstName' | 'middleName' | 'lastName'>) =>
+    m.fullName || [m.firstName, m.middleName, m.lastName].filter(Boolean).join(' ') || '—';
 
-  const startEdit = (m: typeof members[0]) => {
-    setForm({ firstName: m.firstName, middleName: m.middleName, lastName: m.lastName, nationality: m.nationality, gender: m.gender, relation: m.relation });
+  const startEdit = (m: ProFamilyList) => {
+    setForm({
+      firstName:   m.firstName,
+      middleName:  m.middleName,
+      lastName:    m.lastName,
+      nationality: m.nationality,
+      gender:      genderKey(m.gender),
+      relation:    relationKey(m.relation),
+    });
     setEditingId(m.id);
     setOpenId(m.id);
   };
 
   const cancelEdit = () => { setEditingId(null); setForm(EMPTY_FAMILY); };
 
-  const saveEdit = () => {
-    if (editingId) { updateFamilyMember(editingId, form); setEditingId(null); setForm(EMPTY_FAMILY); }
+  const saveEdit = async () => {
+    if (!editingId) return;
+    setSaving(true);
+    try {
+      await updateFamily(editingId, { id: editingId, ...form });
+      await queryClient.invalidateQueries({ queryKey: profileKeys.family() });
+      setEditingId(null);
+      setForm(EMPTY_FAMILY);
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const saveNew = () => {
+  const saveNew = async () => {
     if (!form.firstName.trim()) return;
-    addFamilyMember(form);
-    setForm(EMPTY_FAMILY);
-    setAddingNew(false);
+    setSaving(true);
+    try {
+      await addFamily(form);
+      await queryClient.invalidateQueries({ queryKey: profileKeys.family() });
+      setForm(EMPTY_FAMILY);
+      setAddingNew(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteFamily(id);
+    queryClient.invalidateQueries({ queryKey: profileKeys.family() });
   };
 
   const FormActions = ({ onCancel, onSave }: { onCancel: () => void; onSave: () => void }) => (
     <div className="flex justify-end gap-2 mt-4">
-      <button onClick={onCancel}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded-xl transition-colors">
+      <button onClick={onCancel} disabled={saving}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 rounded-xl transition-colors disabled:opacity-50">
         <X className="w-3.5 h-3.5" />Cancel
       </button>
-      <button onClick={onSave}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors">
-        <Check className="w-3.5 h-3.5" />Save
+      <button onClick={onSave} disabled={saving}
+        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors disabled:opacity-70">
+        {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Saving...</> : <><Check className="w-3.5 h-3.5" />Save</>}
       </button>
     </div>
   );
@@ -167,7 +204,7 @@ export function FamilyTab() {
                     className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
                     <Pencil className="w-3 h-3" />Edit
                   </button>
-                  <button onClick={() => deleteFamilyMember(m.id)}
+                  <button onClick={() => handleDelete(m.id)}
                     className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
                     <Trash2 className="w-3 h-3" />Delete
                   </button>

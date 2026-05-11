@@ -23,7 +23,6 @@ import AttendanceList from "./pages/hr/attendancepage/AttendanceList";
 import ShiftScheduler from "./pages/hr/attendancepage/ShiftScheduler";
 import TimeClock from "./pages/hr/attendancepage/TimeClock";
 import TimeClockFormContainer from "./pages/hr/attendancepage/TimeClockFormContainer";
-import EmployeeDetailsPage from "./components/hr/employee/EmployeeDetailsPage";
 import BudgetList from "./pages/finance/budgetpage/BudgetList";
 import BudgetCreate from "./pages/finance/budgetpage/BudgetCreate";
 import GlPage from "./pages/finance/generalledgerpage/GlPage";
@@ -168,6 +167,7 @@ import EditAccountPage from "./pages/core/usermanagement/pageEditAccount";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PagePaymentApprovalChain from "./pages/settings/FinanceSettings/PagePaymentApprovalChain";
+import EmployeeDetailsPage from "./pages/hr/employeepage/EmployeeDetailsPage";
 
 function App() {
   const init = useAuthStore((s) => s.init);

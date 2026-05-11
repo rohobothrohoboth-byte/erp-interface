@@ -1,24 +1,24 @@
-// ── Profile Info (header) ──────────────────────────────────────────────────
-export interface ProfileInfoDto {
+// ── ProInfo ────────────────────────────────────────────────────────────────
+export interface ProInfo {
   fullName: string;
   fullNameAm: string;
   position: string;
-  empState: string; // e.g. "Pending", "Active"
+  empState: string;
 }
 
-// ── Profile Card (GetProOverview) ─────────────────────────────────────────
-export interface ProfileCardDto {
+// ── ProOverview ────────────────────────────────────────────────────────────
+export interface ProOverview {
   tenure: string;
   perStr: string;
   training: string;
-  attendPer: number;    // e.g. 78
-  attendMonth: string;  // e.g. "May 2026"
+  attendPer: number;
+  attendMonth: string;
   repToName: string;
   repToPos: string;
 }
 
-// ── Basic Info (GetProBasic — includes personal, employment, salary, address) ──
-export interface ProfileBasicDto {
+// ── ProBasic ───────────────────────────────────────────────────────────────
+export interface ProBasic {
   // Personal
   code: string;
   gender: string;
@@ -39,8 +39,8 @@ export interface ProfileBasicDto {
   effectiveFromStr: string;
   jgStep: string;
   jobGrade: string;
-  // Address
-  addressTypeStr: string;
+  // Address & Contact
+  addressType: string;
   country: string;
   region: string;
   subcity: string;
@@ -55,66 +55,114 @@ export interface ProfileBasicDto {
   website: string;
 }
 
-// ── Biographical + Financial (combined endpoint) ───────────────────────────
-export interface ProfileBioDto {
+// ── ProBio ─────────────────────────────────────────────────────────────────
+export interface ProBio {
   id: string;
-  marriageCertId: string | null;
-  birthCertId: string | null;
   birthLocation: string;
   motherFullName: string;
-  hasBirthCertStr: string;
-  hasMarriageCertStr: string;
+  hasBirthCert: string;
+  hasMarriageCert: string;
   tin: string;
   bankAccountNo: string;
   pensionNumber: string;
+  // Birth cert file
+  biCertId: string | null;
+  biCertName: string;
+  biCertType: string;
+  biCertSize: string;
+  // Marriage cert file
+  maCertId: string | null;
+  maCertName: string;
+  maCertType: string;
+  maCertSize: string;
 }
 
-// ── Emergency Contact (GetProEmContact) ───────────────────────────────────
-export interface ProfileEmContactDto {
-  hasContact: boolean;
-  contact: {
-    firstName: string;
-    firstNameAm: string;
-    middleName: string;
-    middleNameAm: string;
-    lastName: string;
-    lastNameAm: string;
-    nationality: string;
-    gender: string;
-    relation: string;
-    telephone: string;
-    country: string;
-    region: string;
-    subcity: string;
-    zone: string;
-    woreda: string;
-    kebele: string;
-    houseNo: string;
-    poBox: string;
-    addressType: string;
-    fax: string;
-    email: string;
-    website: string;
-  } | null;
-}
-
-// ── Family (GetProFamily) ──────────────────────────────────────────────────
-export interface ProfileFamilyMemberDto {
+// ── ProContactList ─────────────────────────────────────────────────────────
+export interface ProContactList {
   id: string;
   firstName: string;
   middleName: string;
   lastName: string;
+  relation: string;
+  gender: string;
   nationality: string;
+  addressType: string;
+  country: string;
+  region: string;
+  subcity: string;
+  zone: string;
+  woreda: string;
+  kebele: string;
+  houseNo: string;
+  telephone: string;
+  poBox: string;
+  fax: string;
+  email: string;
+  website: string;
+}
+
+// ── ProContact ─────────────────────────────────────────────────────────────
+export interface ProContact {
+  employeeId: string;
+  hasContact: boolean;
+  contact: ProContactList | null;
+}
+
+// ── ProFamilyList ──────────────────────────────────────────────────────────
+export interface ProFamilyList {
+  id: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  fullName: string;
+  relation: string;
+  gender: string;
+  nationality: string;
+}
+
+// ── ProFamily ──────────────────────────────────────────────────────────────
+export interface ProFamily {
+  employeeId: string;
+  family: ProFamilyList[];
+}
+
+// ── EmpGuaranty ────────────────────────────────────────────────────────────
+export interface EmpGuaranty {
+  fullName: string;
   gender: string;
   relation: string;
+  nationality: string;
+  telephone: string;
+  email: string;
+  // Address
+  addressType: string;
+  country: string;
+  region: string;
+  subcity: string;
+  zone: string;
+  woreda: string;
+  kebele: string;
+  houseNo: string;
+  poBox: string;
+  fax: string;
+  website: string;
+  // File
+  fileId: string;
+  fileName: string;
+  contentType: string;
+  fileSizeStr: string;
 }
 
-export interface ProfileFamilyDto {
-  employeeId: string;
-  family: ProfileFamilyMemberDto[];
+// ── Photo ──────────────────────────────────────────────────────────────────
+export interface ProfilePhotoDto {
+  id: string;
+  fileName: string;
+  contentType: string;
+  photoSize: string;
+  photo: string;
 }
 
-
+// ── Leave Balance ──────────────────────────────────────────────────────────
 export interface EmpLeaveBalDto {
   leavePolicyId: string;
   leaveType: string;
@@ -124,11 +172,72 @@ export interface EmpLeaveBalDto {
   usedDays: string;
 }
 
-// ── Photo ──────────────────────────────────────────────────────────────────
-export interface ProfilePhotoDto {
+// ── Mod DTOs (request bodies) ──────────────────────────────────────────────
+export interface EmpBioModDto {
   id: string;
-  fileName: string;
-  contentType: string;
-  photoSize: string;
-  photo: string; // base64 or URL
+  birthLocation: string;
+  motherFullName: string;
+  hasBirthCert: string;
+  hasMarriageCert: string;
+  file1?: File | null; // birth cert
+  file2?: File | null; // marriage cert
 }
+
+export interface EmpFinanceModDto {
+  id: string;
+  tin: string;
+  bankAccountNo: string;
+  pensionNumber: string;
+}
+
+export interface EmContactModDto {
+  employeeId?: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  gender: string;
+  nationality: string;
+  relation: string;
+  addressType: string;
+  country?: string;
+  region: string;
+  subcity?: string;
+  zone?: string;
+  woreda?: string;
+  kebele?: string;
+  houseNo?: string;
+  telephone: string;
+  poBox?: string;
+  fax?: string;
+  email?: string;
+  website?: string;
+}
+
+export interface EmpFamilyAddDto {
+  employeeId?: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  gender: string;
+  nationality: string;
+  relation: string;
+}
+
+export interface EmpFamilyModDto {
+  id: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  gender: string;
+  nationality: string;
+  relation: string;
+}
+
+// ── Legacy aliases (keep queries compiling without touching profile.queries.ts) ──
+export type ProfileInfoDto      = ProInfo;
+export type ProfileCardDto      = ProOverview;
+export type ProfileBasicDto     = ProBasic;
+export type ProfileBioDto       = ProBio ;
+export type ProfileEmContactDto = ProContact;
+export type ProfileFamilyDto    = ProFamily;
+export type EmpGuarantyaDto    = EmpGuaranty;

@@ -1,32 +1,33 @@
 import { memo, useCallback } from 'react';
-import { User, Briefcase, Shield, FileText, Heart, Users, ArrowLeft, KeyRound } from 'lucide-react';
-import { EmpPhotoRect } from '../ui/EmpPhoto';
-import { useProfileInfo, useProfilePhoto } from '../../services/profile/profile.queries';
-import { empStateColors } from './shared';
-import type { EmpPhotoRes } from '../../types/hr/employee/empPhoto';
+import { User, Briefcase, Shield, FileText, Heart, Users, FolderOpen, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { EmpPhotoRect } from '../../../ui/EmpPhoto';
+import { useEmpDetailInfo, useEmpDetailPhoto } from './empDetail.queries';
+import { empStateColors } from './shared';
+import type { EmpDetailPhoto } from './types';
+import type { EmpPhotoRes } from '../../../../types/hr/employee/empPhoto';
 
 const TAB_ICONS: Record<string, React.ElementType> = {
-  User, Briefcase, Shield, FileText, Heart, Users, KeyRound,
+  User, Briefcase, Shield, FileText, Heart, Users, FolderOpen,
 };
 
-export const PROFILE_TABS = [
-  { id: 'overview',  label: 'Overview',         icon: 'User'      },
-  { id: 'basic',     label: 'Basic Info',        icon: 'Briefcase' },
-  { id: 'bio',       label: 'Biographical',      icon: 'FileText'  },
-  { id: 'emergency', label: 'Emergency Contact', icon: 'Heart'     },
-  { id: 'family',    label: 'Family',            icon: 'Users'     },
-  { id: 'guarantor', label: 'Guarantor',         icon: 'Shield'    },
-  { id: 'password',  label: 'Password',          icon: 'KeyRound'  },
+export const EMP_DETAIL_TABS = [
+  { id: 'overview',  label: 'Overview',         icon: 'User'       },
+  { id: 'basic',     label: 'Basic Info',        icon: 'Briefcase'  },
+  { id: 'bio',       label: 'Biographical',      icon: 'FileText'   },
+  { id: 'emergency', label: 'Emergency Contact', icon: 'Heart'      },
+  { id: 'family',    label: 'Family',            icon: 'Users'      },
+  { id: 'guarantor', label: 'Guarantor',         icon: 'Shield'     },
+  { id: 'documents', label: 'Documents',         icon: 'FolderOpen' },
 ];
 
-// ── Hero — no activeTab prop, never re-renders on tab change ───────────────
-const ProfileHero = memo(function ProfileHero() {
-  const { data: info }      = useProfileInfo();
-  const { data: photoData } = useProfilePhoto();
+// ── Hero ───────────────────────────────────────────────────────────────────
+const EmpDetailHero = memo(function EmpDetailHero({ employeeId }: { employeeId: string }) {
+  const { data: info }      = useEmpDetailInfo(employeeId);
+  const { data: photoData } = useEmpDetailPhoto(employeeId);
 
   const photo: EmpPhotoRes | undefined = photoData
-    ? { id: photoData.id, fileName: photoData.fileName, contentType: photoData.contentType, photoSize: photoData.photoSize, photo: photoData.photo }
+    ? { id: (photoData as EmpDetailPhoto).id, fileName: (photoData as EmpDetailPhoto).fileName, contentType: (photoData as EmpDetailPhoto).contentType, photoSize: (photoData as EmpDetailPhoto).photoSize, photo: (photoData as EmpDetailPhoto).photo }
     : undefined;
 
   const stateKey = info?.empState
@@ -38,13 +39,12 @@ const ProfileHero = memo(function ProfileHero() {
   const navigate = useNavigate();
   const handleBack = useCallback(() => {
     if (window.history.length > 1) navigate(-1);
-    else navigate('/modules');
+    else navigate('/hr/employees/record');
   }, [navigate]);
 
   return (
     <div className="bg-slate-50 rounded-2xl border border-gray-100 shadow-sm mb-4 px-8 py-6">
-      {/* Back button — top left */}
-      <div >
+      <div>
         <button
           onClick={handleBack}
           aria-label="Go back"
@@ -55,9 +55,7 @@ const ProfileHero = memo(function ProfileHero() {
         </button>
       </div>
 
-      {/* Photo + info — centered */}
       <div className="flex items-center justify-center gap-8 mt-4">
-        {/* Photo with badge below */}
         <div className="shrink-0 flex flex-col items-center gap-3">
           <div className="rounded-2xl overflow-hidden shadow-lg ring-4 ring-white ring-offset-2 ring-offset-gray-50">
             <EmpPhotoRect width={116} height={130} photo={photo} name={info?.fullName ?? ''} />
@@ -70,9 +68,8 @@ const ProfileHero = memo(function ProfileHero() {
           )}
         </div>
 
-        {/* Text block */}
         <div className="min-w-0 -mt-8">
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight leading-snug truncate justify-center items-center flex">
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight leading-snug truncate flex justify-center items-center">
             {info?.fullName ?? <span className="inline-block h-7 w-44 bg-gray-100 rounded-lg animate-pulse" />}
           </h1>
           {info?.fullNameAm && (
@@ -87,8 +84,8 @@ const ProfileHero = memo(function ProfileHero() {
   );
 });
 
-// ── Tab bar — only re-renders when activeTab changes ───────────────────────
-const ProfileTabBar = memo(function ProfileTabBar({
+// ── Tab bar ────────────────────────────────────────────────────────────────
+const EmpDetailTabBar = memo(function EmpDetailTabBar({
   activeTab,
   onTabChange,
 }: {
@@ -99,7 +96,7 @@ const ProfileTabBar = memo(function ProfileTabBar({
     <div className="pb-4">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5">
         <nav className="flex gap-1 overflow-x-auto scrollbar-none">
-          {PROFILE_TABS.map(({ id, label, icon }) => {
+          {EMP_DETAIL_TABS.map(({ id, label, icon }) => {
             const Icon = TAB_ICONS[icon];
             const active = activeTab === id;
             return (
@@ -125,16 +122,19 @@ const ProfileTabBar = memo(function ProfileTabBar({
 });
 
 // ── Public export ──────────────────────────────────────────────────────────
-interface ProfileHeaderProps {
+export const EmpDetailHeader = memo(function EmpDetailHeader({
+  employeeId,
+  activeTab,
+  onTabChange,
+}: {
+  employeeId: string;
   activeTab: string;
   onTabChange: (id: string) => void;
-}
-
-export const ProfileHeader = memo(function ProfileHeader({ activeTab, onTabChange }: ProfileHeaderProps) {
+}) {
   return (
     <>
-      <ProfileHero />
-      <ProfileTabBar activeTab={activeTab} onTabChange={onTabChange} />
+      <EmpDetailHero employeeId={employeeId} />
+      <EmpDetailTabBar activeTab={activeTab} onTabChange={onTabChange} />
     </>
   );
 });

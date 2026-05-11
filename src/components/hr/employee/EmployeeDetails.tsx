@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
-import { useModule } from '../../../ModuleContext';
+import { useParams } from 'react-router-dom';
 import { cn } from '../../../lib/utils';
-import { InteractiveGridPattern } from '../../../components/ui/interactive-grid-pattern';
+import { InteractiveGridPattern } from '../../ui/interactive-grid-pattern';
 import { 
   User, 
   Briefcase, 
@@ -20,10 +19,17 @@ import {
   VenetianMask
 } from 'lucide-react';
 import type { EmployeeListDto } from '../../../types/hr/employee';
-import type { Step5Dto } from '../../../types/hr/employee/empAddDto';
 
 // Extended type for display purposes
-type EmployeeDisplay = EmployeeListDto & Step5Dto & {
+type EmployeeDisplay = EmployeeListDto & {
+  employmentDate?: string;
+  jobGrade?: string;
+  jobGradeId?: string;
+  employmentType?: string;
+  employmentNature?: string;
+  nationality?: string;
+  createdAt?: string;
+  updatedAt?: string;
   email?: string;
   phone?: string;
   address?: string;
@@ -122,26 +128,13 @@ const greenTheme = {
   }
 };
 
-const EmployeeDetailsPage = () => {
-  const { setActiveModule } = useModule();
+const EmployeeDetails = () => {
   const { id } = useParams();
   const [employee, setEmployee] = useState<EmployeeDisplay | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  
+
   useEffect(() => {
-    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
-    if (!isAuth) {
-      setLoading(false);
-      return;
-    }
-
-    const storedModule = sessionStorage.getItem('currentModule');
-    if (storedModule) {
-      setActiveModule(storedModule);
-    }
-
-    // Get employee data from sessionStorage
     const storedEmployee = sessionStorage.getItem('selectedEmployee');
     if (storedEmployee) {
       try {
@@ -156,9 +149,8 @@ const EmployeeDetailsPage = () => {
       }
     }
 
-    // If no employee found in sessionStorage, set loading to false
     setLoading(false);
-  }, [id, setActiveModule]);
+  }, [id]);
 
   const renderTabContent = () => {
     if (!employee) return null;
@@ -173,7 +165,7 @@ const EmployeeDetailsPage = () => {
                 icon={<Clock className="h-6 w-6" />}
                 label="Tenure"
                 value={employee.employmentDate ? 
-                  `${Math.floor((new Date() - new Date(employee.employmentDate)) / (1000 * 60 * 60 * 24 * 365))} years` : 
+                  `${Math.floor((new Date().getTime() - new Date(employee.employmentDate).getTime()) / (1000 * 60 * 60 * 24 * 365))} years` : 
                   'Not specified'
                 }
               />
@@ -208,7 +200,7 @@ const EmployeeDetailsPage = () => {
                 <Section title="Skills & Expertise">
                   <div className="flex flex-wrap gap-2">
                     {(employee.skills || []).length > 0 ? (
-                      employee.skills.map((skill, index) => (
+                      (employee.skills || []).map((skill: string, index: number) => (
                         <span key={index} className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
                           {skill}
                         </span>
@@ -223,7 +215,7 @@ const EmployeeDetailsPage = () => {
                 <Section title="Education">
                   <div className="space-y-4">
                     {(employee.education || []).length > 0 ? (
-                      employee.education.map((edu, index) => (
+                      (employee.education || []).map((edu: { degree: string; institution: string; year: string }, index: number) => (
                         <div key={index} className="border-l-4 border-green-500 pl-4">
                           <div className="font-semibold text-gray-800">{edu.degree}</div>
                           <div className="text-gray-600">{edu.institution}</div>
@@ -261,7 +253,7 @@ const EmployeeDetailsPage = () => {
                 <Section title="Languages">
                   <div className="flex flex-wrap gap-2">
                     {(employee.languages || []).length > 0 ? (
-                      employee.languages.map((lang, index) => (
+                      (employee.languages || []).map((lang: string, index: number) => (
                         <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                           {lang}
                         </span>
@@ -318,7 +310,7 @@ const EmployeeDetailsPage = () => {
               <Section title="Career History">
                 <div className="space-y-4">
                   {(employee.previousRoles || []).length > 0 ? (
-                    employee.previousRoles.map((role, index) => (
+                    (employee.previousRoles || []).map((role: { jobTitle: string; department: string; startDate: string; endDate: string; responsibilities: string }, index: number) => (
                       <div key={index} className="border-l-4 border-blue-500 pl-4">
                         <div className="font-semibold text-gray-800">{role.jobTitle}</div>
                         <div className="text-gray-600">{role.department}</div>
@@ -354,7 +346,7 @@ const EmployeeDetailsPage = () => {
               <Section title="Additional Information">
                 <div className="flex flex-wrap gap-2 mb-4">
                   {(employee.interests || []).length > 0 ? (
-                    employee.interests.map((interest, index) => (
+                    (employee.interests || []).map((interest: string, index: number) => (
                       <span key={index} className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
                         {interest}
                       </span>
@@ -421,7 +413,7 @@ const EmployeeDetailsPage = () => {
               <Section title="Training & Development">
                 <div className="space-y-4">
                   {(employee.trainings || []).length > 0 ? (
-                    employee.trainings.map((training, index) => (
+                    (employee.trainings || []).map((training: { name: string; date: string; duration: string; status: string; certification?: string }, index: number) => (
                       <div key={index} className="border-l-4 border-indigo-500 pl-4 py-2">
                         <div className="flex justify-between items-start">
                           <div>
@@ -479,11 +471,6 @@ const EmployeeDetailsPage = () => {
         </div>
       </div>
     );
-  }
-
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
   }
 
   if (!employee) {
@@ -657,4 +644,4 @@ const formatDate = (dateString?: string) => {
   }
 };
 
-export default EmployeeDetailsPage;
+export default EmployeeDetails;

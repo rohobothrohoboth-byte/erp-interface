@@ -2,12 +2,12 @@ import { memo, useState, useCallback, lazy, Suspense, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { ProfileSkeleton } from '../components/profile/ProfileLoadState';
+import { ChangePasswordModal } from '../components/profile/ChangePasswordModal';
 import { profileKeys } from '../services/profile/profile.queries';
 import { profileApi } from '../services/profile/profile.api';
 
 const STALE = 5 * 60 * 1000;
 
-// Lazy-load each tab so only the active one's bundle is parsed on first render
 const OverviewTab    = lazy(() => import('../components/profile/OverviewTab').then(m => ({ default: m.OverviewTab })));
 const BasicInfoTab   = lazy(() => import('../components/profile/BasicInfoTab').then(m => ({ default: m.BasicInfoTab })));
 const BiographicalTab = lazy(() => import('../components/profile/BiographicalTab').then(m => ({ default: m.BiographicalTab })));
@@ -24,7 +24,6 @@ const TAB_MAP: Record<string, React.ComponentType> = {
   guarantor: GuarantorTab,
 };
 
-// Fallback shown while a lazy tab chunk loads (first visit only)
 const TabFallback = () => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
     {Array.from({ length: 4 }).map((_, i) => <ProfileSkeleton key={i} rows={3} />)}
@@ -33,9 +32,9 @@ const TabFallback = () => (
 
 function ProfilePage() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [pwdModalOpen, setPwdModalOpen] = useState(false);
   const queryClient = useQueryClient();
 
-  // Prefetch all profile data in parallel on mount — tabs get instant data
   useEffect(() => {
     const opts = (fn: () => Promise<unknown>, key: readonly unknown[]) =>
       ({ queryKey: key, queryFn: fn, staleTime: STALE });
@@ -50,8 +49,10 @@ function ProfilePage() {
     queryClient.prefetchQuery(opts(profileApi.getLeaveBalance, profileKeys.leaveBalance()));
   }, [queryClient]);
 
-  // Stable callback — ProfileHeader won't re-render when tab content changes
-  const handleTabChange = useCallback((id: string) => setActiveTab(id), []);
+  const handleTabChange = useCallback((id: string) => {
+    if (id === 'password') { setPwdModalOpen(true); return; }
+    setActiveTab(id);
+  }, []);
 
   const ActiveTab = TAB_MAP[activeTab] ?? OverviewTab;
 
@@ -61,6 +62,7 @@ function ProfilePage() {
       <Suspense fallback={<TabFallback />}>
         <ActiveTab />
       </Suspense>
+      <ChangePasswordModal open={pwdModalOpen} onClose={() => setPwdModalOpen(false)} />
     </div>
   );
 }

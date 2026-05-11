@@ -8,7 +8,7 @@ interface InlineEditCardProps {
   isSaving: boolean;
   onEdit: () => void;
   onCancel: () => void;
-  onSave: () => void;
+  onSave: () => void | Promise<void>;
   children: React.ReactNode;
   actionOverride?: React.ReactNode;
 }

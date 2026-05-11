@@ -68,23 +68,23 @@ export const BiographicalTab = memo(function BiographicalTab() {
 
   useEffect(() => {
     if (bio) {
-      setBioForm({ birthLocation: bio.birthLocation, motherFullName: bio.motherFullName, hasBirthCert: bio.hasBirthCertStr, hasMarriageCert: bio.hasMarriageCertStr });
+      setBioForm({ birthLocation: bio.birthLocation, motherFullName: bio.motherFullName, hasBirthCert: bio.hasBirthCert, hasMarriageCert: bio.hasMarriageCert });
       setFinForm({ tin: bio.tin, bankAccountNo: bio.bankAccountNo, pensionNumber: bio.pensionNumber });
     }
   }, [bio]);
 
   const handleSaveBio = useCallback(async () => {
-    await saveBiographical(bioForm);
+    await saveBiographical(bio?.id ?? '', bioForm);
     queryClient.invalidateQueries({ queryKey: profileKeys.bio() });
-  }, [bioForm, saveBiographical, queryClient]);
+  }, [bio?.id, bioForm, saveBiographical, queryClient]);
 
   const handleSaveFin = useCallback(async () => {
-    await saveFinancial(finForm);
+    await saveFinancial(bio?.id ?? '', finForm);
     queryClient.invalidateQueries({ queryKey: profileKeys.bio() });
-  }, [finForm, saveFinancial, queryClient]);
+  }, [bio?.id, finForm, saveFinancial, queryClient]);
 
   const openBioEdit = useCallback(() => {
-    setBioForm({ birthLocation: bio?.birthLocation ?? '', motherFullName: bio?.motherFullName ?? '', hasBirthCert: bio?.hasBirthCertStr ?? '', hasMarriageCert: bio?.hasMarriageCertStr ?? '' });
+    setBioForm({ birthLocation: bio?.birthLocation ?? '', motherFullName: bio?.motherFullName ?? '', hasBirthCert: bio?.hasBirthCert ?? '', hasMarriageCert: bio?.hasMarriageCert ?? '' });
     setEditingSection('biographical');
   }, [bio, setEditingSection]);
 
@@ -139,7 +139,7 @@ export const BiographicalTab = memo(function BiographicalTab() {
               )}
             </>
           ) : (
-            <Field label="Has Birth Certificate" value={bio?.hasBirthCertStr} />
+            <Field label="Has Birth Certificate" value={bio?.hasBirthCert} />
           )}
 
           {bioEditing ? (
@@ -160,7 +160,7 @@ export const BiographicalTab = memo(function BiographicalTab() {
               )}
             </>
           ) : (
-            <Field label="Has Marriage Certificate" value={bio?.hasMarriageCertStr} />
+            <Field label="Has Marriage Certificate" value={bio?.hasMarriageCert} />
           )}
         </div>
       </InlineEditCard>

@@ -59,7 +59,7 @@ export function BasicInfoTab() {
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Address & Contact</h3>
           </div>
           <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100">
-            {b.addressTypeStr}
+            {b.addressType}
           </span>
         </div>
         <Grid>
