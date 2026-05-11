@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { motion } from 'framer-motion';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
-import { YesNo, MaritalStat } from '../../../../../types/hr/enum';
+import { YesNo, MaritalStat, AddressType } from '../../../../../types/hr/enum';
 import type { Step2Dto } from '../../../../../types/hr/employee/empAddDto';
 import type { UUID } from 'crypto';
 
@@ -382,6 +384,253 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
         </div>
 
        
+
+        {/* Address Information Section */}
+        <div className="space-y-6">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-2 h-8 bg-gradient-to-b from-purple-400 to-purple-600 rounded-full"></div>
+            <h3 className="text-xl font-semibold text-gray-800">Address Information</h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Address Type */}
+            <div className="space-y-2">
+              <label htmlFor="addressType" className="block text-sm font-medium text-gray-700 mb-1">
+                Address Type
+              </label>
+              <Select
+                value={formik.values.addressType}
+                onValueChange={(value: AddressType) => formik.setFieldValue('addressType', value)}
+                disabled={loading}
+              >
+                <SelectTrigger className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200">
+                  <SelectValue placeholder="Select address type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(AddressType).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>{value}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Country */}
+            <div className="space-y-2">
+              <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
+                Country
+              </label>
+              <Input
+                id="country"
+                name="country"
+                value={formik.values.country}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="Ethiopia"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Region */}
+            <div className="space-y-2">
+              <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
+                Region
+              </label>
+              <Input
+                id="region"
+                name="region"
+                value={formik.values.region}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="Addis Ababa"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Subcity */}
+            <div className="space-y-2">
+              <label htmlFor="subcity" className="block text-sm font-medium text-gray-700 mb-1">
+                Subcity
+              </label>
+              <Input
+                id="subcity"
+                name="subcity"
+                value={formik.values.subcity}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="Kirkos"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Zone */}
+            <div className="space-y-2">
+              <label htmlFor="zone" className="block text-sm font-medium text-gray-700 mb-1">
+                Zone
+              </label>
+              <Input
+                id="zone"
+                name="zone"
+                value={formik.values.zone}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="Zone 3"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Woreda */}
+            <div className="space-y-2">
+              <label htmlFor="woreda" className="block text-sm font-medium text-gray-700 mb-1">
+                Woreda
+              </label>
+              <Input
+                id="woreda"
+                name="woreda"
+                value={formik.values.woreda}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="08"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Kebele */}
+            <div className="space-y-2">
+              <label htmlFor="kebele" className="block text-sm font-medium text-gray-700 mb-1">
+                Kebele
+              </label>
+              <Input
+                id="kebele"
+                name="kebele"
+                value={formik.values.kebele}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="09"
+                disabled={loading}
+              />
+            </div>
+
+            {/* House No */}
+            <div className="space-y-2">
+              <label htmlFor="houseNo" className="block text-sm font-medium text-gray-700 mb-1">
+                House Number
+              </label>
+              <Input
+                id="houseNo"
+                name="houseNo"
+                value={formik.values.houseNo}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="H-123"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Telephone */}
+            <div className="space-y-2">
+              <label htmlFor="telephone" className="block text-sm font-medium text-gray-700 mb-1">
+                Telephone
+              </label>
+              <div className="w-full border border-gray-300 rounded-md transition-colors duration-200">
+                <PhoneInput
+                  country={"et"}
+                  value={formik.values.telephone}
+                  onChange={(value) => formik.setFieldValue('telephone', value)}
+                  disabled={loading}
+                  inputProps={{ name: 'telephone', onBlur: formik.handleBlur, disabled: loading }}
+                  inputStyle={{
+                    width: '100%', height: '42px', paddingLeft: '48px',
+                    outline: 'none', fontSize: '14px', borderRadius: '6px', border: 'none',
+                    ...(loading && { backgroundColor: '#f3f4f6', cursor: 'not-allowed' }),
+                  }}
+                  buttonStyle={{
+                    border: 'none', borderRight: '1px solid #ccc',
+                    borderRadius: '6px 0 0 6px', backgroundColor: '#f8f9fa',
+                    ...(loading && { cursor: 'not-allowed' }),
+                  }}
+                  containerStyle={{ width: '100%' }}
+                  dropdownStyle={{ borderRadius: '6px' }}
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={formik.values.email}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="example@email.com"
+                disabled={loading}
+              />
+            </div>
+
+            {/* P.O. Box */}
+            <div className="space-y-2">
+              <label htmlFor="poBox" className="block text-sm font-medium text-gray-700 mb-1">
+                P.O. Box
+              </label>
+              <Input
+                id="poBox"
+                name="poBox"
+                value={formik.values.poBox}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="1234"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Fax */}
+            <div className="space-y-2">
+              <label htmlFor="fax" className="block text-sm font-medium text-gray-700 mb-1">
+                Fax
+              </label>
+              <Input
+                id="fax"
+                name="fax"
+                value={formik.values.fax}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="+251111223344"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Website */}
+            <div className="space-y-2">
+              <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
+                Website
+              </label>
+              <Input
+                id="website"
+                name="website"
+                value={formik.values.website}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                placeholder="https://example.com"
+                disabled={loading}
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Save Button */}
         <div className="flex justify-end pt-6">

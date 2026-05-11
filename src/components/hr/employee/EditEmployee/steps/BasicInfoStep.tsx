@@ -22,6 +22,10 @@ interface BasicInfoStepProps {
   onBack: () => void;
   loading?: boolean;
   isEditMode?: boolean;
+  initialDepartmentName?: string;
+  initialPositionName?: string;
+  initialBranchName?: string;
+  initialJobGradeName?: string;
 }
 
 const validationSchema = yup.object({
@@ -46,7 +50,11 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   data,
   onNext,
   loading = false,
-  isEditMode = false
+  isEditMode = false,
+  initialDepartmentName = '',
+  initialPositionName = '',
+  initialBranchName = '',
+  initialJobGradeName = '',
 }) => {
   const [branches, setBranches] = useState<NameListItem[]>([]);
   const [departments, setDepartments] = useState<NameListItem[]>([]);
@@ -98,6 +106,23 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       employmentNature: data.employmentNature || '' as EmpNature,
       workArrangement: data.workArrangement || '' as WorkArrangement,
       File: data.File || null,
+      // Extra Step1Dto fields (used in biographical step)
+      jgStepId: data.jgStepId || '' as UUID,
+      birthDate: data.birthDate || '',
+      maritalStatus: data.maritalStatus || '' as any,
+      addressType: data.addressType || '' as any,
+      country: data.country || '',
+      region: data.region || '',
+      subcity: data.subcity || '',
+      zone: data.zone,
+      woreda: data.woreda || '',
+      kebele: data.kebele,
+      houseNo: data.houseNo || '',
+      telephone: data.telephone || '',
+      poBox: data.poBox,
+      fax: data.fax,
+      email: data.email || '',
+      website: data.website,
     },
     validationSchema,
     enableReinitialize: true,
@@ -124,10 +149,12 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         const branchesData = await nameListService.getBranchComp();
         setBranches(branchesData);
 
-        // Auto-select first branch if none is selected and we have branches
         if (!formik.values.branchId && branchesData.length > 0) {
-          const firstBranchId = branchesData[0].id;
-          formik.setFieldValue('branchId', firstBranchId);
+          // Match by name if provided, otherwise first item
+          const match = initialBranchName
+            ? branchesData.find(b => b.name.toLowerCase() === initialBranchName.toLowerCase())
+            : null;
+          formik.setFieldValue('branchId', match ? match.id : branchesData[0].id);
         }
       } catch (error) {
         console.error('Error fetching branches:', error);
@@ -148,9 +175,12 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         const departmentsData = await nameListService.getAllDepartmentNames();
         setDepartments(departmentsData);
 
-        // Auto-select first department if none is selected and we have departments
         if (!formik.values.departmentId && departmentsData.length > 0) {
-          formik.setFieldValue('departmentId', departmentsData[0].id);
+          // Match by name if provided, otherwise first item
+          const match = initialDepartmentName
+            ? departmentsData.find(d => d.name.toLowerCase() === initialDepartmentName.toLowerCase())
+            : null;
+          formik.setFieldValue('departmentId', match ? match.id : departmentsData[0].id);
         }
       } catch (error) {
         console.error('Error fetching departments:', error);
@@ -173,16 +203,17 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
 
       try {
         setLoadingPositions(true);
-        // Clear current position selection when fetching new positions
         formik.setFieldValue('positionId', '');
 
-        // Use nameListService to get department positions
         const positionsData = await nameListService.getDepartmentPositions(formik.values.departmentId);
         setPositions(positionsData);
 
-        // Auto-select first position if we have positions
         if (positionsData.length > 0) {
-          formik.setFieldValue('positionId', positionsData[0].id);
+          // Match by name if provided, otherwise first item
+          const match = initialPositionName
+            ? positionsData.find(p => p.name.toLowerCase() === initialPositionName.toLowerCase())
+            : null;
+          formik.setFieldValue('positionId', match ? match.id : positionsData[0].id);
         }
       } catch (error) {
         console.error('Error fetching positions by department:', error);
@@ -205,7 +236,10 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         setJobGrades(jobGradesData);
 
         if (!formik.values.jobGradeId && jobGradesData.length > 0) {
-          formik.setFieldValue('jobGradeId', jobGradesData[0].id);
+          const match = initialJobGradeName
+            ? jobGradesData.find(j => j.name.toLowerCase() === initialJobGradeName.toLowerCase())
+            : null;
+          formik.setFieldValue('jobGradeId', match ? match.id : jobGradesData[0].id);
         }
       } catch (error) {
         console.error('Error fetching job grades:', error);
