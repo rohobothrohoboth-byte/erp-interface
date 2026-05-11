@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Plus, Pencil, Trash2, ChevronDown, Check, X, Loader2 } from 'lucide-react';
+import { Users, Plus, Pencil, Trash2, ChevronDown, Check, X, Loader2, AlertTriangle } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProfileFamily, profileKeys } from '../../services/profile/profile.queries';
 import { useProfileStore } from '../../stores/profile/profile.store';
@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Field } from './shared';
 import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
 import { Relation, Gender } from '../../types/hr/enum';
+import { Button } from '../ui/button';
 import type { ProFamilyList } from '../../types/profile/profile.types';
 
 const EMPTY_FAMILY = { firstName: '', middleName: '', lastName: '', nationality: '', gender: '', relation: '' };
@@ -83,6 +84,8 @@ export function FamilyTab() {
   const [addingNew, setAddingNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(EMPTY_FAMILY);
+  const [deleteTarget, setDeleteTarget] = useState<ProFamilyList | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const members = data?.family ?? [];
 
@@ -131,8 +134,14 @@ export function FamilyTab() {
   };
 
   const handleDelete = async (id: string) => {
-    await deleteFamily(id);
-    queryClient.invalidateQueries({ queryKey: profileKeys.family() });
+    setDeleting(true);
+    try {
+      await deleteFamily(id);
+      await queryClient.invalidateQueries({ queryKey: profileKeys.family() });
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
+    }
   };
 
   const FormActions = ({ onCancel, onSave }: { onCancel: () => void; onSave: () => void }) => (
@@ -152,6 +161,7 @@ export function FamilyTab() {
   if (error) return <ProfileError message={error.message} />;
 
   return (
+    <>
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
@@ -196,7 +206,7 @@ export function FamilyTab() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-800">{fullName}</p>
-                    <p className="text-xs text-gray-400">{m.relation}{m.gender ? ` · ${m.gender}` : ''}</p>
+                    <p className="text-xs text-gray-400">{m.relation}</p>
                   </div>
                 </button>
                 <div className="flex items-center gap-1">
@@ -204,7 +214,7 @@ export function FamilyTab() {
                     className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
                     <Pencil className="w-3 h-3" />Edit
                   </button>
-                  <button onClick={() => handleDelete(m.id)}
+                  <button onClick={() => setDeleteTarget(m)}
                     className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
                     <Trash2 className="w-3 h-3" />Delete
                   </button>
@@ -237,5 +247,44 @@ export function FamilyTab() {
         })}
       </div>
     </div>
+
+    {/* Delete confirmation modal */}
+    {deleteTarget && (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-sm">
+          <div className="p-6 text-center">
+            <div className="flex items-center justify-center text-red-500 mb-4">
+              <AlertTriangle size={48} />
+            </div>
+            <p className="text-lg font-medium text-red-600">
+              Are you sure you want to delete this family member?
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              <span className="font-semibold">{getFullName(deleteTarget)}</span> will be permanently removed.
+            </p>
+            <p className="text-sm text-red-500 mt-1">This action cannot be undone.</p>
+          </div>
+          <div className="border-t px-6 py-3 flex justify-center gap-2">
+            <Button
+              variant="destructive"
+              onClick={() => deleteTarget && handleDelete(deleteTarget.id)}
+              disabled={deleting}
+              className="cursor-pointer px-6"
+            >
+              {deleting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Deleting...</> : 'Yes, Delete!'}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleting}
+              className="px-6"
+            >
+              No, Keep It.
+            </Button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

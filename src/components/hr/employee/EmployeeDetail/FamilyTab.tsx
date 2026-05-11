@@ -42,7 +42,7 @@ export const FamilyTab = memo(function FamilyTab({ employeeId }: { employeeId: s
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-800">{fullName}</p>
-                      <p className="text-xs text-gray-400">{m.relation}{m.gender ? ` - ${m.gender}` : ''}</p>
+                      <p className="text-xs text-gray-400">{m.relation}</p>
                     </div>
                   </div>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />

@@ -114,8 +114,13 @@ export const profileApi = {
   addFamily: (dto: EmpFamilyAddDto): Promise<void> =>
     modPost('EmpFamilyAdd', dto),
 
-  updateFamily: (id: string, dto: EmpFamilyModDto): Promise<void> =>
-    mod(`EmpFamilyMod/${id}`, dto),
+  updateFamily: (id: string, dto: EmpFamilyModDto): Promise<void> => {
+    try {
+      return api.put(`${MOD_BASE}/EmpFamilyMod/${id}`, dto).then(() => undefined);
+    } catch (e) {
+      throw new Error(extractError(e));
+    }
+  },
 
   deleteFamily: (id: string): Promise<void> =>
     modDel(`EmpFamilyDel/${id}`),

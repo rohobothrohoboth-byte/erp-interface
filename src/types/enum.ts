@@ -164,7 +164,8 @@ export const Relation = {
   "8": "Husband",
   "9": "Mother",
   "10": "Child",
-  "11": "Unknown",
+  "11": "Friend",
+   "12": "Unknown",
 } as const;
 
 export type Relation =
