@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { motion } from 'framer-motion';
@@ -10,7 +10,7 @@ import type { Step1Dto } from '../../../../../types/hr/employee/empAddDto';
 import type { UUID } from 'crypto';
 import { amharicRegex } from '../../../../../utils/amharic-regex';
 import List from '../../../../List/list';
-import { nameListService } from '../../../../../services/List/HrmmNameListService';
+import { hrmmNamesApi } from '../../../../../services/List/hrmmNames/hrmmNames.api';
 import type { ListItem } from '../../../../../types/List/list';
 import type { NameListDto } from '../../../../../types/hr/NameListDto';
 import type { NameListItem } from '../../../../../types/NameList/nameList';
@@ -146,7 +146,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
     const fetchBranches = async () => {
       try {
         setLoadingBranches(true);
-        const branchesData = await nameListService.getBranchComp();
+        const branchesData = await hrmmNamesApi.getBranchComp();
         setBranches(branchesData);
 
         if (!formik.values.branchId && branchesData.length > 0) {
@@ -172,7 +172,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
     const fetchAllDepartments = async () => {
       try {
         setLoadingDepartments(true);
-        const departmentsData = await nameListService.getAllDepartmentNames();
+        const departmentsData = await hrmmNamesApi.getAllDepartmentNames();
         setDepartments(departmentsData);
 
         if (!formik.values.departmentId && departmentsData.length > 0) {
@@ -205,7 +205,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         setLoadingPositions(true);
         formik.setFieldValue('positionId', '');
 
-        const positionsData = await nameListService.getDepartmentPositions(formik.values.departmentId);
+        const positionsData = await hrmmNamesApi.getDepartmentPositions(formik.values.departmentId);
         setPositions(positionsData);
 
         if (positionsData.length > 0) {
@@ -232,7 +232,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
     const fetchJobGrades = async () => {
       try {
         setLoadingJobGrades(true);
-        const jobGradesData = await nameListService.getAllJobGradeNames();
+        const jobGradesData = await hrmmNamesApi.getAllJobGradeNames();
         setJobGrades(jobGradesData);
 
         if (!formik.values.jobGradeId && jobGradesData.length > 0) {

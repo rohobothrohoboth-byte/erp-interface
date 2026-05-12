@@ -1,5 +1,5 @@
 import React from "react";
-import { useModule } from "../ModuleContext";
+import { useModuleStore } from "../stores/module.store";
 import { useNavigate } from "react-router";
 import {
   Users,
@@ -45,7 +45,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
   moduleKey,
 }) => {
   const navigate = useNavigate();
-  const { setActiveModule } = useModule();
+  const setActiveModule = useModuleStore((s) => s.setActiveModule);
 
   const handleClick = () => {
     setActiveModule(moduleKey); // ✅ FIXED

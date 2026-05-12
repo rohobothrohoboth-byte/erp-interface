@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
 import { Plus, BookOpen, Award, Clock, FileText, Users, Calendar, BarChart2, CheckCircle, ChevronRight, ArrowRight, Download } from 'lucide-react';
-import { useModule } from '../../../ModuleContext';
+import { useModuleStore } from '../../../stores/module.store';
 import { Badge } from '../../../components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../../components/ui/tabs';
 import { useState, useEffect } from 'react';
@@ -1059,7 +1059,7 @@ const statCardVariants = {
 };
 
 const Training = () => {
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
   
   const stats: Stats = {
     totalCourses: courseData.length,

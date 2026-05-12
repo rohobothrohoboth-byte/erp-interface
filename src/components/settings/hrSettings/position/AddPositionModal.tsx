@@ -8,7 +8,7 @@ import List from "../../../List/list";
 import type { PositionAddDto } from "../../../../types/hr/position";
 import type { NameListDto, UUID } from "../../../../types/hr/NameListDto";
 import type { ListItem } from "../../../../types/List/list";
-import { departmentService } from "../../../../services/core/deptservice";
+import { departmentApi } from "../../../../services/core/department/dept.api";
 import { amharicRegex } from "../../../../utils/amharic-regex";
 
 interface AddPositionModalProps {
@@ -56,7 +56,7 @@ const AddPositionModal: React.FC<AddPositionModalProps> = ({
 
       setLoading(true);
       try {
-        const depts = await departmentService.getAllDepartments();
+        const depts = await departmentApi.getAllDepartments();
         setDepartments(depts);
 
         // Set first department as default if none selected

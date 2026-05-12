@@ -6,7 +6,7 @@ import type { AddPeriodDto, UUID } from "../../../types/core/period";
 import toast from "react-hot-toast";
 import List from "../../List/list";
 import type { ListItem } from "../../../types/List/list";
-import { fiscalYearService } from "../../../services/core/fiscservice";
+import { fiscalYearApi } from "../../../services/core/fiscalyear/fisc.api";
 import { Quarter } from "../../../types/core/enum";
 import {
   Select,
@@ -52,7 +52,7 @@ export const AddPeriodModal = ({
   const fetchFiscalYears = async () => {
     try {
       setLoadingFiscalYears(true);
-      const fiscalYearsData = await fiscalYearService.getAllFiscalYears();
+      const fiscalYearsData = await fiscalYearApi.getAllFiscalYears();
       const fiscalYearListItems: ListItem[] = fiscalYearsData.map((fy) => ({
         id: fy.id,
         name: fy.name,

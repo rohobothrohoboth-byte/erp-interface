@@ -15,7 +15,7 @@ import {
   useDeleteLeavePolicyConfig,
   useChangeStatusLeavePolicyConfig,
 } from "../../../../../../services/core/settings/ModHrm/LeavePolicyConfigService/leavePolicyConfig.queries";
-import { ActiveFiscalYear } from "../../../../../../services/core/fyNameList";
+import { useActiveFiscalYearNames } from "../../../../../../services/core/fiscalyear/fiscNames.queries";
 
 interface LeavePolicyConfigHistorySectionProps {
   leavePolicyId: UUID;
@@ -123,8 +123,7 @@ const LeavePolicyConfigHistorySection: FC<
     }
   };
 
-   const { getActiveFiscalYear } = ActiveFiscalYear();
-        const fy = getActiveFiscalYear.data ?? [];
+   const { data: fy = [] } = useActiveFiscalYearNames();
 
   return (
     <div className="space-y-6">

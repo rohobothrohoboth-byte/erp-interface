@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   X,
@@ -18,7 +18,7 @@ import type {
   UUID,
 } from "../../../../../types/hr/position";
 import type { ListItem } from "../../../../../types/List/list";
-import { nameListService } from "../../../../../services/List/HrmmNameListService";
+import { hrmmNamesApi } from "../../../../../services/List/hrmmNames/hrmmNames.api";
 import { EducationLevel } from "../../../../../types/enum";
 import EnumSelect from "../../../../ui/enumSelect";
 
@@ -74,7 +74,7 @@ const PositionEducationModal: React.FC<PositionEducationModalProps> = ({
       if (!isOpen) return;
       setLoadingQuals(true);
       try {
-        const qualNamesData = await nameListService.getAllEducationQualNames();
+        const qualNamesData = await hrmmNamesApi.getAllEducationQualNames();
         setEducationQualNames(qualNamesData);
 
         if (

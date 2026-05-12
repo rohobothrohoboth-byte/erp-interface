@@ -1,7 +1,7 @@
-import { useModule } from '../../../ModuleContext';
+import { useModuleStore } from '../../../stores/module.store';
 
 const TrainingHeader = () => {
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
   
   return (
     <section className="flex flex-col gap-4">

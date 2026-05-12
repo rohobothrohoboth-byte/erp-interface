@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+﻿import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import type { UUID } from "../../../../../../types/core/Settings/PolicyRuleCondtion";
@@ -9,7 +9,7 @@ import {
   PolicyGender,
 } from "../../../../../../types/core/enum";
 import type { NameListItem } from "../../../../../../types/NameList/nameList";
-import { nameListService } from "../../../../../../services/List/HrmmNameListService";
+import { hrmmNamesApi } from "../../../../../../services/List/hrmmNames/hrmmNames.api";
 
 interface RuleConditionModalProps {
   isOpen: boolean;
@@ -56,7 +56,7 @@ const RuleConditionModal: React.FC<RuleConditionModalProps> = ({
       setCurrentPage(1);
        const fetchJobGrades = async () => {
               try {
-                const grades = await nameListService.getAllJobGradeNames();
+                const grades = await hrmmNamesApi.getAllJobGradeNames();
                 setJobGrades(grades);
               } catch (error) {
                 console.error("Failed to fetch job grades:", error);

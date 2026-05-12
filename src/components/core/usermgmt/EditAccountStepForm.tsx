@@ -12,9 +12,9 @@ import type {
   NameList,
 } from "../../../types/auth/ModPerMenu";
 import type { MenuPerApiListDto } from "../../../types/auth/MenuPerApi";
-import { perMenuService } from "../../../services/auth/perMenuService";
-import * as MenuPerApiService from "../../../services/auth/menuPerApiService";
-import { usermgmtService } from "../../../services/core/usermgtservice";
+import { perMenuApi } from "../../../services/auth/perMenu/perMenu.api";
+import { menuPerApiApi } from "../../../services/auth/menuPerApi/menuPerApi.api";
+import { usermgmtApi } from "../../../services/core/usermgmt/usermgmt.api";
 import toast from "react-hot-toast";
 import { Button } from "../../ui/button";
 import DeleteAccountModal from "./DeleteAccountModal";
@@ -127,7 +127,7 @@ export const EditAccountStepForm: React.FC<EditAccountStepFormProps> = ({
 
           // Fetch filtered permissions for the user based on selected modules
           const filteredPermissions =
-            await perMenuService.getFilteredPermissionsForUser(
+            await perMenuApi.getFilteredPermissionsForUser(
               userId as UUID,
               selectedModuleIds,
             );
@@ -136,7 +136,7 @@ export const EditAccountStepForm: React.FC<EditAccountStepFormProps> = ({
           setPermissionsData(filteredPermissions);
 
           // Flatten the permissions for easier display
-          const flattened = await perMenuService.getFlattenedPermissionsForUser(
+          const flattened = await perMenuApi.getFlattenedPermissionsForUser(
             userId as UUID,
             selectedModuleIds,
           );
@@ -194,7 +194,7 @@ export const EditAccountStepForm: React.FC<EditAccountStepFormProps> = ({
 
           // Fetch filtered API permissions for the user based on selected menus
           const filteredApiPermissions =
-            await MenuPerApiService.menuPerApiService.getFilteredPerApisForUser(
+            await menuPerApiApi.getFilteredPerApisForUser(
               userId as UUID,
               selectedMenuIds,
             );
@@ -207,7 +207,7 @@ export const EditAccountStepForm: React.FC<EditAccountStepFormProps> = ({
 
           // Flatten the API permissions for easier display
           const flattened =
-            await MenuPerApiService.menuPerApiService.getFlattenedPerApisForUser(
+            await menuPerApiApi.getFlattenedPerApisForUser(
               userId as UUID,
               selectedMenuIds,
             );
@@ -322,7 +322,7 @@ export const EditAccountStepForm: React.FC<EditAccountStepFormProps> = ({
     setError(null);
 
     try {
-      await usermgmtService.deleteAccount(userId as UUID);
+      await usermgmtApi.deleteAccount(userId as UUID);
 
       toast.success("Account deleted successfully!");
 

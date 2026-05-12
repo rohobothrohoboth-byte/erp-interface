@@ -9,9 +9,9 @@ import type { EmpSearchRes } from '../../../types/core/EmpSearchRes';
 import type { RegStep1, RegStep2, RegStep3, UUID } from '../../../types/auth/registration';
 import type { ModPerMenuListDto, NameList } from '../../../types/auth/ModPerMenu';
 import type { MenuPerApiListDto } from '../../../types/auth/MenuPerApi';
-import { registrationService } from '../../../services/auth/registerservice';
-import { perMenuService } from '../../../services/auth/perMenuService';
-import * as MenuPerApiService from '../../../services/auth/menuPerApiService';
+import { registerApi } from '../../../services/auth/register/register.api';
+import { perMenuApi } from '../../../services/auth/perMenu/perMenu.api';
+import { menuPerApiApi } from '../../../services/auth/menuPerApi/menuPerApi.api';
 import toast from 'react-hot-toast';
 
 const steps = [
@@ -101,7 +101,7 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({
           const selectedModuleIds = formData.step1.modules.map(id => id as UUID);
 
           // Fetch filtered permissions for the user based on selected modules
-          const filteredPermissions = await perMenuService.getFilteredPermissionsForUser(
+          const filteredPermissions = await perMenuApi.getFilteredPermissionsForUser(
             userId as UUID,
             selectedModuleIds
           );
@@ -110,7 +110,7 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({
           setPermissionsData(filteredPermissions);
 
           // Flatten the permissions for easier display
-          const flattened = await perMenuService.getFlattenedPermissionsForUser(
+          const flattened = await perMenuApi.getFlattenedPermissionsForUser(
             userId as UUID,
             selectedModuleIds
           );
@@ -161,7 +161,7 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({
           const selectedMenuIds = formData.step2.permissions.map(id => id as UUID);
 
           // Fetch filtered API permissions for the user based on selected menus
-          const filteredApiPermissions = await MenuPerApiService.menuPerApiService.getFilteredPerApisForUser(
+          const filteredApiPermissions = await menuPerApiApi.getFilteredPerApisForUser(
             userId as UUID,
             selectedMenuIds
           );
@@ -170,7 +170,7 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({
           setApiPermissionsData(filteredApiPermissions);
 
           // Flatten the API permissions for easier display
-          const flattened = await MenuPerApiService.menuPerApiService.getFlattenedPerApisForUser(
+          const flattened = await menuPerApiApi.getFlattenedPerApisForUser(
             userId as UUID,
             selectedMenuIds
           );
@@ -325,7 +325,7 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({
       console.log('Calling registration step 1:', regStep1Data);
 
       // Call registration service step 1
-      const result = await registrationService.step1(regStep1Data);
+      const result = await registerApi.step1(regStep1Data);
 
       console.log('Registration step 1 completed:', result);
 
@@ -392,7 +392,7 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({
       console.log('Calling registration step 2:', { userId, ...regStep2Data });
 
       // Call registration service step 2
-      const result = await registrationService.step2({
+      const result = await registerApi.step2({
         userId,
         ...regStep2Data
       });
@@ -459,7 +459,7 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({
       console.log('Calling registration step 3:', { userId, ...regStep3Data });
 
       // Call registration service step 3
-      const result = await registrationService.step3({
+      const result = await registerApi.step3({
         userId,
         ...regStep3Data
       });

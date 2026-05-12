@@ -8,7 +8,7 @@ import {
   CheckCircle2, Clock, AlertCircle, BarChart3, BookOpen, Lightbulb,
   MoreVertical, ArrowUpRight,
 } from 'lucide-react';
-import { useModule } from '../../ModuleContext';
+import { useModuleStore } from '../../stores/module.store';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -54,7 +54,7 @@ const statusColor: Record<string, string> = {
 };
 
 const PlanDevDashboard = () => {
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
 
   const stats = [
     { label: 'Active Plans', value: '12', icon: <ClipboardList className="h-4 w-4 text-indigo-600" />, desc: 'Currently in progress' },

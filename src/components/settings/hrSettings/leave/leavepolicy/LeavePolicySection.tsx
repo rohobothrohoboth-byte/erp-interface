@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import type {
   LeavePolicyListDto,
@@ -14,7 +14,7 @@ import EditLeavePolicyModal from "./EditLeavePolicyModal";
 import DeleteLeavePolicyModal from "./DeleteLeavePolicyModal";
 import LeavePolicyTable from "./LeavePolicyTable";
 import { leavePolicyService } from "../../../../../services/core/settings/ModHrm/LeavePolicyService";
-import { hrmLeaveList } from "../../../../../services/List/HrmLeaveList";
+import { hrmLeaveListApi } from "../../../../../services/List/hrmLeave/hrmLeaveList.api";
 import AssignPolicyConfirmationModal from "./AssignPolicyConfirmationModal";
 
 const LeavePolicySection: React.FC = () => {
@@ -43,7 +43,7 @@ const LeavePolicySection: React.FC = () => {
         setLoading(true);
         const [policies, leaveTypes] = await Promise.all([
           leavePolicyService.getAllLeavePolicies(),
-          hrmLeaveList.getAllLeaveTypes(),
+          hrmLeaveListApi.getAllLeaveTypes(),
         ]);
         setLeavePolicies(policies);
         setLeaveTypeOptions(

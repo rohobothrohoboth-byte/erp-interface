@@ -15,7 +15,7 @@ import {
   useDeletePolicyAssignmentRule,
   useChangeStatusPolicyAssignmentRule,
 } from "../../../../../../services/core/settings/ModHrm/LeavePolicyAssignmentRule/policyAssignmentRule.query";
-import { ActiveFiscalYear } from "../../../../../../services/core/fyNameList";
+import { useActiveFiscalYearNames } from "../../../../../../services/core/fiscalyear/fiscNames.queries";
 import RuleConditionModal from "./RuleCondtionsModal";
 
 interface PolicyAssignmentRuleHistorySectionProps {
@@ -137,8 +137,7 @@ const PolicyAssignmentRuleHistorySection: FC<
     setConditionModalOpen(false);
   };
 
-  const { getActiveFiscalYear } = ActiveFiscalYear();
-  const fy = getActiveFiscalYear.data ?? [];
+  const { data: fy = [] } = useActiveFiscalYearNames();
 
   return (
     <div className="space-y-6">

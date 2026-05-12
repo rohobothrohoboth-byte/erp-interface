@@ -21,7 +21,7 @@ import SupportOverview from "../../components/crm/SupportOverview";
 import ActivityOverview from "../../components/crm/ActivityOverview";
 import AnalyticsOverview from "../../components/crm/AnalyticsOverview";
 import WorkflowDiagram from "../../components/crm/WorkflowDiagram";
-import { useModule } from "../../ModuleContext";
+import { useModuleStore } from "../../stores/module.store";
 import {
   Card,
   CardContent,
@@ -252,7 +252,7 @@ const SimpleWorkflowVisualization = () => {
 };
 
 export default function CRMDashboard() {
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
 
   // Orange color variants
   const cardColors = [

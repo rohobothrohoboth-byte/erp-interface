@@ -7,12 +7,12 @@ import CandidateStageChart from "../../../components/hr/recrutement/CandidateSta
 import DepartmentApplicationChart from "../../../components/hr/recrutement/DepartmentApplicationChart";
 import CandidateTable from "../../../components/hr/recrutement/CandidateTable";
 import { Users, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { useModule } from "../../../ModuleContext";
+import { useModuleStore } from "../../../stores/module.store";
 import type { Candidate } from '../../../types/candidate';
 
 const CandidatePipeline = () => {
     // All hooks at the top
-  const { setActiveModule } = useModule();
+  const setActiveModule = useModuleStore((s) => s.setActiveModule);
   const storedModule = sessionStorage.getItem('currentModule');
   
   useEffect(() => {

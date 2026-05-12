@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { BasicInfoStep } from '../../../hr/employee/AddEmployee/steps/BasicInfoStep';
 import { BasicInfoReviewStep } from './InfoReviewStep';
 import { AddEmployeeStepHeader } from './AddUserEmployeeHeader';
-import { usermgmtService } from '../../../../services/core/usermgtservice';
+import { usermgmtApi } from '../../../../services/core/usermgmt/usermgmt.api';
 import { useEmpAddStore } from '../../../../stores/hr/empAdd.store';
 import type { Step1Dto, EmpAddPrintDto } from '../../../../types/hr/employee/empAddDto';
 import type { UUID } from 'crypto';
@@ -61,9 +61,9 @@ export const AddUserStepForm: React.FC<AddUserStepFormProps> = ({
         reader.onloadend = () => setPhotoData(reader.result as string);
         reader.readAsDataURL(data.File);
       }
-      const result = await usermgmtService.addEmployeeStep1(data);
+      const result = await usermgmtApi.addEmployeeStep1(data);
       setAdminEmployeeId(result.id);
-      const step2Response = await usermgmtService.getEmployeeStep2Data(result.id);
+      const step2Response = await usermgmtApi.getEmployeeStep2Data(result.id);
       setStep2Data(step2Response);
       goToStep(2);
     } catch (err: any) {

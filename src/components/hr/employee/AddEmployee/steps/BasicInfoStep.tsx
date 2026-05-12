@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import { motion } from 'framer-motion';
 import PhoneInput from 'react-phone-input-2';
@@ -10,7 +10,7 @@ import { Gender, EmpType, EmpNature, WorkArrangement, MaritalStat, AddressType }
 import type { Step1Dto, UUID } from '../../../../../types/hr/employee/empAddDto';
 import { amharicRegex } from '../../../../../utils/amharic-regex';
 import List from '../../../../List/list';
-import { nameListService } from '../../../../../services/List/HrmmNameListService';
+import { hrmmNamesApi } from '../../../../../services/List/hrmmNames/hrmmNames.api';
 import type { ListItem } from '../../../../../types/List/list';
 import type { NameListDto } from '../../../../../types/hr/NameListDto';
 import type { NameListItem } from '../../../../../types/NameList/nameList';
@@ -122,7 +122,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
     const fetchBranches = async () => {
       try {
         setLoadingBranches(true);
-        const branchesData = await nameListService.getBranchComp();
+        const branchesData = await hrmmNamesApi.getBranchComp();
         setBranches(branchesData);
 
         // Auto-select first branch if none is selected and we have branches
@@ -146,7 +146,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
     const fetchAllDepartments = async () => {
       try {
         setLoadingDepartments(true);
-        const departmentsData = await nameListService.getAllDepartmentNames();
+        const departmentsData = await hrmmNamesApi.getAllDepartmentNames();
         setDepartments(departmentsData);
 
         // Auto-select first department if none is selected and we have departments
@@ -178,7 +178,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
         formik.setFieldValue('positionId', '');
 
         // Use nameListService to get department positions
-        const positionsData = await nameListService.getDepartmentPositions(formik.values.departmentId);
+        const positionsData = await hrmmNamesApi.getDepartmentPositions(formik.values.departmentId);
         setPositions(positionsData);
 
         // Auto-select first position if we have positions
@@ -201,7 +201,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
     const fetchJobGrades = async () => {
       try {
         setLoadingJobGrades(true);
-        const jobGradesData = await nameListService.getAllJobGradeNames();
+        const jobGradesData = await hrmmNamesApi.getAllJobGradeNames();
         setJobGrades(jobGradesData);
 
         if (!formik.values.jobGradeId && jobGradesData.length > 0) {

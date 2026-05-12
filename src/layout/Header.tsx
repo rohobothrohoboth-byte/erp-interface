@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, HelpCircle, Menu } from 'lucide-react';
-import { useModule } from '../ModuleContext';
+import { useModuleStore } from '../stores/module.store';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuItem, DropdownMenuSeparator } from '../components/ui/dropdown-menu';
 import { useNavigate } from "react-router";
 import { useAuthStore } from '../stores/auth.store';
@@ -22,7 +22,7 @@ const MOCK_NOTIFICATIONS = [
 ];
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, isMobile }) => {
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
   const navigate = useNavigate();
   const userName = useAuthStore((s) => s.userName);
   const logout = useAuthStore((s) => s.logout);

@@ -9,7 +9,7 @@ import {
   CheckCircle2, AlertCircle, BarChart3, ListTodo, Milestone,
   MoreVertical, Plus, TrendingUp,
 } from 'lucide-react';
-import { useModule } from '../../ModuleContext';
+import { useModuleStore } from '../../stores/module.store';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -57,7 +57,7 @@ const statusColor: Record<string, string> = {
 };
 
 const ProjectManagementDashboard = () => {
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
 
   const stats = [
     { label: 'Active Projects', value: '8', icon: <BriefcaseBusiness className="h-4 w-4 text-yellow-600" />, desc: 'Currently running' },

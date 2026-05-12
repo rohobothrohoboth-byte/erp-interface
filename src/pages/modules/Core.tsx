@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Plus, RefreshCw, Building, Users, Calendar, Layers, User, MapPin, Users as UsersIcon, Clock, ChevronRight, ArrowRight } from 'lucide-react';
-import { useModule } from '../../ModuleContext';
+import { useModuleStore } from '../../stores/module.store';
 import { Badge } from '../../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
 
@@ -423,7 +423,7 @@ const userData: User[] = [
 ];
 
 const CoreDashboard = () => {
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
   
   const stats: Stats = {
     branches: branchData.length,

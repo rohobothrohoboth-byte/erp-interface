@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import AnnualLeaveSearchFilters from '../../../components/hr/annualLeave/AnnualLeaveSerchFilter';
 import LeaveTable from '../../../components/hr/annualLeave/LeaveTable';
 import AddLeaveRequestModal from '../../../components/hr/annualLeave/AddLeaveRequestModal';
 import EditLeaveReqModal from '../../../components/hr/annualLeave/EditLeaveReqModal';
 import DeleteLeaveReqModal from '../../../components/hr/annualLeave/DeleteLeaveReqModal';
-import { leaveService } from '../../../services/hr/leaveservice';
-import { hrmLeaveList } from '../../../services/List/HrmLeaveList'; 
+import { leaveApi } from '../../../services/hr/leave/leave.api';
+import { hrmLeaveListApi } from '../../../services/List/hrmLeave/hrmLeaveList.api'; 
 import type { LeaveRequestListDto, LeaveRequestAddDto, LeaveRequestModDto } from '../../../types/hr/leaverequest';
 import type { ListItem } from '../../../types/List/list'; 
 import type { UUID } from 'crypto';
@@ -30,7 +30,7 @@ const LeaveList = () => {
   const fetchLeaveTypes = async () => {
     try {
       setLeaveTypesLoading(true);
-      const types = await hrmLeaveList.getAllLeaveTypes();
+      const types = await hrmLeaveListApi.getAllLeaveTypes();
       setLeaveTypes(types);
     } catch (error: any) {
       toast.error(error.message || 'Failed to fetch leave types');
@@ -45,7 +45,7 @@ const LeaveList = () => {
   const fetchLeaveRequests = async () => {
     try {
       setLoading(true);
-      const leaveRequests = await leaveService.getMyLeaveRequests();
+      const leaveRequests = await leaveApi.getMyLeaveRequests();
       setLeaves(leaveRequests);
     } catch (error: any) {
       toast.error(error.message || 'Failed to fetch leave requests');
@@ -117,7 +117,7 @@ const LeaveList = () => {
   const handleAddLeave = async (leaveData: LeaveRequestAddDto): Promise<any> => {
     setActionLoading(true);
     try {
-      const result = await leaveService.addLeaveRequest(leaveData); // Use leaveService
+      const result = await leaveApi.addLeaveRequest(leaveData); // Use leaveService
       
       // Refresh the list
       await fetchLeaveRequests();
@@ -138,7 +138,7 @@ const LeaveList = () => {
   const handleEditLeave = async (leaveData: LeaveRequestModDto): Promise<any> => {
     setActionLoading(true);
     try {
-      const result = await leaveService.updateLeaveRequest(leaveData); 
+      const result = await leaveApi.updateLeaveRequest(leaveData); 
       
       await fetchLeaveRequests();
       
@@ -158,7 +158,7 @@ const LeaveList = () => {
   const handleConfirmDelete = async (leaveId: UUID): Promise<any> => {
     setActionLoading(true);
     try {
-      await leaveService.deleteLeaveRequest(leaveId); // Use leaveService
+      await leaveApi.deleteLeaveRequest(leaveId); // Use leaveService
       
       // Update local state immediately for better UX
       setLeaves(prevLeaves => prevLeaves.filter(leave => leave.id !== leaveId));

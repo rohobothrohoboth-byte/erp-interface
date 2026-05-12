@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { EditAccountStepForm } from "../../../components/core/usermgmt/EditAccountStepForm";
-import { usermgmtService } from "../../../services/core/usermgtservice";
+import { usermgmtApi } from "../../../services/core/usermgmt/usermgmt.api";
 
 export default function EditAccountPage() {
   const { empId } = useParams();
@@ -13,11 +13,11 @@ export default function EditAccountPage() {
   useEffect(() => {
     if (!empId) return;
 
-   usermgmtService.getAllEmployees().then((list) => {
+   usermgmtApi.getAllEmployees().then((list) => {
      const emp = list.find((e) => e.id === empId);
      setEmployee(emp);
    });
-    usermgmtService.getAccountData(empId).then(setAccountData);
+    usermgmtApi.getAccountData(empId).then(setAccountData);
   }, [empId]);
 
   if (!employee || !accountData) return <div>Loading...</div>;

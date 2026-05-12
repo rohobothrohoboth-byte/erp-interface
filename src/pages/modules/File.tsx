@@ -23,7 +23,7 @@ import {
   Trash2,
   MoreVertical
 } from 'lucide-react';
-import { useModule } from '../../ModuleContext';
+import { useModuleStore } from '../../stores/module.store';
 import { Badge } from '../../components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar';
 import { Progress } from '../../components/ui/progress';
@@ -337,7 +337,7 @@ const PermissionsOverview: React.FC<PermissionsOverviewProps> = ({ permissions }
 
 // Main Component
 const FileDashboard = () => {
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
   
   const stats: Stats = {
     totalFiles: documentData.length + 156 + 89 + 67 + 42,

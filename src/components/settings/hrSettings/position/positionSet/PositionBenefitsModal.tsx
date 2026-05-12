@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+﻿import React, { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { X, Award, Loader2 } from "lucide-react";
 import { Button } from "../../../../ui/button";
@@ -15,7 +15,7 @@ import type {
   UUID,
 } from "../../../../../types/hr/position";
 import type { NameListItem } from "../../../../../types/NameList/nameList";
-import { nameListService } from "../../../../../services/List/HrmmNameListService";
+import { hrmmNamesApi } from "../../../../../services/List/hrmmNames/hrmmNames.api";
 
 interface PositionBenefitsModalProps {
   isOpen: boolean;
@@ -48,7 +48,7 @@ const PositionBenefitsModal: React.FC<PositionBenefitsModalProps> = ({
 
       setLoading(true);
       try {
-        const settings = await nameListService.getAllBenefitSetNames();
+        const settings = await hrmmNamesApi.getAllBenefitSetNames();
         setBenefitSettings(settings);
 
         if (settings.length > 0) {

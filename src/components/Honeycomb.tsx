@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import './Honeycomb.css';
-import { useModule } from '../ModuleContext';
+import { useModuleStore } from '../stores/module.store';
 
 const modules = [
   { label: "HR", color: "group-hover:from-green-400 group-hover:to-green-600", path: "/hr" },
@@ -28,7 +28,7 @@ interface HoneycombProps {
 
 export default function Honeycomb({ onModuleSelect }: HoneycombProps) {
   const navigate = useNavigate();
-  const { setActiveModule } = useModule();
+  const setActiveModule = useModuleStore((s) => s.setActiveModule);
 
   const handleModuleClick = (module: typeof modules[0]) => {
     const moduleName = module.label === "Logo" ? "Core" : module.label;

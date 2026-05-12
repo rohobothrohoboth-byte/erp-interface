@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+﻿import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { X, Plus, Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "../../../../ui/button";
@@ -30,7 +30,7 @@ import {
   useUpdatePolicyRuleCondition,
   useDeletePolicyRuleCondition,
 } from "../../../../../services/core/settings/ModHrm/PolicyRuleCondition/policyRuleCondition.queries";
-import { nameListService } from "../../../../../services/List/HrmmNameListService";
+import { hrmmNamesApi } from "../../../../../services/List/hrmmNames/hrmmNames.api";
 import DeletePolicyRuleConditionModal from "./DeletePolicyRuleConditionModal";
 
 interface PolicyRuleConditionModalProps {
@@ -109,7 +109,7 @@ const PolicyRuleConditionModal: React.FC<PolicyRuleConditionModalProps> = ({
       // Fetch job grades
       const fetchJobGrades = async () => {
         try {
-          const grades = await nameListService.getAllJobGradeNames();
+          const grades = await hrmmNamesApi.getAllJobGradeNames();
           setJobGrades(grades);
         } catch (error) {
           console.error("Failed to fetch job grades:", error);

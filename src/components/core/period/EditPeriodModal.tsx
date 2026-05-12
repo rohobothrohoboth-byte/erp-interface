@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import { PeriodStat, Quarter } from "../../../types/core/enum";
 import List from "../../List/list";
 import type { ListItem } from "../../../types/List/list";
-import { fiscalYearService } from "../../../services/core/fiscservice";
+import { fiscalYearApi } from "../../../services/core/fiscalyear/fisc.api";
 import {
   Select,
   SelectContent,
@@ -120,7 +120,7 @@ const EditPeriodModal: React.FC<EditPeriodModalProps> = ({
   const fetchFiscalYears = async () => {
     try {
       setLoadingFiscalYears(true);
-      const fiscalYearsData = await fiscalYearService.getAllFiscalYears();
+      const fiscalYearsData = await fiscalYearApi.getAllFiscalYears();
       const fiscalYearListItems: ListItem[] = fiscalYearsData.map((fy) => ({
         id: fy.id,
         name: fy.name,

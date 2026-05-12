@@ -47,7 +47,7 @@ import {
   History,
   Target,
 } from "lucide-react";
-import { useModule } from "../ModuleContext";
+import { useModuleStore } from "../stores/module.store";
 import {
   Popover,
   PopoverContent,
@@ -280,7 +280,7 @@ const NavGroup = ({
 
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
 
 const collapsed = useSidebarStore((s) => s.collapsed);
 const openGroups = useSidebarStore((s) => s.openGroups);

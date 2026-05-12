@@ -6,7 +6,7 @@ import StockMovements from '../../components/inventory/StockMovements';
 import WarehouseManagement from '../../components/inventory/WarehouseManagement';
 import ReorderAlerts from '../../components/inventory/ReorderAlerts';
 import InventoryTrends from '../../components/inventory/InventoryTrends';
-import { useModule } from '../../ModuleContext';
+import { useModuleStore } from '../../stores/module.store';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -26,7 +26,7 @@ const itemVariants = {
 };
 
 export default function InventoryDashboard() {
-  const { activeModule } = useModule();
+  const activeModule = useModuleStore((s) => s.activeModule);
 
   return (
     <motion.div variants={containerVariants} initial="hidden" animate="visible">

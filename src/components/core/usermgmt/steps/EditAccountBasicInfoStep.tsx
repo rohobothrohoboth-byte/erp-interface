@@ -6,10 +6,10 @@ import * as Yup from "yup";
 import { Button } from "../../../../components/ui/button";
 import { Label } from "../../../../components/ui/label";
 import { Checkbox } from "../../../../components/ui/checkbox";
-import { nameListService } from "../../../../services/List/AuthList";
+import { authListApi } from "../../../../services/List/auth/authList.api";
 import type { NameListItem } from "../../../../types/NameList/nameList";
 import toast from "react-hot-toast";
-import { usermgmtService } from "../../../../services/core/usermgtservice";
+import { usermgmtApi } from "../../../../services/core/usermgmt/usermgmt.api";
 import type { UUID } from "../../../../types/hr/employee";
 
 interface EditAccountBasicInfoStepProps {
@@ -53,7 +53,7 @@ export const EditAccountBasicInfoStep: React.FC<
     const fetchModules = async () => {
       setIsFetchingModules(true);
       try {
-        const modules = await nameListService.getAllModuleNames();
+        const modules = await authListApi.getAllModuleNames();
         if (Array.isArray(modules)) {
           setModuleOptions(modules);
         } else {
@@ -90,7 +90,7 @@ export const EditAccountBasicInfoStep: React.FC<
       setError(null);
   
       try {
-        await usermgmtService.deleteAccount(userId as UUID);
+        await usermgmtApi.deleteAccount(userId as UUID);
   
         toast.success("Account deleted successfully!");
   

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import type { EmpSearchRes, UUID } from "../../../types/core/EmpSearchRes";
 import EmployeeSearchFilters from "../../../components/hr/employee/EmployeeSearchFilters";
 import { motion } from "framer-motion";
-import { usermgmtService } from "../../../services/core/usermgtservice";
+import { usermgmtApi } from "../../../services/core/usermgmt/usermgmt.api";
 import EmployeeTable from "../../../components/core/usermgmt/employeeTable";
 import type { EmployeeListDto } from "../../../types/hr/employee";
 import { useNavigate } from "react-router-dom";
@@ -107,7 +107,7 @@ const UserManagement: React.FC = () => {
 
     try {
       // Fetch all employees from the API
-      const apiEmployees = await usermgmtService.getAllEmployees();
+      const apiEmployees = await usermgmtApi.getAllEmployees();
       console.log("API Response:", apiEmployees);
 
       // Check if response is in expected format
@@ -218,7 +218,7 @@ const UserManagement: React.FC = () => {
     try {
       setTableLoading(true);
       // Fetch actual account data from API
-      const accountData = await usermgmtService.getAccountData(
+      const accountData = await usermgmtApi.getAccountData(
         employeeData.id as UUID,
       );
 

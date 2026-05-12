@@ -3,7 +3,6 @@ import SignInPage from "./pages/SignInPage";
 import Layout from "./layout/layout";
 import Dashboard from "./pages/modules/HR";
 import Modules from "./pages/Modules";
-import { ModuleProvider } from "./ModuleContext";
 import InventoryDashboard from "./pages/modules/Inventory";
 import CoreDashboard from "./pages/modules/Core";
 import Finance from "./pages/modules/Finance";
@@ -179,8 +178,7 @@ function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return (
-    <ModuleProvider>
-      <QueryClientProvider client={queryClient}>
+    <QueryClientProvider client={queryClient}>
         <Routes>
           {/* Root path redirects to login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
@@ -708,9 +706,8 @@ function App() {
               <Navigate to={isAuthenticated ? "/404" : "/login"} replace />
             }
           />
-        </Routes>
-      </QueryClientProvider>
-    </ModuleProvider>
+      </Routes>
+    </QueryClientProvider>
   );
 }
 

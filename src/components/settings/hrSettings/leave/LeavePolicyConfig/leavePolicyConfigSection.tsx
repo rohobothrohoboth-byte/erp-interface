@@ -5,7 +5,7 @@ import LeavePolicyConfigHeader from "./LeavePolicyConfig/leaveConfigHeader";
 import LeaveAppChainSection from "../LeaveAppChain/LeaveAppChainSection";
 import LeavePolicyConfigTable from "./LeavePolicyConfig/LeavePolicyConfigTable";
 import PolicyAssignmentRuleSection from "../PolicyAssignmentRule/PolicyAssignmenRuleSection";
-import { ActiveFiscalYear } from "../../../../../services/core/fyNameList";
+import { useActiveFiscalYearNames } from "../../../../../services/core/fiscalyear/fiscNames.queries";
 import { useNavigate } from "react-router-dom";
 import { useActiveLeavePolicyConfig, useCreateLeavePolicyConfig } from "../../../../../services/core/settings/ModHrm/LeavePolicyConfigService/leavePolicyConfig.queries";
 import AddLeavePolicyConfig from "./LeavePolicyConfig/AddLeavePolicyConfig";
@@ -62,8 +62,7 @@ const LeavePolicyConfigSection: React.FC<LeavePolicyConfigSectionProps> = ({
       const [deletingPolicy, setDeletingPolicy] =
         useState<LeavePolicyConfigListDto | null>(null);
 
-      const { getActiveFiscalYear } = ActiveFiscalYear();
-      const fy = getActiveFiscalYear.data ?? [];
+      const { data: fy = [] } = useActiveFiscalYearNames();
       const createPolicyConfig = useCreateLeavePolicyConfig();
       const handleAddLeavePolicyConfig = async (leavePolicyConfig: LeavePolicyConfigAddDto) => {
        

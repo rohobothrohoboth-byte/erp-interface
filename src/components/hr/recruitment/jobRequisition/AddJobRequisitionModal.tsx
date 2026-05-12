@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import RichTextEditor, { htmlToPlainText } from '../../../ui/RichTextEditor';
 import type { JobReqAddDto } from '../../../../types/hr/recruit/jobRequisition';
 import { Gender, EmpNature, WorkArrangement } from '../../../../types/hr/enum';
-import { nameListService } from '../../../../services/List/HrmmNameListService';
+import { hrmmNamesApi } from '../../../../services/List/hrmmNames/hrmmNames.api';
 import { jgStepService } from '../../../../services/core/settings/ModHrm/JgStepService';
 
 interface AddJobRequisitionModalProps {
@@ -42,14 +42,14 @@ const AddJobRequisitionModal: React.FC<AddJobRequisitionModalProps> = ({
 
   const { data: positions = [] } = useQuery({
     queryKey: ['positionNames'],
-    queryFn: () => nameListService.getAllPositionNames(),
+    queryFn: () => hrmmNamesApi.getAllPositionNames(),
     staleTime: 5 * 60 * 1000,
     enabled: isOpen,
   });
 
   const { data: jobGrades = [] } = useQuery({
     queryKey: ['jobGradeNames'],
-    queryFn: () => nameListService.getAllJobGradeNames(),
+    queryFn: () => hrmmNamesApi.getAllJobGradeNames(),
     staleTime: 5 * 60 * 1000,
     enabled: isOpen,
   });

@@ -13,7 +13,7 @@ import {
   SelectValue,
 } from "../../../../components/ui/select";
 import { Checkbox } from "../../../../components/ui/checkbox";
-import { nameListService } from "../../../../services/List/AuthList";
+import { authListApi } from "../../../../services/List/auth/authList.api";
 import type {
   NameListItem,
   RoleListItem,
@@ -105,7 +105,7 @@ export const AccountBasicInfoStep: React.FC<AccountBasicInfoStepProps> = ({
       // Fetch modules
       setIsFetchingModules(true);
       try {
-        const modules = await nameListService.getAllModuleNames();
+        const modules = await authListApi.getAllModuleNames();
         if (Array.isArray(modules)) {
           setModuleOptions(modules);
         } else {
@@ -122,7 +122,7 @@ export const AccountBasicInfoStep: React.FC<AccountBasicInfoStepProps> = ({
       // Fetch roles
       setIsFetchingRoles(true);
       try {
-        const roles = await nameListService.getAllRoles();
+        const roles = await authListApi.getAllRoles();
         if (Array.isArray(roles)) {
           setRoleOptions(roles);
         } else {
