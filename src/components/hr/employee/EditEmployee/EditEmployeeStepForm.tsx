@@ -7,15 +7,8 @@ import { GuarantorStep } from './steps/GuarantorStep';
 import { StampStep } from './steps/StampStep';
 import { SignatureStep } from './steps/SignatureStep';
 import { EditEmployeeStepHeader } from './EditEmployeeStepHeader';
-import { empService } from '../../../../services/hr/employee/empService';
-import { employeeService } from '../../../../services/hr/employee/employees';
-import type { Step1Dto, Step2Dto, Step4Dto, UUID } from '../../../../types/hr/employee/empAddDto';
-import { Gender, EmpType, EmpNature, WorkArrangement } from '../../../../types/hr/enum';
-
-// Helper: reverse-lookup enum key by display value
-function enumKey<T extends Record<string, string>>(enumObj: T, displayValue: string): string {
-  return Object.entries(enumObj).find(([, v]) => v === displayValue)?.[0] ?? '';
-}
+import { empApi } from '../../../../services/hr/employee/emp.api';
+import type { Step1Dto, Step2Dto, UUID } from '../../../../types/hr/employee/empAddDto';
 
 const steps = [
   { id: 1, title: 'Basic Info', icon: User },
@@ -84,162 +77,123 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
       setError(null);
 
       try {
-        // Always fetch full employee data from API for accurate prefill
-        let employeeData: any = {};
-        let tableEmployee: any = null;
+        // Fetch all three tab data in parallel
+        const [basic, bio, guar] = await Promise.all([
+          empApi.getModBasic(employeeId),
+          empApi.getModBio(employeeId),
+          empApi.getModGuar(employeeId),
+        ]);
 
-        try {
-          employeeData = await employeeService.getEmployeeById(employeeId);
-          console.log('Loaded employee data from API:', employeeData);
-        } catch (apiError) {
-          console.warn('API call failed, falling back to sessionStorage:', apiError);
-          const storedEmployee = sessionStorage.getItem('selectedEmployee');
-          if (storedEmployee) {
-            tableEmployee = JSON.parse(storedEmployee);
-            employeeData = tableEmployee;
-          }
-        }
-
-        // Resolve enum keys from display values (API may return display strings)
-        const resolveGender = (v: string) =>
-          Object.keys(Gender).includes(v) ? v : enumKey(Gender, v);
-        const resolveEmpType = (v: string) =>
-          Object.keys(EmpType).includes(v) ? v : enumKey(EmpType, v);
-        const resolveEmpNature = (v: string) =>
-          Object.keys(EmpNature).includes(v) ? v : enumKey(EmpNature, v);
-        const resolveWorkArr = (v: string) =>
-          Object.keys(WorkArrangement).includes(v) ? v : enumKey(WorkArrangement, v);
-
-        // Parse full names by space into first / middle / last
-        const enParts = (employeeData.empFullName || '').trim().split(/\s+/);
-        const amParts = (employeeData.empFullNameAm || '').trim().split(/\s+/);
-
-        const firstName   = employeeData.firstName   || enParts[0] || '';
-        const middleName  = employeeData.middleName  || enParts[1] || '';
-        const lastName    = employeeData.lastName    || enParts[2] || '';
-        const firstNameAm  = employeeData.firstNameAm  || amParts[0] || '';
-        const middleNameAm = employeeData.middleNameAm || amParts[1] || '';
-        const lastNameAm   = employeeData.lastNameAm   || amParts[2] || '';
-
-        // Map the employee data to form structure
         const mappedData = {
           step1: {
-            firstName,
-            firstNameAm,
-            middleName,
-            middleNameAm,
-            lastName,
-            lastNameAm,
-            nationality: employeeData.nationality || 'Ethiopian',
-            gender: resolveGender(employeeData.gender || ''),
-            employmentDate: employeeData.employmentDate || '',
-            branchId: employeeData.branchId || '',
-            jobGradeId: employeeData.jobGradeId || '',
-            jobGradeStepId: employeeData.jobGradeStepId || '',
-            // API returns UUIDs when available, fall back to empty (List will auto-select)
-            departmentId: employeeData.departmentId || '',
-            positionId: employeeData.positionId || '',
-            employmentType: resolveEmpType(employeeData.employmentType ?? employeeData.empType ?? ''),
-            employmentNature: resolveEmpNature(employeeData.employmentNature ?? employeeData.empNature ?? ''),
-            workArrangement: resolveWorkArr(employeeData.workArrangement ?? employeeData.workArr ?? ''),
+            firstName:        basic.firstName        ?? '',
+            firstNameAm:      basic.firstNameAm      ?? '',
+            middleName:       basic.middleName        ?? '',
+            middleNameAm:     basic.middleNameAm      ?? '',
+            lastName:         basic.lastName          ?? '',
+            lastNameAm:       basic.lastNameAm        ?? '',
+            nationality:      basic.nationality       ?? '',
+            gender:           basic.gender            ?? '',
+            employmentDate:   basic.employmentDate ? basic.employmentDate.split('T')[0] : '',
+            branchId:         basic.branchId          ?? '',
+            jobGradeId:       basic.jobGradeId        ?? '',
+            jgStepId:         basic.jgStepId          ?? '' as UUID,
+            positionId:       basic.positionId        ?? '',
+            departmentId:     basic.departmentId      ?? '',
+            employmentType:   basic.employmentType    ?? '',
+            employmentNature: basic.employmentNature  ?? '',
+            workArrangement:  basic.workArrangement   ?? '',
             File: null,
-            // Step1Dto extra fields (filled in biographical step)
-            jgStepId: employeeData.jgStepId || '' as UUID,
-            birthDate: employeeData.birthDate || '',
-            maritalStatus: employeeData.maritalStatus || '' as any,
-            addressType: employeeData.addressType || '' as any,
-            country: employeeData.country || '',
-            region: employeeData.region || '',
-            subcity: employeeData.subcity || '',
-            zone: employeeData.zone,
-            woreda: employeeData.woreda || '',
-            kebele: employeeData.kebele,
-            houseNo: employeeData.houseNo || '',
-            telephone: employeeData.telephone || '',
-            poBox: employeeData.poBox,
-            fax: employeeData.fax,
-            email: employeeData.email || '',
-            website: employeeData.website,
+            // bio address fields carried into step1 shape
+            birthDate:     bio.birthDate     ?? '',
+            maritalStatus: bio.maritalStatus ?? '' as any,
+            addressType:   bio.addressType   ?? '' as any,
+            country:       bio.country       ?? '',
+            region:        bio.region        ?? '',
+            subcity:       bio.subcity       ?? '',
+            zone:          bio.zone          ?? '',
+            woreda:        bio.woreda        ?? '',
+            kebele:        bio.kebele        ?? '',
+            houseNo:       bio.houseNo       ?? '',
+            telephone:     bio.telephone     ?? '',
+            poBox:         bio.poBox         ?? '',
+            fax:           bio.fax           ?? '',
+            email:         bio.email         ?? '',
+            website:       bio.website       ?? '',
           },
           step2: {
-            birthDate: employeeData.birthDate || '',
-            birthLocation: employeeData.birthLocation || '',
-            motherFullName: employeeData.motherFullName || '',
-            hasBirthCert: employeeData.hasBirthCert || '',
-            hasMarriageCert: employeeData.hasMarriageCert || '',
-            maritalStatus: employeeData.maritalStatus || '',
-            employeeId: employeeId as UUID,
-            tin: employeeData.tin || '',
-            bankAccountNo: employeeData.bankAccountNo || '',
-            pensionNumber: employeeData.pensionNumber || '',
-            addressType: employeeData.addressType || '',
-            country: employeeData.country || '',
-            region: employeeData.region || '',
-            subcity: employeeData.subcity || '',
-            zone: employeeData.zone || '',
-            woreda: employeeData.woreda || '',
-            kebele: employeeData.kebele || '',
-            houseNo: employeeData.houseNo || '',
-            telephone: employeeData.telephone || '',
-            poBox: employeeData.poBox || '',
-            fax: employeeData.fax || '',
-            email: employeeData.email || '',
-            website: employeeData.website || '',
+            employeeId:     employeeId as UUID,
+            birthDate:      bio.birthDate      ?? '',
+            birthLocation:  bio.birthLocation  ?? '',
+            motherFullName: bio.motherFullName ?? '',
+            maritalStatus:  bio.maritalStatus  ?? '',
+            tin:            bio.tin            ?? '',
+            bankAccountNo:  bio.bankAccountNo  ?? '',
+            pensionNumber:  bio.pensionNumber  ?? '',
+            addressType:    bio.addressType    ?? '',
+            country:        bio.country        ?? '',
+            region:         bio.region         ?? '',
+            subcity:        bio.subcity        ?? '',
+            zone:           bio.zone           ?? '',
+            woreda:         bio.woreda         ?? '',
+            kebele:         bio.kebele         ?? '',
+            houseNo:        bio.houseNo        ?? '',
+            telephone:      bio.telephone      ?? '',
+            poBox:          bio.poBox          ?? '',
+            fax:            bio.fax            ?? '',
+            email:          bio.email          ?? '',
+            website:        bio.website        ?? '',
           },
           step4: {
-            firstName: employeeData.guarantorFirstName || '',
-            firstNameAm: employeeData.guarantorFirstNameAm || '',
-            middleName: employeeData.guarantorMiddleName || '',
-            middleNameAm: employeeData.guarantorMiddleNameAm || '',
-            lastName: employeeData.guarantorLastName || '',
-            lastNameAm: employeeData.guarantorLastNameAm || '',
-            nationality: employeeData.guarantorNationality || '',
-            gender: resolveGender(employeeData.guarantorGender || ''),
-            relationId: employeeData.guarantorRelationId || '',
-            employeeId: employeeId as UUID,
-            addressType: employeeData.guarantorAddressType || '',
-            country: employeeData.guarantorCountry || '',
-            region: employeeData.guarantorRegion || '',
-            subcity: employeeData.guarantorSubcity || '',
-            zone: employeeData.guarantorZone || '',
-            woreda: employeeData.guarantorWoreda || '',
-            kebele: employeeData.guarantorKebele || '',
-            houseNo: employeeData.guarantorHouseNo || '',
-            telephone: employeeData.guarantorTelephone || '',
-            poBox: employeeData.guarantorPoBox || '',
-            fax: employeeData.guarantorFax || '',
-            email: employeeData.guarantorEmail || '',
-            website: employeeData.guarantorWebsite || '',
+            firstName:   guar.firstName   ?? '',
+            middleName:  guar.middleName  ?? '',
+            lastName:    guar.lastName    ?? '',
+            nationality: guar.nationality ?? '',
+            gender:      guar.gender      ?? '',
+            relationId:  guar.relation    ?? '',
+            employeeId:  employeeId as UUID,
+            addressType: guar.addressType ?? '',
+            country:     guar.country     ?? '',
+            region:      guar.region      ?? '',
+            subcity:     guar.subcity     ?? '',
+            zone:        guar.zone        ?? '',
+            woreda:      guar.woreda      ?? '',
+            kebele:      guar.kebele      ?? '',
+            houseNo:     guar.houseNo     ?? '',
+            telephone:   guar.telephone   ?? '',
+            poBox:       guar.poBox       ?? '',
+            fax:         guar.fax         ?? '',
+            email:       guar.email       ?? '',
+            website:     guar.website     ?? '',
             File: null,
           },
           stamp: null as File | null,
           signature: null as File | null,
         };
 
-        // Set header data for profile display
-        const storedEmployee = sessionStorage.getItem('selectedEmployee');
-        const headerSource = storedEmployee ? JSON.parse(storedEmployee) : employeeData;
+        // Header data from sessionStorage (has photo/display names) merged with basic
+        const stored = sessionStorage.getItem('selectedEmployee');
+        const headerSource = stored ? JSON.parse(stored) : {};
         setEmployeeHeaderData({
-          photo: headerSource.photo ?? employeeData.photo,
-          fullName: headerSource.empFullName ?? employeeData.empFullName,
-          fullNameAm: headerSource.empFullNameAm ?? employeeData.empFullNameAm,
-          position: headerSource.position ?? employeeData.position,
-          department: headerSource.department ?? employeeData.department,
-          code: headerSource.code ?? employeeData.code,
+          photo:      headerSource.photo      ?? basic.photo,
+          fullName:   headerSource.empFullName ?? `${basic.firstName} ${basic.middleName} ${basic.lastName}`.trim(),
+          fullNameAm: headerSource.empFullNameAm,
+          position:   headerSource.position   ?? basic.position,
+          department: headerSource.department ?? basic.department,
+          code:       headerSource.code       ?? basic.code,
         });
 
-        // Store display names for name-based matching in BasicInfoStep
         setEmployeeNames({
-          department: employeeData.department || headerSource?.department || '',
-          position: employeeData.position || headerSource?.position || '',
-          branch: employeeData.branch || headerSource?.branch || '',
-          jobGrade: employeeData.jobGrade || headerSource?.jobGrade || '',
+          department: headerSource.department ?? basic.department ?? '',
+          position:   headerSource.position   ?? basic.position   ?? '',
+          branch:     headerSource.branch     ?? basic.branch     ?? '',
+          jobGrade:   headerSource.jobGrade   ?? basic.jobGrade   ?? '',
         });
 
         setFormData(mappedData);
         setInitialDataLoaded(true);
-      } catch (error) {
-        console.error('Failed to load employee data:', error);
+      } catch (err) {
+        console.error('Failed to load employee data:', err);
         setError('Failed to load employee data. Please try again.');
       } finally {
         setLoading(false);
@@ -258,7 +212,7 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
 
     try {
       // Update employee basic info via API
-      const result = await empService.empAddStep1({
+      const result = await empApi.addStep1({
         ...step1Data,
         // Add employeeId for update context if needed
       });
@@ -294,7 +248,7 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
         employeeId: employeeId as UUID
       };
 
-      const result = await empService.empAddStep2(step2DataWithEmployeeId);
+      const result = await empApi.addStep2(step2DataWithEmployeeId);
 
       console.log('Biographical info updated successfully:', result);
 
@@ -317,49 +271,17 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
   };
 
   // Handle Step 4 update (Guarantor)
-  const handleStep4Submit = async (step4Data: Step4Dto) => {
+  const handleStep4Submit = async (step4Data: Step2Dto) => {
     setLoading(true);
     setError(null);
 
     try {
-      // empAddStep4 expects Step2Dto shape — map Step4Dto fields accordingly
-      const step2Payload: Step2Dto = {
-        firstName: step4Data.firstName,
-        middleName: step4Data.middleName,
-        lastName: step4Data.lastName,
-        nationality: step4Data.nationality,
-        gender: step4Data.gender,
-        relation: String(step4Data.relationId),
-        employeeId: employeeId as UUID,
-        addressType: step4Data.addressType,
-        country: step4Data.country,
-        region: step4Data.region,
-        subcity: step4Data.subcity,
-        zone: step4Data.zone,
-        woreda: step4Data.woreda,
-        kebele: step4Data.kebele,
-        houseNo: step4Data.houseNo,
-        telephone: step4Data.telephone,
-        poBox: step4Data.poBox,
-        fax: step4Data.fax,
-        email: step4Data.email,
-        website: step4Data.website,
-        File: step4Data.File,
-      };
-
-      const result = await empService.empAddStep4(step2Payload);
+      const result = await empApi.addStep4({ ...step4Data, employeeId: employeeId as UUID });
 
       console.log('Guarantor info updated successfully:', result);
 
-      const updatedFormData = {
-        ...formData,
-        step4: step4Data,
-      };
-
-      setFormData(updatedFormData);
+      setFormData({ ...formData, step4: step4Data });
       scrollToTop();
-      
-      // Show success message
       alert('Guarantor information updated successfully!');
     } catch (error) {
       console.error('Failed to update guarantor info:', error);

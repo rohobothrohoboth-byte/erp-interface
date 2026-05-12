@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle, FileText, User, MapPin, Printer } from 'lucide-react';
 import type { EmpAddPrintDto } from '../../../../../types/hr/employee/empAddDto';
 import type { UUID } from 'crypto';
-import { empService } from '../../../../../services/hr/employee/empService';
+import { empApi } from '../../../../../services/hr/employee/emp.api';
 import { useNavigate } from 'react-router-dom';
 import { EmpPhotoRect } from '../../../../ui/EmpPhoto';
 import type { EmpPhotoRes } from '../../../../../types/hr/employee/empPhoto';
@@ -47,7 +47,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
       try {
         setFetchLoading(true);
         setFetchError(null);
-        const data = await empService.getStep5Data(employeeId);
+        const data = await empApi.getPrint(employeeId);
         setReviewData(data);
       } catch (error) {
         console.error('Failed to fetch review data:', error);

@@ -5,7 +5,7 @@ import { BasicInfoStep } from './steps/BasicInfoStep';
 import { GuarantorStep } from './steps/GurantorStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { AddEmployeeStepHeader } from './AddEmployeeStepHeader';
-import { empService } from '../../../../services/hr/employee/empService';
+import { empApi } from '../../../../services/hr/employee/emp.api';
 import type { Step1Dto, Step2Dto, EmpAddRes, UUID } from '../../../../types/hr/employee/empAddDto';
 import { useEmpAddStore } from '../../../../stores/hr/empAdd.store';
 
@@ -83,7 +83,7 @@ export const AddEmployeeStepForm: React.FC<AddEmployeeStepFormProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const result: EmpAddRes = await empService.empAddStep1(step1Data);
+      const result: EmpAddRes = await empApi.addStep1(step1Data);
       setHrEmployeeId(result.id);
       setFormData((prev) => ({ ...prev, step1: step1Data }));
       scrollToTop();
@@ -109,7 +109,7 @@ export const AddEmployeeStepForm: React.FC<AddEmployeeStepFormProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const result: EmpAddRes = await empService.empAddStep4({ ...step4Data, employeeId: hrEmployeeId });
+      const result: EmpAddRes = await empApi.addStep4({ ...step4Data, employeeId: hrEmployeeId });
       console.log('Guarantor added successfully:', result);
       setFormData((prev) => ({ ...prev, step4: step4Data }));
       scrollToTop();

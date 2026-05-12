@@ -5,7 +5,7 @@ import EmployeeStatsCards from '../../../components/hr/employee/EmployeeStatsCar
 import EmployeeSearchFilters from '../../../components/hr/employee/EmployeeSearchFilters';
 import EmployeeTable from '../../../components/hr/employee/EmployeeTable';
 import type { EmployeeListDto } from '../../../types/hr/employee';
-import { employeeService } from '../../../services/hr/employee/employees';
+import { empApi } from '../../../services/hr/employee/emp.api';
 import type { UUID } from 'crypto';
 
 // Extended type for local state management
@@ -37,7 +37,7 @@ const EmployeeManagementPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const employeesData = await employeeService.getAllEmployees();
+      const employeesData = await empApi.getAllEmployees();
       
       // Add status and other required fields to employees
       const employeesWithStatus: EmployeeWithStatus[] = employeesData.map((emp: EmployeeListDto) => ({
@@ -169,7 +169,7 @@ const EmployeeManagementPage = () => {
     try {
       setError(null);
       // Call the API to delete the employee
-      await employeeService.deleteEmployee(employeeId as UUID);
+      await empApi.deleteEmployee(employeeId as UUID);
       
       // Update previous stats before making changes
       setPreviousStats({
@@ -193,7 +193,7 @@ const EmployeeManagementPage = () => {
     try {
       setError(null);
       // Call the API to delete the employee
-      await employeeService.deleteEmployee(employeeId as UUID);
+      await empApi.deleteEmployee(employeeId as UUID);
       
       // Update previous stats before making changes
       setPreviousStats({

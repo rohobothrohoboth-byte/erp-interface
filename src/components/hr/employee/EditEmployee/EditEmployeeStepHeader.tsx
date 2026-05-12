@@ -87,7 +87,7 @@ const EditEmpHero = memo(function EditEmpHero({
             )}
           </div>
 
-          <div className="min-w-0 -mt-8">
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight leading-snug truncate flex justify-center items-center">
               {employeeData?.fullName ?? <span className="inline-block h-7 w-44 bg-emerald-100 rounded-lg animate-pulse" />}
             </h1>
@@ -97,11 +97,6 @@ const EditEmpHero = memo(function EditEmpHero({
             <p className="text-sm font-medium text-emerald-600 mt-1.5 truncate">
               {employeeData?.position ?? <span className="inline-block h-4 w-28 bg-emerald-100 rounded animate-pulse" />}
             </p>
-            {(employeeData?.department || employeeData?.code) && (
-              <p className="text-xs text-gray-400 mt-1">
-                {[employeeData.department, employeeData.code].filter(Boolean).join(' · ')}
-              </p>
-            )}
           </div>
         </div>
       </div>
