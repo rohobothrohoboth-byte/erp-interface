@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import EmployeeManagementHeader from '../../../components/hr/employee/EmployeeManagementHeader';
 import EmployeeStatsCards from '../../../components/hr/employee/EmployeeStatsCards';
-import EmployeeSearchFilters from '../../../components/hr/employee/EmployeeSearchFilters';
+import EmployeeSearchFilters, { type HREmployeeFilters } from '../../../components/hr/employee/EmployeeSearchFilters';
 import EmployeeTable from '../../../components/hr/employee/EmployeeTable';
 import type { EmployeeListDto } from '../../../types/hr/employee';
 import { empApi } from '../../../services/hr/employee/emp.api';
@@ -17,6 +17,13 @@ type EmployeeWithStatus = EmployeeListDto & {
 
 const EmployeeManagementPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState<HREmployeeFilters>({
+    department: '',
+    branch: '',
+    empState: '',
+    empNature: '',
+    gender: '',
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [employees, setEmployees] = useState<EmployeeWithStatus[]>([]);
@@ -227,11 +234,10 @@ const EmployeeManagementPage = () => {
     }
   };
 
-  // Filter employees based on search only
+  // Filter employees based on search and filters
   const filteredEmployees = employees.filter(employee => {
     const searchLower = searchTerm.toLowerCase();
     
-    // Search through available fields
     const matchesSearch = 
       (employee.empFullName?.toLowerCase() || '').includes(searchLower) ||
       (employee.empFullNameAm?.toLowerCase() || '').includes(searchLower) ||
@@ -241,7 +247,12 @@ const EmployeeManagementPage = () => {
       (employee.employmentTypeStr?.toLowerCase() || '').includes(searchLower) ||
       (employee.nationality?.toLowerCase() || '').includes(searchLower);
 
-    return matchesSearch;
+    const matchesDepartment = !filters.department || employee.department === filters.department;
+    const matchesBranch = !filters.branch || employee.branch === filters.branch;
+    const matchesEmpState = !filters.empState || employee.empState === filters.empState;
+    const matchesGender = !filters.gender || employee.gender === filters.gender;
+
+    return matchesSearch && matchesDepartment && matchesBranch && matchesEmpState && matchesGender;
   });
 
   // Pagination logic
@@ -337,9 +348,8 @@ const EmployeeManagementPage = () => {
               <EmployeeSearchFilters 
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
-                filters={{ department: '', status: '', employmentType: '' }}
-                setFilters={() => {}}
-                employees={employees}
+                filters={filters}
+                setFilters={setFilters}
                 onRefresh={handleRefresh}
                 loading={loading}
               />

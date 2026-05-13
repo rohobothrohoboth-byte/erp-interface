@@ -6,7 +6,7 @@ import { usermgmtApi } from "../../../services/core/usermgmt/usermgmt.api";
 import EmployeeTable from "../../../components/core/usermgmt/employeeTable";
 import type { EmployeeListDto } from "../../../types/hr/employee";
 import { useNavigate } from "react-router-dom";
-import EmployeeSearch from "../../../components/core/usermgmt/EmployeeSearch";
+import EmployeeSearch, { type AdminEmployeeFilters } from "../../../components/core/usermgmt/EmployeeSearch";
 
 
 const UserManagement: React.FC = () => {
@@ -27,9 +27,12 @@ const UserManagement: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [tableLoading, setTableLoading] = useState(false);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<AdminEmployeeFilters>({
     department: "",
+    branch: "",
     empState: "",
+    role: "",
+    gender: "",
   });
    const navigate = useNavigate();
   // Helper function to determine employee status based on actual data
@@ -86,14 +89,24 @@ const UserManagement: React.FC = () => {
       const matchesDepartment =
         !filters.department || employee.department === filters.department;
 
+      // Apply branch filter
+      const matchesBranch =
+        !filters.branch || employee.branch === filters.branch;
+
       // Apply status filter
       const matchesStatus =
         !filters.empState || employee.empState === filters.empState;
 
+      // Apply gender filter
+      const matchesGender =
+        !filters.gender || employee.gender === filters.gender;
+
       return (
         matchesSearch &&
         matchesDepartment &&
-        matchesStatus
+        matchesBranch &&
+        matchesStatus &&
+        matchesGender
       );
     });
   };
@@ -368,7 +381,10 @@ const UserManagement: React.FC = () => {
                     setSearchTerm("");
                     setFilters({
                       department: "",
+                      branch: "",
                       empState: "",
+                      role: "",
+                      gender: "",
                     });
                     setHasSearched(false);
                   }}

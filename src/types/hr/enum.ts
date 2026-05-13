@@ -249,7 +249,7 @@ export type OnboardingStatus =
 export type ReqStatus =
   typeof ReqStatus[keyof typeof ReqStatus];
 
-  export const EmpState = {
+export const EmpState = {
   "0": "Pending",
   "1": "Approved",
   "2": "Active",
@@ -261,6 +261,13 @@ export type ReqStatus =
 } as const;
 
 export type EmpState = typeof EmpState[keyof typeof EmpState];
+
+export const ReviewDecision = {
+  Accept: 'Accept',
+  Decline: 'Decline',
+} as const;
+
+export type ReviewDecision = typeof ReviewDecision[keyof typeof ReviewDecision];
 
 export const Relation = {
   "0": "Daughter",

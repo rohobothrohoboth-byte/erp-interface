@@ -2,6 +2,7 @@ import { api } from '../../api';
 import type { NameListItem } from '../../../types/NameList/nameList';
 import type { UUID } from '../../../types/List/list';
 import type { NameListDto } from '../../../types/hr/NameListDto';
+import type { BranchDeptList } from '../../../types/core/dept';
 
 const baseUrl = `${import.meta.env.VITE_CORE_HRMM_URL || '/core/hrmm/v1'}/Names`;
 const moduleBaseUrl = `${import.meta.env.VITE_CORE_MODULE_URL || '/core/module/v1'}/Names`;
@@ -57,6 +58,10 @@ export const hrmmNamesApi = {
   },
   getDepartmentNameById: async (id: UUID): Promise<NameListItem> => {
     const response = await api.get(`${moduleBaseUrl}/GetDeptName/${id}`);
+    return response.data.data ?? response.data;
+  },
+  getBranchDepartmentNames: async (branchId: UUID): Promise<BranchDeptList[]> => {
+    const response = await api.get(`${moduleBaseUrl}/BranchDept/${branchId}`);
     return response.data.data ?? response.data;
   },
 };

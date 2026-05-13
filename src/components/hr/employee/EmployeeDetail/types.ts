@@ -142,6 +142,7 @@ export interface EmpDetailDocument {
   fileSizeStr: string;
   documentType: string;
   uploadedAt: string;
+  url?: string;
 }
 
 export interface EmpDetailLeaveBalance {

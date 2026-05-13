@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useCallback } from 'react';
-import { FileText, Landmark, Pencil } from 'lucide-react';
+import { FileText, Landmark, Pencil, ExternalLink } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useProfileBio, profileKeys } from '../../services/profile/profile.queries';
 import { useProfileStore } from '../../stores/profile/profile.store';
@@ -163,6 +163,46 @@ export const BiographicalTab = memo(function BiographicalTab() {
             <Field label="Has Marriage Certificate" value={bio?.hasMarriageCert} />
           )}
         </div>
+
+        {/* Document pills */}
+        {!bioEditing && (
+          <div className="mt-5 pt-4 border-t border-gray-100">
+            <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Documents</p>
+            <div className="flex flex-wrap gap-2">
+              <div className="inline-flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
+                <FileText className="w-4 h-4 text-red-400 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-gray-800 whitespace-nowrap">{bio?.biCertName || 'Birth_Certificate.pdf'}</p>
+                  <p className="text-[11px] text-gray-400 whitespace-nowrap">Birth Cert · {bio?.biCertSize || '180 KB'}</p>
+                </div>
+                <a
+                  href={bio?.biCertId ? `/hrm/profile/v1/MyPro/GetEmpDoc/${bio.biCertId}` : 'https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700 shrink-0 ml-1"
+                >
+                  View <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+
+              <div className="inline-flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
+                <FileText className="w-4 h-4 text-red-400 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-gray-800 whitespace-nowrap">{bio?.maCertName || 'Marriage_Certificate.pdf'}</p>
+                  <p className="text-[11px] text-gray-400 whitespace-nowrap">Marriage Cert · {bio?.maCertSize || '210 KB'}</p>
+                </div>
+                <a
+                  href={bio?.maCertId ? `/hrm/profile/v1/MyPro/GetEmpDoc/${bio.maCertId}` : 'https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700 shrink-0 ml-1"
+                >
+                  View <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
       </InlineEditCard>
 
       {/* Financial Information */}
@@ -182,6 +222,7 @@ export const BiographicalTab = memo(function BiographicalTab() {
           <EditableField label="Pension Number"    value={finForm.pensionNumber} isEditing={finEditing} onChange={(v) => setFinForm((p) => ({ ...p, pensionNumber: v }))} placeholder="PEN-12345" />
         </Grid>
       </InlineEditCard>
+
     </div>
   );
 });

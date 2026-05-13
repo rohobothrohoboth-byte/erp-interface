@@ -9,7 +9,10 @@ import type {
 } from '../../types/profile/profile.types';
 
 // ── Re-exported form types used by components ──────────────────────────────
-export type BiographicalForm = Omit<EmpBioModDto, 'id'>;
+export type BiographicalForm = Omit<EmpBioModDto, 'id'> & {
+  birthCertFileName?: string;
+  marriageCertFileName?: string;
+};
 export type FinancialForm    = Omit<EmpFinanceModDto, 'id'>;
 export type EmergencyContactForm = {
   employeeId?: string;

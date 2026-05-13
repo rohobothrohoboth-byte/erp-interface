@@ -44,15 +44,19 @@ const EmpDetailHero = memo(function EmpDetailHero({ employeeId }: { employeeId: 
 
   return (
     <div className="relative rounded-2xl overflow-hidden mb-4 shadow-sm border border-slate-200">
-      <div className="absolute inset-0 bg-slate-50" />
+      {/* Base */}
+      <div className="absolute inset-0 bg-white" />
 
-      <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 70" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0,35 C240,70 480,0 720,35 C960,70 1200,0 1440,35 L1440,70 L0,70 Z" fill="#059669" fillOpacity="0.12" />
+      {/* Diagonal mesh grid */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="detail-mesh" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+            <line x1="0" y1="0" x2="0" y2="36" stroke="#059669" strokeWidth="1" strokeOpacity="0.18" />
+            <line x1="0" y1="0" x2="36" y2="0" stroke="#059669" strokeWidth="1" strokeOpacity="0.18" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#detail-mesh)" />
       </svg>
-      <svg className="absolute bottom-0 left-0 w-full" viewBox="0 0 1440 50" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M0,15 C360,50 720,0 1080,25 C1260,38 1380,10 1440,15 L1440,50 L0,50 Z" fill="#059669" fillOpacity="0.07" />
-      </svg>
-      <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-emerald-50 to-transparent pointer-events-none" />
 
       <div className="relative z-10 px-8 py-6">
         <div>

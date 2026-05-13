@@ -4,15 +4,17 @@ import {
   ChevronLeft,
   ChevronRight,
   MoreVertical,
-  User,
   Loader2,
   Eye,
   PenBox,
   Trash2,
-  Lock
+  Lock,
+  ClipboardCheck,
+  ExternalLink,
 } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover';
 import DeleteEmployeeModal from './DeleteEmployeeModal';
+import { ReviewDecision } from '../../../types/hr/enum';
 import type { EmpState } from '../../../types/hr/enum';
 import { useNavigate } from 'react-router';
 
@@ -51,6 +53,101 @@ interface EmployeeTableProps {
   loading?: boolean;
 }
 
+// ── Review Modal ────────────────────────────────────────────────────────────
+function ReviewModal({ employee, onClose }: { employee: Employee; onClose: () => void }) {
+  const [decision, setDecision] = React.useState<string>('');
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+        {/* Header */}
+        <div className="flex items-center px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center gap-2">
+            <ClipboardCheck className="w-4 h-4 text-green-600" />
+            <h2 className="text-sm font-semibold text-gray-800">Review Employee</h2>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-5 space-y-4">
+          {/* Employee detail link */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
+            <div>
+              <p className="text-xs font-medium text-gray-700">Employee Details</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">View full profile before deciding</p>
+            </div>
+            <a
+              href={`/hr/employees/${employee.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700 shrink-0"
+            >
+              View Detail
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          {/* Decision */}
+          <div>
+            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Decision</p>
+            <div className="flex flex-col gap-2">
+              {Object.values(ReviewDecision).map((value) => (
+                <label
+                  key={value}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
+                    decision === value
+                      ? value === ReviewDecision.Accept
+                        ? 'border-green-400 bg-green-50'
+                        : 'border-red-400 bg-red-50'
+                      : 'border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="decision"
+                    value={value}
+                    checked={decision === value}
+                    onChange={() => setDecision(value)}
+                    className="accent-green-600"
+                  />
+                  <span className={`text-sm font-medium ${
+                    decision === value
+                      ? value === ReviewDecision.Accept ? 'text-green-700' : 'text-red-700'
+                      : 'text-gray-700'
+                  }`}>
+                    {value}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-center gap-2 px-5 py-4 border-t border-gray-100">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={!decision}
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 const EmployeeTable: React.FC<EmployeeTableProps> = ({
   employees,
   currentPage,
@@ -65,6 +162,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [reviewEmployee, setReviewEmployee] = useState<Employee | null>(null);
 
   const sortedEmployees = [...employees].sort((a, b) => {
     const dateA = a.employmentDate || a.createdAt || '';
@@ -377,9 +475,15 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                                 <PenBox size={16} />
                                 Update
                               </button>
-                              <button className="w-full text-left px-4 py-2 text-sm text-orange-600 hover:bg-orange-50 rounded flex items-center gap-2">
-                                <Trash2 size={16} />
-                                Change Status
+                              <button
+                                onClick={() => {
+                                  setReviewEmployee(employee);
+                                  setPopoverOpen(null);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded flex items-center gap-2"
+                              >
+                                <ClipboardCheck size={16} />
+                                Review
                               </button>
                               <button
                                 onClick={() => handleDelete(employee)}
@@ -485,6 +589,14 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
         onClose={handleCloseDeleteModal}
         onConfirm={confirmDeletion}
       />
+
+      {/* Review Modal */}
+      {reviewEmployee && (
+        <ReviewModal
+          employee={reviewEmployee}
+          onClose={() => setReviewEmployee(null)}
+        />
+      )}
     </>
   );
 };

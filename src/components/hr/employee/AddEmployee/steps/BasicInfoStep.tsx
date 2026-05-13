@@ -141,28 +141,30 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
     fetchBranches();
   }, []);
 
-  // Fetch all departments when component mounts (using nameListService)
+  // Fetch departments when branch changes
   useEffect(() => {
-    const fetchAllDepartments = async () => {
+    const fetchDepartmentsByBranch = async () => {
+      if (!formik.values.branchId) {
+        setDepartments([]);
+        return;
+      }
       try {
         setLoadingDepartments(true);
-        const departmentsData = await hrmmNamesApi.getAllDepartmentNames();
-        setDepartments(departmentsData);
-
-        // Auto-select first department if none is selected and we have departments
-        if (!formik.values.departmentId && departmentsData.length > 0) {
-          formik.setFieldValue('departmentId', departmentsData[0].id);
-        }
+        formik.setFieldValue('departmentId', '');
+        const data = await hrmmNamesApi.getBranchDepartmentNames(formik.values.branchId);
+        const mapped: NameListItem[] = data.map(d => ({ id: d.id, name: d.dept }));
+        setDepartments(mapped);
+        if (mapped.length > 0) formik.setFieldValue('departmentId', mapped[0].id);
       } catch (error) {
-        console.error('Error fetching departments:', error);
+        console.error('Error fetching departments by branch:', error);
         setDepartmentError('Failed to load departments. Please refresh.');
       } finally {
         setLoadingDepartments(false);
       }
     };
 
-    fetchAllDepartments();
-  }, []);
+    fetchDepartmentsByBranch();
+  }, [formik.values.branchId]);
 
   // Fetch positions when department selection changes
   useEffect(() => {
@@ -608,97 +610,68 @@ useEffect(() => {
             )}
           </div>
 
-          {/* Gender */}
-          <div className="space-y-2">
-            <label
-              htmlFor="gender"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Gender  <span className="text-red-500">*</span>
-            </label>
-            <Select
-              value={formik.values.gender}
-              onValueChange={(value: Gender) =>
-                formik.setFieldValue("gender", value)
-              }
-              disabled={loading}
-            >
-              <SelectTrigger
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                  getErrorMessage("gender")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+          {/* Gender, Nationality, Birth Date, Marital Status — one row */}
+          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Gender */}
+            <div className="space-y-2">
+              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+                Gender <span className="text-red-500">*</span>
+              </label>
+              <Select
+                value={formik.values.gender}
+                onValueChange={(value: Gender) => formik.setFieldValue("gender", value)}
+                disabled={loading}
               >
-                <SelectValue placeholder="Select Gender" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(Gender).map(([key, value]) => (
-                  <SelectItem key={key} value={key}>
-                    {value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {getErrorMessage("gender") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("gender")}
-              </div>
-            )}
-          </div>
+                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("gender") ? "border-red-500" : "border-gray-300"}`}>
+                  <SelectValue placeholder="Select Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(Gender).map(([key, value]) => (
+                    <SelectItem key={key} value={key}>{value}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {getErrorMessage("gender") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("gender")}</div>}
+            </div>
 
-          {/* Nationality */}
-          <div className="space-y-2">
-            <label
-              htmlFor="nationality"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Nationality <span className="text-red-500">*</span>
-            </label>
-            <Input
-              id="nationality"
-              name="nationality"
-              type="text"
-              value={formik.values.nationality}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("nationality")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="Ethiopian"
-              disabled={loading}
-            />
-            {getErrorMessage("nationality") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("nationality")}
-              </div>
-            )}
-          </div>
-{/* Birth Date */}
-        <div className="space-y-2">
-          <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">
-            Birth Date  <span className="text-red-500">*</span>
-          </label>
-          <Input
-            id="birthDate"
-            name="birthDate"
-            type="date"
-            value={formik.values.birthDate}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-              getErrorMessage('birthDate') ? "border-red-500" : "border-gray-300"
-            }`}
-            disabled={loading}
-          />
-          {getErrorMessage('birthDate') && (
-            <div className="text-red-500 text-xs mt-1">{getErrorMessage('birthDate')}</div>
-          )}
-        </div>
+            {/* Nationality */}
+            <div className="space-y-2">
+              <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">
+                Nationality <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="nationality"
+                name="nationality"
+                type="text"
+                value={formik.values.nationality}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("nationality") ? "border-red-500" : "border-gray-300"}`}
+                placeholder="Ethiopian"
+                disabled={loading}
+              />
+              {getErrorMessage("nationality") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("nationality")}</div>}
+            </div>
 
- {/* Marital Status */}
+            {/* Birth Date */}
+            <div className="space-y-2">
+              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">
+                Birth Date <span className="text-red-500">*</span>
+              </label>
+              <Input
+                id="birthDate"
+                name="birthDate"
+                type="date"
+                value={formik.values.birthDate}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('birthDate') ? "border-red-500" : "border-gray-300"}`}
+                disabled={loading}
+              />
+              {getErrorMessage('birthDate') && <div className="text-red-500 text-xs mt-1">{getErrorMessage('birthDate')}</div>}
+            </div>
+
+            {/* Marital Status */}
             <div className="space-y-2">
               <label htmlFor="maritalStatus" className="block text-sm font-medium text-gray-700 mb-1">
                 Marital Status <span className="text-red-500">*</span>
@@ -708,23 +681,18 @@ useEffect(() => {
                 onValueChange={(value: MaritalStat) => formik.setFieldValue('maritalStatus', value)}
                 disabled={loading}
               >
-                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                  getErrorMessage('maritalStatus') ? "border-red-500" : "border-gray-300"
-                }`}>
+                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('maritalStatus') ? "border-red-500" : "border-gray-300"}`}>
                   <SelectValue placeholder="Select marital status" />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(MaritalStat).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
+                    <SelectItem key={key} value={key}>{value}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {getErrorMessage('maritalStatus') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('maritalStatus')}</div>
-              )}
+              {getErrorMessage('maritalStatus') && <div className="text-red-500 text-xs mt-1">{getErrorMessage('maritalStatus')}</div>}
             </div>
+          </div>
 
         </div>
 

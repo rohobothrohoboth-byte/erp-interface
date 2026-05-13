@@ -167,31 +167,35 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
     fetchBranches();
   }, []);
 
-  // Fetch all departments when component mounts (using nameListService)
+  // Fetch departments when branch changes
   useEffect(() => {
-    const fetchAllDepartments = async () => {
+    const fetchDepartmentsByBranch = async () => {
+      if (!formik.values.branchId) {
+        setDepartments([]);
+        return;
+      }
       try {
         setLoadingDepartments(true);
-        const departmentsData = await hrmmNamesApi.getAllDepartmentNames();
-        setDepartments(departmentsData);
+        const data = await hrmmNamesApi.getBranchDepartmentNames(formik.values.branchId);
+        const mapped: NameListItem[] = data.map(d => ({ id: d.id, name: d.dept }));
+        setDepartments(mapped);
 
-        if (!formik.values.departmentId && departmentsData.length > 0) {
-          // Match by name if provided, otherwise first item
+        if (!formik.values.departmentId && mapped.length > 0) {
           const match = initialDepartmentName
-            ? departmentsData.find(d => d.name.toLowerCase() === initialDepartmentName.toLowerCase())
+            ? mapped.find(d => d.name.toLowerCase() === initialDepartmentName.toLowerCase())
             : null;
-          formik.setFieldValue('departmentId', match ? match.id : departmentsData[0].id);
+          formik.setFieldValue('departmentId', match ? match.id : mapped[0].id);
         }
       } catch (error) {
-        console.error('Error fetching departments:', error);
+        console.error('Error fetching departments by branch:', error);
         setSubmitError('Failed to load departments');
       } finally {
         setLoadingDepartments(false);
       }
     };
 
-    fetchAllDepartments();
-  }, []);
+    fetchDepartmentsByBranch();
+  }, [formik.values.branchId]);
 
   // Fetch positions when department selection changes
   useEffect(() => {

@@ -6,7 +6,7 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
-import { YesNo, MaritalStat, AddressType } from '../../../../../types/hr/enum';
+import { MaritalStat, AddressType } from '../../../../../types/hr/enum';
 import type { Step2Dto } from '../../../../../types/hr/employee/empAddDto';
 import type { UUID } from 'crypto';
 
@@ -22,8 +22,6 @@ const validationSchema = yup.object({
   birthDate: yup.string().required('Birth date is required'),
   birthLocation: yup.string().required('Birth location is required'),
   motherFullName: yup.string().required("Mother's full name is required"),
-  hasBirthCert: yup.string().required('Birth certificate information is required'),
-  hasMarriageCert: yup.string().required('Marriage certificate information is required'),
   maritalStatus: yup.string().required('Marital status is required'),
   tin: yup.string().required('TIN is required'),
   bankAccountNo: yup.string().required('Bank account number is required'),
@@ -56,8 +54,6 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
       birthDate: data.birthDate || '',
       birthLocation: data.birthLocation || '',
       motherFullName: data.motherFullName || '',
-      hasBirthCert: data.hasBirthCert || '' as YesNo,
-      hasMarriageCert: data.hasMarriageCert || '' as YesNo,
       maritalStatus: data.maritalStatus || '' as MaritalStat,
       employeeId: employeeId || data.employeeId || '' as UUID,
       tin: data.tin || '',
@@ -198,7 +194,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Birth Date */}
             <div className="space-y-2">
               <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">
@@ -218,34 +214,6 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
               />
               {getErrorMessage('birthDate') && (
                 <div className="text-red-500 text-xs mt-1">{getErrorMessage('birthDate')}</div>
-              )}
-            </div>
-
-            {/* Has Birth Certificate */}
-            <div className="space-y-2">
-              <label htmlFor="hasBirthCert" className="block text-sm font-medium text-gray-700 mb-1">
-                Has Birth Certificate? *
-              </label>
-              <Select
-                value={formik.values.hasBirthCert}
-                onValueChange={(value: YesNo) => formik.setFieldValue('hasBirthCert', value)}
-                disabled={loading}
-              >
-                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                  getErrorMessage('hasBirthCert') ? "border-red-500" : "border-gray-300"
-                }`}>
-                  <SelectValue placeholder="Select option" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(YesNo).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getErrorMessage('hasBirthCert') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('hasBirthCert')}</div>
               )}
             </div>
 
@@ -274,34 +242,6 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
               </Select>
               {getErrorMessage('maritalStatus') && (
                 <div className="text-red-500 text-xs mt-1">{getErrorMessage('maritalStatus')}</div>
-              )}
-            </div>
-
-            {/* Has Marriage Certificate */}
-            <div className="space-y-2">
-              <label htmlFor="hasMarriageCert" className="block text-sm font-medium text-gray-700 mb-1">
-                Has Marriage Certificate? *
-              </label>
-              <Select
-                value={formik.values.hasMarriageCert}
-                onValueChange={(value: YesNo) => formik.setFieldValue('hasMarriageCert', value)}
-                disabled={loading}
-              >
-                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                  getErrorMessage('hasMarriageCert') ? "border-red-500" : "border-gray-300"
-                }`}>
-                  <SelectValue placeholder="Select option" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(YesNo).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getErrorMessage('hasMarriageCert') && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage('hasMarriageCert')}</div>
               )}
             </div>
           </div>

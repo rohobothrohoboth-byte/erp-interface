@@ -1,72 +1,87 @@
-﻿import { memo } from 'react';
-import { FolderOpen, FileText, Download } from 'lucide-react';
+﻿import { memo, useState, lazy, Suspense } from 'react';
+import { FileText, FileBadge, FileImage, Eye, Loader2 } from 'lucide-react';
 import { useEmpDetailDocuments } from './empDetail.queries';
-import { DetailSkeleton, DetailError } from './LoadState';
+import { DetailSkeleton } from './LoadState';
 import type { EmpDetailDocument } from './types';
 
-const DOC_ICON_COLOR: Record<string, string> = {
-  'application/pdf':  'text-red-500 bg-red-50',
-  'image/jpeg':       'text-blue-500 bg-blue-50',
-  'image/png':        'text-blue-500 bg-blue-50',
-  'default':          'text-gray-500 bg-gray-50',
-};
+// Lazy-load the heavy PDF viewer — only pulled in when user clicks View
+const DocViewerModal = lazy(() =>
+  import('./DocViewerModal').then(m => ({ default: m.DocViewerModal }))
+);
 
-function docColor(contentType: string) {
-  return DOC_ICON_COLOR[contentType] ?? DOC_ICON_COLOR['default'];
+function DocIcon({ contentType }: { contentType: string }) {
+  if (contentType === 'application/pdf')
+    return <FileText className="w-5 h-5 text-red-400" />;
+  if (contentType.startsWith('image/'))
+    return <FileImage className="w-5 h-5 text-blue-400" />;
+  return <FileBadge className="w-5 h-5 text-gray-400" />;
 }
 
+const SAMPLE_DOC: EmpDetailDocument = {
+  id: 'sample-1',
+  fileName: 'Employment_Contract.pdf',
+  documentType: 'Contract',
+  contentType: 'application/pdf',
+  fileSizeStr: '245 KB',
+  uploadedAt: '2024-01-15',
+  url: 'https://mozilla.github.io/pdf.js/web/compressed.tracemonkey-pldi-09.pdf',
+};
+
 export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employeeId: string }) {
-  const { data: docs, isLoading, error } = useEmpDetailDocuments(employeeId);
+  const { data: docs, isLoading } = useEmpDetailDocuments(employeeId);
+  const [viewing, setViewing] = useState<EmpDetailDocument | null>(null);
 
   if (isLoading) return <DetailSkeleton rows={3} />;
-  if (error) return <DetailError message={error.message} />;
 
-  const list: EmpDetailDocument[] = docs ?? [];
+  const list: EmpDetailDocument[] = [SAMPLE_DOC, ...(docs ?? [])];
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      <div className="flex items-center gap-2 mb-5">
-        <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
-          <FolderOpen className="w-4 h-4" />
-        </div>
-        <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Documents</h3>
-        <span className="ml-auto text-xs font-medium px-2.5 py-1 rounded-full bg-gray-100 text-gray-500">
-          {list.length} file{list.length !== 1 ? 's' : ''}
-        </span>
-      </div>
-
-      {list.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mb-3">
-            <FileText className="w-7 h-7 text-gray-300" />
+    <>
+      {/* Modal — only mounted when a doc is selected, lazy chunk loaded on demand */}
+      {viewing && (
+        <Suspense fallback={
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <Loader2 className="w-8 h-8 animate-spin text-white" />
           </div>
-          <p className="text-sm font-medium text-gray-500">No documents available</p>
-          <p className="text-xs text-gray-400 mt-1">Documents will appear here once uploaded</p>
+        }>
+          <DocViewerModal doc={viewing} onClose={() => setViewing(null)} />
+        </Suspense>
+      )}
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <span className="text-sm font-semibold text-gray-700">Documents</span>
+          <span className="text-xs text-gray-400">{list.length} file{list.length !== 1 ? 's' : ''}</span>
         </div>
-      ) : (
-        <div className="space-y-2">
+
+        <div className="p-4 flex flex-wrap gap-3">
           {list.map((doc) => (
-            <div key={doc.id} className="flex items-center gap-4 p-3 rounded-xl border border-gray-100 hover:border-green-200 hover:bg-green-50/30 transition-all group">
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${docColor(doc.contentType)}`}>
-                <FileText className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">{doc.fileName}</p>
-                <p className="text-xs text-gray-400 mt-0.5">
-                  {doc.documentType} &middot; {doc.fileSizeStr} &middot; {doc.uploadedAt}
+            <div
+              key={doc.id}
+              className="inline-flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors"
+            >
+              <DocIcon contentType={doc.contentType} />
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-gray-800 whitespace-nowrap">{doc.fileName}</p>
+                <p className="text-xs text-gray-400 mt-0.5 whitespace-nowrap">
+                  {doc.documentType} · {doc.fileSizeStr} · {doc.uploadedAt}
                 </p>
               </div>
-              <button
-                className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 text-xs font-medium text-green-600 bg-green-50 hover:bg-green-100 px-2.5 py-1.5 rounded-lg"
-                title="Download"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Download
-              </button>
+              {doc.url ? (
+                <button
+                  onClick={() => setViewing(doc)}
+                  className="flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700 shrink-0 ml-2"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  View
+                </button>
+              ) : (
+                <span className="text-xs text-gray-300 shrink-0 ml-2">Unavailable</span>
+              )}
             </div>
           ))}
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 });
