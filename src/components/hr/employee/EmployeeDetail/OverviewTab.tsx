@@ -1,9 +1,9 @@
 import { memo, useMemo } from 'react';
 import { Clock, Star, Award, UserCheck, Calendar } from 'lucide-react';
-import { useEmpDetailOverview, useEmpDetailLeave } from './empDetail.queries';
 import { ReadCard } from './shared';
 import { DetailSkeleton, DetailError } from './LoadState';
 import { EmpPhotoCircle } from '../../../ui/EmpPhoto';
+import { useEmpDetailLeave, useEmpDetailOverview } from '../../../../services/hr/employee/empDetail/empDetail.queries';
 
 const WORKING_DAYS = 23;
 
@@ -137,3 +137,4 @@ export const OverviewTab = memo(function OverviewTab({ employeeId }: { employeeI
     </div>
   );
 });
+

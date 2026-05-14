@@ -4,7 +4,7 @@ import EmployeeSearchFilters from "../../../components/hr/employee/EmployeeSearc
 import { motion } from "framer-motion";
 import { usermgmtApi } from "../../../services/core/usermgmt/usermgmt.api";
 import EmployeeTable from "../../../components/core/usermgmt/employeeTable";
-import type { EmployeeListDto } from "../../../types/hr/employee";
+import type { AdminEmpListDto } from "../../../types/hr/employee";
 import { useNavigate } from "react-router-dom";
 import EmployeeSearch, { type AdminEmployeeFilters } from "../../../components/core/usermgmt/EmployeeSearch";
 
@@ -16,13 +16,13 @@ const UserManagement: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
 
   // State for employee table
-  const [employeesTableData, setEmployeesTableData] = useState<EmployeeListDto[]>(
+  const [employeesTableData, setEmployeesTableData] = useState<AdminEmpListDto[]>(
     [],
   );
-  const [filteredEmployees, setFilteredEmployees] = useState<EmployeeListDto[]>(
+  const [filteredEmployees, setFilteredEmployees] = useState<AdminEmpListDto[]>(
     [],
   );
-  const [allEmployees, setAllEmployees] = useState<EmployeeListDto[]>([]);
+  const [allEmployees, setAllEmployees] = useState<AdminEmpListDto[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -37,15 +37,15 @@ const UserManagement: React.FC = () => {
    const navigate = useNavigate();
   // Helper function to determine employee status based on actual data
   const determineEmployeeStatus = (
-    employee: EmployeeListDto,
+    employee: AdminEmpListDto,
   ): "active" | "on-leave" => {
     // TODO: Replace with actual status logic from your API
     // For now, default to "active"
     return "active";
   };
 
-  // Convert EmployeeListDto to EmployeeListDto format using actual employee data
-  const convertToEmployeeListDto = (employee: EmployeeListDto): EmployeeListDto => {
+  // Convert AdminEmpListDto to AdminEmpListDto format using actual employee data
+  const convertToAdminEmpListDto = (employee: AdminEmpListDto): AdminEmpListDto => {
     // const currentYear = new Date().getFullYear();
     // const currentMonth = String(new Date().getMonth() + 1).padStart(2, '0');
     // const currentDay = String(new Date().getDate()).padStart(2, '0');
@@ -62,17 +62,11 @@ const UserManagement: React.FC = () => {
       branch: employee.branch,
       empState: employee.empState,
       hasAccount: employee.hasAccount,
-      createdAt: employee.createdAt,
-      isDeleted: employee.isDeleted,
-      rowVersion: employee.rowVersion,
-      createdAtAm: employee.createdAtAm,
-      modifiedAt: employee.modifiedAt,
-      modifiedAtAm: employee.modifiedAtAm,
     };
   };
 
   // Filter and search employees
-  const applyFiltersAndSearch = (employees: EmployeeListDto[]) => {
+  const applyFiltersAndSearch = (employees: AdminEmpListDto[]) => {
     return employees.filter((employee) => {
       // Apply search term filter
       const searchLower = searchTerm.toLowerCase();
@@ -120,7 +114,7 @@ const UserManagement: React.FC = () => {
 
     try {
       // Fetch all employees from the API
-      const apiEmployees = await usermgmtApi.getAllEmployees();
+      const apiEmployees = await usermgmtApi.getAllEmployeesAdmin();
       console.log("API Response:", apiEmployees);
 
       // Check if response is in expected format
@@ -129,9 +123,9 @@ const UserManagement: React.FC = () => {
         // Still proceed with empty array instead of throwing error
       }
 
-      // Convert API response to EmployeeListDto format
-      const convertedEmployees: EmployeeListDto[] = Array.isArray(apiEmployees)
-        ? apiEmployees.map(convertToEmployeeListDto)
+      // Convert API response to AdminEmpListDto format
+      const convertedEmployees: AdminEmpListDto[] = Array.isArray(apiEmployees)
+        ? apiEmployees.map(convertToAdminEmpListDto)
         : [];
 
       setAllEmployees(convertedEmployees);
@@ -196,7 +190,7 @@ const UserManagement: React.FC = () => {
     }
   }, [searchTerm, filters, allEmployees, currentPage]);
 
-  const handleAddAccount = (employeeData: EmployeeListDto) => {
+  const handleAddAccount = (employeeData: AdminEmpListDto) => {
     const empSearchRes: EmpSearchRes = {
       id: employeeData.id as UUID,
       code: employeeData.code,
@@ -214,7 +208,7 @@ const UserManagement: React.FC = () => {
 
   };
 
-  const handleEditAccount = async (employeeData: EmployeeListDto) => {
+  const handleEditAccount = async (employeeData: AdminEmpListDto) => {
     const empSearchRes: EmpSearchRes = {
       id: employeeData.id as UUID,
       code: employeeData.code,
@@ -231,9 +225,9 @@ const UserManagement: React.FC = () => {
     try {
       setTableLoading(true);
       // Fetch actual account data from API
-      const accountData = await usermgmtApi.getAccountData(
-        employeeData.id as UUID,
-      );
+      // const accountData = await usermgmtApi.getAccountData(
+      //   employeeData.id as UUID,
+      // );
 
       navigate(`/core/user-management/edit/${employeeData.id}`);
     } catch (error: any) {

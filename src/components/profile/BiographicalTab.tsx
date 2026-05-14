@@ -9,6 +9,8 @@ import { EditableField } from './EditableField';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Field, Grid } from './shared';
 import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
+import EnumSelect from '../ui/enumSelect';
+import { YesNo } from '../../types/hr/enum';
 
 // ── Sub-components defined outside BiographicalTab so they never remount ──
 
@@ -122,83 +124,129 @@ export const BiographicalTab = memo(function BiographicalTab() {
           <EditableField label="Mother's Full Name" value={bioForm.motherFullName} isEditing={bioEditing} onChange={(v) => setBioForm((p) => ({ ...p, motherFullName: v }))} placeholder="Full name" />
 
           {bioEditing ? (
-            <>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Has Birth Certificate</label>
-                <Select value={bioForm.hasBirthCert || ''} onValueChange={(v) => setBioForm((p) => ({ ...p, hasBirthCert: v }))}>
-                  <SelectTrigger className="w-full h-8 text-sm border-gray-200"><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Yes">Yes</SelectItem>
-                    <SelectItem value="No">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {bioForm.hasBirthCert === 'Yes' && (
-                <CertUpload fileName={bioForm.birthCertFileName} label="Upload Birth Certificate"
-                  onFile={(file, name) => setBioForm((p) => ({ ...p, birthCertFile: file, birthCertFileName: name }))} />
-              )}
-            </>
+          <>
+  <div className="flex flex-col gap-1">
+    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+      Has Birth Certificate
+    </label>
+
+    <EnumSelect
+      enumObject={YesNo}
+      value={bioForm.hasBirthCert || ''}
+      onChange={(value) =>
+        setBioForm((p) => ({
+          ...p,
+          hasBirthCert: value,
+        }))
+      }
+      placeholder="Select"
+    />
+  </div>
+
+  {bioForm.hasBirthCert === '0' && (
+    <CertUpload
+      fileName={bioForm.birthCertFileName}
+      label="Upload Birth Certificate"
+      onFile={(file, name) =>
+        setBioForm((p) => ({
+          ...p,
+          birthCertFile: file,
+          birthCertFileName: name,
+        }))
+      }
+    />
+  )}
+</>
           ) : (
             <Field label="Has Birth Certificate" value={bio?.hasBirthCert} />
           )}
 
           {bioEditing ? (
             <>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">Has Marriage Certificate</label>
-                <Select value={bioForm.hasMarriageCert || ''} onValueChange={(v) => setBioForm((p) => ({ ...p, hasMarriageCert: v }))}>
-                  <SelectTrigger className="w-full h-8 text-sm border-gray-200"><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Yes">Yes</SelectItem>
-                    <SelectItem value="No">No</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              {bioForm.hasMarriageCert === 'Yes' && (
-                <CertUpload fileName={bioForm.marriageCertFileName} label="Upload Marriage Certificate"
-                  onFile={(file, name) => setBioForm((p) => ({ ...p, marriageCertFile: file, marriageCertFileName: name }))} />
-              )}
-            </>
+  <div className="flex flex-col gap-1">
+    <label className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+      Has Marriage Certificate
+    </label>
+
+    <EnumSelect
+      enumObject={YesNo}
+      value={bioForm.hasMarriageCert || ''}
+      onChange={(value) =>
+        setBioForm((p) => ({
+          ...p,
+          hasMarriageCert: value,
+        }))
+      }
+      placeholder="Select"
+    />
+  </div>
+
+  {bioForm.hasMarriageCert === '0' && (
+    <CertUpload
+      fileName={bioForm.marriageCertFileName}
+      label="Upload Marriage Certificate"
+      onFile={(file, name) =>
+        setBioForm((p) => ({
+          ...p,
+          marriageCertFile: file,
+          marriageCertFileName: name,
+        }))
+      }
+    />
+  )}
+</>
           ) : (
             <Field label="Has Marriage Certificate" value={bio?.hasMarriageCert} />
           )}
         </div>
 
-        {/* Document pills */}
+        {/* Document pills — split left/right */}
         {!bioEditing && (
           <div className="mt-5 pt-4 border-t border-gray-100">
             <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-3">Documents</p>
-            <div className="flex flex-wrap gap-2">
-              <div className="inline-flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
-                <FileText className="w-4 h-4 text-red-400 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-gray-800 whitespace-nowrap">{bio?.biCertName || 'Birth_Certificate.pdf'}</p>
-                  <p className="text-[11px] text-gray-400 whitespace-nowrap">Birth Cert · {bio?.biCertSize || '180 KB'}</p>
-                </div>
-                <a
-                  href={bio?.biCertId ? `/hrm/profile/v1/MyPro/GetEmpDoc/${bio.biCertId}` : 'https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700 shrink-0 ml-1"
-                >
-                  View <ExternalLink className="w-3 h-3" />
-                </a>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Birth Certificate */}
+              <div className="flex flex-col gap-1.5 p-3 rounded-xl border border-gray-100 bg-gray-50">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full w-fit">
+                  Birth Certificate
+                </span>
+                {bio?.biCertId ? (
+                  <>
+                    <p className="text-xs text-gray-500">{bio.biCertType} · {bio.biCertSize}</p>
+                    <a
+                      href={`/hrm/profile/v1/MyPro/GetEmpDoc/${bio.biCertId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700 w-fit"
+                    >
+                      View <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-400 italic">No file uploaded</p>
+                )}
               </div>
 
-              <div className="inline-flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
-                <FileText className="w-4 h-4 text-red-400 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-gray-800 whitespace-nowrap">{bio?.maCertName || 'Marriage_Certificate.pdf'}</p>
-                  <p className="text-[11px] text-gray-400 whitespace-nowrap">Marriage Cert · {bio?.maCertSize || '210 KB'}</p>
-                </div>
-                <a
-                  href={bio?.maCertId ? `/hrm/profile/v1/MyPro/GetEmpDoc/${bio.maCertId}` : 'https://www.w3.org/WAI/WCAG21/Techniques/pdf/sample.pdf'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700 shrink-0 ml-1"
-                >
-                  View <ExternalLink className="w-3 h-3" />
-                </a>
+              {/* Marriage Certificate */}
+              <div className="flex flex-col gap-1.5 p-3 rounded-xl border border-gray-100 bg-gray-50">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-pink-700 bg-pink-50 border border-pink-200 px-2 py-0.5 rounded-full w-fit">
+                  Marriage Certificate
+                </span>
+                {bio?.maCertId ? (
+                  <>
+                    <p className="text-xs text-gray-500">{bio.maCertType} · {bio.maCertSize}</p>
+                    <a
+                      href={`/hrm/profile/v1/MyPro/GetEmpDoc/${bio.maCertId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700 w-fit"
+                    >
+                      View <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-400 italic">No file uploaded</p>
+                )}
               </div>
             </div>
           </div>

@@ -152,7 +152,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
             {/* Birth Location */}
             <div className="space-y-2">
               <label htmlFor="birthLocation" className="block text-sm font-medium text-gray-700 mb-1">
-                Birth Location *
+                Birth Location <span className="text-red-500">*</span>
               </label>
               <Input
                 id="birthLocation"
@@ -174,7 +174,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
             {/* Mother's Full Name */}
             <div className="space-y-2">
               <label htmlFor="motherFullName" className="block text-sm font-medium text-gray-700 mb-1">
-                Mother's Full Name *
+                Mother's Full Name <span className="text-red-500">*</span>
               </label>
               <Input
                 id="motherFullName"
@@ -198,7 +198,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
             {/* Birth Date */}
             <div className="space-y-2">
               <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Birth Date *
+                Birth Date <span className="text-red-500">*</span>
               </label>
               <Input
                 id="birthDate"
@@ -220,7 +220,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
             {/* Marital Status */}
             <div className="space-y-2">
               <label htmlFor="maritalStatus" className="block text-sm font-medium text-gray-700 mb-1">
-                Marital Status *
+                Marital Status <span className="text-red-500">*</span>
               </label>
               <Select
                 value={formik.values.maritalStatus}
@@ -258,7 +258,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
             {/* TIN */}
             <div className="space-y-2">
               <label htmlFor="tin" className="block text-sm font-medium text-gray-700 mb-1">
-                TIN (Tax Identification Number) *
+                TIN (Tax Identification Number) <span className="text-red-500">*</span>
               </label>
               <Input
                 id="tin"
@@ -280,7 +280,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
             {/* Bank Account Number */}
             <div className="space-y-2">
               <label htmlFor="bankAccountNo" className="block text-sm font-medium text-gray-700 mb-1">
-                Bank Account Number *
+                Bank Account Number <span className="text-red-500">*</span>
               </label>
               <Input
                 id="bankAccountNo"
@@ -302,7 +302,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
             {/* Pension Number */}
             <div className="space-y-2">
               <label htmlFor="pensionNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                Pension Number *
+                Pension Number <span className="text-red-500">*</span>
               </label>
               <Input
                 id="pensionNumber"
@@ -593,3 +593,5 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
     </motion.div>
   );
 };
+
+

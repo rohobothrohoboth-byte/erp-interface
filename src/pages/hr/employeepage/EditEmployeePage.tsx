@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { EditEmployeeStepForm } from '../../../components/hr/employee/EditEmployee/EditEmployeeStepForm';
+import type { UUID } from 'crypto';
 
 export const EditEmployeePage: React.FC = () => {
   const navigate = useNavigate();
-  const { employeeId } = useParams<{ employeeId: string }>();
+  const { employeeId } = useParams<{ employeeId: UUID }>();
 
   const handleBackToEmployees = () => {
     navigate('/hr/employees/record');

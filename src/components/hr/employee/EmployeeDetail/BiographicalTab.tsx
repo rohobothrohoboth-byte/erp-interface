@@ -1,8 +1,8 @@
 import { memo } from 'react';
 import { FileText, Landmark } from 'lucide-react';
-import { useEmpDetailBio } from './empDetail.queries';
 import { ReadCard, Grid, Field } from './shared';
 import { DetailSkeleton, DetailError } from './LoadState';
+import { useEmpDetailBio } from '../../../../services/hr/employee/empDetail/empDetail.queries';
 
 export const BiographicalTab = memo(function BiographicalTab({ employeeId }: { employeeId: string }) {
   const { data: bio, isLoading, error } = useEmpDetailBio(employeeId);
@@ -38,3 +38,4 @@ export const BiographicalTab = memo(function BiographicalTab({ employeeId }: { e
     </div>
   );
 });
+

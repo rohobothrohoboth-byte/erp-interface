@@ -10,7 +10,9 @@ import type {
 
 // ── Re-exported form types used by components ──────────────────────────────
 export type BiographicalForm = Omit<EmpBioModDto, 'id'> & {
-  birthCertFileName?: string;
+  birthCertFile?:      File | null;
+  birthCertFileName?:  string;
+  marriageCertFile?:   File | null;
   marriageCertFileName?: string;
 };
 export type FinancialForm    = Omit<EmpFinanceModDto, 'id'>;
@@ -68,7 +70,15 @@ export const useProfileStore = create<ProfileStore>((set) => ({
   saveBiographical: async (id, data) => {
     set({ savingSection: 'biographical' });
     try {
-      await profileApi.updateBio({ id, ...data });
+      await profileApi.updateBio({
+        id,
+        birthLocation:   data.birthLocation,
+        motherFullName:  data.motherFullName,
+        hasBirthCert:    data.hasBirthCert,
+        hasMarriageCert: data.hasMarriageCert,
+        file1: data.file1 ?? data.birthCertFile ?? null,
+        file2: data.file2 ?? data.marriageCertFile ?? null,
+      });
       set({ editingSection: null });
     } finally {
       set({ savingSection: null });

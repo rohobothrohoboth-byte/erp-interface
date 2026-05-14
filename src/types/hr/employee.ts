@@ -129,3 +129,17 @@ export interface EmployeeFilters {
 export interface EmployeeDetailsData {
   employee: EmployeeListDto;
 }
+
+
+export interface AdminEmpListDto {
+  id: string;
+  empFullName: string;
+  empFullNameAm: string;
+  gender: string;
+  code: string;
+  branch: string;
+  department: string;
+  position: string;
+  empState: string;
+  hasAccount: boolean;
+}

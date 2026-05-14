@@ -26,3 +26,4 @@ export const InlineLoader = () => (
     <Loader2 className="w-6 h-6 animate-spin text-green-500" />
   </div>
 );
+

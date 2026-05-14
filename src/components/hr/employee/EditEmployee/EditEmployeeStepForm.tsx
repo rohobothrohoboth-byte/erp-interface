@@ -8,7 +8,13 @@ import { StampStep } from './steps/StampStep';
 import { SignatureStep } from './steps/SignatureStep';
 import { EditEmployeeStepHeader } from './EditEmployeeStepHeader';
 import { empApi } from '../../../../services/hr/employee/emp.api';
-import type { Step1Dto, Step2Dto, UUID } from '../../../../types/hr/employee/empAddDto';
+import { empModApi } from '../../../../services/hr/employee/empMod.api';
+import { showToast } from '../../../../layout/layout';
+import { Relation } from '../../../../types/enum';
+import { useQueryClient } from '@tanstack/react-query';
+import { empDetailKeys } from '../../../../services/hr/employee/empDetail/empDetail.queries';
+import type { Step1Dto, UUID } from '../../../../types/hr/employee/empAddDto';
+import type { EmpModBasicDto, EmpModBioDto, EmpModGuarDto } from '../../../../types/hr/employee/empModDto';
 
 const steps = [
   { id: 1, title: 'Basic Info', icon: User },
@@ -19,7 +25,7 @@ const steps = [
 ];
 
 interface EditEmployeeStepFormProps {
-  employeeId: string;
+  employeeId: UUID;
   onBackToEmployees: () => void;
   onEmployeeUpdated: (result: any) => void;
 }
@@ -31,12 +37,14 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    step1: {},
+    step1: {} as any,
     step2: {},
     step4: {},
     stamp: null as File | null,
     signature: null as File | null,
   });
+  const [rowVersions, setRowVersions] = useState({ basic: '', bio: '', guar: '' });
+  const [recordIds, setRecordIds]     = useState({ basic: '', bio: '', guar: '' });
   const [employeeHeaderData, setEmployeeHeaderData] = useState<any>(null);
   const [employeeNames, setEmployeeNames] = useState({ department: '', position: '', branch: '', jobGrade: '' });
   const [loading, setLoading] = useState(false);
@@ -44,6 +52,7 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
   const [initialDataLoaded, setInitialDataLoaded] = useState(false);
   const formContainerRef = useRef<HTMLDivElement>(null);
   const stepContentRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
 
   // Scroll to top when step changes
   useEffect(() => {
@@ -150,7 +159,7 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
             lastName:    guar.lastName    ?? '',
             nationality: guar.nationality ?? '',
             gender:      guar.gender      ?? '',
-            relationId:  guar.relation    ?? '',
+            relationId:  Object.entries(Relation).find(([, v]) => v === guar.relation)?.[0] ?? guar.relation ?? '',
             employeeId:  employeeId as UUID,
             addressType: guar.addressType ?? '',
             country:     guar.country     ?? '',
@@ -191,6 +200,16 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
         });
 
         setFormData(mappedData);
+        setRowVersions({
+          basic: basic.rowVersion ?? '',
+          bio:   bio.rowVersion   ?? '',
+          guar:  guar.rowVersion  ?? '',
+        });
+        setRecordIds({
+          basic: basic.id ?? employeeId,
+          bio:   bio.id   ?? employeeId,
+          guar:  guar.id  ?? employeeId,
+        });
         setInitialDataLoaded(true);
       } catch (err) {
         console.error('Failed to load employee data:', err);
@@ -211,81 +230,136 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
     setError(null);
 
     try {
-      // Update employee basic info via API
-      const result = await empApi.addStep1({
-        ...step1Data,
-        // Add employeeId for update context if needed
-      });
-
-      console.log('Employee basic info updated successfully:', result);
-
-      const updatedFormData = {
-        ...formData,
-        step1: step1Data,
+      const dto: EmpModBasicDto = {
+        id:               recordIds.basic as UUID,
+        rowVersion:       rowVersions.basic,
+        isDeleted:        false,
+        branchId:         step1Data.branchId,
+        jobGradeId:       step1Data.jobGradeId,
+        jgStepId:         step1Data.jgStepId,
+        positionId:       step1Data.positionId,
+        departmentId:     step1Data.departmentId,
+        firstName:        step1Data.firstName,
+        firstNameAm:      step1Data.firstNameAm,
+        middleName:       step1Data.middleName,
+        middleNameAm:     step1Data.middleNameAm,
+        lastName:         step1Data.lastName,
+        lastNameAm:       step1Data.lastNameAm,
+        gender:           step1Data.gender,
+        nationality:      step1Data.nationality,
+        employmentDate:   step1Data.employmentDate,
+        employmentType:   step1Data.employmentType,
+        employmentNature: step1Data.employmentNature,
+        workArrangement:  step1Data.workArrangement,
+        file:             step1Data.File,
       };
 
-      setFormData(updatedFormData);
+      await empModApi.updateBasic(employeeId as UUID, dto);
+      setFormData({ ...formData, step1: step1Data });
+      // Invalidate photo cache so header updates immediately if photo was changed
+      if (step1Data.File) {
+        queryClient.invalidateQueries({ queryKey: empDetailKeys.photo(employeeId) });
+      }
       scrollToTop();
-      
-      // Show success message
-      alert('Basic information updated successfully!');
+      showToast.success('Basic information updated successfully!');
     } catch (error) {
       console.error('Failed to update employee basic info:', error);
       setError('Failed to update employee information. Please try again.');
+      showToast.error('Failed to update basic information.');
     } finally {
       setLoading(false);
     }
   };
 
   // Handle Step 2 update
-  const handleStep2Submit = async (step2Data: Step2Dto) => {
+  const handleStep2Submit = async (step2Data: any) => {
     setLoading(true);
     setError(null);
 
     try {
-      const step2DataWithEmployeeId: Step2Dto = {
-        ...step2Data,
-        employeeId: employeeId as UUID
+      const dto: EmpModBioDto = {
+        id:            recordIds.bio as UUID,
+        rowVersion:    rowVersions.bio,
+        isDeleted:     false,
+        employeeId:    employeeId as UUID,
+        hasData:       true,
+        birthDate:     step2Data.birthDate      ?? '',
+        birthLocation: step2Data.birthLocation  ?? '',
+        motherFullName:step2Data.motherFullName ?? '',
+        maritalStatus: step2Data.maritalStatus  ?? '',
+        tin:           step2Data.tin            ?? '',
+        bankAccountNo: step2Data.bankAccountNo  ?? '',
+        pensionNumber: step2Data.pensionNumber  ?? '',
+        addressType:   step2Data.addressType    ?? '',
+        country:       step2Data.country,
+        region:        step2Data.region         ?? '',
+        subcity:       step2Data.subcity,
+        zone:          step2Data.zone,
+        woreda:        step2Data.woreda,
+        kebele:        step2Data.kebele,
+        houseNo:       step2Data.houseNo,
+        telephone:     step2Data.telephone      ?? '',
+        poBox:         step2Data.poBox,
+        fax:           step2Data.fax,
+        email:         step2Data.email,
+        website:       step2Data.website,
       };
 
-      const result = await empApi.addStep2(step2DataWithEmployeeId);
-
-      console.log('Biographical info updated successfully:', result);
-
-      const updatedFormData = {
-        ...formData,
-        step2: step2Data,
-      };
-
-      setFormData(updatedFormData);
+      await empModApi.updateBio(employeeId as UUID, dto);
+      setFormData({ ...formData, step2: step2Data });
       scrollToTop();
-      
-      // Show success message
-      alert('Biographical information updated successfully!');
+      showToast.success('Biographical information updated successfully!');
     } catch (error) {
       console.error('Failed to update biographical info:', error);
       setError('Failed to save biographical information. Please try again.');
+      showToast.error('Failed to update biographical information.');
     } finally {
       setLoading(false);
     }
   };
 
   // Handle Step 4 update (Guarantor)
-  const handleStep4Submit = async (step4Data: Step2Dto) => {
+  const handleStep4Submit = async (step4Data: any) => {
     setLoading(true);
     setError(null);
 
     try {
-      const result = await empApi.addStep4({ ...step4Data, employeeId: employeeId as UUID });
+      const dto: EmpModGuarDto = {
+        id:          recordIds.guar as UUID,
+        rowVersion:  rowVersions.guar,
+        isDeleted:   false,
+        employeeId:  employeeId as UUID,
+        hasData:     true,
+        firstName:   step4Data.firstName   ?? '',
+        middleName:  step4Data.middleName  ?? '',
+        lastName:    step4Data.lastName    ?? '',
+        gender:      step4Data.gender      ?? '',
+        nationality: step4Data.nationality ?? '',
+        relation:    String(step4Data.relationId ?? step4Data.relation ?? ''),
+        addressType: step4Data.addressType ?? '',
+        country:     step4Data.country,
+        region:      step4Data.region      ?? '',
+        subcity:     step4Data.subcity,
+        zone:        step4Data.zone,
+        woreda:      step4Data.woreda,
+        kebele:      step4Data.kebele,
+        houseNo:     step4Data.houseNo,
+        telephone:   step4Data.telephone   ?? '',
+        poBox:       step4Data.poBox,
+        fax:         step4Data.fax,
+        email:       step4Data.email,
+        website:     step4Data.website,
+        file:        step4Data.File,
+      };
 
-      console.log('Guarantor info updated successfully:', result);
-
+      await empModApi.updateGuar(employeeId as UUID, dto);
       setFormData({ ...formData, step4: step4Data });
       scrollToTop();
-      alert('Guarantor information updated successfully!');
+      showToast.success('Guarantor information updated successfully!');
     } catch (error) {
       console.error('Failed to update guarantor info:', error);
       setError('Failed to save guarantor information. Please try again.');
+      showToast.error('Failed to update guarantor information.');
     } finally {
       setLoading(false);
     }
@@ -297,22 +371,16 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
     setError(null);
 
     try {
-      // TODO: Add API call to upload stamp
-      console.log('Stamp uploaded:', stampFile);
-
-      const updatedFormData = {
-        ...formData,
-        stamp: stampFile,
-      };
-
-      setFormData(updatedFormData);
+      if (stampFile) {
+        await empModApi.updateStamp({ id: employeeId as UUID, employeeId: employeeId as UUID, file: stampFile });
+      }
+      setFormData({ ...formData, stamp: stampFile });
       scrollToTop();
-      
-      // Show success message
-      alert('Stamp uploaded successfully!');
+      showToast.success('Stamp uploaded successfully!');
     } catch (error) {
       console.error('Failed to upload stamp:', error);
       setError('Failed to upload stamp. Please try again.');
+      showToast.error('Failed to upload stamp.');
     } finally {
       setLoading(false);
     }
@@ -324,22 +392,16 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
     setError(null);
 
     try {
-      // TODO: Add API call to upload signature
-      console.log('Signature uploaded:', signatureFile);
-
-      const updatedFormData = {
-        ...formData,
-        signature: signatureFile,
-      };
-
-      setFormData(updatedFormData);
+      if (signatureFile) {
+        await empModApi.updateSign({ id: employeeId as UUID, employeeId: employeeId as UUID, file: signatureFile });
+      }
+      setFormData({ ...formData, signature: signatureFile });
       scrollToTop();
-      
-      // Show success message
-      alert('Signature uploaded successfully!');
+      showToast.success('Signature uploaded successfully!');
     } catch (error) {
       console.error('Failed to upload signature:', error);
       setError('Failed to upload signature. Please try again.');
+      showToast.error('Failed to upload signature.');
     } finally {
       setLoading(false);
     }
@@ -430,6 +492,7 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
           onTabClick={handleTabClick}
           title="Edit Employee"
           backButtonText="Back to Employees"
+          employeeId={employeeId}
           employeeData={employeeHeaderData}
         />
 

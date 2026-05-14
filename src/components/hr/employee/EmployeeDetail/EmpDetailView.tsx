@@ -1,9 +1,9 @@
-﻿import { memo, useState, useCallback, lazy, Suspense } from 'react';
+import { memo, useState, useCallback, lazy, Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { EmpDetailHeader } from './EmpDetailHeader';
-import { empDetailApi } from './empDetail.api';
-import { empDetailKeys } from './empDetail.queries';
+import { empDetailApi } from '../../../../services/hr/employee/empDetail/empDetail.api';
+import { empDetailKeys } from '../../../../services/hr/employee/empDetail/empDetail.queries';
 import { DetailSkeleton } from './LoadState';
 
 const STALE = 5 * 60 * 1000;
@@ -81,3 +81,4 @@ export const EmpDetailView = memo(function EmpDetailView() {
 });
 
 export default EmpDetailView;
+

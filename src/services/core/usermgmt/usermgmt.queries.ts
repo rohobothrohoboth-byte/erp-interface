@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, type UseQueryOptions, type UseMu
 import { usermgmtFetcher } from './usermgmt.api';
 import { usermgmtKeys } from './usermgmt.keys';
 import type { Step1Dto, EmpAddRes, EmpAddPrintDto, UUID } from '../../../types/hr/employee/empAddDto';
-import type { EmployeeListDto } from '../../../types/hr/employee';
+import type { AdminEmpListDto, EmployeeListDto } from '../../../types/hr/employee';
 
 export const useEmployees = (
   options?: Omit<UseQueryOptions<EmployeeListDto[], Error>, 'queryKey' | 'queryFn'>
@@ -10,6 +10,15 @@ export const useEmployees = (
   useQuery<EmployeeListDto[], Error>({
     queryKey: usermgmtKeys.employees(),
     queryFn: usermgmtFetcher.getAllEmployees,
+    ...options,
+  });
+
+  export const useAdminEmployees = (
+  options?: Omit<UseQueryOptions<AdminEmpListDto[], Error>, 'queryKey' | 'queryFn'>
+) =>
+  useQuery<AdminEmpListDto[], Error>({
+    queryKey: usermgmtKeys.employees(),
+    queryFn: usermgmtFetcher.getAllEmployeesAdmin,
     ...options,
   });
 

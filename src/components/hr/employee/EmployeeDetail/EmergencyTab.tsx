@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { User, MapPin } from 'lucide-react';
-import { useEmpDetailContact } from './empDetail.queries';
+import { useEmpDetailContact } from '../../../../services/hr/employee/empDetail/empDetail.queries';
 import { ReadCard, Grid, Field } from './shared';
 import { DetailSkeleton, DetailError } from './LoadState';
 
@@ -72,3 +72,4 @@ export const EmergencyTab = memo(function EmergencyTab({ employeeId }: { employe
     </div>
   );
 });
+

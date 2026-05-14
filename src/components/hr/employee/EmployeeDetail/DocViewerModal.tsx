@@ -5,7 +5,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import {
   X, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight, Loader2, AlertCircle,
 } from 'lucide-react';
-import type { EmpDetailDocument } from './types';
+import type { EmpDetailDocument } from '../../../../types/hr/employee/empDetail';
 
 // Use local worker served from /public — avoids CDN failures in dev/prod
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
@@ -175,3 +175,4 @@ export function DocViewerModal({ doc, onClose }: Props) {
     </div>
   );
 }
+

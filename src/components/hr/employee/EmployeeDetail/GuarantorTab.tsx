@@ -1,6 +1,6 @@
-﻿import { memo } from 'react';
+import { memo } from 'react';
 import { Shield, FileText, MapPin } from 'lucide-react';
-import { useEmpDetailGuarantor } from './empDetail.queries';
+import { useEmpDetailGuarantor } from '../../../../services/hr/employee/empDetail/empDetail.queries';
 import { ReadCard, Grid, Field } from './shared';
 import { DetailSkeleton, DetailError } from './LoadState';
 
@@ -65,3 +65,4 @@ export const GuarantorTab = memo(function GuarantorTab({ employeeId }: { employe
     </div>
   );
 });
+

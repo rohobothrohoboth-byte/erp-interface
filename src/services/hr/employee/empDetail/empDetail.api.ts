@@ -1,4 +1,4 @@
-import { api } from '../../../../services/api';
+import { api } from '../../../api';
 import type {
   EmpDetailInfo,
   EmpDetailPhoto,
@@ -10,7 +10,8 @@ import type {
   EmpDetailGuarantor,
   EmpDetailDocument,
   EmpDetailLeaveBalance,
-} from './types';
+  EmpFileList,
+} from '../../../../types/hr/employee/empDetail';
 
 const BASE = '/hrm/profile/v1/EmpPro';
 
@@ -53,6 +54,8 @@ export const empDetailApi = {
   },
   // Documents endpoint — update path once available
   getDocuments: (id: string) => get<EmpDetailDocument[]>(`${BASE}/GetEmpDocuments/${id}`),
+  // All employee certificates
+  getCertAll:   (id: string) => get<EmpFileList[]>(`/hrm/profile/v1/EmpMod/EmpCertAll/${id}`),
   // Leave balance — no dedicated endpoint yet, returns empty
   getLeave:     (_id: string): Promise<EmpDetailLeaveBalance[]> => Promise.resolve([]),
 };

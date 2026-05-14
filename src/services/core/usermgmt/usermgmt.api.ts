@@ -1,6 +1,6 @@
 import { api } from '../../api';
 import type { Step1Dto, EmpAddRes, EmpAddPrintDto, UUID } from '../../../types/hr/employee/empAddDto';
-import type { EmployeeListDto } from '../../../types/hr/employee';
+import type { AdminEmpListDto, EmployeeListDto } from '../../../types/hr/employee';
 
 const toUtcIso = (date: string): string => {
   if (!date) return date;
@@ -11,6 +11,7 @@ class UsermgmtApi {
   private baseUrl = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/AdminEmp`;
   private baseUrlE = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/Employee`;
   private addEmpUrl = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/AddEmp`;
+    private addBaseUrl = `${import.meta.env.VITE_AUTH_URL }/AdminEmp`;
 
   private extractErrorMessage(error: any): string {
     if (error.response?.data?.message) return error.response.data.message;
@@ -24,6 +25,15 @@ class UsermgmtApi {
   async getAllEmployees(): Promise<EmployeeListDto[]> {
     try {
       const response = await api.get(`${this.baseUrlE}/AllEmployee`);
+      return response.data.data;
+    } catch (error) {
+      throw new Error(this.extractErrorMessage(error));
+    }
+  }
+
+  async getAllEmployeesAdmin(): Promise<AdminEmpListDto[]> {
+    try {
+      const response = await api.get(`${this.addBaseUrl}/AllEmployee`);
       return response.data.data;
     } catch (error) {
       throw new Error(this.extractErrorMessage(error));
@@ -111,6 +121,7 @@ export const usermgmtApi = new UsermgmtApi();
 
 export const usermgmtFetcher = {
   getAllEmployees: () => usermgmtApi.getAllEmployees(),
+   getAllEmployeesAdmin: () => usermgmtApi.getAllEmployeesAdmin(),
   addEmployeeStep1: (data: Step1Dto) => usermgmtApi.addEmployeeStep1(data),
   getEmployeeStep2Data: (id: UUID) => usermgmtApi.getEmployeeStep2Data(id),
   getAccountData: (id: UUID) => usermgmtApi.getAccountData(id),

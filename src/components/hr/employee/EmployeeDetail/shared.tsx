@@ -51,3 +51,4 @@ export const ReadCard = memo(({ title, icon, children, badge }: {
 export const Grid = memo(({ children }: { children: React.ReactNode }) => (
   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">{children}</div>
 ));
+

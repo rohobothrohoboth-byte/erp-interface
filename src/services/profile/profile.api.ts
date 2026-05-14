@@ -102,26 +102,26 @@ export const profileApi = {
     form.append('HasMarriageCert', dto.hasMarriageCert);
     if (dto.file1) form.append('File1', dto.file1);
     if (dto.file2) form.append('File2', dto.file2);
-    return mod('EmpBioMod', form, true);
+    return mod('MyBioMod', form, true);
   },
 
   updateFinance: (dto: EmpFinanceModDto): Promise<void> =>
-    mod('EmpFinanceMod', dto),
+    mod('MyFinanceMod', dto),
 
   updateEmContact: (dto: EmContactModDto): Promise<void> =>
-    mod('EmContactMod', dto),
+    mod('MyEmContMod', dto),
 
   addFamily: (dto: EmpFamilyAddDto): Promise<void> =>
-    modPost('EmpFamilyAdd', dto),
+    modPost('MyFamilyAdd', dto),
 
   updateFamily: (id: string, dto: EmpFamilyModDto): Promise<void> => {
     try {
-      return api.put(`${MOD_BASE}/EmpFamilyMod/${id}`, dto).then(() => undefined);
+      return api.put(`${MOD_BASE}/MyFamilyMod/${id}`, dto).then(() => undefined);
     } catch (e) {
       throw new Error(extractError(e));
     }
   },
 
   deleteFamily: (id: string): Promise<void> =>
-    modDel(`EmpFamilyDel/${id}`),
+    modDel(`MyFamilyDel/${id}`),
 };

@@ -1,6 +1,4 @@
-// ── Employee Detail DTOs ───────────────────────────────────────────────────
-// These will be populated from the dedicated employee detail endpoints.
-// Mirrors profile types but scoped to viewing another employee (no self-edit).
+import type { UUID } from "crypto";
 
 export interface EmpDetailInfo {
   fullName: string;
@@ -56,7 +54,7 @@ export interface EmpDetailBasic {
 }
 
 export interface EmpDetailBio {
-  id: string;
+  id: UUID;
   birthLocation: string;
   motherFullName: string;
   hasBirthCert: string;
@@ -67,7 +65,7 @@ export interface EmpDetailBio {
 }
 
 export interface EmpDetailContactList {
-  id: string;
+  id: UUID;
   firstName: string;
   middleName: string;
   lastName: string;
@@ -90,13 +88,13 @@ export interface EmpDetailContactList {
 }
 
 export interface EmpDetailContact {
-  employeeId: string;
+  employeeId: UUID;
   hasContact: boolean;
   contact: EmpDetailContactList | null;
 }
 
 export interface EmpDetailFamilyMember {
-  id: string;
+  id: UUID;
   firstName: string;
   middleName: string;
   lastName: string;
@@ -107,7 +105,7 @@ export interface EmpDetailFamilyMember {
 }
 
 export interface EmpDetailFamily {
-  employeeId: string;
+  employeeId: UUID;
   family: EmpDetailFamilyMember[];
 }
 
@@ -146,7 +144,7 @@ export interface EmpDetailDocument {
 }
 
 export interface EmpDetailLeaveBalance {
-  leavePolicyId: string;
+  leavePolicyId: UUID;
   leaveType: string;
   percent: number;
   totalDays: string;
@@ -161,3 +159,12 @@ export interface EmpDetailPhoto {
   photoSize: string;
   photo: string;
 }
+
+export interface EmpFileList {
+  id: UUID;
+  fileName: string;
+  contentType: string;
+  size: string;
+  certType: string;
+}
+

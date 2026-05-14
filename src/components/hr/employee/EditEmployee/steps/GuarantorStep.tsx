@@ -247,7 +247,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
             {/* First Name */}
             <div className="space-y-2">
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                First Name *
+                First Name <span className="text-red-500">*</span>
               </label>
               <Input
                 id="firstName"
@@ -267,7 +267,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
             {/* Middle Name */}
             <div className="space-y-2">
               <label htmlFor="middleName" className="block text-sm font-medium text-gray-700 mb-1">
-                Middle Name *
+                Middle Name <span className="text-red-500">*</span>
               </label>
               <Input
                 id="middleName"
@@ -287,7 +287,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
             {/* Last Name */}
             <div className="space-y-2">
               <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name *
+                Last Name <span className="text-red-500">*</span>
               </label>
               <Input
                 id="lastName"
@@ -312,7 +312,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 htmlFor="nationality"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Nationality *
+              Nationality <span className="text-red-500">*</span>
               </label>
               <Input
                 id="nationality"
@@ -340,7 +340,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 htmlFor="gender"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Gender *
+                Gender <span className="text-red-500">*</span>
               </label>
               <Select
                 value={formik.values.gender}
@@ -378,14 +378,14 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 htmlFor="relationId"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Relation *
+                Relation <span className="text-red-500">*</span>
               </label>
 
               <EnumSelect
                 enumObject={Relation}
                 value={formik.values.relationId?.toString() || ""}
                 onChange={(value) =>
-                  formik.setFieldValue("relationId", Number(value))
+                  formik.setFieldValue("relationId", value)
                 }
                 placeholder="Select relation"
                 disabled={loading}
@@ -416,7 +416,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 htmlFor="addressType"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Address Type *
+                Address Type <span className="text-red-500">*</span>
               </label>
               <Select
                 value={formik.values.addressType}
@@ -455,7 +455,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 htmlFor="country"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Country *
+                Country <span className="text-red-500">*</span>
               </label>
               <Input
                 id="country"
@@ -484,7 +484,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 htmlFor="region"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Region *
+                Region <span className="text-red-500">*</span>
               </label>
               <Input
                 id="region"
@@ -513,7 +513,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 htmlFor="telephone"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Telephone *
+                Telephone <span className="text-red-500">*</span>
               </label>
               <div
                 className={`w-full border rounded-md transition-colors duration-200 ${
@@ -569,11 +569,8 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
 
             {/* Optional Fields (same as EmergencyContactStep) */}
             <div className="space-y-2">
-              <label
-                htmlFor="subcity"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Subcity
+              <label htmlFor="subcity" className="block text-sm font-medium text-gray-700 mb-1">
+                Subcity <span className="text-red-500">*</span>
               </label>
               <Input
                 id="subcity"
@@ -581,10 +578,13 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 value={formik.values.subcity}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("subcity") ? "border-red-500" : "border-gray-300"}`}
                 placeholder="Kirkos"
                 disabled={loading}
               />
+              {getErrorMessage("subcity") && (
+                <div className="text-red-500 text-xs mt-1">{getErrorMessage("subcity")}</div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -607,11 +607,8 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label
-                htmlFor="woreda"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Woreda
+              <label htmlFor="woreda" className="block text-sm font-medium text-gray-700 mb-1">
+                Woreda <span className="text-red-500">*</span>
               </label>
               <Input
                 id="woreda"
@@ -619,10 +616,13 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 value={formik.values.woreda}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("woreda") ? "border-red-500" : "border-gray-300"}`}
                 placeholder="08"
                 disabled={loading}
               />
+              {getErrorMessage("woreda") && (
+                <div className="text-red-500 text-xs mt-1">{getErrorMessage("woreda")}</div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -645,11 +645,8 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
             </div>
 
             <div className="space-y-2">
-              <label
-                htmlFor="houseNo"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                House Number
+              <label htmlFor="houseNo" className="block text-sm font-medium text-gray-700 mb-1">
+                House Number <span className="text-red-500">*</span>
               </label>
               <Input
                 id="houseNo"
@@ -657,10 +654,13 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
                 value={formik.values.houseNo}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
+                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("houseNo") ? "border-red-500" : "border-gray-300"}`}
                 placeholder="H-123"
                 disabled={loading}
               />
+              {getErrorMessage("houseNo") && (
+                <div className="text-red-500 text-xs mt-1">{getErrorMessage("houseNo")}</div>
+              )}
             </div>
 
             <div className="space-y-2">

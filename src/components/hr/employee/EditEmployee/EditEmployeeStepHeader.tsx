@@ -4,6 +4,11 @@ import { EmpPhotoRect } from '../../../ui/EmpPhoto';
 import { empStateColors } from '../../../profile/shared';
 import { Popover, PopoverTrigger, PopoverContent } from '../../../ui/popover';
 import { Button } from '../../../ui/button';
+import {
+  useEmpDetailInfo,
+  useEmpDetailPhoto,
+} from '../../../../services/hr/employee/empDetail/empDetail.queries';
+import type { EmpDetailPhoto } from '../../../../types/hr/employee/empDetail';
 import type { EmpPhotoRes } from '../../../../types/hr/employee/empPhoto';
 
 interface Step {
@@ -19,34 +24,37 @@ interface EditEmployeeStepHeaderProps {
   onTabClick: (stepId: number) => void;
   title: string;
   backButtonText?: string;
-  employeeData?: {
-    photo?: string;
-    fullName?: string;
-    fullNameAm?: string;
-    position?: string;
-    department?: string;
-    code?: string;
-    empState?: string;
-  };
+  employeeId?: string;
+  // kept for fallback only — hero now fetches its own data
+  employeeData?: Record<string, any>;
 }
 
-// ── Hero ───────────────────────────────────────────────────────────────────
+// ── Hero — fetches info & photo from same endpoints as detail header ────────
 const EditEmpHero = memo(function EditEmpHero({
-  employeeData,
+  employeeId,
   onBack,
   backButtonText,
 }: {
-  employeeData?: EditEmployeeStepHeaderProps['employeeData'];
+  employeeId: string;
   onBack: () => void;
   backButtonText: string;
 }) {
-  const photo: EmpPhotoRes | undefined = employeeData?.photo
-    ? { id: '', fileName: '', contentType: 'image/png', photoSize: '', photo: employeeData.photo }
+  const { data: info }      = useEmpDetailInfo(employeeId);
+  const { data: photoData } = useEmpDetailPhoto(employeeId);
+
+  const photo: EmpPhotoRes | undefined = photoData
+    ? {
+        id:          (photoData as EmpDetailPhoto).id,
+        fileName:    (photoData as EmpDetailPhoto).fileName,
+        contentType: (photoData as EmpDetailPhoto).contentType,
+        photoSize:   (photoData as EmpDetailPhoto).photoSize,
+        photo:       (photoData as EmpDetailPhoto).photo,
+      }
     : undefined;
 
-  const stateKey = employeeData?.empState
+  const stateKey = info?.empState
     ? Object.entries(empStateColors).find(([, v]) =>
-        v.includes(employeeData.empState!.toLowerCase().replace(/\s/g, '-'))
+        v.includes(info.empState.toLowerCase().replace(/\s/g, '-'))
       )?.[0] ?? '0'
     : '0';
 
@@ -66,44 +74,39 @@ const EditEmpHero = memo(function EditEmpHero({
         <rect width="100%" height="100%" fill="url(#edit-mesh)" />
       </svg>
 
-
-
-
       <div className="relative z-10 px-8 py-6">
-        <div>
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label="Go back"
-            className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:text-emerald-900 border border-emerald-300 hover:border-emerald-500 bg-white/70 hover:bg-white px-3 py-1.5 rounded-lg transition-all duration-150"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            {backButtonText}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onBack}
+          aria-label="Go back"
+          className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:text-emerald-900 border border-emerald-300 hover:border-emerald-500 bg-white/70 hover:bg-white px-3 py-1.5 rounded-lg transition-all duration-150"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          {backButtonText}
+        </button>
 
         <div className="flex items-center justify-center gap-8 mt-4">
           <div className="shrink-0 flex flex-col items-center gap-3">
             <div className="rounded-2xl overflow-hidden shadow-lg ring-2 ring-emerald-400/50 ring-offset-2 ring-offset-slate-50">
-              <EmpPhotoRect width={116} height={130} photo={photo} name={employeeData?.fullName ?? ''} />
+              <EmpPhotoRect width={116} height={130} photo={photo} name={info?.fullName ?? ''} />
             </div>
-            {employeeData?.empState && (
+            {info?.empState && (
               <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border bg-white/90 ${empStateColors[stateKey]}`}>
                 <span className="w-1.5 h-1.5 rounded-full bg-current opacity-80" />
-                {employeeData.empState}
+                {info.empState}
               </span>
             )}
           </div>
 
-          <div className="min-w-0">
+          <div className="min-w-0 -mt-8">
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight leading-snug truncate flex justify-center items-center">
-              {employeeData?.fullName ?? <span className="inline-block h-7 w-44 bg-emerald-100 rounded-lg animate-pulse" />}
+              {info?.fullName ?? <span className="inline-block h-7 w-44 bg-emerald-100 rounded-lg animate-pulse" />}
             </h1>
-            {employeeData?.fullNameAm && (
-              <p className="text-sm text-gray-500 mt-0.5 truncate">{employeeData.fullNameAm}</p>
+            {info?.fullNameAm && (
+              <p className="text-sm text-gray-500 mt-0.5 truncate">{info.fullNameAm}</p>
             )}
             <p className="text-sm font-medium text-emerald-600 mt-1.5 truncate">
-              {employeeData?.position ?? <span className="inline-block h-4 w-28 bg-emerald-100 rounded animate-pulse" />}
+              {info?.position ?? <span className="inline-block h-4 w-28 bg-emerald-100 rounded animate-pulse" />}
             </p>
           </div>
         </div>
@@ -124,7 +127,6 @@ function ConfirmModal({ action, onConfirm, onCancel }: {
       onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
     >
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
-        {/* Body */}
         <div className="flex flex-col items-center text-center gap-4 px-6 py-6">
           <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center">
             <AlertTriangle className="w-6 h-6 text-red-500" />
@@ -136,16 +138,10 @@ function ConfirmModal({ action, onConfirm, onCancel }: {
             </p>
           </div>
         </div>
-
-        {/* Footer */}
         <div className="border-t px-6 py-3">
           <div className="flex justify-center items-center gap-2">
-            <Button variant="destructive" className="w-28" onClick={onConfirm}>
-              Yes
-            </Button>
-            <Button variant="outline" className="w-28" onClick={onCancel}>
-              No
-            </Button>
+            <Button variant="destructive" className="w-28" onClick={onConfirm}>Yes</Button>
+            <Button variant="outline"     className="w-28" onClick={onCancel}>No</Button>
           </div>
         </div>
       </div>
@@ -163,14 +159,14 @@ const EditEmpTabBar = memo(function EditEmpTabBar({
   currentStep: number;
   onTabClick: (id: number) => void;
 }) {
-  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [popoverOpen, setPopoverOpen]     = useState(false);
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
 
   const menuItems = [
-    { label: 'Terminate', icon: UserX },
-    { label: 'Stand By',  icon: BedDouble },
+    { label: 'Terminate', icon: UserX       },
+    { label: 'Stand By',  icon: BedDouble   },
     { label: 'Suspend',   icon: PauseCircle },
-    { label: 'Retire',    icon: XCircle },
+    { label: 'Retire',    icon: XCircle     },
   ];
 
   return (
@@ -208,7 +204,6 @@ const EditEmpTabBar = memo(function EditEmpTabBar({
               })}
             </nav>
 
-            {/* Actions menu */}
             <div className="shrink-0 ml-2">
               <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
@@ -223,10 +218,7 @@ const EditEmpTabBar = memo(function EditEmpTabBar({
                   {menuItems.map(({ label, icon: Icon }) => (
                     <button
                       key={label}
-                      onClick={() => {
-                        setPopoverOpen(false);
-                        setConfirmAction(label);
-                      }}
+                      onClick={() => { setPopoverOpen(false); setConfirmAction(label); }}
                       className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-red-50 rounded-lg flex items-center gap-2"
                     >
                       <Icon className="w-4 h-4 text-red-500" />
@@ -250,11 +242,11 @@ export const EditEmployeeStepHeader: React.FC<EditEmployeeStepHeaderProps> = ({
   onBack,
   onTabClick,
   backButtonText = 'Back to Employees',
-  employeeData,
+  employeeId = '',
 }) => (
   <>
     <EditEmpHero
-      employeeData={employeeData}
+      employeeId={employeeId}
       onBack={onBack}
       backButtonText={backButtonText}
     />

@@ -2,10 +2,10 @@ import { memo, useCallback } from 'react';
 import { User, Briefcase, Shield, FileText, Heart, Users, FolderOpen, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EmpPhotoRect } from '../../../ui/EmpPhoto';
-import { useEmpDetailInfo, useEmpDetailPhoto } from './empDetail.queries';
 import { empStateColors } from './shared';
-import type { EmpDetailPhoto } from './types';
+import type { EmpDetailPhoto } from '../../../../types/hr/employee/empDetail';
 import type { EmpPhotoRes } from '../../../../types/hr/employee/empPhoto';
+import { useEmpDetailInfo, useEmpDetailPhoto } from '../../../../services/hr/employee/empDetail/empDetail.queries';
 
 const TAB_ICONS: Record<string, React.ElementType> = {
   User, Briefcase, Shield, FileText, Heart, Users, FolderOpen,
@@ -154,3 +154,4 @@ export const EmpDetailHeader = memo(function EmpDetailHeader({
     </>
   );
 });
+

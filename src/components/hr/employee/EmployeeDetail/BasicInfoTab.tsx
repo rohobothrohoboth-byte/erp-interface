@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { User, Briefcase, Landmark, MapPin } from 'lucide-react';
-import { useEmpDetailBasic } from './empDetail.queries';
+import { useEmpDetailBasic } from '../../../../services/hr/employee/empDetail/empDetail.queries';
 import { ReadCard, Grid, Field } from './shared';
 import { DetailSkeleton, DetailError } from './LoadState';
 
@@ -69,3 +69,4 @@ export const BasicInfoTab = memo(function BasicInfoTab({ employeeId }: { employe
     </div>
   );
 });
+

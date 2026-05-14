@@ -27,4 +27,5 @@ export const useEmpDetailContact  = (id: string) => useQuery({ queryKey: empDeta
 export const useEmpDetailFamily   = (id: string) => useQuery({ queryKey: empDetailKeys.family(id),    queryFn: () => empDetailApi.getFamily(id),    staleTime: STALE, enabled: !!id });
 export const useEmpDetailGuarantor= (id: string) => useQuery({ queryKey: empDetailKeys.guarantor(id), queryFn: () => empDetailApi.getGuarantor(id), staleTime: STALE, enabled: !!id });
 export const useEmpDetailDocuments= (id: string) => useQuery({ queryKey: empDetailKeys.documents(id), queryFn: () => empDetailApi.getDocuments(id), staleTime: STALE, enabled: !!id });
+export const useEmpCertAll        = (id: string) => useQuery({ queryKey: [...empDetailKeys.documents(id), 'certs'], queryFn: () => empDetailApi.getCertAll(id), staleTime: STALE, enabled: !!id });
 export const useEmpDetailLeave    = (id: string) => useQuery({ queryKey: empDetailKeys.leave(id),     queryFn: () => empDetailApi.getLeave(id),     staleTime: STALE, enabled: !!id });

@@ -3,25 +3,25 @@ import { motion } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, User, Loader2, PenBox, Lock,
 } from "lucide-react";
-import type { EmployeeListDto } from '../../../types/hr/employee';
+import type { AdminEmpListDto } from '../../../types/hr/employee';
 
 
 
 interface EmployeeTableProps {
-  employees: EmployeeListDto[];
+  employees: AdminEmpListDto[];
   currentPage: number;
   totalPages: number;
   totalItems: number;
   onPageChange: (page: number) => void;
-  onEmployeeUpdate: (updatedEmployee: EmployeeListDto) => void;
+  onEmployeeUpdate: (updatedEmployee: AdminEmpListDto) => void;
   onEmployeeStatusChange: (
     employeeId: string,
     newStatus: "active" | "on-leave",
   ) => void;
   onEmployeeTerminate: (employeeId: string) => void;
   onEmployeeDelete: (employeeId: string) => void;
-  onAddAccount?: (employee: EmployeeListDto) => void;
-  onEditAccount?: (employee: EmployeeListDto) => void;
+  onAddAccount?: (employee: AdminEmpListDto) => void;
+  onEditAccount?: (employee: AdminEmpListDto) => void;
   showAddAccountButton?: boolean;
   loading?: boolean;
 }
@@ -37,7 +37,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   onEditAccount,
   loading = false,
 }) => {
-  const [selectedEmployee, setSelectedEmployee] = useState<EmployeeListDto | null>(
+  const [selectedEmployee, setSelectedEmployee] = useState<AdminEmpListDto | null>(
     null,
   );
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -48,7 +48,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
     return new Date(dateB).getTime() - new Date(dateA).getTime();
   });
 
-  const handleDelete = (employee: EmployeeListDto) => {
+  const handleDelete = (employee: AdminEmpListDto) => {
     setSelectedEmployee(employee);
     setIsDeleteModalOpen(true);
   };
@@ -65,14 +65,14 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   };
 
   // Handle Add Account button click
-  const handleAddAccountClick = (employee: EmployeeListDto) => {
+  const handleAddAccountClick = (employee: AdminEmpListDto) => {
     if (onAddAccount) {
       onAddAccount(employee);
     }
   };
 
   // Handle Edit Account button click
-  const handleEditAccountClick = (employee: EmployeeListDto) => {
+  const handleEditAccountClick = (employee: AdminEmpListDto) => {
     if (onEditAccount) {
       onEditAccount(employee);
     }
@@ -100,7 +100,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
       return "bg-orange-100 text-orange-800 border border-orange-200";
 
     case "retired":
-      return "bg-gray-100 text-gray-700 border border-gray-200";
+    return "bg-slate-100 text-slate-700 border border-slate-200";
 
     default:
       return "bg-gray-100 text-gray-700 border border-gray-200";

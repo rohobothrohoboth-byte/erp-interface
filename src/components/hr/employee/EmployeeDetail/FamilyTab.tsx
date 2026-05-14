@@ -1,9 +1,9 @@
-﻿import { memo, useState } from 'react';
+import { memo, useState } from 'react';
 import { Users, ChevronDown } from 'lucide-react';
-import { useEmpDetailFamily } from './empDetail.queries';
+import { useEmpDetailFamily } from '../../../../services/hr/employee/empDetail/empDetail.queries';
 import { Field } from './shared';
 import { DetailSkeleton, DetailError } from './LoadState';
-import type { EmpDetailFamilyMember } from './types';
+import type { EmpDetailFamilyMember } from '../../../../types/hr/employee/empDetail';
 
 export const FamilyTab = memo(function FamilyTab({ employeeId }: { employeeId: string }) {
   const { data, isLoading, error } = useEmpDetailFamily(employeeId);
@@ -65,3 +65,4 @@ export const FamilyTab = memo(function FamilyTab({ employeeId }: { employeeId: s
     </div>
   );
 });
+

@@ -453,8 +453,8 @@ useEffect(() => {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Personal Information Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-3">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-2 h-8 bg-gradient-to-b from-green-400 to-green-600 rounded-full"></div>
               <h3 className="text-xl font-semibold text-gray-800">
@@ -463,184 +463,99 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* First Name (English) */}
-          <div className="space-y-2">
-            <label
-              htmlFor="firstName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              First Name (English) *
-            </label>
-            <Input
-              id="firstName"
-              name="firstName"
-              type="text"
-              value={formik.values.firstName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("firstName")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="John"
-              disabled={loading}
-            />
-            {getErrorMessage("firstName") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("firstName")}
-              </div>
-            )}
-          </div>
-
+          {/* Row 1 — Amharic names */}
           {/* ስም */}
           <div className="space-y-2">
-            <label
-              htmlFor="firstNameAm"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="firstNameAm" className="block text-sm font-medium text-gray-700 mb-1">
               ስም *
             </label>
             <Input
-              id="firstNameAm"
-              name="firstNameAm"
-              type="text"
+              id="firstNameAm" name="firstNameAm" type="text"
               value={formik.values.firstNameAm}
               onChange={(e) => handleAmharicInputChange(e, "firstNameAm")}
               onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("firstNameAm")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="አየለ"
-              disabled={loading}
+              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("firstNameAm") ? "border-red-500" : "border-gray-300"}`}
+              placeholder="አየለ" disabled={loading}
             />
-            {getErrorMessage("firstNameAm") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("firstNameAm")}
-              </div>
-            )}
-          </div>
-
-          {/* Middle Name (English) */}
-          <div className="space-y-2">
-            <label
-              htmlFor="middleName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Middle Name (English) *
-            </label>
-            <Input
-              id="middleName"
-              name="middleName"
-              type="text"
-              value={formik.values.middleName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("middleName")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="Michael"
-              disabled={loading}
-            />
-            {getErrorMessage("middleName") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("middleName")}
-              </div>
-            )}
+            {getErrorMessage("firstNameAm") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("firstNameAm")}</div>}
           </div>
 
           {/* የአባት ስም */}
           <div className="space-y-2">
-            <label
-              htmlFor="middleNameAm"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="middleNameAm" className="block text-sm font-medium text-gray-700 mb-1">
               የአባት ስም *
             </label>
             <Input
-              id="middleNameAm"
-              name="middleNameAm"
-              type="text"
+              id="middleNameAm" name="middleNameAm" type="text"
               value={formik.values.middleNameAm}
               onChange={(e) => handleAmharicInputChange(e, "middleNameAm")}
               onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("middleNameAm")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="በቀለ"
-              disabled={loading}
+              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("middleNameAm") ? "border-red-500" : "border-gray-300"}`}
+              placeholder="በቀለ" disabled={loading}
             />
-            {getErrorMessage("middleNameAm") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("middleNameAm")}
-              </div>
-            )}
-          </div>
-
-          {/* Last Name (English) */}
-          <div className="space-y-2">
-            <label
-              htmlFor="lastName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Last Name (English) *
-            </label>
-            <Input
-              id="lastName"
-              name="lastName"
-              type="text"
-              value={formik.values.lastName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("lastName")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="Doe"
-              disabled={loading}
-            />
-            {getErrorMessage("lastName") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("lastName")}
-              </div>
-            )}
+            {getErrorMessage("middleNameAm") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("middleNameAm")}</div>}
           </div>
 
           {/* የአያት ስም */}
           <div className="space-y-2">
-            <label
-              htmlFor="lastNameAm"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="lastNameAm" className="block text-sm font-medium text-gray-700 mb-1">
               የአያት ስም *
             </label>
             <Input
-              id="lastNameAm"
-              name="lastNameAm"
-              type="text"
+              id="lastNameAm" name="lastNameAm" type="text"
               value={formik.values.lastNameAm}
               onChange={(e) => handleAmharicInputChange(e, "lastNameAm")}
               onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("lastNameAm")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="ዮሐንስ"
-              disabled={loading}
+              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("lastNameAm") ? "border-red-500" : "border-gray-300"}`}
+              placeholder="ዮሐንስ" disabled={loading}
             />
-            {getErrorMessage("lastNameAm") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("lastNameAm")}
-              </div>
-            )}
+            {getErrorMessage("lastNameAm") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("lastNameAm")}</div>}
+          </div>
+
+          {/* Row 2 — English names */}
+          {/* First Name (English) */}
+          <div className="space-y-2">
+            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+              First Name (English) *
+            </label>
+            <Input
+              id="firstName" name="firstName" type="text"
+              value={formik.values.firstName}
+              onChange={formik.handleChange} onBlur={formik.handleBlur}
+              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("firstName") ? "border-red-500" : "border-gray-300"}`}
+              placeholder="John" disabled={loading}
+            />
+            {getErrorMessage("firstName") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("firstName")}</div>}
+          </div>
+
+          {/* Middle Name (English) */}
+          <div className="space-y-2">
+            <label htmlFor="middleName" className="block text-sm font-medium text-gray-700 mb-1">
+              Middle Name (English) *
+            </label>
+            <Input
+              id="middleName" name="middleName" type="text"
+              value={formik.values.middleName}
+              onChange={formik.handleChange} onBlur={formik.handleBlur}
+              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("middleName") ? "border-red-500" : "border-gray-300"}`}
+              placeholder="Michael" disabled={loading}
+            />
+            {getErrorMessage("middleName") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("middleName")}</div>}
+          </div>
+
+          {/* Last Name (English) */}
+          <div className="space-y-2">
+            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+              Last Name (English) *
+            </label>
+            <Input
+              id="lastName" name="lastName" type="text"
+              value={formik.values.lastName}
+              onChange={formik.handleChange} onBlur={formik.handleBlur}
+              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("lastName") ? "border-red-500" : "border-gray-300"}`}
+              placeholder="Doe" disabled={loading}
+            />
+            {getErrorMessage("lastName") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("lastName")}</div>}
           </div>
 
           {/* Gender */}

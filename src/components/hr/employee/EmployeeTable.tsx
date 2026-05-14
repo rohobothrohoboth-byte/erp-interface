@@ -17,6 +17,7 @@ import DeleteEmployeeModal from './DeleteEmployeeModal';
 import { ReviewDecision } from '../../../types/hr/enum';
 import type { EmpState } from '../../../types/hr/enum';
 import { useNavigate } from 'react-router';
+import { Button } from '../../ui/button';
 
 interface Employee {
   id: string;
@@ -69,7 +70,7 @@ function ReviewModal({ employee, onClose }: { employee: Employee; onClose: () =>
         <div className="flex items-center px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <ClipboardCheck className="w-4 h-4 text-green-600" />
-            <h2 className="text-sm font-semibold text-gray-800">
+          <h2 className="text-lg font-bold text-gray-800">
               Review Employee
             </h2>
           </div>
@@ -148,19 +149,20 @@ function ReviewModal({ employee, onClose }: { employee: Employee; onClose: () =>
 
         {/* Footer */}
         <div className="flex items-center justify-center gap-2 px-5 py-4 border-t border-gray-100">
-          <button
+          <Button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+             variant="outline"
+                  className="cursor-pointer px-6"
           >
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             disabled={!decision}
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer px-6"
           >
             Submit
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -495,6 +497,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                                 <PenBox size={16} />
                                 Update
                               </button>
+                                {employee.empState==="Pending" &&
                               <button
                                 onClick={() => {
                                   setReviewEmployee(employee);
@@ -504,7 +507,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                               >
                                 <ClipboardCheck size={16} />
                                 Review
-                              </button>
+                              </button>}
                               <button
                                 onClick={() => handleDelete(employee)}
                                 className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
