@@ -59,3 +59,11 @@ export const empDetailApi = {
   // Leave balance — no dedicated endpoint yet, returns empty
   getLeave:     (_id: string): Promise<EmpDetailLeaveBalance[]> => Promise.resolve([]),
 };
+
+/** Fetch a certificate by ID with auth headers, returns a blob object URL */
+export async function fetchCertBlobUrl(certId: string): Promise<string> {
+  const res = await api.get(`/hrm/profile/v1/EmpMod/EmpCertById/${certId}`, {
+    responseType: 'blob',
+  });
+  return URL.createObjectURL(res.data as Blob);
+}

@@ -405,7 +405,6 @@ const UserManagement: React.FC = () => {
                 onEmployeeUpdate={() => {}}
                 onEmployeeStatusChange={() => {}}
                 onEmployeeTerminate={() => {}}
-                onEmployeeDelete={handleEmployeeDelete}
                 onAddAccount={handleAddAccount}
                 onEditAccount={handleEditAccount}
                 showAddAccountButton={true}

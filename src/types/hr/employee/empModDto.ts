@@ -55,7 +55,7 @@ export interface EmpModBioDto  extends BaseDto {
 }
 
 // ── EmpModGuarDto ──────────────────────────────────────────────────────────
-export interface EmpModGuarDto  extends BaseDto {
+export interface  EmpModGuarDto  extends BaseDto {
   employeeId:  UUID;
   hasData:     boolean;
   firstName:   string;

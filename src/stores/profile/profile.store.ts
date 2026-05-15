@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { profileApi } from '../../services/profile/profile.api';
+import { queryClient } from '../../lib/queryClient';
 import type {
   EmpBioModDto,
   EmpFinanceModDto,
@@ -80,6 +81,10 @@ export const useProfileStore = create<ProfileStore>((set) => ({
         file2: data.file2 ?? data.marriageCertFile ?? null,
       });
       set({ editingSection: null });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['empDetail'] });
+    } catch (e) {
+      throw e; // rethrow so callers can show error toast
     } finally {
       set({ savingSection: null });
     }
@@ -90,6 +95,10 @@ export const useProfileStore = create<ProfileStore>((set) => ({
     try {
       await profileApi.updateFinance({ id, ...data });
       set({ editingSection: null });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['empDetail'] });
+    } catch (e) {
+      throw e;
     } finally {
       set({ savingSection: null });
     }
@@ -100,6 +109,10 @@ export const useProfileStore = create<ProfileStore>((set) => ({
     try {
       await profileApi.updateEmContact(data as EmContactModDto);
       set({ editingSection: null });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['empDetail'] });
+    } catch (e) {
+      throw e;
     } finally {
       set({ savingSection: null });
     }

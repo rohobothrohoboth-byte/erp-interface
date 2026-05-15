@@ -8,16 +8,14 @@ import { GuarantorProfileUpload } from '../../AddEmployee/steps/GuarantorProfile
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 import { Gender, AddressType } from '../../../../../types/hr/enum';
-import type { Step4Dto } from '../../../../../types/hr/employee/empAddDto';
 import type { UUID } from 'crypto';
-import { amharicRegex } from '../../../../../utils/amharic-regex';
-import type { ListItem } from '../../../../../types/List/list';
 import EnumSelect from '../../../../ui/enumSelect';
 import { Relation } from '../../../../../types/enum';
+import type { EmpModGuarDto } from '../../../../../types/hr/employee/empModDto';
 
 interface GuarantorStepProps {
-  data: Partial<Step4Dto>;
-  onNext: (data: Step4Dto) => void;
+  data: Partial<EmpModGuarDto>;
+  onNext: (data: EmpModGuarDto) => void;
   onBack: () => void;
   employeeId?: UUID;
   loading?: boolean;
@@ -30,7 +28,7 @@ const validationSchema = yup.object({
   lastName: yup.string().required('Last name is required'),
   nationality: yup.string().required('Nationality is required'),
   gender: yup.string().required('Gender is required'),
-  relationId: yup.string().required('Relation is required'),
+  relation: yup.string().required('Relation is required'),
   addressType: yup.string().required('Address type is required'),
   country: yup.string().required('Country is required'),
   region: yup.string().required('Region is required'),
@@ -64,17 +62,14 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
     }
   };
 
-  const formik = useFormik<Step4Dto>({
+  const formik = useFormik<EmpModGuarDto>({
     initialValues: {
       firstName: data.firstName || '',
-      firstNameAm: data.firstNameAm || '',
       middleName: data.middleName || '',
-      middleNameAm: data.middleNameAm || '',
       lastName: data.lastName || '',
-      lastNameAm: data.lastNameAm || '',
       nationality: data.nationality || '',
       gender: data.gender || '' as Gender,
-      relationId: data.relationId || '' as UUID,
+      relation: data.relation || '' as UUID,
       employeeId: employeeId || data.employeeId || '' as UUID,
       addressType: data.addressType || '' as AddressType,
       country: data.country || '',
@@ -89,7 +84,11 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
       fax: data.fax || '',
       email: data.email || '',
       website: data.website || '',
-      File: data.File || null,
+      file: data.file || null,
+      hasData: data.hasData ?? false,
+      rowVersion: data.rowVersion ?? '',
+      id: data.id ?? '' as UUID,
+      isDeleted: data.isDeleted ?? false,
     },
     validationSchema,
     enableReinitialize: true,
@@ -109,20 +108,6 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
   }, [employeeId]);
 
 
- 
-
- 
-
-  // Amharic input handlers
-  const handleAmharicInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    fieldName: string
-  ) => {
-    const value = e.target.value;
-    if (value === '' || amharicRegex.test(value)) {
-      formik.setFieldValue(fieldName, value);
-    }
-  };
 
   // Handle phone input change
   const handlePhoneChange = (value: string) => {
@@ -130,12 +115,12 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
     formik.setFieldTouched('telephone', true);
   };
 
-  const handleGuarantorFileSelect = (file: File) => {
-    formik.setFieldValue('File', file);
+  const handleGuarantorfileSelect = (file: File) => {
+    formik.setFieldValue('file', file);
   };
 
-  const handleGuarantorFileRemove = () => {
-    formik.setFieldValue('File', null);
+  const handleGuarantorfileRemove = () => {
+    formik.setFieldValue('file', null);
   };
 
   // Helper function to safely get error messages
@@ -161,9 +146,9 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
     if (Object.keys(errors).length > 0) {
       // Set touched for all fields to show errors
       const allTouched = Object.keys(formik.values).reduce((acc, key) => {
-        acc[key as keyof Step4Dto] = true;
+        acc[key as keyof EmpModGuarDto] = true;
         return acc;
-      }, {} as Record<keyof Step4Dto, boolean>);
+      }, {} as Record<keyof EmpModGuarDto, boolean>);
       formik.setTouched(allTouched);
       
       // Scroll to first error
@@ -375,7 +360,7 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
 
             <div className="space-y-2">
               <label
-                htmlFor="relationId"
+                htmlFor="relation"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
                 Relation <span className="text-red-500">*</span>
@@ -383,17 +368,17 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
 
               <EnumSelect
                 enumObject={Relation}
-                value={formik.values.relationId?.toString() || ""}
+                value={formik.values.relation?.toString() || ""}
                 onChange={(value) =>
-                  formik.setFieldValue("relationId", value)
+                  formik.setFieldValue("relation", value)
                 }
                 placeholder="Select relation"
                 disabled={loading}
               />
 
-              {getErrorMessage("relationId") && (
+              {getErrorMessage("relation") && (
                 <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("relationId")}
+                  {getErrorMessage("relation")}
                 </div>
               )}
             </div>
@@ -746,9 +731,9 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
         <div className="flex justify-center mb-8">
           <div className="w-full max-w-2xl">
             <GuarantorProfileUpload
-              guarantorFile={formik.values.File}
-              onGuarantorFileSelect={handleGuarantorFileSelect}
-              onGuarantorFileRemove={handleGuarantorFileRemove}
+              guarantorFile={formik.values.file ?? null}
+              onGuarantorFileSelect={handleGuarantorfileSelect}
+              onGuarantorFileRemove={handleGuarantorfileRemove}
             />
           </div>
         </div>

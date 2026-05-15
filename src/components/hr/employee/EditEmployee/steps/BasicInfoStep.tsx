@@ -6,7 +6,6 @@ import { ProfilePictureUpload } from '../../AddEmployee/steps/ProfileUpload';
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 import { Gender, EmpType, EmpNature, WorkArrangement } from '../../../../../types/hr/enum';
-import type { Step1Dto } from '../../../../../types/hr/employee/empAddDto';
 import type { UUID } from 'crypto';
 import { amharicRegex } from '../../../../../utils/amharic-regex';
 import List from '../../../../List/list';
@@ -15,10 +14,11 @@ import type { ListItem } from '../../../../../types/List/list';
 import type { NameListDto } from '../../../../../types/hr/NameListDto';
 import type { NameListItem } from '../../../../../types/NameList/nameList';
 import { jgStepService } from '../../../../../services/core/settings/ModHrm/JgStepService';
+import type { EmpModBasicDto } from '../../../../../types/hr/employee/empModDto';
 
 interface BasicInfoStepProps {
-  data: Partial<Step1Dto & { branchId: UUID, jobGradeStepId: UUID }>;
-  onNext: (data: Step1Dto & { branchId: UUID, jobGradeStepId: UUID }) => void;
+  data: Partial<EmpModBasicDto>;
+  onNext: (data: EmpModBasicDto) => void;
   onBack: () => void;
   loading?: boolean;
   isEditMode?: boolean;
@@ -85,8 +85,8 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   const getDefaultEmploymentDate = () => {
     return data.employmentDate || new Date().toISOString().split('T')[0];
   };
-
-  const formik = useFormik<Step1Dto & { branchId: UUID, jobGradeStepId: UUID }>({
+const EMPTY_UUID = '00000000-0000-0000-0000-000000000000' as UUID;
+  const formik = useFormik<EmpModBasicDto>({
     initialValues: {
       firstName: data.firstName || '',
       firstNameAm: data.firstNameAm || '',
@@ -97,32 +97,18 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       nationality: data.nationality || '',
       gender: data.gender || '' as Gender,
       employmentDate: getDefaultEmploymentDate(),
-      branchId: data.branchId || '' as UUID,
-      jobGradeId: data.jobGradeId || '' as UUID,
-      jobGradeStepId: data.jobGradeStepId || '' as UUID,
-      positionId: data.positionId || '' as UUID,
-      departmentId: data.departmentId || '' as UUID,
+      branchId: data.branchId?? EMPTY_UUID,
+      jobGradeId: data.jobGradeId?? EMPTY_UUID,
+      positionId: data.positionId?? EMPTY_UUID,
+      departmentId: data.departmentId?? EMPTY_UUID,
+      jgStepId: data.jgStepId?? EMPTY_UUID,
       employmentType: data.employmentType || '' as EmpType,
       employmentNature: data.employmentNature || '' as EmpNature,
       workArrangement: data.workArrangement || '' as WorkArrangement,
-      File: data.File || null,
-      // Extra Step1Dto fields (used in biographical step)
-      jgStepId: data.jgStepId || '' as UUID,
-      birthDate: data.birthDate || '',
-      maritalStatus: data.maritalStatus || '' as any,
-      addressType: data.addressType || '' as any,
-      country: data.country || '',
-      region: data.region || '',
-      subcity: data.subcity || '',
-      zone: data.zone,
-      woreda: data.woreda || '',
-      kebele: data.kebele,
-      houseNo: data.houseNo || '',
-      telephone: data.telephone || '',
-      poBox: data.poBox,
-      fax: data.fax,
-      email: data.email || '',
-      website: data.website,
+      file: data.file || null,
+       id: data.id ?? EMPTY_UUID,
+  rowVersion: data.rowVersion ?? '',
+  isDeleted: data.isDeleted ?? false,
     },
     validationSchema,
     enableReinitialize: true,
@@ -349,7 +335,7 @@ useEffect(() => {
    // Handle job grade step select
   const handleJobGradeStepSelect = (item: ListItem) => {
     formik.setFieldValue('jobGradeStepId', item.id);
-    if (submitError && formik.errors.jobGradeStepId) {
+    if (submitError && formik.errors.jgStepId) {
       setSubmitError(null);
     }
   };
@@ -365,10 +351,9 @@ useEffect(() => {
     }
   };
 
-  // Handle profile picture selection
   const handleProfilePictureSelect = async (file: File) => {
     try {
-      formik.setFieldValue('File', file);
+      formik.setFieldValue('file', file);
     } catch (error) {
       console.error('Error processing image:', error);
       setSubmitError('Failed to process the image. Please try again.');
@@ -376,7 +361,7 @@ useEffect(() => {
   };
 
   const handleProfilePictureRemove = () => {
-    formik.setFieldValue('File', null);
+    formik.setFieldValue('file', null);
   };
 
   // Helper function to safely get error messages (kept for display purposes only)
@@ -779,7 +764,7 @@ useEffect(() => {
             <div className="space-y-2">
               <List
                 items={jobGradeStepsListItems}
-                selectedValue={formik.values.jobGradeStepId}
+                selectedValue={formik.values.jgStepId}
                 onSelect={handleJobGradeStepSelect}
                 label="Select Job Grade Step"
                 placeholder="Select a job grade step"
@@ -930,7 +915,7 @@ useEffect(() => {
               {" "}
               {/* Increased size */}
               <ProfilePictureUpload
-                profilePicture={formik.values.File}
+                profilePicture={formik.values.file ?? null}
                 onProfilePictureSelect={handleProfilePictureSelect}
                 onProfilePictureRemove={handleProfilePictureRemove}
                 size="large"

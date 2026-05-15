@@ -9,8 +9,17 @@ import { EditableField } from './EditableField';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Field, Grid } from './shared';
 import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
+import { fetchCertBlobUrl } from '../../services/hr/employee/empDetail/empDetail.api';
+import { showToast } from '../../layout/layout';
+
+async function openCertBlob(certId: string) {
+  const url = await fetchCertBlobUrl(certId);
+  window.open(url, '_blank', 'noopener,noreferrer');
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
 import EnumSelect from '../ui/enumSelect';
 import { YesNo } from '../../types/hr/enum';
+import SelectEnum from '../ui/selectEnum';
 
 // ── Sub-components defined outside BiographicalTab so they never remount ──
 
@@ -76,13 +85,23 @@ export const BiographicalTab = memo(function BiographicalTab() {
   }, [bio]);
 
   const handleSaveBio = useCallback(async () => {
-    await saveBiographical(bio?.id ?? '', bioForm);
-    queryClient.invalidateQueries({ queryKey: profileKeys.bio() });
+    try {
+      await saveBiographical(bio?.id ?? '', bioForm);
+      queryClient.invalidateQueries({ queryKey: profileKeys.bio() });
+      showToast.success('Personal details updated successfully!');
+    } catch {
+      showToast.error('Failed to update personal details.');
+    }
   }, [bio?.id, bioForm, saveBiographical, queryClient]);
 
   const handleSaveFin = useCallback(async () => {
-    await saveFinancial(bio?.id ?? '', finForm);
-    queryClient.invalidateQueries({ queryKey: profileKeys.bio() });
+    try {
+      await saveFinancial(bio?.id ?? '', finForm);
+      queryClient.invalidateQueries({ queryKey: profileKeys.bio() });
+      showToast.success('Financial information updated successfully!');
+    } catch {
+      showToast.error('Failed to update financial information.');
+    }
   }, [bio?.id, finForm, saveFinancial, queryClient]);
 
   const openBioEdit = useCallback(() => {
@@ -130,7 +149,7 @@ export const BiographicalTab = memo(function BiographicalTab() {
       Has Birth Certificate
     </label>
 
-    <EnumSelect
+    <SelectEnum
       enumObject={YesNo}
       value={bioForm.hasBirthCert || ''}
       onChange={(value) =>
@@ -168,7 +187,7 @@ export const BiographicalTab = memo(function BiographicalTab() {
       Has Marriage Certificate
     </label>
 
-    <EnumSelect
+    <SelectEnum
       enumObject={YesNo}
       value={bioForm.hasMarriageCert || ''}
       onChange={(value) =>
@@ -213,14 +232,12 @@ export const BiographicalTab = memo(function BiographicalTab() {
                 {bio?.biCertId ? (
                   <>
                     <p className="text-xs text-gray-500">{bio.biCertType} · {bio.biCertSize}</p>
-                    <a
-                      href={`/hrm/profile/v1/MyPro/GetEmpDoc/${bio.biCertId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => openCertBlob(bio.biCertId!)}
                       className="flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700 w-fit"
                     >
                       View <ExternalLink className="w-3 h-3" />
-                    </a>
+                    </button>
                   </>
                 ) : (
                   <p className="text-xs text-gray-400 italic">No file uploaded</p>
@@ -235,14 +252,12 @@ export const BiographicalTab = memo(function BiographicalTab() {
                 {bio?.maCertId ? (
                   <>
                     <p className="text-xs text-gray-500">{bio.maCertType} · {bio.maCertSize}</p>
-                    <a
-                      href={`/hrm/profile/v1/MyPro/GetEmpDoc/${bio.maCertId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => openCertBlob(bio.maCertId!)}
                       className="flex items-center gap-1 text-[11px] font-medium text-green-600 hover:text-green-700 w-fit"
                     >
                       View <ExternalLink className="w-3 h-3" />
-                    </a>
+                    </button>
                   </>
                 ) : (
                   <p className="text-xs text-gray-400 italic">No file uploaded</p>
@@ -274,3 +289,4 @@ export const BiographicalTab = memo(function BiographicalTab() {
     </div>
   );
 });
+

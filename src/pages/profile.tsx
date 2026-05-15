@@ -1,5 +1,6 @@
 import { memo, useState, useCallback, lazy, Suspense, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
 import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { ProfileSkeleton } from '../components/profile/ProfileLoadState';
 import { ChangePasswordModal } from '../components/profile/ChangePasswordModal';
@@ -58,6 +59,22 @@ function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 px-8 py-4 overflow-y-auto h-full pb-8">
+      {/* Fixed toaster for profile page — not affected by scroll */}
+      <Toaster
+        position="top-right"
+        gutter={12}
+        toastOptions={{
+          duration: 3000,
+          success: {
+            style: { background: '#10b981', color: '#fff' },
+            iconTheme: { primary: '#fff', secondary: '#10b981' },
+          },
+          error: {
+            duration: 5000,
+            iconTheme: { primary: '#ef4444', secondary: '#fff' },
+          },
+        }}
+      />
       <ProfileHeader activeTab={activeTab} onTabChange={handleTabChange} />
       <Suspense fallback={<TabFallback />}>
         <ActiveTab />

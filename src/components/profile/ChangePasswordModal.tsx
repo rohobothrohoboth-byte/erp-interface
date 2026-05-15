@@ -122,7 +122,7 @@ export function ChangePasswordModal({ open, onClose }: Props) {
              <Button
               onClick={handleSubmit}
               disabled={saving}
-               className="bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer px-6"
+               className=" bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white  cursor-pointer px-6"
             >
               {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Saving...</> : <>Change Password</>}
             </Button>

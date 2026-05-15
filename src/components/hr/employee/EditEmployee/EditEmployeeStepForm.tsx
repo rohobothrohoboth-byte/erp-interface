@@ -13,8 +13,8 @@ import { showToast } from '../../../../layout/layout';
 import { Relation } from '../../../../types/enum';
 import { useQueryClient } from '@tanstack/react-query';
 import { empDetailKeys } from '../../../../services/hr/employee/empDetail/empDetail.queries';
-import type { Step1Dto, UUID } from '../../../../types/hr/employee/empAddDto';
 import type { EmpModBasicDto, EmpModBioDto, EmpModGuarDto } from '../../../../types/hr/employee/empModDto';
+import type { UUID } from 'crypto';
 
 const steps = [
   { id: 1, title: 'Basic Info', icon: User },
@@ -43,8 +43,6 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
     stamp: null as File | null,
     signature: null as File | null,
   });
-  const [rowVersions, setRowVersions] = useState({ basic: '', bio: '', guar: '' });
-  const [recordIds, setRecordIds]     = useState({ basic: '', bio: '', guar: '' });
   const [employeeHeaderData, setEmployeeHeaderData] = useState<any>(null);
   const [employeeNames, setEmployeeNames] = useState({ department: '', position: '', branch: '', jobGrade: '' });
   const [loading, setLoading] = useState(false);
@@ -53,6 +51,13 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
   const formContainerRef = useRef<HTMLDivElement>(null);
   const stepContentRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+
+  // Invalidate all three cache namespaces so profile, detail, and edit all stay in sync
+  const invalidateAll = (section: 'basic' | 'bio' | 'guarantor' | 'photo') => {
+    queryClient.invalidateQueries({ queryKey: empDetailKeys[section](employeeId) });
+    queryClient.invalidateQueries({ queryKey: empDetailKeys.info(employeeId) });
+    queryClient.invalidateQueries({ queryKey: ['profile'] });
+  };
 
   // Scroll to top when step changes
   useEffect(() => {
@@ -93,8 +98,16 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
           empApi.getModGuar(employeeId),
         ]);
 
+        // Debug: log raw guar response to identify field names
+        console.log('[EditEmpForm] guar raw:', JSON.stringify(guar, null, 2));
+
         const mappedData = {
           step1: {
+            // BaseDto
+            id:          basic.id         ?? '' as UUID,
+            rowVersion:  basic.rowVersion  ?? '',
+            isDeleted:   false,
+            // Fields
             firstName:        basic.firstName        ?? '',
             firstNameAm:      basic.firstNameAm      ?? '',
             middleName:       basic.middleName        ?? '',
@@ -112,27 +125,17 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
             employmentType:   basic.employmentType    ?? '',
             employmentNature: basic.employmentNature  ?? '',
             workArrangement:  basic.workArrangement   ?? '',
-            File: null,
-            // bio address fields carried into step1 shape
-            birthDate:     bio.birthDate     ?? '',
-            maritalStatus: bio.maritalStatus ?? '' as any,
-            addressType:   bio.addressType   ?? '' as any,
-            country:       bio.country       ?? '',
-            region:        bio.region        ?? '',
-            subcity:       bio.subcity       ?? '',
-            zone:          bio.zone          ?? '',
-            woreda:        bio.woreda        ?? '',
-            kebele:        bio.kebele        ?? '',
-            houseNo:       bio.houseNo       ?? '',
-            telephone:     bio.telephone     ?? '',
-            poBox:         bio.poBox         ?? '',
-            fax:           bio.fax           ?? '',
-            email:         bio.email         ?? '',
-            website:       bio.website       ?? '',
+            file: null,
           },
           step2: {
+            // BaseDto
+            id:          bio.id         ?? '' as UUID,
+            rowVersion:  bio.rowVersion  ?? '',
+            isDeleted:   false,
+            // Fields
             employeeId:     employeeId as UUID,
-            birthDate:      bio.birthDate      ?? '',
+            hasData:        true,
+            birthDate:      bio.birthDate ? bio.birthDate.split('T')[0] : '',
             birthLocation:  bio.birthLocation  ?? '',
             motherFullName: bio.motherFullName ?? '',
             maritalStatus:  bio.maritalStatus  ?? '',
@@ -154,13 +157,19 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
             website:        bio.website        ?? '',
           },
           step4: {
+            // BaseDto — try all possible field name variants from the API
+            id:          guar.id         ?? guar.guarId      ?? guar.Id      ?? '' as UUID,
+            rowVersion:  guar.rowVersion  ?? guar.RowVersion  ?? guar.rowversion ?? '',
+            isDeleted:   false,
+            // Fields
+            employeeId:  employeeId as UUID,
+            hasData:     true,
             firstName:   guar.firstName   ?? '',
             middleName:  guar.middleName  ?? '',
             lastName:    guar.lastName    ?? '',
             nationality: guar.nationality ?? '',
             gender:      guar.gender      ?? '',
-            relationId:  Object.entries(Relation).find(([, v]) => v === guar.relation)?.[0] ?? guar.relation ?? '',
-            employeeId:  employeeId as UUID,
+            relation:    Object.entries(Relation).find(([, v]) => v === guar.relation)?.[0] ?? guar.relation ?? '',
             addressType: guar.addressType ?? '',
             country:     guar.country     ?? '',
             region:      guar.region      ?? '',
@@ -174,7 +183,7 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
             fax:         guar.fax         ?? '',
             email:       guar.email       ?? '',
             website:     guar.website     ?? '',
-            File: null,
+            file:        null,
           },
           stamp: null as File | null,
           signature: null as File | null,
@@ -200,16 +209,6 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
         });
 
         setFormData(mappedData);
-        setRowVersions({
-          basic: basic.rowVersion ?? '',
-          bio:   bio.rowVersion   ?? '',
-          guar:  guar.rowVersion  ?? '',
-        });
-        setRecordIds({
-          basic: basic.id ?? employeeId,
-          bio:   bio.id   ?? employeeId,
-          guar:  guar.id  ?? employeeId,
-        });
         setInitialDataLoaded(true);
       } catch (err) {
         console.error('Failed to load employee data:', err);
@@ -224,42 +223,15 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
     }
   }, [employeeId]);
 
-  // Handle Step 1 update
-  const handleStep1Submit = async (step1Data: Step1Dto & { branchId: UUID, jobGradeStepId: UUID }) => {
+  // Handle Step 1 update — step component passes complete EmpModBasicDto with id/rowVersion
+  const handleStep1Submit = async (step1Data: EmpModBasicDto) => {
     setLoading(true);
     setError(null);
-
     try {
-      const dto: EmpModBasicDto = {
-        id:               recordIds.basic as UUID,
-        rowVersion:       rowVersions.basic,
-        isDeleted:        false,
-        branchId:         step1Data.branchId,
-        jobGradeId:       step1Data.jobGradeId,
-        jgStepId:         step1Data.jgStepId,
-        positionId:       step1Data.positionId,
-        departmentId:     step1Data.departmentId,
-        firstName:        step1Data.firstName,
-        firstNameAm:      step1Data.firstNameAm,
-        middleName:       step1Data.middleName,
-        middleNameAm:     step1Data.middleNameAm,
-        lastName:         step1Data.lastName,
-        lastNameAm:       step1Data.lastNameAm,
-        gender:           step1Data.gender,
-        nationality:      step1Data.nationality,
-        employmentDate:   step1Data.employmentDate,
-        employmentType:   step1Data.employmentType,
-        employmentNature: step1Data.employmentNature,
-        workArrangement:  step1Data.workArrangement,
-        file:             step1Data.File,
-      };
-
-      await empModApi.updateBasic(employeeId as UUID, dto);
+      await empModApi.updateBasic(employeeId as UUID, step1Data);
       setFormData({ ...formData, step1: step1Data });
-      // Invalidate photo cache so header updates immediately if photo was changed
-      if (step1Data.File) {
-        queryClient.invalidateQueries({ queryKey: empDetailKeys.photo(employeeId) });
-      }
+      invalidateAll('basic');
+      if (step1Data.file) invalidateAll('photo');
       scrollToTop();
       showToast.success('Basic information updated successfully!');
     } catch (error) {
@@ -271,42 +243,14 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
     }
   };
 
-  // Handle Step 2 update
-  const handleStep2Submit = async (step2Data: any) => {
+  // Handle Step 2 update — step component passes complete EmpModBioDto with id/rowVersion
+  const handleStep2Submit = async (step2Data: EmpModBioDto) => {
     setLoading(true);
     setError(null);
-
     try {
-      const dto: EmpModBioDto = {
-        id:            recordIds.bio as UUID,
-        rowVersion:    rowVersions.bio,
-        isDeleted:     false,
-        employeeId:    employeeId as UUID,
-        hasData:       true,
-        birthDate:     step2Data.birthDate      ?? '',
-        birthLocation: step2Data.birthLocation  ?? '',
-        motherFullName:step2Data.motherFullName ?? '',
-        maritalStatus: step2Data.maritalStatus  ?? '',
-        tin:           step2Data.tin            ?? '',
-        bankAccountNo: step2Data.bankAccountNo  ?? '',
-        pensionNumber: step2Data.pensionNumber  ?? '',
-        addressType:   step2Data.addressType    ?? '',
-        country:       step2Data.country,
-        region:        step2Data.region         ?? '',
-        subcity:       step2Data.subcity,
-        zone:          step2Data.zone,
-        woreda:        step2Data.woreda,
-        kebele:        step2Data.kebele,
-        houseNo:       step2Data.houseNo,
-        telephone:     step2Data.telephone      ?? '',
-        poBox:         step2Data.poBox,
-        fax:           step2Data.fax,
-        email:         step2Data.email,
-        website:       step2Data.website,
-      };
-
-      await empModApi.updateBio(employeeId as UUID, dto);
+      await empModApi.updateBio(employeeId as UUID, step2Data);
       setFormData({ ...formData, step2: step2Data });
+      invalidateAll('bio');
       scrollToTop();
       showToast.success('Biographical information updated successfully!');
     } catch (error) {
@@ -318,42 +262,14 @@ export const EditEmployeeStepForm: React.FC<EditEmployeeStepFormProps> = ({
     }
   };
 
-  // Handle Step 4 update (Guarantor)
-  const handleStep4Submit = async (step4Data: any) => {
+  // Handle Step 4 update — step component passes complete EmpModGuarDto with id/rowVersion
+  const handleStep4Submit = async (step4Data: EmpModGuarDto) => {
     setLoading(true);
     setError(null);
-
     try {
-      const dto: EmpModGuarDto = {
-        id:          recordIds.guar as UUID,
-        rowVersion:  rowVersions.guar,
-        isDeleted:   false,
-        employeeId:  employeeId as UUID,
-        hasData:     true,
-        firstName:   step4Data.firstName   ?? '',
-        middleName:  step4Data.middleName  ?? '',
-        lastName:    step4Data.lastName    ?? '',
-        gender:      step4Data.gender      ?? '',
-        nationality: step4Data.nationality ?? '',
-        relation:    String(step4Data.relationId ?? step4Data.relation ?? ''),
-        addressType: step4Data.addressType ?? '',
-        country:     step4Data.country,
-        region:      step4Data.region      ?? '',
-        subcity:     step4Data.subcity,
-        zone:        step4Data.zone,
-        woreda:      step4Data.woreda,
-        kebele:      step4Data.kebele,
-        houseNo:     step4Data.houseNo,
-        telephone:   step4Data.telephone   ?? '',
-        poBox:       step4Data.poBox,
-        fax:         step4Data.fax,
-        email:       step4Data.email,
-        website:     step4Data.website,
-        file:        step4Data.File,
-      };
-
-      await empModApi.updateGuar(employeeId as UUID, dto);
+      await empModApi.updateGuar(employeeId as UUID, step4Data);
       setFormData({ ...formData, step4: step4Data });
+      invalidateAll('guarantor');
       scrollToTop();
       showToast.success('Guarantor information updated successfully!');
     } catch (error) {

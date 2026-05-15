@@ -5,6 +5,7 @@ import { useProfileInfo, useProfilePhoto } from '../../services/profile/profile.
 import { empStateColors } from './shared';
 import type { EmpPhotoRes } from '../../types/hr/employee/empPhoto';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../ui/button';
 
 const TAB_ICONS: Record<string, React.ElementType> = {
   User, Briefcase, Shield, FileText, Heart, Users, KeyRound,
@@ -144,19 +145,19 @@ const ProfileTabBar = memo(function ProfileTabBar({
             const Icon = TAB_ICONS[tab.icon];
             const active = activeTab === tab.id;
             return (
-              <button
+              <Button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium transition-all duration-200 whitespace-nowrap ${
+                className={`flex items-center gap-2 bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white cursor-pointer${
                   active
                     ? 'bg-emerald-50 border border-emerald-200 text-emerald-700 shadow-sm'
-                    : 'text-gray-500 hover:text-emerald-700 hover:bg-emerald-50/60'
+                    : 'text-white  hover:bg-emerald-50/60'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${active ? 'text-emerald-600' : 'text-gray-400'}`} />
+                <Icon className={`w-4 h-4 ${active ? 'text-emerald-600' : 'text-white '}`} />
                 {tab.label}
                 {active && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 ml-0.5" />}
-              </button>
+              </Button>
             );
           })()}
         </nav>

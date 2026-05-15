@@ -1,6 +1,7 @@
-﻿import { memo, useState, lazy, Suspense } from 'react';
+﻿import { memo, useState, lazy, Suspense, useCallback } from 'react';
 import { FileText, FileBadge, FileImage, Eye, Loader2, FolderOpen } from 'lucide-react';
 import { useEmpCertAll } from '../../../../services/hr/employee/empDetail/empDetail.queries';
+import { fetchCertBlobUrl } from '../../../../services/hr/employee/empDetail/empDetail.api';
 import { DetailSkeleton } from './LoadState';
 import type { EmpFileList, EmpDetailDocument } from '../../../../types/hr/employee/empDetail';
 
@@ -22,9 +23,29 @@ function certTypeColor(certType: string) {
   return 'bg-gray-50 text-gray-600 border-gray-200';
 }
 
+
 export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employeeId: string }) {
   const { data: certs, isLoading } = useEmpCertAll(employeeId);
   const [viewing, setViewing] = useState<EmpDetailDocument | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const handleView = useCallback(async (cert: EmpFileList) => {
+    setLoadingId(cert.id);
+    try {
+      const blobUrl = await fetchCertBlobUrl(cert.id);
+      setViewing({
+        id:           cert.id,
+        fileName:     cert.fileName,
+        contentType:  cert.contentType,
+        fileSizeStr:  cert.size,
+        documentType: cert.certType,
+        uploadedAt:   '',
+        url:          blobUrl,
+      });
+    } finally {
+      setLoadingId(null);
+    }
+  }, []);
 
   if (isLoading) return <DetailSkeleton rows={3} />;
 
@@ -38,7 +59,11 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
             <Loader2 className="w-8 h-8 animate-spin text-white" />
           </div>
         }>
-          <DocViewerModal doc={viewing} onClose={() => setViewing(null)} />
+          <DocViewerModal doc={viewing} onClose={() => {
+            // revoke blob URL to free memory
+            if (viewing.url) URL.revokeObjectURL(viewing.url);
+            setViewing(null);
+          }} />
         </Suspense>
       )}
 
@@ -68,7 +93,6 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
                 <DocIcon contentType={cert.contentType} />
 
                 <div className="min-w-0">
-                  {/* cert type badge */}
                   <span className={`inline-block text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border mb-1 ${certTypeColor(cert.certType)}`}>
                     {cert.certType}
                   </span>
@@ -78,10 +102,13 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
                 </div>
 
                 <button
-                  onClick={() => setViewing({ id: cert.id, fileName: cert.fileName, contentType: cert.contentType, fileSizeStr: cert.size, documentType: cert.certType, uploadedAt: '' })}
-                  className="flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700 shrink-0 ml-2"
+                  onClick={() => handleView(cert)}
+                  disabled={loadingId === cert.id}
+                  className="flex items-center gap-1 text-xs font-medium text-green-600 hover:text-green-700 shrink-0 ml-2 disabled:opacity-50"
                 >
-                  <Eye className="w-3.5 h-3.5" />
+                  {loadingId === cert.id
+                    ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    : <Eye className="w-3.5 h-3.5" />}
                   View
                 </button>
               </div>

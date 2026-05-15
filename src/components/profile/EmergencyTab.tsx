@@ -8,6 +8,7 @@ import { EditableField } from './EditableField';
 import { Field } from './shared';
 import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
 import { Relation, Gender, AddressType } from '../../types/hr/enum';
+import { showToast } from '../../layout/layout';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '../ui/select';
@@ -70,8 +71,13 @@ export function EmergencyTab() {
   const handleEdit   = () => setIsEditing(true);
   const handleCancel = () => { if (contact) setForm({ ...EMPTY_FORM, ...contact }); setIsEditing(false); };
   const handleSave   = async () => {
-    await saveEmergency(form);
-    await queryClient.invalidateQueries({ queryKey: profileKeys.emContact() });
+    try {
+      await saveEmergency(form);
+      await queryClient.invalidateQueries({ queryKey: profileKeys.emContact() });
+      showToast.success('Emergency contact updated successfully!');
+    } catch {
+      showToast.error('Failed to update emergency contact.');
+    }
     setIsEditing(false);
   };
 
@@ -244,3 +250,4 @@ export function EmergencyTab() {
     </div>
   );
 }
+

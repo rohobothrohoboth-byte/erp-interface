@@ -104,11 +104,11 @@ function ReviewModal({ employee, onClose }: { employee: Employee; onClose: () =>
             <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
               Decision
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="flex gap-2 ">
               {Object.values(ReviewDecision).map((value) => (
                 <label
                   key={value}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border cursor-pointer transition-colors ${
                     decision === value
                       ? value === ReviewDecision.Accept
                         ? "border-green-400 bg-green-50"

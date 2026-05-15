@@ -336,14 +336,14 @@ const EmployeeManagementPage = () => {
           {/* Content Area - Only show when not loading */}
           {!loading && (
             <>
-              <EmployeeStatsCards 
+              {/* <EmployeeStatsCards 
                 totalEmployees={totalEmployees}
                 activeEmployees={activeEmployees}
                 onLeaveEmployees={onLeaveEmployees}
                 previousTotal={previousStats.total}
                 previousActive={previousStats.active}
                 previousOnLeave={previousStats.onLeave}
-              />
+              /> */}
 
               <EmployeeSearchFilters 
                 searchTerm={searchTerm}

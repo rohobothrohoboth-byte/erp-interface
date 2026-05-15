@@ -8,6 +8,7 @@ import { Field } from './shared';
 import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
 import { Relation, Gender } from '../../types/hr/enum';
 import { Button } from '../ui/button';
+import { showToast } from '../../layout/layout';
 import type { ProFamilyList } from '../../types/profile/profile.types';
 
 const EMPTY_FAMILY = { firstName: '', middleName: '', lastName: '', nationality: '', gender: '', relation: '' };
@@ -113,8 +114,11 @@ export function FamilyTab() {
     try {
       await updateFamily(editingId, { id: editingId, ...form });
       await queryClient.invalidateQueries({ queryKey: profileKeys.family() });
+      showToast.success('Family member updated successfully!');
       setEditingId(null);
       setForm(EMPTY_FAMILY);
+    } catch {
+      showToast.error('Failed to update family member.');
     } finally {
       setSaving(false);
     }
@@ -126,8 +130,11 @@ export function FamilyTab() {
     try {
       await addFamily(form);
       await queryClient.invalidateQueries({ queryKey: profileKeys.family() });
+      showToast.success('Family member added successfully!');
       setForm(EMPTY_FAMILY);
       setAddingNew(false);
+    } catch {
+      showToast.error('Failed to add family member.');
     } finally {
       setSaving(false);
     }
@@ -138,6 +145,9 @@ export function FamilyTab() {
     try {
       await deleteFamily(id);
       await queryClient.invalidateQueries({ queryKey: profileKeys.family() });
+      showToast.success('Family member deleted.');
+    } catch {
+      showToast.error('Failed to delete family member.');
     } finally {
       setDeleting(false);
       setDeleteTarget(null);
@@ -288,3 +298,4 @@ export function FamilyTab() {
     </>
   );
 }
+

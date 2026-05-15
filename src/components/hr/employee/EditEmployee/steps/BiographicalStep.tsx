@@ -7,12 +7,12 @@ import 'react-phone-input-2/lib/style.css';
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
 import { MaritalStat, AddressType } from '../../../../../types/hr/enum';
-import type { Step2Dto } from '../../../../../types/hr/employee/empAddDto';
 import type { UUID } from 'crypto';
+import type { EmpModBioDto } from '../../../../../types/hr/employee/empModDto';
 
 interface BiographicalStepProps {
-  data: Partial<Step2Dto>;
-  onNext: (data: Step2Dto) => void;
+  data: Partial<EmpModBioDto>;
+  onNext: (data: EmpModBioDto) => void;
   employeeId?: UUID;
   loading?: boolean;
   isEditMode?: boolean;
@@ -49,7 +49,7 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
     }
   };
 
-  const formik = useFormik<Step2Dto>({
+  const formik = useFormik<EmpModBioDto>({
     initialValues: {
       birthDate: data.birthDate || '',
       birthLocation: data.birthLocation || '',
@@ -72,7 +72,11 @@ export const BiographicalStep: React.FC<BiographicalStepProps> = ({
       poBox: data.poBox || '',
       fax: data.fax || '',
       email: data.email || '',
-      website: data.website || '',
+      website: data.website || '',  
+      hasData: data.hasData ?? false,    
+      rowVersion: data.rowVersion || '',
+      id: data.id || '' as UUID,
+      isDeleted: data.isDeleted ?? false,
     },
     validationSchema,
     enableReinitialize: true,

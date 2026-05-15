@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import {
-  ChevronLeft, ChevronRight, User, Loader2, PenBox, Lock,
+  ChevronLeft, ChevronRight, Loader2, PenBox, Lock,
 } from "lucide-react";
 import type { AdminEmpListDto } from '../../../types/hr/employee';
 
@@ -19,7 +19,6 @@ interface EmployeeTableProps {
     newStatus: "active" | "on-leave",
   ) => void;
   onEmployeeTerminate: (employeeId: string) => void;
-  onEmployeeDelete: (employeeId: string) => void;
   onAddAccount?: (employee: AdminEmpListDto) => void;
   onEditAccount?: (employee: AdminEmpListDto) => void;
   showAddAccountButton?: boolean;
@@ -32,37 +31,15 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   totalPages,
   totalItems,
   onPageChange,
-  onEmployeeDelete,
+  // onEmployeeDelete,
   onAddAccount,
   onEditAccount,
   loading = false,
 }) => {
-  const [selectedEmployee, setSelectedEmployee] = useState<AdminEmpListDto | null>(
-    null,
-  );
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const sortedEmployees = [...employees].sort((a, b) => {
-    const dateA = a.createdAt || "";
-    const dateB = b.createdAt || "";
-    return new Date(dateB).getTime() - new Date(dateA).getTime();
-  });
-
-  const handleDelete = (employee: AdminEmpListDto) => {
-    setSelectedEmployee(employee);
-    setIsDeleteModalOpen(true);
-  };
-
-  const confirmDeletion = (employeeId: string) => {
-    onEmployeeDelete(employeeId);
-    setIsDeleteModalOpen(false);
-    setSelectedEmployee(null);
-  };
-
-  const handleCloseDeleteModal = () => {
-    setIsDeleteModalOpen(false);
-    setSelectedEmployee(null);
-  };
+const sortedEmployees = [...employees].sort((a, b) =>
+  (a.empFullName || "").localeCompare(b.empFullName || "")
+);
 
   // Handle Add Account button click
   const handleAddAccountClick = (employee: AdminEmpListDto) => {
