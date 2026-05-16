@@ -46,6 +46,7 @@ import {
   Layers,
   History,
   Target,
+  CalendarDays,
 } from "lucide-react";
 import { useModuleStore } from "../stores/module.store";
 import {
@@ -282,22 +283,20 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const activeModule = useModuleStore((s) => s.activeModule);
 
-const collapsed = useSidebarStore((s) => s.collapsed);
-const openGroups = useSidebarStore((s) => s.openGroups);
+  const collapsed = useSidebarStore((s) => s.collapsed);
+  const openGroups = useSidebarStore((s) => s.openGroups);
 
-const toggleSidebar = useSidebarStore((s) => s.toggleCollapsed);
-const toggleGroup = useSidebarStore((s) => s.toggleGroup);
+  const toggleSidebar = useSidebarStore((s) => s.toggleCollapsed);
+  const toggleGroup = useSidebarStore((s) => s.toggleGroup);
 
-const openGroup = openGroups[activeModule];
+  const openGroup = openGroups[activeModule];
 
- const { employeeId, role, permissions, userName, isAuthenticated } =
-  useAuthStore();
+  const { employeeId, role, permissions, userName, isAuthenticated } =
+    useAuthStore();
 
   // Check if user is admin
-const isAdmin = 
-  role === "admin" || 
-  employeeId === "019d19c0-ae3e-78bd-bd2a-98d36bd6e078";
-
+  const isAdmin =
+    role === "admin" || employeeId === "019d19c0-ae3e-78bd-bd2a-98d36bd6e078";
 
   const getIcon = (iconType?: string) => {
     // Return appropriate icon based on type or default
@@ -367,7 +366,6 @@ const isAdmin =
 
   const theme = themeMap[activeModule] || themeMap.default;
 
-
   // Render dynamic menus from token (for non-admin users)
   const renderDynamicMenus = (menus: MenuItem[]) => {
     return menus.map((menu) => {
@@ -424,15 +422,16 @@ const isAdmin =
               to="/hr/employees/record"
               icon={<Users size={18} />}
               label="Employees"
+              matchPaths={["/hr/employees/:id", "/hr/employees/edit/:id"]}
               {...theme}
               collapsed={collapsed}
             />
 
             <NavGroup
-              icon={<Building2 size={18} />}
+              icon={<ClipboardCheck size={18} />}
               label="Recruitment"
               isOpen={openGroup === "Recruitment"}
-              onToggle={() => toggleGroup(activeModule,"Recruitment")}
+              onToggle={() => toggleGroup(activeModule, "Recruitment")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -489,10 +488,10 @@ const isAdmin =
             </NavGroup>
 
             <NavGroup
-              icon={<Building2 size={18} />}
+              icon={<CalendarDays size={18} />}
               label="Annual Leave"
               isOpen={openGroup === "Leave"}
-              onToggle={() => toggleGroup(activeModule,"Leave")}
+              onToggle={() => toggleGroup(activeModule, "Leave")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -500,15 +499,15 @@ const isAdmin =
             >
               <NavItem
                 to="/hr/leave/list"
-                icon={<Building2 size={18} />}
+                icon={<CalendarDays size={18} />}
                 label="My Leave"
                 {...theme}
                 isChild
                 collapsed={collapsed}
               />
-              <NavItem
+              {/* <NavItem
                 to="/hr/leave/form"
-                icon={<Building2 size={18} />}
+                icon={<CalendarDays size={18} />}
                 label="Leave Request"
                 {...theme}
                 isChild
@@ -516,19 +515,19 @@ const isAdmin =
               />
               <NavItem
                 to="/hr/leave/Entitlement"
-                icon={<Users size={18} />}
+                icon={<CalendarDays size={18} />}
                 label="Leave Entitlement"
                 {...theme}
                 isChild
                 collapsed={collapsed}
-              />
+              /> */}
             </NavGroup>
 
             <NavGroup
               icon={<Building2 size={18} />}
               label="Attendance"
               isOpen={openGroup === "Attendance"}
-              onToggle={() => toggleGroup(activeModule,"Attendance")}
+              onToggle={() => toggleGroup(activeModule, "Attendance")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -663,7 +662,11 @@ const isAdmin =
               icon={<Users size={18} />}
               label="User Management"
               {...theme}
-              matchPaths={["/core/add-employee", "/core/user-management/add/:empId", "/core/user-management/edit/:empId"]}
+              matchPaths={[
+                "/core/add-employee",
+                "/core/user-management/add/:empId",
+                "/core/user-management/edit/:empId",
+              ]}
               collapsed={collapsed}
             />
           </>
@@ -676,7 +679,7 @@ const isAdmin =
               icon={<Trophy size={18} />}
               label="Lead Management"
               isOpen={openGroup === "LeadManagement"}
-              onToggle={() => toggleGroup(activeModule,"LeadManagement")}
+              onToggle={() => toggleGroup(activeModule, "LeadManagement")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -717,7 +720,7 @@ const isAdmin =
               icon={<Users size={18} />}
               label="Contact Management"
               isOpen={openGroup === "Contacts"}
-              onToggle={() => toggleGroup(activeModule,"Contacts")}
+              onToggle={() => toggleGroup(activeModule, "Contacts")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -754,7 +757,7 @@ const isAdmin =
               icon={<BarChart4 size={18} />}
               label="Sales Management"
               isOpen={openGroup === "Sales"}
-              onToggle={() => toggleGroup(activeModule,"Sales")}
+              onToggle={() => toggleGroup(activeModule, "Sales")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -789,7 +792,7 @@ const isAdmin =
               icon={<FileSpreadsheet size={18} />}
               label="Marketing Automation"
               isOpen={openGroup === "Marketing"}
-              onToggle={() => toggleGroup(activeModule,"Marketing")}
+              onToggle={() => toggleGroup(activeModule, "Marketing")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -825,7 +828,7 @@ const isAdmin =
               icon={<Calendar size={18} />}
               label="Customer Service"
               isOpen={openGroup === "CustomerService"}
-              onToggle={() => toggleGroup(activeModule,"CustomerService")}
+              onToggle={() => toggleGroup(activeModule, "CustomerService")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -852,7 +855,7 @@ const isAdmin =
               icon={<ClipboardList size={18} />}
               label="Activity Management"
               isOpen={openGroup === "Activities"}
-              onToggle={() => toggleGroup(activeModule,"Activities")}
+              onToggle={() => toggleGroup(activeModule, "Activities")}
               hoverBg={theme.hoverBg}
               textColor={theme.textColor}
               activeBg={theme.activeBg}
@@ -908,7 +911,7 @@ const isAdmin =
               icon={<FileText size={18} />}
               label="General Ledger"
               isOpen={openGroup === "General Ledger"}
-              onToggle={() => toggleGroup(activeModule,"General Ledger")}
+              onToggle={() => toggleGroup(activeModule, "General Ledger")}
               {...theme}
               collapsed={collapsed}
             >
@@ -955,7 +958,7 @@ const isAdmin =
               icon={<DollarSign size={18} />}
               label="Accounts Payable"
               isOpen={openGroup === "Accounts Payable"}
-              onToggle={() => toggleGroup(activeModule,"Accounts Payable")}
+              onToggle={() => toggleGroup(activeModule, "Accounts Payable")}
               {...theme}
               collapsed={collapsed}
             >
@@ -980,7 +983,7 @@ const isAdmin =
               icon={<DollarSign size={18} />}
               label="Accounts Receivable"
               isOpen={openGroup === "Accounts Receivable"}
-              onToggle={() => toggleGroup(activeModule,"Accounts Receivable")}
+              onToggle={() => toggleGroup(activeModule, "Accounts Receivable")}
               {...theme}
               collapsed={collapsed}
             >
@@ -1073,7 +1076,7 @@ const isAdmin =
               icon={<Folder size={18} />}
               label="Folders"
               isOpen={openGroup === "FileFolders"}
-              onToggle={() => toggleGroup(activeModule,"FileFolders")}
+              onToggle={() => toggleGroup(activeModule, "FileFolders")}
               {...theme}
               collapsed={collapsed}
             >
@@ -1106,7 +1109,7 @@ const isAdmin =
               icon={<File size={18} />}
               label="Documents"
               isOpen={openGroup === "FileDocuments"}
-              onToggle={() => toggleGroup(activeModule,"FileDocuments")}
+              onToggle={() => toggleGroup(activeModule, "FileDocuments")}
               {...theme}
               collapsed={collapsed}
             >
@@ -1261,9 +1264,9 @@ const isAdmin =
     }
   };
 
-const parsedPermissions = permissions || [];
-const menus =
-  parsedPermissions.find((m: MenuItem) => m.K === activeModule)?.M || [];
+  const parsedPermissions = permissions || [];
+  const menus =
+    parsedPermissions.find((m: MenuItem) => m.K === activeModule)?.M || [];
   const hasDynamicMenus = menus && menus.length > 0;
 
   return (

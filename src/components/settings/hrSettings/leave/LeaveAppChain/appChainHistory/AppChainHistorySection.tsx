@@ -1,13 +1,17 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { XCircleIcon } from 'lucide-react';
-import AppChainSearchFilters from './AppChainSearchFilter';
-import AppChainHistoryTable from './AppChainHistoryTable';
-import type { LeaveAppChainListDto, LeaveAppChainModDto, UUID } from '../../../../../../types/core/Settings/leaveAppChain';
-import { leaveAppChainServices } from '../../../../../../services/core/settings/ModHrm/leaveAppChainServices';
-import EditAppChainModal from './EditAppChainModal';
-import DeleteAppChainModal from './DeleteAppChainModal';
-interface LeaveAppChainHistorySectionProps{
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { XCircleIcon } from "lucide-react";
+import AppChainSearchFilters from "./AppChainSearchFilter";
+import AppChainHistoryTable from "./AppChainHistoryTable";
+import type {
+  LeaveAppChainListDto,
+  LeaveAppChainModDto,
+  UUID,
+} from "../../../../../../types/core/Settings/leaveAppChain";
+import { leaveAppChainServices } from "../../../../../../services/core/settings/ModHrm/leaveAppChainServices";
+import EditAppChainModal from "./EditAppChainModal";
+import DeleteAppChainModal from "./DeleteAppChainModal";
+interface LeaveAppChainHistorySectionProps {
   leavePolicyId: UUID;
 }
 
@@ -19,10 +23,12 @@ const AppChainHisotrySection: React.FC<LeaveAppChainHistorySectionProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const { listByPolicy, update, changeStatus, remove } = leaveAppChainServices(leavePolicyId);
-  const [editingAppChain, setEditingAppChain] = useState<LeaveAppChainListDto | null>(null);
-    const [deletingAppChain, setDeletingAppChain] =
-      useState<LeaveAppChainListDto | null>(null);
+  const { listByPolicy, update, changeStatus, remove } =
+    leaveAppChainServices(leavePolicyId);
+  const [editingAppChain, setEditingAppChain] =
+    useState<LeaveAppChainListDto | null>(null);
+  const [deletingAppChain, setDeletingAppChain] =
+    useState<LeaveAppChainListDto | null>(null);
 
   const itemsPerPage = 10;
 
@@ -42,7 +48,7 @@ const AppChainHisotrySection: React.FC<LeaveAppChainHistorySectionProps> = ({
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedAppChains = filteredAppChain.slice(
     (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+    currentPage * itemsPerPage,
   );
 
   // Reset to first page when search changes
@@ -109,7 +115,7 @@ const AppChainHisotrySection: React.FC<LeaveAppChainHistorySectionProps> = ({
       await remove.mutateAsync(appChainId);
       setAppChains((prev) => prev.filter((ac) => ac.id !== appChainId));
       setError(null);
-       setDeletingAppChain(null);
+      setDeletingAppChain(null);
     } catch (err: any) {
       console.error("Failed to delete approval chain:", err);
       const errorMessage =
@@ -118,35 +124,34 @@ const AppChainHisotrySection: React.FC<LeaveAppChainHistorySectionProps> = ({
     }
   };
 
-    const handleToggleStatus = async (appChain: LeaveAppChainListDto) => {
-      try {
-        const statusPayload = {
-          id: appChain.id,
-          stat: !appChain.isActive,
-          rowVersion:appChain.rowVersion,
-        };
-        await changeStatus.mutateAsync(statusPayload);
-        // Refetch data instead of manual state update to ensure consistency
-        await fetchAppChains();
-        setError(null);
-      } catch (err) {
-        console.error("Failed to toggle approval chain status:", err);
-        setError("Failed to update approval chain status. Please try again.");
-      }
-    };
+  const handleToggleStatus = async (appChain: LeaveAppChainListDto) => {
+    try {
+      const statusPayload = {
+        id: appChain.id,
+        stat: !appChain.isActive,
+        rowVersion: appChain.rowVersion,
+      };
+      await changeStatus.mutateAsync(statusPayload);
+      // Refetch data instead of manual state update to ensure consistency
+      await fetchAppChains();
+      setError(null);
+    } catch (err) {
+      console.error("Failed to toggle approval chain status:", err);
+      setError("Failed to update approval chain status. Please try again.");
+    }
+  };
 
- const handleEdit = (appChain: LeaveAppChainListDto) => {
-   setEditingAppChain(appChain);
- };
+  const handleEdit = (appChain: LeaveAppChainListDto) => {
+    setEditingAppChain(appChain);
+  };
 
- const handleCloseEditModal = () => {
-   setEditingAppChain(null);
- };
+  const handleCloseEditModal = () => {
+    setEditingAppChain(null);
+  };
 
- const handleDelete = (appChain: LeaveAppChainListDto) => {
-   setDeletingAppChain(appChain);
- 
- };
+  const handleDelete = (appChain: LeaveAppChainListDto) => {
+    setDeletingAppChain(appChain);
+  };
 
   const handleCloseDeleteModal = () => {
     setDeletingAppChain(null);
@@ -165,7 +170,7 @@ const AppChainHisotrySection: React.FC<LeaveAppChainHistorySectionProps> = ({
             <span className="font-medium">
               {error.includes("load") ? (
                 <>
-                  Failed to load leave types.{" "}
+                  Failed to load leave AppChian.{" "}
                   <button
                     onClick={fetchAppChains}
                     className="underline hover:text-red-800 font-semibold focus:outline-none"
@@ -175,11 +180,11 @@ const AppChainHisotrySection: React.FC<LeaveAppChainHistorySectionProps> = ({
                   later.
                 </>
               ) : error.includes("create") ? (
-                "Failed to create leave type. Please try again."
+                "Failed to create leave AppChian. Please try again."
               ) : error.includes("update") ? (
-                "Failed to update leave type. Please try again."
+                "Failed to update leave AppChian. Please try again."
               ) : error.includes("delete") ? (
-                "Failed to delete leave type. Please try again."
+                "Failed to delete leave AppChian. Please try again."
               ) : (
                 error
               )}
@@ -223,11 +228,10 @@ const AppChainHisotrySection: React.FC<LeaveAppChainHistorySectionProps> = ({
           <div className="flex items-center">
             <XCircleIcon className="h-5 w-5 text-yellow-400 mr-3" />
             <div>
-              <h3 className="text-yellow-800 font-medium">
-                No Results Found
-              </h3>
+              <h3 className="text-yellow-800 font-medium">No Results Found</h3>
               <p className="text-yellow-700 text-sm mt-1">
-                No approval chains match your search criteria. Try adjusting your search terms.
+                No approval chains match your search criteria. Try adjusting
+                your search terms.
               </p>
             </div>
           </div>
@@ -248,7 +252,8 @@ const AppChainHisotrySection: React.FC<LeaveAppChainHistorySectionProps> = ({
                 No Approval Chains Found
               </h3>
               <p className="text-yellow-700 text-sm mt-1">
-                There are currently no approval chains in the system. Please add an approval chain to get started.
+                There are currently no approval chains in the system. Please add
+                an approval chain to get started.
               </p>
             </div>
           </div>

@@ -6,7 +6,6 @@ import { useProfileStore } from '../../stores/profile/profile.store';
 import type { BiographicalForm, FinancialForm } from '../../stores/profile/profile.store';
 import { InlineEditCard } from './InlineEditCard';
 import { EditableField } from './EditableField';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Field, Grid } from './shared';
 import { ProfileSkeleton, ProfileError } from './ProfileLoadState';
 import { fetchCertBlobUrl } from '../../services/hr/employee/empDetail/empDetail.api';
@@ -17,7 +16,6 @@ async function openCertBlob(certId: string) {
   window.open(url, '_blank', 'noopener,noreferrer');
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
-import EnumSelect from '../ui/enumSelect';
 import { YesNo } from '../../types/hr/enum';
 import SelectEnum from '../ui/selectEnum';
 
