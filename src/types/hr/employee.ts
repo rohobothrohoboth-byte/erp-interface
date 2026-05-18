@@ -143,3 +143,9 @@ export interface AdminEmpListDto {
   empState: string;
   hasAccount: boolean;
 }
+
+export interface PwdChgDto
+{
+   oldPwd: string ;
+   newPwd: string ;
+}

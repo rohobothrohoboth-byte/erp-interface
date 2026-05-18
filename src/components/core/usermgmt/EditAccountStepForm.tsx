@@ -14,10 +14,9 @@ import type {
 import type { MenuPerApiListDto } from "../../../types/auth/MenuPerApi";
 import { perMenuApi } from "../../../services/auth/perMenu/perMenu.api";
 import { menuPerApiApi } from "../../../services/auth/menuPerApi/menuPerApi.api";
-import { usermgmtApi } from "../../../services/core/usermgmt/usermgmt.api";
 import toast from "react-hot-toast";
 import { Button } from "../../ui/button";
-import DeleteAccountModal from "./DeleteAccountModal";
+import { DeleteAccountModal } from "./steps/DeleteAccountModal";
 
 const steps = [
   { id: 1, title: "Module Access", icon: Shield },
@@ -62,7 +61,6 @@ export const EditAccountStepForm: React.FC<EditAccountStepFormProps> = ({
   const [userId, setUserId] = useState<string>(accountData?.userId || "");
   const [isUpdateComplete, setIsUpdateComplete] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Real data state for permissions (Step 2)
   const [permissionsData, setPermissionsData] = useState<ModPerMenuListDto[]>(
@@ -316,39 +314,6 @@ export const EditAccountStepForm: React.FC<EditAccountStepFormProps> = ({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Handle account deletion
-  const handleDeleteAccount = async (userId: string) => {
-    setIsDeleting(true);
-    setError(null);
-
-    try {
-      await usermgmtApi.deleteAccount(userId as UUID);
-
-      toast.success("Account deleted successfully!");
-
-      // Call the callback if provided
-      if (onAccountDeleted) {
-        onAccountDeleted({
-          success: true,
-          message: "Account deleted successfully",
-          userId: userId,
-          employeeId: employee?.id || "",
-        });
-      } else {
-        // Fallback to onBackToAccounts if no delete callback
-        onBackToAccounts();
-      }
-    } catch (error: any) {
-      console.error("Failed to delete account:", error);
-      const errorMessage =
-        error.message || "Failed to delete account. Please try again.";
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
-    }
-  };
   const clearTemporaryData = () => {
     localStorage.removeItem("editAccountFormData");
     setFormData({
@@ -648,11 +613,13 @@ export const EditAccountStepForm: React.FC<EditAccountStepFormProps> = ({
 
       {/* Delete Confirmation Modal */}
       <DeleteAccountModal
-        employee={employee || null}
+        userId={accountData?.userId as any}
         isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={handleDeleteAccount}
-        isDeleting={isDeleting}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          if (onAccountDeleted) onAccountDeleted({ success: true });
+          else onBackToAccounts();
+        }}
       />
 
       {/* Module Selection Info */}

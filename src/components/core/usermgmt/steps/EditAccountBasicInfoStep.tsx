@@ -9,7 +9,7 @@ import { Checkbox } from "../../../../components/ui/checkbox";
 import { authListApi } from "../../../../services/List/auth/authList.api";
 import type { NameListItem } from "../../../../types/NameList/nameList";
 import toast from "react-hot-toast";
-import { usermgmtApi } from "../../../../services/core/usermgmt/usermgmt.api";
+import { DeleteAccountModal } from "./DeleteAccountModal";
 import type { UUID } from "../../../../types/hr/employee";
 
 interface EditAccountBasicInfoStepProps {
@@ -43,10 +43,7 @@ export const EditAccountBasicInfoStep: React.FC<
   onAccountDeleted, }) => {
   const [moduleOptions, setModuleOptions] = useState<NameListItem[]>([]);
   const [isFetchingModules, setIsFetchingModules] = useState(false);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
-      const [error, setError] = useState<string | null>(null);
-    
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Fetch modules from backend using listService
   useEffect(() => {
@@ -84,40 +81,6 @@ export const EditAccountBasicInfoStep: React.FC<
   const initialValues = {
     modules: initialData.modules,
   };
-
-   const handleDeleteAccount = async (userId: string) => {
-      setIsDeleting(true);
-      setError(null);
-  
-      try {
-        await usermgmtApi.deleteAccount(userId as UUID);
-  
-        toast.success("Account deleted successfully!");
-  
-        // Call the callback if provided
-        if (onAccountDeleted) {
-          onAccountDeleted({
-            success: true,
-            message: "Account deleted successfully",
-            userId: userId,
-            employeeId: employee?.id || "",
-          });
-        } else {
-          // Fallback to onBackToAccounts if no delete callback
-          onBackToAccounts();
-        }
-      } catch (error: any) {
-        console.error("Failed to delete account:", error);
-        const errorMessage =
-          error.message || "Failed to delete account. Please try again.";
-        setError(errorMessage);
-        toast.error(errorMessage);
-      } finally {
-        setIsDeleting(false);
-        setShowDeleteConfirm(false);
-      }
-    };
-
   const isLoadingData = isLoading || isFetchingModules;
 
   return (
@@ -132,13 +95,13 @@ export const EditAccountBasicInfoStep: React.FC<
           Edit Account Modules
         </h2>
                 <Button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={isDeleting || isLoading}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Trash2 size={14} />
-                  Delete Account
-                </Button>
+  onClick={() => setShowDeleteConfirm(true)}
+  disabled={isLoadingData}
+  className="flex items-center gap-2 px-3 py-1.5 bg-red-100 text-red-700 hover:bg-red-200 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  <Trash2 size={14} />
+  Delete Account
+</Button>
           
       </div>
   <div className="p-3 text-sm text-gray-500">
@@ -260,6 +223,14 @@ export const EditAccountBasicInfoStep: React.FC<
           </Form>
         )}
       </Formik>
+      <DeleteAccountModal
+        isOpen={showDeleteConfirm}
+        userId={employee?.id as UUID | undefined}
+        onClose={() => {
+          setShowDeleteConfirm(false);
+          onAccountDeleted?.({ success: true, userId: employee?.id });
+        }}
+      />
     </motion.div>
   );
 };

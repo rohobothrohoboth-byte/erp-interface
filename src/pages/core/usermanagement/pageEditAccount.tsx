@@ -26,9 +26,9 @@ export default function EditAccountPage() {
     <EditAccountStepForm
       employee={employee}
       accountData={accountData}
-      onBackToAccounts={() => navigate("/core/user-management")}
-      onAccountUpdated={() => navigate("/core/user-management")}
-      onAccountDeleted={() => navigate("/core/user-management")}
+      onBackToAccounts={() => navigate("/core/users")}
+      onAccountUpdated={() => navigate("/core/users")}
+      onAccountDeleted={() => navigate(`/core/user-management/edit/${empId}`)}
     />
   );
 }
