@@ -1,3 +1,5 @@
+import type { OnLeaveEmployee } from "../components/hr/dashboard/OnLeaveEmployee";
+
 export const dashboardMetrics = {
   totalEmployees: 110,
   activeEmployees: 105,
@@ -142,3 +144,38 @@ export const upcomingEvents: EventItem[] = [
     type: 'Training',
   },
 ]
+
+export const onLeaveEmployees: OnLeaveEmployee[] = [
+  {
+    empFullName: "Abel Tesfaye",
+    empFullNameAm: "አበል ተስፋዬ",
+    gender: "Male",
+    department: "IT",
+    position: "Software Engineer",
+    leaveType: "Annual",
+  },
+  {
+    empFullName: "Selamawit Haile",
+    empFullNameAm: "ሰላማዊት ሀይሌ",
+    gender: "Female",
+    department: "HR",
+    position: "HR Officer",
+    leaveType: "Sick",
+  },
+  {
+    empFullName: "Daniel Yohannes",
+    empFullNameAm: "ዳንኤል ዮሐንስ",
+    gender: "Male",
+    department: "Finance",
+    position: "Accountant",
+    leaveType: "Maternity",
+  },
+  {
+    empFullName: "Hanna Mulu",
+    empFullNameAm: "ሐና ሙሉ",
+    gender: "Female",
+    department: "Marketing",
+    position: "Marketing Specialist",
+    leaveType: "Unpaid",
+  },
+];

@@ -7,7 +7,7 @@ import type {
 } from '../../../../types/hr/benefit';
 
 class BenefitSetService {
-  private baseUrl = `${import.meta.env.VITE_CORE_MODULE_URL || 'core/hrmm/v1'}/BenefitSet`;
+  private baseUrl = `${import.meta.env.VITE_CORE_HRMM_URL || 'core/hrmm/v1'}/BenefitSet`;
 
   // Helper method to extract error messages
   private extractErrorMessage(error: any): string {

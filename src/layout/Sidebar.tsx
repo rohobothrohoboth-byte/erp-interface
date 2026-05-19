@@ -1352,6 +1352,8 @@ const Sidebar: React.FC = () => {
             label="Dashboard"
             end
             {...theme}
+            matchPaths={activeModule === "mod.hrm"
+                    ? ["/hr/pend-employees"]:[]}
             collapsed={collapsed}
           />
 

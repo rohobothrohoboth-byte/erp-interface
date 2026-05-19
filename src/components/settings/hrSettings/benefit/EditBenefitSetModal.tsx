@@ -28,6 +28,7 @@ const EditBenefitSetModal: React.FC<EditBenefitSetModalProps> = ({
     name: "",
     benefitValue: 0,
     rowVersion: "",
+    per:"",
   });
 
   // Initialize form when benefitSet changes
@@ -37,6 +38,7 @@ const EditBenefitSetModal: React.FC<EditBenefitSetModalProps> = ({
         id: benefitSet.id,
         name: benefitSet.name,
         benefitValue: benefitSet.benefit,
+        per: benefitSet.per,
         rowVersion: benefitSet.rowVersion || "",
       });
     }
@@ -83,7 +85,7 @@ const EditBenefitSetModal: React.FC<EditBenefitSetModalProps> = ({
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">

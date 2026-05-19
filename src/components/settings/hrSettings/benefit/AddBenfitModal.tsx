@@ -26,7 +26,6 @@ const AddBenefitModal: React.FC<AddBenefitModalProps> = ({
     benefitValue: 0,
     per: " ",
   });
-  const [per, setPer] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -35,7 +34,6 @@ const AddBenefitModal: React.FC<AddBenefitModalProps> = ({
         benefitValue: 0,
         per: "",
       });
-      setPer("");
     }
   }, [isOpen]);
 
@@ -130,12 +128,17 @@ const AddBenefitModal: React.FC<AddBenefitModalProps> = ({
                 <Label htmlFor="benefitValue" className="text-sm text-gray-500">
                   Period
                 </Label>
-                <EnumSelect
-                  enumObject={Per}
-                  value={per}
-                  onChange={setPer}
-                  placeholder="Select Period"
-                />
+               <EnumSelect
+  enumObject={Per}
+  value={formData.per}
+  onChange={(value) =>
+    setFormData((prev) => ({
+      ...prev,
+      per: value,
+    }))
+  }
+  placeholder="Select Period"
+/>
               </div>
             </div>
           </div>

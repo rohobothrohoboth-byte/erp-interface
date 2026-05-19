@@ -7,7 +7,7 @@ import type {
 } from '../../../../types/hr/educationalqual';
 
 class EducationQualService {
-  private baseUrl = `${import.meta.env.VITE_CORE_MODULE_URL || 'core/hrmm/v1'}/EducationQual`;
+  private baseUrl = `${import.meta.env.VITE_CORE_HRMM_URL || 'core/hrmm/v1'}/EducationQual`;
 
   // Helper method to extract error messages
   private extractErrorMessage(error: any): string {

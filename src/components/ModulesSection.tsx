@@ -166,7 +166,7 @@ const { token, role, employeeId, permissions } = useAuthStore();
 
   const ALL_MODULES: AllowedModule[] = [
     {
-      label: "HR",
+      label: "HR Management",
       key: "mod.hrm",
       path: "/hr",
       icon: <Users size={24} />,
@@ -196,14 +196,14 @@ const { token, role, employeeId, permissions } = useAuthStore();
     },
       {
   label: "Plan & Development",
-  key: "mod.plan",
+  key: "mod.pld",
   path: "/plandev",
   icon: <ClipboardList size={24} />,
   color: "from-indigo-600 via-indigo-500 to-sky-400",
 },
 {
   label: "Project Management",
-  key: "mod.prj",
+  key: "mod.prm",
   path: "/project-management",
   icon: <BriefcaseBusiness size={24} />,
   color: "from-yellow-500 via-yellow-400 to-amber-300",
@@ -216,7 +216,7 @@ const { token, role, employeeId, permissions } = useAuthStore();
       color: "from-purple-500 via-purple-400 to-pink-400",
     },
     {
-      label: "File",
+      label: "File Management",
       key: "mod.flm",
       path: "/file",
       icon: <FileText size={24} />,

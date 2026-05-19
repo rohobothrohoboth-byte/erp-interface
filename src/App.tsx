@@ -70,6 +70,7 @@ import PageCoreSettings from "./pages/settings/coreSettings/PageCoreSettings";
 import PageApiSettings from "./pages/settings/coreSettings/PageApiSettings";
 import PageMenuSettings from "./pages/settings/coreSettings/PageMenuSettings";
 import FileDashboard from "./pages/modules/File";
+import FolderDocumentsPage from "./pages/File/FolderDocumentsPage";
 import PlanDevDashboard from "./pages/modules/PlanDev";
 import ProjectManagementDashboard from "./pages/modules/ProjectManagement";
 
@@ -167,6 +168,7 @@ import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PagePaymentApprovalChain from "./pages/settings/FinanceSettings/PagePaymentApprovalChain";
 import EmployeeDetailsPage from "./pages/hr/employeepage/EmployeeDetailsPage";
+import PendingEmployeePage from "./pages/hr/employeepage/PendingEmployeePage";
 
 function App() {
   const init = useAuthStore((s) => s.init);
@@ -196,6 +198,7 @@ function App() {
               <Route path="/finance" element={<Finance />} />
               <Route path="/procurement" element={<Procurement />} />
               <Route path="/file" element={<FileDashboard />} />
+              <Route path="/file/documents/:folderId"  element={<FolderDocumentsPage />} />
               <Route path="/plandev" element={<PlanDevDashboard />} />
               <Route
                 path="/project-management"
@@ -335,6 +338,10 @@ function App() {
               <Route
                 path="/hr/employees/record"
                 element={<EmployeeManagementPage />}
+              />
+              <Route
+                path="/hr/pend-employees"
+                element={<PendingEmployeePage />}
               />
               <Route
                 path="/hr/employees/record/Add"
