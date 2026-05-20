@@ -71,7 +71,7 @@ function Dashboard() {
       animate="visible"
     >
       {/* Header */}
-      <section className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+      {/* <section className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Welcome back,{" "}
@@ -100,7 +100,7 @@ function Dashboard() {
             Export
           </Button>
         </div>
-      </section>
+      </section> */}
 
       {/* Stats */}
       <motion.div variants={itemVariants}>

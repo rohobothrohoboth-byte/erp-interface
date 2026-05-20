@@ -1,4 +1,4 @@
-import { Star, Download, Printer, Trash2, Edit3, MoreVertical, Lock, Upload } from 'lucide-react';
+import { Star, Download, Printer, Trash2, Edit3, MoreVertical, Lock } from 'lucide-react';
 import { FileThumbnail } from '../FileThumbnail';
 import { getFileTypeConfig } from '../fileTypeConfig';
 import type { DocumentItem, FolderPermissions } from '../../../types/file/folder.types';
@@ -12,6 +12,7 @@ interface FileListItemProps {
   perms: FolderPermissions;
   selected: boolean;
   onSelect: () => void;
+  onDoubleClick: () => void;
   onFavorite: () => void;
   onDelete: () => void;
   onDownload: () => void;
@@ -20,13 +21,14 @@ interface FileListItemProps {
 
 export function FileListItem({
   doc, perms, selected,
-  onSelect, onFavorite, onDelete, onDownload, onPrint,
+  onSelect, onDoubleClick, onFavorite, onDelete, onDownload, onPrint,
 }: FileListItemProps) {
   const cfg = getFileTypeConfig(doc.contentType, doc.name);
 
   return (
     <tr
       onClick={onSelect}
+      onDoubleClick={onDoubleClick}
       className={`group cursor-pointer transition-colors ${
         selected ? 'bg-green-50' : 'hover:bg-gray-50/60'
       }`}
@@ -40,14 +42,14 @@ export function FileListItem({
             <div className="flex items-center gap-2 mt-0.5">
               <span className={`text-[10px] font-semibold ${cfg.iconClass}`}>{cfg.label}</span>
               {/* Privilege badge */}
-              {!perms.canEdit && !perms.uploadOnly && (
+              {!perms.canEdit && !perms.canDownload && !perms.canPrint && (
                 <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-medium">
-                  <Lock className="w-2.5 h-2.5" /> Read Only
+                  <Lock className="w-2.5 h-2.5" /> View Only
                 </span>
               )}
-              {perms.uploadOnly && (
-                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600 text-[10px] font-medium">
-                  <Upload className="w-2.5 h-2.5" /> Upload Only
+              {!perms.canEdit && (perms.canDownload || perms.canPrint) && (
+                <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 text-[10px] font-medium">
+                  <Download className="w-2.5 h-2.5" /> Print/DL
                 </span>
               )}
               {doc.isFavorite && <Star className="w-3 h-3 text-yellow-400 fill-yellow-400" />}

@@ -1,7 +1,4 @@
-import type { ReactNode } from 'react';
-
 export type FolderCategory = 'company' | 'personal';
-
 export interface FolderPermissions {
   canAddFolder: boolean;
   canAddFile: boolean;
@@ -18,8 +15,8 @@ export const CATEGORY_PERMISSIONS: Record<FolderCategory, FolderPermissions> = {
     canAddFile:   false,
     canEdit:      false,
     canDelete:    false,
-    canDownload:  false,
-    canPrint:     false,
+    canDownload:  true,   // allowed at folder level; doc perms may restrict further
+    canPrint:     true,   // allowed at folder level; doc perms may restrict further
     uploadOnly:   false,
   },
   personal: {
@@ -41,9 +38,19 @@ export interface FolderItem {
   category: FolderCategory;
   owner?: string;
   description?: string;
-  /** Company folders can have a special system icon (like Windows default folders) */
-  systemIcon?: ReactNode;
 }
+
+/**
+ * Per-document access level.
+ * - 'full'           → all folder perms apply (edit, delete, download, print)
+ * - 'print-download' → can view, download and print; no edit/delete
+ * - 'view-only'      → can only open/view; no download, no print, no edit
+ *
+ * The effective permission is the intersection of folder perms and doc perms.
+ * Company folders are already read-only at folder level, so doc perms further
+ * restrict what's allowed within that folder.
+ */
+export type DocPermission = 'full' | 'print-download' | 'view-only';
 
 export interface DocumentItem {
   id: string;
@@ -55,8 +62,40 @@ export interface DocumentItem {
   folderId: string;
   folderCategory: FolderCategory;
   isFavorite?: boolean;
+  /** Per-document access level. Defaults to 'full' when not set. */
+  docPermission?: DocPermission;
   /** For image files, a thumbnail URL */
   thumbnailUrl?: string;
+}
+
+/** Merge folder-level perms with per-document perms to get effective perms. */
+export function effectivePerms(
+  folderPerms: FolderPermissions,
+  docPerm: DocPermission = 'full',
+): FolderPermissions {
+  if (docPerm === 'view-only') {
+    return {
+      ...folderPerms,
+      canDownload: false,
+      canPrint:    false,
+      canEdit:     false,
+      canDelete:   false,
+      canAddFile:  false,
+      uploadOnly:  false,
+    };
+  }
+  if (docPerm === 'print-download') {
+    return {
+      ...folderPerms,
+      canDownload: folderPerms.canDownload,
+      canPrint:    folderPerms.canPrint,
+      canEdit:     false,
+      canDelete:   false,
+      canAddFile:  false,
+      uploadOnly:  false,
+    };
+  }
+  return folderPerms;
 }
 
 export type SortField = 'name' | 'size' | 'updatedAt' | 'type';

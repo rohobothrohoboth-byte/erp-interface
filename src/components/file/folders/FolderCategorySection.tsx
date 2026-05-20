@@ -1,71 +1,26 @@
 import { useNavigate } from 'react-router-dom';
-import { Folder, MoreVertical, Lock, Upload, Edit3, Trash2, FolderPlus, FilePlus } from 'lucide-react';
+import { Folder, MoreVertical, Edit3, Trash2, FolderPlus, FilePlus, BookOpen, BarChart3, Scale, Users, Briefcase, Settings } from 'lucide-react';
 import type { FolderItem, FolderCategory } from '../../../types/file/folder.types';
 import { CATEGORY_PERMISSIONS } from '../../../types/file/folder.types';
-import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
 } from '../../ui/dropdown-menu';
 
-const CATEGORY_META: Record<FolderCategory, {
-  label: string;
-  cardBg: string;
-  cardBorder: string;
-  iconClass: string;
-  badgeClass: string;
-  badgeText: string;
-  headerAccent: string;
-}> = {
-  company: {
-    label: 'Company Folders',
-    cardBg: 'bg-emerald-50',
-    cardBorder: 'border-emerald-100 hover:border-emerald-300',
-    iconClass: 'text-emerald-600 fill-emerald-100',
-    badgeClass: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    badgeText: 'Read Only',
-    headerAccent: 'text-emerald-700',
-  },
-  department: {
-    label: 'Department Folders',
-    cardBg: 'bg-green-50',
-    cardBorder: 'border-green-100 hover:border-green-300',
-    iconClass: 'text-green-600 fill-green-100',
-    badgeClass: 'bg-green-100 text-green-700 border-green-200',
-    badgeText: 'Upload Only',
-    headerAccent: 'text-green-700',
-  },
-  shared: {
-    label: 'Shared Folders',
-    cardBg: 'bg-emerald-50',
-    cardBorder: 'border-emerald-100 hover:border-emerald-300',
-    iconClass: 'text-emerald-500 fill-emerald-100',
-    badgeClass: 'bg-emerald-600 text-white border-emerald-600',
-    badgeText: 'Full Access',
-    headerAccent: 'text-emerald-700',
-  },
-  my: {
-    label: 'My Folders',
-    cardBg: 'bg-green-50',
-    cardBorder: 'border-green-100 hover:border-green-300',
-    iconClass: 'text-green-500 fill-green-100',
-    badgeClass: 'bg-green-600 text-white border-green-600',
-    badgeText: 'Full Access',
-    headerAccent: 'text-green-700',
-  },
-  personal: {
-    label: 'Personal Folders',
-    cardBg: 'bg-emerald-50/60',
-    cardBorder: 'border-emerald-100 hover:border-emerald-200',
-    iconClass: 'text-emerald-400 fill-emerald-50',
-    badgeClass: 'bg-white text-emerald-700 border-emerald-300',
-    badgeText: 'Private',
-    headerAccent: 'text-emerald-600',
-  },
+// Derive company folder icon from ID at render time — never store ReactNodes in data
+const COMPANY_ICONS: Record<string, React.ReactNode> = {
+  'c-policies': <BookOpen className="w-8 h-8 text-emerald-600" />,
+  'c-reports':  <BarChart3 className="w-8 h-8 text-emerald-500" />,
+  'c-legal':    <Scale    className="w-8 h-8 text-emerald-600" />,
+  'c-hr':       <Users    className="w-8 h-8 text-green-600" />,
+  'c-projects': <Briefcase className="w-8 h-8 text-emerald-500" />,
+  'c-it':       <Settings  className="w-8 h-8 text-green-500" />,
+};
+
+const CATEGORY_META: Record<FolderCategory, { label: string; headerClass: string }> = {
+  company:  { label: 'Company Folders',  headerClass: 'text-gray-700' },
+  personal: { label: 'Personal Folders', headerClass: 'text-gray-700' },
 };
 
 interface FolderCategorySectionProps {
@@ -80,7 +35,7 @@ export function FolderCategorySection({ category, folders, onAddFolder }: Folder
   const perms = CATEGORY_PERMISSIONS[category];
 
   const handleOpen = (folder: FolderItem) => {
-    navigate(`/file/documents/${folder.id}`, { state: { folder } });
+    navigate(`/file/documents/${folder.id}`);
   };
 
   return (
@@ -88,10 +43,7 @@ export function FolderCategorySection({ category, folders, onAddFolder }: Folder
       {/* Section header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className={`text-sm font-semibold ${meta.headerAccent}`}>{meta.label}</h3>
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border ${meta.badgeClass}`}>
-            {meta.badgeText}
-          </span>
+          <h3 className={`text-sm font-semibold ${meta.headerClass}`}>{meta.label}</h3>
           <span className="text-xs text-gray-400">({folders.length})</span>
         </div>
         {perms.canAddFolder && (
@@ -109,8 +61,8 @@ export function FolderCategorySection({ category, folders, onAddFolder }: Folder
 
       {/* Folder grid */}
       {folders.length === 0 ? (
-        <div className="flex items-center justify-center py-8 rounded-xl border border-dashed border-green-200 bg-green-50/30">
-          <p className="text-sm text-green-400">No folders in this category</p>
+        <div className="flex items-center justify-center py-8 rounded-xl border border-dashed border-gray-200">
+          <p className="text-sm text-gray-400">No folders</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
@@ -118,7 +70,6 @@ export function FolderCategorySection({ category, folders, onAddFolder }: Folder
             <FolderCard
               key={folder.id}
               folder={folder}
-              meta={meta}
               perms={perms}
               onOpen={handleOpen}
             />
@@ -131,37 +82,28 @@ export function FolderCategorySection({ category, folders, onAddFolder }: Folder
 
 interface FolderCardProps {
   folder: FolderItem;
-  meta: typeof CATEGORY_META[FolderCategory];
   perms: typeof CATEGORY_PERMISSIONS[FolderCategory];
   onOpen: (f: FolderItem) => void;
 }
 
-function FolderCard({ folder, meta, perms, onOpen }: FolderCardProps) {
+function FolderCard({ folder, perms, onOpen }: FolderCardProps) {
+  const isCompany = folder.category === 'company';
+
   return (
     <div
       onClick={() => onOpen(folder)}
-      className={`group relative flex flex-col items-center gap-2 p-4 rounded-2xl border cursor-pointer hover:shadow-md transition-all ${meta.cardBg} ${meta.cardBorder}`}
+      className="group relative flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 bg-white cursor-pointer hover:border-green-200 hover:shadow-sm transition-all"
     >
-      {/* Permission indicator */}
-      <div className="absolute top-2 left-2">
-        {!perms.canEdit && !perms.uploadOnly && (
-          <Lock className="w-3 h-3 text-emerald-400" />
-        )}
-        {perms.uploadOnly && (
-          <Upload className="w-3 h-3 text-green-500" />
-        )}
-      </div>
-
-      {/* Context menu */}
+      {/* Context menu — only for personal */}
       {(perms.canEdit || perms.canDelete || perms.canAddFile) && (
         <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 onClick={(e) => e.stopPropagation()}
-                className="p-1 rounded-lg hover:bg-white/70"
+                className="p-1 rounded-lg hover:bg-gray-100"
               >
-                <MoreVertical className="w-3.5 h-3.5 text-green-600" />
+                <MoreVertical className="w-3.5 h-3.5 text-gray-400" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44">
@@ -175,9 +117,7 @@ function FolderCard({ folder, meta, perms, onOpen }: FolderCardProps) {
                   <Edit3 className="w-4 h-4 mr-2 text-green-500" /> Rename
                 </DropdownMenuItem>
               )}
-              {(perms.canAddFile || perms.canEdit) && perms.canDelete && (
-                <DropdownMenuSeparator />
-              )}
+              {(perms.canAddFile || perms.canEdit) && perms.canDelete && <DropdownMenuSeparator />}
               {perms.canDelete && (
                 <DropdownMenuItem
                   onClick={(e) => e.stopPropagation()}
@@ -191,9 +131,19 @@ function FolderCard({ folder, meta, perms, onOpen }: FolderCardProps) {
         </div>
       )}
 
-      <Folder className={`w-10 h-10 ${meta.iconClass}`} />
-      <p className="text-xs font-medium text-gray-800 text-center truncate w-full leading-tight">{folder.name}</p>
-      <p className="text-xs text-green-500">{folder.fileCount} files</p>
+      {/* Icon — system icon for company, plain folder for personal */}
+      {isCompany && COMPANY_ICONS[folder.id] ? (
+        <div className="w-12 h-12 flex items-center justify-center">
+          {COMPANY_ICONS[folder.id]}
+        </div>
+      ) : (
+        <Folder className="w-12 h-12 text-yellow-400 fill-yellow-50" />
+      )}
+
+      <p className="text-xs font-medium text-gray-800 text-center truncate w-full leading-tight">
+        {folder.name}
+      </p>
+      <p className="text-xs text-gray-400">{folder.fileCount} files</p>
     </div>
   );
 }

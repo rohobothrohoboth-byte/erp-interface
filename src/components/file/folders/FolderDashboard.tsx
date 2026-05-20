@@ -5,12 +5,11 @@ import AddFolderModal from './AddFolderModal';
 import type { FolderItem, FolderCategory } from '../../../types/file/folder.types';
 import { MOCK_FOLDERS } from '../../../data/file/fileMockData';
 
-const CATEGORY_ORDER: FolderCategory[] = ['company', 'department', 'shared', 'my', 'personal'];
+const CATEGORY_ORDER: FolderCategory[] = ['company', 'personal'];
 
 export function FolderDashboard() {
   const [query, setQuery] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
-  const [addCategory, setAddCategory] = useState<FolderCategory>('my');
   const [folders, setFolders] = useState<FolderItem[]>(MOCK_FOLDERS);
 
   const filtered = folders.filter((f) =>
@@ -19,18 +18,13 @@ export function FolderDashboard() {
 
   const byCategory = (cat: FolderCategory) => filtered.filter((f) => f.category === cat);
 
-  const handleAddFolder = (category: FolderCategory) => {
-    setAddCategory(category);
-    setShowAddModal(true);
-  };
-
   const handleSaveFolder = async (data: { name: string; description?: string }) => {
     const newFolder: FolderItem = {
-      id: `new-${Date.now()}`,
+      id: `personal-${Date.now()}`,
       name: data.name,
       fileCount: 0,
       updatedAt: new Date().toISOString().split('T')[0],
-      category: addCategory,
+      category: 'personal',
       owner: 'Me',
       description: data.description,
     };
@@ -48,7 +42,7 @@ export function FolderDashboard() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">File Manager</h1>
-            <p className="text-sm text-gray-500">Browse and manage all your folders</p>
+            <p className="text-sm text-gray-500">Browse and manage your folders</p>
           </div>
         </div>
         <div className="relative w-full sm:w-64">
@@ -58,13 +52,12 @@ export function FolderDashboard() {
             placeholder="Search folders..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-md bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
           />
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-green-100" />
+      <div className="border-t border-gray-100" />
 
       {/* Category sections */}
       <div className="space-y-8">
@@ -73,7 +66,7 @@ export function FolderDashboard() {
             key={cat}
             category={cat}
             folders={byCategory(cat)}
-            onAddFolder={() => handleAddFolder(cat)}
+            onAddFolder={cat === 'personal' ? () => setShowAddModal(true) : undefined}
           />
         ))}
       </div>

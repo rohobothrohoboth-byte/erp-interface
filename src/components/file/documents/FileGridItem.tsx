@@ -1,4 +1,4 @@
-import { Star, MoreVertical, Download, Printer, Trash2, Edit3, Lock, Upload } from 'lucide-react';
+import { Star, MoreVertical, Download, Printer, Trash2, Edit3, Lock } from 'lucide-react';
 import { FileThumbnail } from '../FileThumbnail';
 import { getFileTypeConfig } from '../fileTypeConfig';
 import type { DocumentItem, FolderPermissions } from '../../../types/file/folder.types';
@@ -12,6 +12,7 @@ interface FileGridItemProps {
   perms: FolderPermissions;
   selected: boolean;
   onSelect: () => void;
+  onDoubleClick: () => void;
   onFavorite: () => void;
   onDelete: () => void;
   onDownload: () => void;
@@ -20,13 +21,14 @@ interface FileGridItemProps {
 
 export function FileGridItem({
   doc, perms, selected,
-  onSelect, onFavorite, onDelete, onDownload, onPrint,
+  onSelect, onDoubleClick, onFavorite, onDelete, onDownload, onPrint,
 }: FileGridItemProps) {
   const cfg = getFileTypeConfig(doc.contentType, doc.name);
 
   return (
     <div
       onClick={onSelect}
+      onDoubleClick={onDoubleClick}
       className={`group relative flex flex-col gap-2 p-3 rounded-xl border cursor-pointer transition-all hover:shadow-sm ${
         selected
           ? 'border-green-400 bg-green-50/60 shadow-sm'
@@ -35,14 +37,14 @@ export function FileGridItem({
     >
       {/* Privilege badge */}
       <div className="absolute top-2 left-2 z-10">
-        {!perms.canEdit && !perms.uploadOnly && (
+        {!perms.canEdit && !perms.canDownload && !perms.canPrint && (
           <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 text-[10px] font-medium">
-            <Lock className="w-2.5 h-2.5" /> Read Only
+            <Lock className="w-2.5 h-2.5" /> View Only
           </span>
         )}
-        {perms.uploadOnly && (
-          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-600 text-[10px] font-medium">
-            <Upload className="w-2.5 h-2.5" /> Upload Only
+        {!perms.canEdit && (perms.canDownload || perms.canPrint) && (
+          <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-600 text-[10px] font-medium">
+            <Download className="w-2.5 h-2.5" /> Print/DL
           </span>
         )}
       </div>

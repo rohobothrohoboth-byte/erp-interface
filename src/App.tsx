@@ -164,6 +164,7 @@ import PageTicketStatus from "./pages/settings/crmSettings/pageTicketStatus";
 import VacanciesPage from "./pages/vacancy/VacanciesPage";
 import AddAccountPage from "./pages/core/usermanagement/pageAddAccount";
 import EditAccountPage from "./pages/core/usermanagement/pageEditAccount";
+import PageAddUserV2 from "./pages/core/usermanagement/pageAddUserV2";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PagePaymentApprovalChain from "./pages/settings/FinanceSettings/PagePaymentApprovalChain";
@@ -665,9 +666,15 @@ function App() {
               {/* <Route path='/core/hierarchy' element={<HierarchyOverview />} /> */}
               <Route path="/core/users" element={<UserOverview />} />
               <Route path="/core/add-employee" element={<PageAddUser />} />
+              {/* Old add account — kept in place */}
               <Route
                 path="/core/user-management/add/:empId"
                 element={<AddAccountPage />}
+              />
+              {/* New add account wizard */}
+              <Route
+                path="/core/user-management/add-v2"
+                element={<PageAddUserV2 />}
               />
               <Route
                 path="/core/user-management/edit/:empId"

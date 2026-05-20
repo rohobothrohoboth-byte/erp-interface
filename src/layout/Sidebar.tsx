@@ -1072,76 +1072,10 @@ const Sidebar: React.FC = () => {
       case "mod.flm":
         return (
           <>
-            <NavGroup
-              icon={<Folder size={18} />}
-              label="Folders"
-              isOpen={openGroup === "FileFolders"}
-              onToggle={() => toggleGroup(activeModule, "FileFolders")}
-              {...theme}
-              collapsed={collapsed}
-            >
-              <NavItem
-                to="/file/folders/all"
-                icon={<FolderOpen size={18} />}
-                label="All Folders"
-                {...theme}
-                isChild
-                collapsed={collapsed}
-              />
-              <NavItem
-                to="/file/folders/shared"
-                icon={<Users size={18} />}
-                label="Shared Folders"
-                {...theme}
-                isChild
-                collapsed={collapsed}
-              />
-              <NavItem
-                to="/file/folders/personal"
-                icon={<User size={18} />}
-                label="Personal Folders"
-                {...theme}
-                isChild
-                collapsed={collapsed}
-              />
-            </NavGroup>
-            <NavGroup
-              icon={<File size={18} />}
-              label="Documents"
-              isOpen={openGroup === "FileDocuments"}
-              onToggle={() => toggleGroup(activeModule, "FileDocuments")}
-              {...theme}
-              collapsed={collapsed}
-            >
-              <NavItem
-                to="/file/documents/all"
-                icon={<FileText size={18} />}
-                label="All Documents"
-                {...theme}
-                isChild
-                collapsed={collapsed}
-              />
-              <NavItem
-                to="/file/documents/recent"
-                icon={<Clock size={18} />}
-                label="Recent"
-                {...theme}
-                isChild
-                collapsed={collapsed}
-              />
-              <NavItem
-                to="/file/documents/favorites"
-                icon={<FileCheck size={18} />}
-                label="Favorites"
-                {...theme}
-                isChild
-                collapsed={collapsed}
-              />
-            </NavGroup>
             <NavItem
-              to="/file/uploads"
-              icon={<Upload size={18} />}
-              label="Upload Manager"
+              to="/file"
+              icon={<FolderOpen size={18} />}
+              label="All Folders"
               {...theme}
               collapsed={collapsed}
             />

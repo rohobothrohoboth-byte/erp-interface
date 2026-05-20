@@ -191,21 +191,22 @@ const UserManagement: React.FC = () => {
   }, [searchTerm, filters, allEmployees, currentPage]);
 
   const handleAddAccount = (employeeData: AdminEmpListDto) => {
-    const empSearchRes: EmpSearchRes = {
-      id: employeeData.id as UUID,
-      code: employeeData.code,
-      empFullName: employeeData.empFullName,
-      empFullNameAm: employeeData.empFullNameAm,
-      gender: employeeData.gender,
-      dept: employeeData.department,
-      position: employeeData.position,
-      hasAccount: employeeData.hasAccount,
-      branch: employeeData.branch,
-      empState: employeeData.empState,
-    };
-
-   navigate(`/core/user-management/add/${employeeData.id}`);
-
+    navigate('/core/user-management/add-v2', {
+      state: {
+        employee: {
+          id: employeeData.id as UUID,
+          code: employeeData.code,
+          empFullName: employeeData.empFullName,
+          empFullNameAm: employeeData.empFullNameAm,
+          gender: employeeData.gender,
+          dept: employeeData.department,
+          position: employeeData.position,
+          hasAccount: employeeData.hasAccount,
+          branch: employeeData.branch,
+          empState: employeeData.empState,
+        } satisfies EmpSearchRes,
+      },
+    });
   };
 
   const handleEditAccount = async (employeeData: AdminEmpListDto) => {
