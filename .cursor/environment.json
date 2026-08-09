@@ -1,10 +1,10 @@
 {
   "name": "RST ERP frontend (erp-interface)",
-  "install": "npm ci",
+  "install": "cd /agent/repos/erp-interface && npm ci",
   "terminals": [
     {
       "name": "vite-dev",
-      "command": "npm run dev -- --host 0.0.0.0",
+      "command": "cd /agent/repos/erp-interface && npm run dev -- --host 0.0.0.0",
       "description": "Vite dev server for the RST ERP React frontend, served on port 1211."
     }
   ],
