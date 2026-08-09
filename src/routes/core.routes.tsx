@@ -43,7 +43,7 @@ const CompanyBranchesPage = lazy(() => import('../pages/core/pageCompanyBranches
 
 
 
-const PageModuleSettings = lazy(() => import('../pages/settings/coresettings/PageModuleSettings'));
+const PageModuleSettings = lazy(() => import('../pages/settings/coreSettings/PageModuleSettings'));
 const PageCoreSettings = lazy(() => import('../pages/settings/coreSettings/PageCoreSettings'));
 const PageApiSettings = lazy(() => import('../pages/settings/coreSettings/PageApiSettings'));
 const PageMenuSettings = lazy(() => import('../pages/settings/coreSettings/PageMenuSettings'));
