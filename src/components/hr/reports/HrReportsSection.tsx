@@ -45,18 +45,25 @@ export const HrReportsHome: React.FC = () => {
 export const HrReportDomainPage: React.FC<{ domain: 'employees' | 'attendance' | 'leave' | 'payroll' | 'recruitment'; title: string }> = ({
   domain, title,
 }) => {
-  const { data, isLoading, error } = useHrReport(domain);
+  const { data, isLoading, error, refetch, isFetching } = useHrReport(domain);
   return (
-    <HrPageShell title={title} subtitle={`Upstream: ${data?.domain || domain}`} loading={isLoading} error={error?.message}>
+    <HrPageShell
+      title={title}
+      subtitle={`Gateway /hrm/reports/${domain} → Reports :7018 → upstream ${data?.domain || domain}`}
+      loading={isLoading}
+      error={error?.message}
+      actionLabel={isFetching ? 'Refreshing…' : 'Refresh'}
+      onAction={() => { void refetch(); }}
+    >
       <div className="bg-white border rounded-lg p-4">
-        <div className="mb-3 flex gap-2 items-center">
+        <div className="mb-3 flex gap-2 items-center flex-wrap">
           <Badge variant={data?.upstreamSuccess ? 'default' : 'destructive'}>
             {data?.upstreamSuccess ? 'Upstream OK' : 'Upstream failed'}
           </Badge>
-          <span className="text-xs text-gray-500">{data?.message}</span>
+          <span className="text-xs text-gray-500">{data?.message || (error ? error.message : 'Loading…')}</span>
         </div>
         <pre className="text-xs overflow-auto max-h-[70vh] bg-gray-50 p-3 rounded">
-          {JSON.stringify(data?.data ?? data, null, 2)}
+          {JSON.stringify(data ?? null, null, 2)}
         </pre>
       </div>
     </HrPageShell>

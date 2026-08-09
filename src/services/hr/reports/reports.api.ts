@@ -3,30 +3,22 @@ import { extractApiError, unwrapData } from '../apiError';
 import type { HrReportEnvelope, HrReportsSummaryDto } from '../../../types/hr/reports';
 
 const BASE = import.meta.env.VITE_HR_REPORTS_URL || '/hrm/reports';
+/** Reports aggregates several upstreams — allow more time than the default 30s. */
+const REPORTS_TIMEOUT_MS = 45_000;
+
+const getReport = async <T>(path: string) => {
+  try {
+    return unwrapData<T>(await api.get(`${BASE}/${path}`, { timeout: REPORTS_TIMEOUT_MS }));
+  } catch (e) {
+    throw new Error(extractApiError(e));
+  }
+};
 
 export const reportsApi = {
-  summary: async () => {
-    try { return unwrapData<HrReportsSummaryDto>(await api.get(`${BASE}/summary`)); }
-    catch (e) { throw new Error(extractApiError(e)); }
-  },
-  employees: async () => {
-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/employees`)); }
-    catch (e) { throw new Error(extractApiError(e)); }
-  },
-  attendance: async () => {
-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/attendance`)); }
-    catch (e) { throw new Error(extractApiError(e)); }
-  },
-  leave: async () => {
-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/leave`)); }
-    catch (e) { throw new Error(extractApiError(e)); }
-  },
-  payroll: async () => {
-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/payroll`)); }
-    catch (e) { throw new Error(extractApiError(e)); }
-  },
-  recruitment: async () => {
-    try { return unwrapData<HrReportEnvelope>(await api.get(`${BASE}/recruitment`)); }
-    catch (e) { throw new Error(extractApiError(e)); }
-  },
+  summary: () => getReport<HrReportsSummaryDto>('summary'),
+  employees: () => getReport<HrReportEnvelope>('employees'),
+  attendance: () => getReport<HrReportEnvelope>('attendance'),
+  leave: () => getReport<HrReportEnvelope>('leave'),
+  payroll: () => getReport<HrReportEnvelope>('payroll'),
+  recruitment: () => getReport<HrReportEnvelope>('recruitment'),
 };
