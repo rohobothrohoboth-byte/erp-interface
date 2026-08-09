@@ -50,17 +50,22 @@ export const HrReportDomainPage: React.FC<{ domain: 'employees' | 'attendance' |
     <HrPageShell
       title={title}
       subtitle={`Gateway /hrm/reports/${domain} → Reports :7018 → upstream ${data?.domain || domain}`}
-      loading={isLoading}
+      loading={isLoading && !data}
       error={error?.message}
       actionLabel={isFetching ? 'Refreshing…' : 'Refresh'}
       onAction={() => { void refetch(); }}
     >
+      {isFetching && data && (
+        <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+          Refreshing report…
+        </p>
+      )}
       <div className="bg-white border rounded-lg p-4">
         <div className="mb-3 flex gap-2 items-center flex-wrap">
           <Badge variant={data?.upstreamSuccess ? 'default' : 'destructive'}>
             {data?.upstreamSuccess ? 'Upstream OK' : 'Upstream failed'}
           </Badge>
-          <span className="text-xs text-gray-500">{data?.message || (error ? error.message : 'Loading…')}</span>
+          <span className="text-xs text-gray-500">{data?.message || (error ? error.message : 'Waiting for Reports service…')}</span>
         </div>
         <pre className="text-xs overflow-auto max-h-[70vh] bg-gray-50 p-3 rounded">
           {JSON.stringify(data ?? null, null, 2)}
