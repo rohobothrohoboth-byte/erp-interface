@@ -41,7 +41,7 @@ const FolderContentsPage = lazy(() => import('../pages/File/FolderContentsPage')
 
 // ✅ DocumentDetailPage - Keep as a regular import since it's already a component
 // or use lazy if you want code splitting
-import DocumentDetailPage from '../pages/file/DocumentDetailPage';
+import DocumentDetailPage from '../pages/File/DocumentDetailPage';
 
 export const fileRoutes: AppRoute[] = [
     // Dashboard
