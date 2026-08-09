@@ -1,7 +1,17 @@
 export const extractApiError = (error: any): string => {
-  if (error?.response?.data?.message) return error.response.data.message;
-  if (error?.response?.data?.errors) {
-    return (Object.values(error.response.data.errors) as string[][]).flat().join(', ');
+  const data = error?.response?.data;
+  if (typeof data?.message === 'string' && data.message) return data.message;
+  if (typeof data?.title === 'string' && data.title && typeof data?.detail === 'string') {
+    return data.detail || data.title;
+  }
+  if (data?.errors) {
+    return (Object.values(data.errors) as string[][]).flat().join(', ');
+  }
+  if (error?.response?.status === 404) {
+    return 'API not found (check gateway route and that the service is running)';
+  }
+  if (error?.response?.status === 502 || error?.response?.status === 503) {
+    return 'Upstream service unavailable (Performance/Training/Reports may be down)';
   }
   return error?.message || 'An unexpected error occurred';
 };

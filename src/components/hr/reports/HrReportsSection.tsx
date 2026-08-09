@@ -18,9 +18,19 @@ const DomainCard: React.FC<{ title: string; to: string; envelope?: HrReportEnvel
 );
 
 export const HrReportsHome: React.FC = () => {
-  const { data, isLoading, error } = useHrReportsSummary();
+  const { data, isLoading, error, refetch, isFetching } = useHrReportsSummary();
   return (
-    <HrPageShell title="HR Reports" subtitle="Cross-module report hub" loading={isLoading} error={error?.message}>
+    <HrPageShell
+      title="HR Reports"
+      subtitle="Calls gateway /hrm/reports/* → Reports service :7018"
+      loading={isLoading}
+      error={error?.message}
+      actionLabel={isFetching ? 'Refreshing…' : 'Refresh'}
+      onAction={() => { void refetch(); }}
+    >
+      <p className="text-xs text-gray-500 mb-2">
+        Expected API: <code>GET {import.meta.env.VITE_HR_REPORTS_URL || '/hrm/reports'}/summary</code>
+      </p>
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
         <DomainCard title="Employees" to="/hr/reports/employees" envelope={data?.employees} />
         <DomainCard title="Attendance" to="/hr/reports/attendance" envelope={data?.attendance} />

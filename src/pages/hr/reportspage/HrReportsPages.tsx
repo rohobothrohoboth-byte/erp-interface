@@ -6,3 +6,5 @@ export function HrAttendanceReportsPage() { return <HrReportDomainPage domain="a
 export function HrLeaveReportsPage() { return <HrReportDomainPage domain="leave" title="Leave Reports" />; }
 export function HrPayrollReportsPage() { return <HrReportDomainPage domain="payroll" title="Payroll Reports" />; }
 export function HrRecruitmentReportsPage() { return <HrReportDomainPage domain="recruitment" title="Recruitment Reports" />; }
+
+export default HrReportsPage;

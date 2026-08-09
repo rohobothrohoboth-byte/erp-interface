@@ -10,6 +10,16 @@ import {
   useCreateGoal, useCreateReview, useGoals, useReviewAction, useReviews,
 } from '../../../services/hr/performance/performance.queries';
 
+const canSubmit = (status?: string) => {
+  const s = (status || '').toLowerCase();
+  return s === 'draft' || s === 'rejected';
+};
+const canDecide = (status?: string) => {
+  const s = (status || '').toLowerCase();
+  // Backend also auto-submits Draft on approve/reject, but keep UI honest.
+  return s === 'draft' || s === 'submitted' || s === 'inreview' || s === 'in_review';
+};
+
 const PerformanceSection: React.FC = () => {
   const [goalOpen, setGoalOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
@@ -32,7 +42,8 @@ const PerformanceSection: React.FC = () => {
 
   return (
     <HrPageShell title="Performance" subtitle="Goals and performance reviews"
-      error={goalsQ.error?.message || reviewsQ.error?.message}>
+      error={goalsQ.error?.message || reviewsQ.error?.message}
+      loading={goalsQ.isLoading || reviewsQ.isLoading}>
       <Tabs defaultValue="reviews">
         <TabsList>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
@@ -53,9 +64,21 @@ const PerformanceSection: React.FC = () => {
                     <td className="p-3 font-mono text-xs">{r.employeeId.slice(0, 8)}…</td>
                     <td className="p-3">{r.status}</td>
                     <td className="p-3 space-x-1">
-                      <Button size="sm" variant="outline" onClick={() => submitMut.mutate({ id: r.id })}>Submit</Button>
-                      <Button size="sm" onClick={() => approveMut.mutate({ id: r.id, decision: {} })}>Approve</Button>
-                      <Button size="sm" variant="outline" onClick={() => rejectMut.mutate({ id: r.id, decision: { rejectionReason: 'Needs revision' } })}>Reject</Button>
+                      {canSubmit(r.status) && (
+                        <Button size="sm" variant="outline" disabled={submitMut.isPending}
+                          onClick={() => submitMut.mutate({ id: r.id })}>Submit</Button>
+                      )}
+                      {canDecide(r.status) && (
+                        <>
+                          <Button size="sm" disabled={approveMut.isPending}
+                            onClick={() => approveMut.mutate({ id: r.id, decision: {} })}>Approve</Button>
+                          <Button size="sm" variant="outline" disabled={rejectMut.isPending}
+                            onClick={() => rejectMut.mutate({ id: r.id, decision: { rejectionReason: 'Needs revision' } })}>Reject</Button>
+                        </>
+                      )}
+                      {!canSubmit(r.status) && !canDecide(r.status) && (
+                        <span className="text-xs text-gray-400">No actions</span>
+                      )}
                     </td>
                   </tr>
                 ))}
