@@ -1,9 +1,2 @@
-import React from 'react'
-
-function Termination() {
-  return (
-    <div>Termination</div>
-  )
-}
-
-export default Termination
+import TerminationSection from '../../../components/hr/termination/TerminationSection';
+export default function Termination() { return <TerminationSection />; }

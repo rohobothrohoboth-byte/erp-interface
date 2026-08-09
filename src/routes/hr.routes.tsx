@@ -15,6 +15,10 @@ import {
     type LucideIcon,
     BookOpen,
     Award,
+    ArrowLeftRight,
+    TrendingUp,
+    Target,
+    PieChart,
 } from 'lucide-react';
 import { PageLoader } from '../components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
@@ -126,6 +130,29 @@ const EditEmployeePage =safeLazy(() => import('../pages/hr/employeepage/EditEmpl
 const PendingEmployeePage =safeLazy(() => import('../pages/hr/employeepage/PendingEmployeePage'));
 const PendingEmployeeDetail =safeLazy(() => import('../components/hr/employee/PendingEmployee/PendingEmployeeDetail'));
 const Termination =safeLazy(() => import('../pages/hr/employeepage/Termination'));
+const ContractsPage = safeLazy(() => import('../pages/hr/careerpage/ContractsPage'));
+const PromotionsPage = safeLazy(() => import('../pages/hr/careerpage/PromotionsPage'));
+const TransfersPage = safeLazy(() => import('../pages/hr/careerpage/TransfersPage'));
+const PerformancePage = safeLazy(() => import('../pages/hr/performancepage/PerformancePage'));
+const JobOffersHirePage = safeLazy(() => import('../pages/hr/recruitmentpage/JobOffersPage'));
+const HrReportsPage = safeLazy(() =>
+    import('../pages/hr/reportspage/HrReportsPages').then((m) => ({ default: m.HrReportsPage }))
+);
+const HrEmployeeReportsPage = safeLazy(() =>
+    import('../pages/hr/reportspage/HrReportsPages').then((m) => ({ default: m.HrEmployeeReportsPage }))
+);
+const HrAttendanceReportsPage = safeLazy(() =>
+    import('../pages/hr/reportspage/HrReportsPages').then((m) => ({ default: m.HrAttendanceReportsPage }))
+);
+const HrLeaveReportsPage = safeLazy(() =>
+    import('../pages/hr/reportspage/HrReportsPages').then((m) => ({ default: m.HrLeaveReportsPage }))
+);
+const HrPayrollReportsPage = safeLazy(() =>
+    import('../pages/hr/reportspage/HrReportsPages').then((m) => ({ default: m.HrPayrollReportsPage }))
+);
+const HrRecruitmentReportsPage = safeLazy(() =>
+    import('../pages/hr/reportspage/HrReportsPages').then((m) => ({ default: m.HrRecruitmentReportsPage }))
+);
 
 // ✅ Add Pending Education/Experience Page
 const PendingEmpEduExpPage =safeLazy(() => import('../pages/hr/employeepage/PendingEmpEduExpPage'));
@@ -149,6 +176,10 @@ const TimeClockFormContainer =safeLazy(() => import('../pages/hr/attendancepage/
 
 // Training
 const Training =safeLazy(() => import('../pages/hr/trainingpage/Training'));
+const TrainingProgramsPage = safeLazy(() => import('../pages/hr/trainingpage/TrainingProgramsPage'));
+const TrainingCalendarPage = safeLazy(() => import('../pages/hr/trainingpage/TrainingCalendarPage'));
+const TrainingFeedbackPage = safeLazy(() => import('../pages/hr/trainingpage/TrainingFeedbackPage'));
+const TrainingCertificatesPage = safeLazy(() => import('../pages/hr/trainingpage/TrainingCertificatesPage'));
 
 // ==================== RECRUITMENT MODULE PAGES ====================
 const RecruitmentDashboard =safeLazy(() => import('../pages/hr/recruitmentpage/RecruitmentDashboard'));
@@ -307,6 +338,38 @@ export const hrRoutes: AppRoute[] = [
         element: withSuspense(Termination),
         nav: false,
     },
+    {
+        path: 'hr/employees/contracts',
+        href: '/hr/employees/contracts',
+        title: 'Contracts',
+        icon: FileText,
+        element: withSuspense(ContractsPage),
+        nav: true,
+    },
+    {
+        path: 'hr/employees/promotions',
+        href: '/hr/employees/promotions',
+        title: 'Promotions',
+        icon: TrendingUp,
+        element: withSuspense(PromotionsPage),
+        nav: true,
+    },
+    {
+        path: 'hr/employees/transfers',
+        href: '/hr/employees/transfers',
+        title: 'Transfers',
+        icon: ArrowLeftRight,
+        element: withSuspense(TransfersPage),
+        nav: true,
+    },
+    {
+        path: 'hr/employees/performance',
+        href: '/hr/employees/performance',
+        title: 'Performance',
+        icon: Target,
+        element: withSuspense(PerformancePage),
+        nav: true,
+    },
     // ✅ Add Pending Education/Experience Route
     {
         path: 'hr/employees/pending-edu-exp',
@@ -449,6 +512,88 @@ export const hrRoutes: AppRoute[] = [
         icon: GraduationCap,
         element: withSuspense(Training),
         nav: true,
+    },
+    {
+        path: 'hr/training/programs',
+        href: '/hr/training/programs',
+        title: 'Training Programs',
+        icon: GraduationCap,
+        element: withSuspense(TrainingProgramsPage),
+        nav: true,
+    },
+    {
+        path: 'hr/training/calendar',
+        href: '/hr/training/calendar',
+        title: 'Training Calendar',
+        icon: Calendar,
+        element: withSuspense(TrainingCalendarPage),
+        nav: true,
+    },
+    {
+        path: 'hr/training/feedback',
+        href: '/hr/training/feedback',
+        title: 'Training Feedback',
+        icon: ClipboardList,
+        element: withSuspense(TrainingFeedbackPage),
+        nav: true,
+    },
+    {
+        path: 'hr/training/certificates',
+        href: '/hr/training/certificates',
+        title: 'Training Certificates',
+        icon: Award,
+        element: withSuspense(TrainingCertificatesPage),
+        nav: true,
+    },
+
+    // HR Reports (Phase 5)
+    {
+        path: 'hr/reports',
+        href: '/hr/reports',
+        title: 'HR Reports',
+        icon: PieChart,
+        element: withSuspense(HrReportsPage),
+        nav: true,
+    },
+    {
+        path: 'hr/reports/employees',
+        href: '/hr/reports/employees',
+        title: 'Employee Reports',
+        icon: BarChart3,
+        element: withSuspense(HrEmployeeReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/attendance',
+        href: '/hr/reports/attendance',
+        title: 'Attendance Reports',
+        icon: BarChart3,
+        element: withSuspense(HrAttendanceReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/leave',
+        href: '/hr/reports/leave',
+        title: 'Leave Reports',
+        icon: BarChart3,
+        element: withSuspense(HrLeaveReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/payroll',
+        href: '/hr/reports/payroll',
+        title: 'Payroll Reports',
+        icon: BarChart3,
+        element: withSuspense(HrPayrollReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/recruitment',
+        href: '/hr/reports/recruitment',
+        title: 'Recruitment Reports',
+        icon: BarChart3,
+        element: withSuspense(HrRecruitmentReportsPage),
+        nav: false,
     },
 
     // Recruitment Dashboard & Analytics
@@ -678,6 +823,14 @@ export const hrRoutes: AppRoute[] = [
         title: 'Offers',
         icon: FileText,
         element: withSuspense(OffersPage),
+        nav: true,
+    },
+    {
+        path: 'hr/recruitment/job-offers',
+        href: '/hr/recruitment/job-offers',
+        title: 'Job Offers (Hire)',
+        icon: UserCheck,
+        element: withSuspense(JobOffersHirePage),
         nav: true,
     },
     {
@@ -989,6 +1142,10 @@ export const hrSidebarRoutes: SidebarNavSection[] = [
             { title: 'Employee Record', href: '/hr/employees/record', activeMatch: 'exact' },
             { title: 'Pending Employees', href: '/hr/pend-employees', activeMatch: 'prefix' },
             { title: 'Pending Education/Experience', href: '/hr/employees/pending-edu-exp', activeMatch: 'prefix' }, // ✅ Add this
+            { title: 'Contracts', href: '/hr/employees/contracts', activeMatch: 'prefix' },
+            { title: 'Promotions', href: '/hr/employees/promotions', activeMatch: 'prefix' },
+            { title: 'Transfers', href: '/hr/employees/transfers', activeMatch: 'prefix' },
+            { title: 'Performance', href: '/hr/employees/performance', activeMatch: 'prefix' },
             { title: 'Terminations', href: '/hr/employees/termination', activeMatch: 'prefix' },
         ],
     },
@@ -1026,6 +1183,7 @@ export const hrSidebarRoutes: SidebarNavSection[] = [
             { title: 'Applicants', href: '/hr/recruitment/applicants', activeMatch: 'prefix' },
             { title: 'Interviews', href: '/hr/recruitment/interviews', activeMatch: 'prefix' },
             { title: 'Offers', href: '/hr/recruitment/offers', activeMatch: 'prefix' },
+            { title: 'Job Offers (Hire)', href: '/hr/recruitment/job-offers', activeMatch: 'prefix' },
             { title: 'Onboarding', href: '/hr/recruitment/onboarding/tasks', activeMatch: 'prefix' },
         ],
     },
@@ -1034,7 +1192,24 @@ export const hrSidebarRoutes: SidebarNavSection[] = [
         title: 'Training',
         icon: GraduationCap,
         items: [
-            { title: 'Training Programs', href: '/hr/training', activeMatch: 'prefix' },
+            { title: 'Overview', href: '/hr/training', activeMatch: 'exact' },
+            { title: 'Programs', href: '/hr/training/programs', activeMatch: 'prefix' },
+            { title: 'Calendar', href: '/hr/training/calendar', activeMatch: 'prefix' },
+            { title: 'Feedback', href: '/hr/training/feedback', activeMatch: 'prefix' },
+            { title: 'Certificates', href: '/hr/training/certificates', activeMatch: 'prefix' },
+        ],
+    },
+    {
+        id: 'hr-reports',
+        title: 'Reports',
+        icon: PieChart,
+        items: [
+            { title: 'HR Reports', href: '/hr/reports', activeMatch: 'exact' },
+            { title: 'Employees', href: '/hr/reports/employees', activeMatch: 'prefix' },
+            { title: 'Attendance', href: '/hr/reports/attendance', activeMatch: 'prefix' },
+            { title: 'Leave', href: '/hr/reports/leave', activeMatch: 'prefix' },
+            { title: 'Payroll', href: '/hr/reports/payroll', activeMatch: 'prefix' },
+            { title: 'Recruitment', href: '/hr/reports/recruitment', activeMatch: 'prefix' },
         ],
     },
     {
@@ -1057,16 +1232,28 @@ export const hrSidebarRoutes: SidebarNavSection[] = [
 const ROUTE_TITLE_BY_PREFIX: [string, string][] = [
     ['/hr/employees/record', 'Employee Record'],
     ['/hr/employees/edit/', 'Edit Employee'],
+    ['/hr/employees/contracts', 'Contracts'],
+    ['/hr/employees/promotions', 'Promotions'],
+    ['/hr/employees/transfers', 'Transfers'],
+    ['/hr/employees/performance', 'Performance'],
+    ['/hr/employees/termination', 'Terminations'],
+    ['/hr/employees/pending-edu-exp', 'Pending Education & Experience'], // ✅ Add this
     ['/hr/employees/', 'Employee Details'],
     ['/hr/pend-employees/', 'Pending Employee'],
-    ['/hr/employees/pending-edu-exp', 'Pending Education & Experience'], // ✅ Add this
     ['/hr/leave/approval-chain/', 'Approval Chain'],
     ['/hr/leave/approval-chain-history/', 'Approval Chain History'],
+    ['/hr/training/programs', 'Training Programs'],
+    ['/hr/training/calendar', 'Training Calendar'],
+    ['/hr/training/feedback', 'Training Feedback'],
+    ['/hr/training/certificates', 'Training Certificates'],
+    ['/hr/reports/', 'HR Reports'],
+    ['/hr/reports', 'HR Reports'],
     ['/hr/recruitment/workforce-plan/', 'Workforce Plan'],
     ['/hr/recruitment/requisition/', 'Job Requisition'],
     ['/hr/recruitment/posting/', 'Job Posting'],
     ['/hr/recruitment/applicant/', 'Applicant'],
     ['/hr/recruitment/interviews/', 'Interview'],
+    ['/hr/recruitment/job-offers', 'Job Offers (Hire)'],
     ['/hr/recruitment/offer/', 'Offer'],
     ['/hr/recruitment/onboarding/task/', 'Onboarding Task'],
     ['/hr/recruitment/onboarding/assignment/', 'Onboarding Assignment'],
