@@ -212,7 +212,6 @@ export default function CampaignFilters({
             </div>
           )}
         </div>
-      </div>
     </motion.div>
   );
 }

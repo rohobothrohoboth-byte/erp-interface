@@ -5,7 +5,7 @@ import {
   FileText, Download, Eye, Calendar,
   TrendingUp, TrendingDown, DollarSign, PieChart
 } from 'lucide-react';
-import { getIncomeStatement, getBalanceSheet, getCashFlow, getExpenseReport } from '../../services/finance/finance.api';
+import { getIncomeStatement, getBalanceSheet, getCashFlowStatement, getExpenseReport } from '../../services/finance/finance.api';
 
 interface ReportType {
   id: string;
@@ -73,7 +73,7 @@ const PageReports: React.FC = () => {
           response = await getBalanceSheet({ asOfDate: `${dateRange.endDate}T23:59:59Z` });
           break;
         case 'cash-flow':
-          response = await getCashFlow(params);
+          response = await getCashFlowStatement(params);
           break;
         case 'expense-report':
           response = await getExpenseReport(params);

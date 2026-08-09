@@ -1567,6 +1567,25 @@ export const getCashFlowForecast = (params: {
 };
 
 // ============================================================
+// FINANCIAL STATEMENT REPORTS
+// ============================================================
+export const getIncomeStatement = (params: { startDate: string; endDate: string }) => {
+    return financeApi.get('/Reports/IncomeStatement', { params });
+};
+
+export const getBalanceSheet = (params: { asOfDate: string }) => {
+    return financeApi.get('/Reports/BalanceSheet', { params });
+};
+
+export const getCashFlowStatement = (params: { startDate: string; endDate: string }) => {
+    return financeApi.get('/Reports/CashFlow', { params });
+};
+
+export const getExpenseReport = (params: { startDate: string; endDate: string }) => {
+    return financeApi.get('/Reports/ExpenseReport', { params });
+};
+
+// ============================================================
 // ACCOUNTING ENTRIES
 // ============================================================
 export const getAccountingEntries = (params: {

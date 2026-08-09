@@ -9,6 +9,7 @@ export type AppRoute = {
     element: ReactNode;
     nav: boolean;
     index?: boolean;
+    permission?: string;
 };
 
 export type SidebarNavItem = {
