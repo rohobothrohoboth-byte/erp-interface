@@ -1,136 +1,116 @@
+// src/components/crm/SupportOverview.tsx
+import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight, Headphones } from 'lucide-react';
-import { Button } from '../ui/button';
-import { Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { useNavigate } from 'react-router-dom';
-
-// Register ChartJS components
-ChartJS.register(ArcElement, Tooltip, Legend);
-
-interface TicketData {
-  name: string;
-  value: number;
-  color: string;
-}
-
-interface RecentTicket {
-  id: string;
-  subject: string;
-  priority: 'High' | 'Medium' | 'Low';
-  status: 'Open' | 'In Progress' | 'Resolved' | 'Pending';
-  created: string;
-}
-
-interface PriorityColors {
-  High: string;
-  Medium: string;
-  Low: string;
-}
-
-const ticketData: TicketData[] = [
-  { name: 'Open', value: 45, color: 'rgba(239, 68, 68, 0.8)' },     // red-500
-  { name: 'In Progress', value: 32, color: 'rgba(249, 115, 22, 0.8)' }, // orange-500
-  { name: 'Resolved', value: 50, color: 'rgba(16, 185, 129, 0.8)' }, // green-500
-  { name: 'Pending', value: 15, color: 'rgba(59, 130, 246, 0.8)' },  // blue-500
-];
-
-const recentTickets: RecentTicket[] = [
-  { id: 'TKT-1024', subject: 'Login issues', priority: 'High', status: 'Open', created: '2h ago' },
-  { id: 'TKT-1023', subject: 'Billing question', priority: 'Medium', status: 'In Progress', created: '5h ago' },
-  { id: 'TKT-1022', subject: 'Feature request', priority: 'Low', status: 'Pending', created: '1d ago' },
-  { id: 'TKT-1021', subject: 'Performance slow', priority: 'High', status: 'Resolved', created: '1d ago' },
-];
-
-const priorityColors: PriorityColors = {
-  High: 'bg-red-100 text-red-800',
-  Medium: 'bg-orange-100 text-orange-800',
-  Low: 'bg-blue-100 text-blue-800'
-};
-
-// Prepare data for Chart.js
-const chartData = {
-  labels: ticketData.map(item => item.name),
-  datasets: [
-    {
-      data: ticketData.map(item => item.value),
-      backgroundColor: ticketData.map(item => item.color),
-      borderWidth: 1,
-    },
-  ],
-};
-
-const chartOptions = {
-  plugins: {
-    legend: {
-      display: false, // We'll show our own legend
-    },
-  },
-  cutout: '70%', // Makes it a donut instead of pie
-  maintainAspectRatio: false,
-};
+import {
+  Headphones,
+  Ticket,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  ThumbsUp,
+  ArrowUp,
+  ArrowDown
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Progress } from '../ui/progress';
+import { useCrmData } from '../../hooks/useCrmData';
 
 export default function SupportOverview() {
-  const navigate = useNavigate();
+  const { tasks, loading } = useCrmData();
+
+  if (loading) {
+    return (
+        <Card className="border-red-200 dark:border-red-800">
+          <CardContent className="pt-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            </div>
+          </CardContent>
+        </Card>
+    );
+  }
+
+  const openTasks = tasks?.filter(t => t.status === 'Pending' || t.status === 'InProgress').length || 0;
+  const completedTasks = tasks?.filter(t => t.status === 'Completed').length || 0;
+  const highPriorityTasks = tasks?.filter(t => t.priority === 'High' || t.priority === 'Urgent').length || 0;
 
   return (
-    <motion.div 
-      className="bg-white rounded-lg border p-6 shadow-sm"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.1 }}
-    >
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-semibold flex items-center">
-          <Headphones className="mr-2 text-indigo-600" size={20} />
-          Customer Support
-        </h2>
-        <Button variant="ghost" size="sm" className="text-indigo-600" onClick={() => navigate('/crm/support')}>
-          View All <ChevronRight size={16} />
-        </Button>
-      </div>
-      
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-500 mb-2">Ticket Status</h3>
-        <div className="h-48 flex">
-          <div className="w-2/3 h-full">
-            <Doughnut data={chartData} options={chartOptions} />
+      <Card className="border-red-200 dark:border-red-800 shadow-sm hover:shadow-md transition-all duration-300">
+        <CardHeader className="border-b border-red-100 dark:border-red-800 bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-red-900 dark:text-red-100 flex items-center gap-2">
+              <Headphones className="h-5 w-5" />
+              Support Overview
+            </CardTitle>
+            <Badge className="bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-300">
+              {tasks?.length || 0} Tasks
+            </Badge>
           </div>
-          <div className="w-1/3 flex flex-col justify-center">
-            {ticketData.map((item, index) => (
-              <div key={index} className="flex items-center mb-2">
-                <div 
-                  className="w-3 h-3 rounded-full mr-2" 
-                  style={{ backgroundColor: item.color }}
-                ></div>
-                <span className="text-sm">{item.name}: {item.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      
-      <div>
-        <h3 className="text-sm font-medium text-gray-500 mb-3">Recent Tickets</h3>
-        <div className="space-y-3">
-          {recentTickets.map((ticket, index) => (
-            <div key={index} className="flex items-center p-2 hover:bg-gray-50 rounded">
-              <div className="bg-indigo-100 text-indigo-600 p-2 rounded-full mr-3">
-                <Headphones size={16} />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">{ticket.subject}</p>
-                <p className="text-xs text-gray-500">{ticket.id} • {ticket.created}</p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <span className={`text-xs px-2 py-1 rounded-full ${priorityColors[ticket.priority]}`}>
-                  {ticket.priority}
-                </span>
-              </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-2 mb-4">
+            <div className="p-2 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-100 dark:border-yellow-800 text-center">
+              <p className="text-xs text-yellow-700 dark:text-yellow-300">Open</p>
+              <p className="text-lg font-bold text-yellow-900 dark:text-yellow-100">{openTasks}</p>
             </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
+            <div className="p-2 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-800 text-center">
+              <p className="text-xs text-green-700 dark:text-green-300">Completed</p>
+              <p className="text-lg font-bold text-green-900 dark:text-green-100">{completedTasks}</p>
+            </div>
+            <div className="p-2 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-800 text-center">
+              <p className="text-xs text-red-700 dark:text-red-300">High Priority</p>
+              <p className="text-lg font-bold text-red-900 dark:text-red-100">{highPriorityTasks}</p>
+            </div>
+          </div>
+
+          {/* Recent Tasks */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Recent Tasks</p>
+            {tasks?.slice(0, 3).map((task, index) => (
+                <motion.div
+                    key={task.id || index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    {task.status === 'Completed' ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : task.status === 'Overdue' ? (
+                        <AlertCircle className="h-4 w-4 text-red-500" />
+                    ) : (
+                        <Clock className="h-4 w-4 text-yellow-500" />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {task.title || 'Unnamed Task'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {task.assignedToUserName || 'Unassigned'}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge
+                      variant="outline"
+                      className={`text-xs ${
+                          task.priority === 'Urgent' ? 'border-red-500 text-red-600' :
+                              task.priority === 'High' ? 'border-orange-500 text-orange-600' :
+                                  'border-blue-500 text-blue-600'
+                      }`}
+                  >
+                    {task.priority || 'Medium'}
+                  </Badge>
+                </motion.div>
+            ))}
+            {(!tasks || tasks.length === 0) && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">No tasks yet</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
   );
 }

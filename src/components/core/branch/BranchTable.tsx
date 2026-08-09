@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   ChevronLeft,
   ChevronRight,
@@ -16,6 +15,7 @@ import { EditBranchModal } from './EditBranchModal';
 import DeleteBranchModal from './DeleteBranchModal';
 import StatBranchModal from './StatBranchModal';
 import ViewBranchModal from './ViewBranchModal';
+import { Button } from '../../ui/button';
 
 interface BranchTableProps {
   branches: BranchListDto[];
@@ -29,15 +29,15 @@ interface BranchTableProps {
 }
 
 const BranchTable: React.FC<BranchTableProps> = ({
-  branches,
-  currentPage,
-  totalPages,
-  totalItems,
-  onPageChange,
-  onBranchUpdate,
-  onBranchStatusChange,
-  onBranchDelete
-}) => {
+                                                   branches,
+                                                   currentPage,
+                                                   totalPages,
+                                                   totalItems,
+                                                   onPageChange,
+                                                   onBranchUpdate,
+                                                   onBranchStatusChange,
+                                                   onBranchDelete
+                                                 }) => {
   const [selectedBranch, setSelectedBranch] = useState<BranchListDto | null>(null);
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -58,6 +58,12 @@ const BranchTable: React.FC<BranchTableProps> = ({
   const handleEdit = (branch: BranchListDto) => {
     setSelectedBranch(branch);
     setIsEditModalOpen(true);
+    setPopoverOpen(null);
+  };
+
+  const handleStatusChange = (branch: BranchListDto) => {
+    setSelectedBranch(branch);
+    setIsStatModalOpen(true);
     setPopoverOpen(null);
   };
 
@@ -99,10 +105,10 @@ const BranchTable: React.FC<BranchTableProps> = ({
 
   const getStatusColor = (status: string): string => {
     switch (status) {
-      case '0': return 'bg-green-100 text-green-800'; // Active - Green
-      case '1': return 'bg-red-100 text-red-800';     // Inactive - Red
-      case '2': return 'bg-yellow-100 text-yellow-800'; // Under Construction - Yellow
-      default: return 'bg-gray-100 text-gray-800';
+      case '0': return 'bg-green-50 text-green-700 border-green-200';
+      case '1': return 'bg-red-50 text-red-700 border-red-200';
+      case '2': return 'bg-amber-50 text-amber-700 border-amber-200';
+      default: return 'bg-slate-50 text-slate-700 border-slate-200';
     }
   };
 
@@ -125,254 +131,216 @@ const BranchTable: React.FC<BranchTableProps> = ({
     }
   };
 
+  // Pagination helpers
+  const startItem = (currentPage - 1) * 10 + 1;
+  const endItem = Math.min(currentPage * 10, totalItems);
+  const totalPagesArray = Array.from({ length: totalPages }, (_, i) => i + 1);
+  const showEllipsisStart = currentPage > 3;
+  const showEllipsisEnd = currentPage < totalPages - 2;
+
+  let displayedPages = totalPagesArray;
+  if (totalPages > 7) {
+    if (currentPage <= 4) {
+      displayedPages = [...totalPagesArray.slice(0, 5), -1, ...totalPagesArray.slice(-2)];
+    } else if (currentPage >= totalPages - 3) {
+      displayedPages = [...totalPagesArray.slice(0, 2), -1, ...totalPagesArray.slice(-5)];
+    } else {
+      displayedPages = [
+        ...totalPagesArray.slice(0, 2),
+        -1,
+        ...totalPagesArray.slice(currentPage - 2, currentPage + 1),
+        -1,
+        ...totalPagesArray.slice(-2)
+      ];
+    }
+  }
+
   return (
-    <>
-      <motion.div 
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { y: 20, opacity: 0 },
-          visible: {
-            y: 0, 
-            opacity: 1,
-            transition: {
-              type: 'spring',
-              stiffness: 100,
-              damping: 15,
-              duration: 0.5
-            }
-          }
-        }}
-        className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm overflow-hidden"
-      >
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-white">
-              <motion.tr 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+      <>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Branch
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">
                   Code
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">
                   Type
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">
                   Status
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">
                   Location
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden lg:table-cell">
                   Opened
                 </th>
-                <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Actions
                 </th>
-              </motion.tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {sortedBranches.map((branch, index) => (
-                <motion.tr 
-                  key={branch.id}
-                  custom={index}
-                  initial="hidden"
-                  animate="visible"
-                  whileHover="hover"
-                  className="hover:bg-gray-50"
-                >
-                  <td className="px-4 py-1 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <motion.div 
-                        whileHover={{ rotate: 10 }}
-                        className="flex-shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center"
-                      >
-                        <Building className="text-emerald-600 h-5 w-5" />
-                      </motion.div>
-                      <div className="ml-3">
-                        <div className="text-sm font-medium text-gray-900 truncate max-w-[120px] md:max-w-none">
-                          {branch.name}
+              </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {sortedBranches.map((branch) => (
+                  <tr key={branch.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                          <Building className="h-4 w-4 text-slate-500 dark:text-slate-400" />
                         </div>
-                        <div className="text-xs text-gray-500 truncate max-w-[120px] md:max-w-none">
-                          {branch.nameAm}
+                        <div>
+                          <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                            {branch.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {branch.nameAm}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
-                    <span className='truncate max-w-[120px]'>
-                      {branch.code}
-                    </span>
-                  </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
-                    <span className={`truncate max-w-[120px]`}>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400 hidden sm:table-cell">
+                      <code className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                        {branch.code}
+                      </code>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400 hidden sm:table-cell">
                       {getBranchTypeText(branch.branchType)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden sm:table-cell">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(branch.branchStat)}`}>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
+                    <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${getStatusColor(branch.branchStat)}`}>
                       {getStatusText(branch.branchStat)}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-sm font-medium hidden md:table-cell text-gray-600">
-                    <div className="flex items-center">
-                      <span className="truncate max-w-[120px]">{branch.location}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
-                    <div className="flex items-center">
-                      <span>{branch.openDateStr}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-right text-sm font-medium">
-                    <Popover open={popoverOpen === branch.id} onOpenChange={(open) => setPopoverOpen(open ? branch.id : null)}>
-                      <PopoverTrigger asChild>
-                        <motion.button 
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100"
-                        >
-                          <MoreVertical className="h-5 w-5" />
-                        </motion.button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-48 p-0" align="end">
-                        <div className="py-1">
-                          <button 
-                            onClick={() => handleViewDetails(branch)}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
-                          >
-                            <Eye size={16} />
-                            View Details
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400 hidden md:table-cell">
+                      {branch.location}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400 hidden lg:table-cell">
+                      {branch.openDateStr}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <Popover open={popoverOpen === branch.id} onOpenChange={(open) => setPopoverOpen(open ? branch.id : null)}>
+                        <PopoverTrigger asChild>
+                          <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            <MoreVertical className="h-4 w-4" />
                           </button>
-
-                          <button 
-                            onClick={() => handleEdit(branch)}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
-                          >
-                            <PenBox size={16} />
-                            Edit
-                          </button>
-
-                          <button 
-                            onClick={() => handleDelete(branch)}
-                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
-                          >
-                            <Trash2 size={16} />
-                            Delete
-                          </button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
-                  </td>
-                </motion.tr>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-44 p-1 rounded-lg shadow-lg" align="end">
+                          <div className="py-1">
+                            <button
+                                onClick={() => handleViewDetails(branch)}
+                                className="w-full text-left px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md flex items-center gap-2"
+                            >
+                              <Eye size={14} />
+                              View Details
+                            </button>
+                            <button
+                                onClick={() => handleEdit(branch)}
+                                className="w-full text-left px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md flex items-center gap-2"
+                            >
+                              <PenBox size={14} />
+                              Edit
+                            </button>
+                            <button
+                                onClick={() => handleDelete(branch)}
+                                className="w-full text-left px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md flex items-center gap-2"
+                            >
+                              <Trash2 size={14} />
+                              Delete
+                            </button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </td>
+                  </tr>
               ))}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+              <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    Showing {startItem} to {endItem} of {totalItems} branches
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft size={16} />
+                    </Button>
+                    {displayedPages.map((page, index) => (
+                        page === -1 ? (
+                            <span key={`ellipsis-${index}`} className="px-2 text-slate-400">...</span>
+                        ) : (
+                            <Button
+                                key={page}
+                                variant={currentPage === page ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => onPageChange(page)}
+                                className={`h-8 w-8 p-0 ${currentPage === page ? 'bg-slate-800 dark:bg-slate-700 text-white' : ''}`}
+                            >
+                              {page}
+                            </Button>
+                        )
+                    ))}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight size={16} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+          )}
         </div>
 
-        {/* Pagination */}
-        <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Next
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{' '}
-                <span className="font-medium">{Math.min(currentPage * 10, totalItems)}</span> of{' '}
-                <span className="font-medium">{totalItems}</span> branches
-              </p>
-            </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button
-                  onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span className="sr-only">Previous</span>
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => onPageChange(page)}
-                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                      currentPage === page
-                        ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600'
-                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-                >
-                  <span className="sr-only">Next</span>
-                  <ChevronRight size={16} />
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Edit Modal */}
-      <EditBranchModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSaveChanges}
-        branch={selectedBranch}
-      />
-
-      {/* Status Change Modal */}
-      <StatBranchModal
-        branch={selectedBranch}
-        isOpen={isStatModalOpen}
-        onClose={() => setIsStatModalOpen(false)}
-        onConfirm={confirmStatusChange}
-      />
-
-      {/* Delete Modal */}
-      <DeleteBranchModal
-        branch={selectedBranch}
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        onConfirm={confirmDeletion}
-      />
-
-      {/* View Details Modal */}
-      {isViewModalOpen && (
-        <ViewBranchModal
-          selectedBranch={selectedBranch}
-          onClose={handleCloseViewModal}
-          getStatusColor={getStatusColor}
-          getStatusText={getStatusText}
-          getBranchTypeText={getBranchTypeText}
+        {/* Modals */}
+        <EditBranchModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onSave={handleSaveChanges}
+            branch={selectedBranch}
         />
-      )}
-    </>
+
+        <StatBranchModal
+            branch={selectedBranch}
+            isOpen={isStatModalOpen}
+            onClose={() => setIsStatModalOpen(false)}
+            onConfirm={confirmStatusChange}
+        />
+
+        <DeleteBranchModal
+            branch={selectedBranch}
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            onConfirm={confirmDeletion}
+        />
+
+        {isViewModalOpen && (
+            <ViewBranchModal
+                selectedBranch={selectedBranch}
+                onClose={handleCloseViewModal}
+                getStatusColor={getStatusColor}
+                getStatusText={getStatusText}
+                getBranchTypeText={getBranchTypeText}
+            />
+        )}
+      </>
   );
 };
 

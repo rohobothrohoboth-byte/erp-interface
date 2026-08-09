@@ -1,6 +1,7 @@
+// src/components/crm/leadManagement/leadGrouping/LeadGroupConditionModal.tsx
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { X, Plus, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Settings } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Label } from '../../../ui/label';
 import { Input } from '../../../ui/input';
@@ -27,7 +28,7 @@ interface ConditionFormData {
   value: string;
 }
 
-// Mock conditions storage (in real app, this would be API calls)
+// Mock conditions storage
 const mockConditionsStorage: Record<string, LeadGroupCondition[]> = {
   '1': [
     { id: '1', field: 'Score', operator: 'Greater Than', value: '80' },
@@ -47,9 +48,10 @@ const leadFields = [
   { value: 'Industry', label: 'Industry' },
   { value: 'Score', label: 'Score' },
   { value: 'Status', label: 'Status' },
-  { value: 'Stage', label: 'Stage' },
+  { value: 'Priority', label: 'Priority' },
   { value: 'Budget', label: 'Budget' },
-  { value: 'Company Size', label: 'Company Size' }
+  { value: 'CompanyName', label: 'Company Name' },
+  { value: 'Title', label: 'Job Title' },
 ];
 
 const operators = [
@@ -57,20 +59,22 @@ const operators = [
   { value: 'Contains', label: 'Contains' },
   { value: 'Greater Than', label: 'Greater Than' },
   { value: 'Less Than', label: 'Less Than' },
-  { value: 'Not Equals', label: 'Not Equals' }
+  { value: 'Not Equals', label: 'Not Equals' },
+  { value: 'Starts With', label: 'Starts With' },
+  { value: 'Ends With', label: 'Ends With' },
 ];
 
-const sourceOptions = ['Website', 'Email Campaign', 'Social Media', 'Phone', 'Referral', 'Event'];
-const industryOptions = ['Technology', 'Healthcare', 'Finance', 'Retail', 'Manufacturing', 'Education'];
-const statusOptions = ['New', 'Contacted', 'Qualified', 'Proposal Sent', 'Closed Won', 'Closed Lost'];
-const stageOptions = ['Awareness', 'Interest', 'Consideration', 'Decision'];
+const sourceOptions = ['Website', 'Referral', 'SocialMedia', 'Email', 'ColdCall', 'Event', 'Partner', 'Advertisement', 'Other'];
+const industryOptions = ['Technology', 'Healthcare', 'Finance', 'Retail', 'Manufacturing', 'Education', 'Government', 'RealEstate', 'Consulting', 'Other'];
+const statusOptions = ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Converted', 'Lost', 'Archived'];
+const priorityOptions = ['Low', 'Medium', 'High', 'Urgent'];
 
 export default function LeadGroupConditionModal({
-  isOpen,
-  onClose,
-  groupId,
-  groupName
-}: LeadGroupConditionModalProps) {
+                                                  isOpen,
+                                                  onClose,
+                                                  groupId,
+                                                  groupName
+                                                }: LeadGroupConditionModalProps) {
   const [conditions, setConditions] = useState<LeadGroupCondition[]>([]);
   const [editingCondition, setEditingCondition] = useState<LeadGroupCondition | null>(null);
   const [formData, setFormData] = useState<ConditionFormData>({
@@ -81,7 +85,6 @@ export default function LeadGroupConditionModal({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // Load conditions for this group
   useEffect(() => {
     if (isOpen && groupId) {
       const groupConditions = mockConditionsStorage[groupId] || [];
@@ -90,7 +93,6 @@ export default function LeadGroupConditionModal({
     }
   }, [isOpen, groupId]);
 
-  // Pagination
   const totalItems = conditions.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedConditions = useMemo(() => {
@@ -139,9 +141,9 @@ export default function LeadGroupConditionModal({
 
     if (editingCondition) {
       const updatedConditions = conditions.map(c =>
-        c.id === editingCondition.id
-          ? { ...c, ...formData }
-          : c
+          c.id === editingCondition.id
+              ? { ...c, ...formData }
+              : c
       );
       setConditions(updatedConditions);
       mockConditionsStorage[groupId] = updatedConditions;
@@ -168,347 +170,301 @@ export default function LeadGroupConditionModal({
 
   const getValueOptions = (field: string) => {
     switch (field) {
-      case 'Source':
-        return sourceOptions;
-      case 'Industry':
-        return industryOptions;
-      case 'Status':
-        return statusOptions;
-      case 'Stage':
-        return stageOptions;
-      default:
-        return [];
+      case 'Source': return sourceOptions;
+      case 'Industry': return industryOptions;
+      case 'Status': return statusOptions;
+      case 'Priority': return priorityOptions;
+      default: return [];
     }
   };
 
   const renderValueInput = () => {
     const valueOptions = getValueOptions(formData.field);
 
-    if (['Score', 'Budget', 'Company Size'].includes(formData.field)) {
+    if (['Score', 'Budget'].includes(formData.field)) {
       return (
-        <Input
-          name="value"
-          type="number"
-          value={formData.value}
-          onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
-          placeholder="Enter value"
-          className="w-full h-8 sm:h-9 text-xs sm:text-sm"
-          min="0"
-        />
+          <Input
+              type="number"
+              value={formData.value}
+              onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+              placeholder="Enter value"
+              className="w-full"
+              min="0"
+          />
       );
     }
 
     if (valueOptions.length > 0) {
       return (
-        <Select
-          value={formData.value}
-          onValueChange={(value) => handleSelectChange('value', value)}
-        >
-          <SelectTrigger className="w-full h-8 sm:h-9 text-xs sm:text-sm">
-            <SelectValue placeholder="Select value" />
-          </SelectTrigger>
-          <SelectContent>
-            {valueOptions.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <Select
+              value={formData.value}
+              onValueChange={(value) => handleSelectChange('value', value)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select value" />
+            </SelectTrigger>
+            <SelectContent>
+              {valueOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {option}
+                  </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
       );
     }
 
     return (
-      <Input
-        name="value"
-        value={formData.value}
-        onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
-        placeholder="Enter value"
-        className="w-full h-8 sm:h-9 text-xs sm:text-sm"
-      />
+        <Input
+            value={formData.value}
+            onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
+            placeholder="Enter value"
+            className="w-full"
+        />
     );
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-2 sm:px-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-lg shadow-xl w-full max-w-5xl h-[90vh] sm:h-[75vh] flex flex-col"
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center border-b px-4 sm:px-6 py-3 bg-white rounded-lg">
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
-              {groupName} conditions
-            </h2>
-          </div>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 p-1 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <X size={18} className="sm:w-5 sm:h-5" />
-          </button>
-        </div>
-
-        {/* Body - Responsive Layout */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden rounded-lg">
-          {/* Form Section */}
-          <div className="w-full lg:w-2/5 border-b lg:border-b-0 lg:border-r border-gray-200 p-3 sm:p-4 bg-white">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                <Plus size={14} className="sm:w-4 sm:h-4 text-orange-600" />
-                <h3 className="text-sm sm:text-base font-semibold text-gray-900">
-                  {editingCondition ? 'Edit' : 'Add'} Condition
-                </h3>
-              </div>
-
-              <div className="space-y-3 sm:space-y-4 flex-1">
-                {/* Field */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium text-gray-700">
-                    Field <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.field}
-                    onValueChange={(value) => handleSelectChange('field', value)}
-                  >
-                    <SelectTrigger className="w-full h-8 sm:h-9 text-xs sm:text-sm">
-                      <SelectValue placeholder="Select field" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {leadFields.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Operator */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium text-gray-700">
-                    Operator <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.operator}
-                    onValueChange={(value) => handleSelectChange('operator', value)}
-                  >
-                    <SelectTrigger className="w-full h-8 sm:h-9 text-xs sm:text-sm">
-                      <SelectValue placeholder="Select operator" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {operators.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Value */}
-                <div className="space-y-1">
-                  <Label className="text-xs font-medium text-gray-700">
-                    Value <span className="text-red-500">*</span>
-                  </Label>
-                  {renderValueInput()}
-                </div>
-              </div>
-
-              {/* Form Actions */}
-              <div className="space-y-2 mt-4 sm:mt-8">
-                <Button
-                  onClick={handleSaveCondition}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white h-8 sm:h-9 text-xs sm:text-sm"
-                  disabled={!formData.field || !formData.operator || !formData.value}
-                >
-                  {editingCondition ? 'Update' : 'Add'}
-                </Button>
-                {editingCondition && (
-                  <Button
-                    onClick={handleCancelCondition}
-                    variant="outline"
-                    className="w-full h-8 sm:h-9 text-xs sm:text-sm"
-                  >
-                    Cancel
-                  </Button>
-                )}
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-5xl h-[90vh] flex flex-col"
+        >
+          <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-800 px-6 py-4">
+            <div className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-orange-600" />
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {groupName} - Conditions
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Define conditions for this lead group
+                </p>
               </div>
             </div>
+            <button
+                onClick={handleClose}
+                className="text-gray-400 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <X size={20} />
+            </button>
           </div>
 
-          {/* Table Section */}
-          <div className="w-full lg:w-3/5 flex flex-col bg-white">
-            <div className="flex-1 overflow-hidden">
-              <div className="rounded-lg shadow-sm overflow-hidden bg-white h-full flex flex-col">
-                <div className="overflow-x-auto flex-1">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          #
-                        </th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Field
-                        </th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                          Operator
-                        </th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Value
-                        </th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {conditions.length === 0 ? (
-                        <tr>
-                          <td colSpan={5} className="px-4 py-8 sm:py-12 text-center">
-                            <div className="flex flex-col items-center">
-                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-100 rounded-full flex items-center justify-center mb-2 sm:mb-3">
-                                <Plus size={16} className="sm:w-5 sm:h-5 text-gray-400" />
-                              </div>
-                              <p className="text-gray-500 font-medium mb-1 text-sm">
-                                No conditions configured
-                              </p>
-                              <p className="text-gray-400 text-xs sm:text-sm">
-                                Add your first condition using the form
-                              </p>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        paginatedConditions.map((condition, index) => (
-                          <motion.tr
-                            key={condition.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="hover:bg-gray-50 transition-colors"
-                          >
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
-                              <div className="flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold">
-                                {(currentPage - 1) * itemsPerPage + index + 1}
-                              </div>
-                            </td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
-                              <div className="text-xs sm:text-sm font-medium text-gray-900">
-                                {condition.field}
-                              </div>
-                              <div className="text-xs text-gray-500 sm:hidden">
-                                {condition.operator}
-                              </div>
-                            </td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap hidden sm:table-cell">
-                              <div className="text-sm text-gray-900">
-                                {condition.operator}
-                              </div>
-                            </td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap">
-                              <div className="text-xs sm:text-sm font-medium text-gray-900">
-                                {condition.value}
-                              </div>
-                            </td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 whitespace-nowrap text-center">
-                              <div className="flex items-center justify-center gap-1">
-                                <button
-                                  onClick={() => handleEditCondition(condition)}
-                                  className="p-1 sm:p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded transition-colors"
-                                  title="Edit condition"
-                                >
-                                  <Edit size={12} className="sm:w-3.5 sm:h-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteCondition(condition.id)}
-                                  className="p-1 sm:p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                  title="Delete condition"
-                                >
-                                  <Trash2 size={12} className="sm:w-3.5 sm:h-3.5" />
-                                </button>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+            <div className="w-full lg:w-2/5 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-800 p-6">
+              <div className="flex flex-col h-full">
+                <div className="flex items-center gap-2 mb-4">
+                  <Plus className="w-4 h-4 text-orange-600" />
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {editingCondition ? 'Edit' : 'Add'} Condition
+                  </h3>
                 </div>
 
-                {/* Pagination */}
-                {totalItems > 0 && (
-                  <div className="bg-white px-4 sm:px-6 py-3 flex items-center justify-between border-t border-gray-200">
-                    <div className="flex-1 flex justify-between sm:hidden">
-                      <button
-                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                <div className="space-y-4 flex-1">
+                  <div className="space-y-2">
+                    <Label className="text-sm text-gray-600 dark:text-gray-400">
+                      Field <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                        value={formData.field}
+                        onValueChange={(value) => handleSelectChange('field', value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select field" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {leadFields.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm text-gray-600 dark:text-gray-400">
+                      Operator <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                        value={formData.operator}
+                        onValueChange={(value) => handleSelectChange('operator', value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select operator" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {operators.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm text-gray-600 dark:text-gray-400">
+                      Value <span className="text-red-500">*</span>
+                    </Label>
+                    {renderValueInput()}
+                  </div>
+                </div>
+
+                <div className="space-y-2 mt-4">
+                  <Button
+                      onClick={handleSaveCondition}
+                      className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                      disabled={!formData.field || !formData.operator || !formData.value}
+                  >
+                    {editingCondition ? 'Update' : 'Add'} Condition
+                  </Button>
+                  {editingCondition && (
+                      <Button
+                          onClick={handleCancelCondition}
+                          variant="outline"
+                          className="w-full"
                       >
-                        Previous
-                      </button>
-                      <button
-                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
-                        className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                      >
-                        Next
-                      </button>
-                    </div>
-                    <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-sm text-gray-700">
+                        Cancel Edit
+                      </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full lg:w-3/5 flex flex-col">
+              <div className="flex-1 overflow-hidden p-6">
+                <div className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden h-full flex flex-col">
+                  <div className="overflow-x-auto flex-1">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                      <thead className="bg-gray-50 dark:bg-gray-800/50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Field</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Operator</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-800">
+                      {conditions.length === 0 ? (
+                          <tr>
+                            <td colSpan={5} className="px-4 py-12 text-center">
+                              <div className="flex flex-col items-center">
+                                <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
+                                  <Plus className="w-5 h-5 text-gray-400" />
+                                </div>
+                                <p className="text-gray-500 font-medium">No conditions configured</p>
+                                <p className="text-gray-400 text-sm">Add your first condition using the form</p>
+                              </div>
+                            </td>
+                          </tr>
+                      ) : (
+                          paginatedConditions.map((condition, index) => (
+                              <motion.tr
+                                  key={condition.id}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                              >
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <div className="flex items-center justify-center w-6 h-6 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs font-semibold">
+                                    {(currentPage - 1) * itemsPerPage + index + 1}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {condition.field}
+                                  </div>
+                                  <div className="text-xs text-gray-500 sm:hidden">
+                                    {condition.operator}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
+                                  <div className="text-sm text-gray-600 dark:text-gray-300">
+                                    {condition.operator}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {condition.value}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-center">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <button
+                                        onClick={() => handleEditCondition(condition)}
+                                        className="p-1 text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30 rounded transition-colors"
+                                        title="Edit condition"
+                                    >
+                                      <Edit size={14} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteCondition(condition.id)}
+                                        className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded transition-colors"
+                                        title="Delete condition"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                </td>
+                              </motion.tr>
+                          ))
+                      )}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {totalItems > 0 && (
+                      <div className="bg-gray-50 dark:bg-gray-800/50 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-800">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                           Showing <span className="font-medium">{(currentPage - 1) * itemsPerPage + 1}</span> to{' '}
                           <span className="font-medium">{Math.min(currentPage * itemsPerPage, totalItems)}</span> of{' '}
                           <span className="font-medium">{totalItems}</span> conditions
-                        </p>
-                      </div>
-                      <div>
-                        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        </div>
+                        <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                           <button
-                            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                            disabled={currentPage === 1}
-                            className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                              disabled={currentPage === 1}
+                              className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
                           >
                             <span className="sr-only">Previous</span>
                             <ChevronLeft size={16} />
                           </button>
                           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                            <button
-                              key={page}
-                              onClick={() => setCurrentPage(page)}
-                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                currentPage === page
-                                  ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
-                                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                              }`}
-                            >
-                              {page}
-                            </button>
+                              <button
+                                  key={page}
+                                  onClick={() => setCurrentPage(page)}
+                                  className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                      currentPage === page
+                                          ? 'z-10 bg-orange-50 dark:bg-orange-950/30 border-orange-500 text-orange-600 dark:text-orange-400'
+                                          : 'bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                                  }`}
+                              >
+                                {page}
+                              </button>
                           ))}
                           <button
-                            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                            disabled={currentPage === totalPages}
-                            className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                              disabled={currentPage === totalPages}
+                              className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm font-medium text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
                           >
                             <span className="sr-only">Next</span>
                             <ChevronRight size={16} />
                           </button>
                         </nav>
                       </div>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
   );
 }

@@ -1,769 +1,816 @@
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+// src/pages/crm/leadManagement/LeadConversion.tsx
+
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CheckSquare, User, Building, DollarSign, Calendar, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+    ArrowLeft,
+    RefreshCw,
+    Users,
+    UserPlus,
+    CheckCircle,
+    XCircle,
+    AlertCircle,
+    Star,
+    Calendar,
+    DollarSign,
+    Building2,
+    Mail,
+    Phone,
+    MapPin,
+    Briefcase,
+    Tag,
+    Search,
+    Filter,
+    ChevronLeft,
+    ChevronRight,
+    Loader2,
+    TrendingUp,
+    BarChart3,
+    Award,
+    Clock,
+    Zap,
+    Sparkles,
+} from 'lucide-react';
+import { getLeads, convertLeadToCustomer } from '../../../services/crm/crm.api';
+import { showToast } from '../../../layout/layout';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Label } from '../../../components/ui/label';
-import { Textarea } from '../../../components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
-import { Separator } from '../../../components/ui/separator';
 import { Badge } from '../../../components/ui/badge';
-import { Checkbox } from '../../../components/ui/checkbox';
-import { showToast } from '../../../layout/layout';
-import { mockLeads } from '../../../data/crmMockData';
-import type { Lead } from '../../../types/crm';
+import { Card, CardContent } from '../../../components/ui/card';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../../../components/ui/select';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '../../../components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { Skeleton } from '../../../components/ui/skeleton';
+import type { LeadDto } from '../../../types/crm/crm.types';
 
-export default function LeadConversion() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+// ============================================================
+// CONSTANTS & HELPERS
+// ============================================================
 
-  // Load lead from localStorage or mockLeads
-  const loadLead = () => {
-    const storedLeads = localStorage.getItem('leads');
-    if (storedLeads) {
-      try {
-        const leads = JSON.parse(storedLeads);
-        return leads.find((l: any) => l.id === id);
-      } catch (error) {
-        console.error('Error parsing stored leads:', error);
-      }
+const ITEMS_PER_PAGE = 10;
+
+// ✅ Correct status mapping based on backend enum
+const STATUS_MAP: Record<number, string> = {
+    1: 'New',
+    2: 'Contacted',
+    3: 'Qualified',
+    4: 'Proposal',
+    5: 'Negotiation',
+    6: 'Converted',
+    7: 'Lost',
+    8: 'Archived',
+};
+
+// ✅ Correct priority mapping
+const PRIORITY_MAP: Record<number, string> = {
+    1: 'Low',
+    2: 'Medium',
+    3: 'High',
+    4: 'Urgent',
+};
+
+const STATUS_COLORS: Record<string, string> = {
+    'New': 'bg-blue-100 text-blue-700 border-blue-200',
+    'Contacted': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    'Qualified': 'bg-green-100 text-green-700 border-green-200',
+    'Proposal': 'bg-indigo-100 text-indigo-700 border-indigo-200',
+    'Negotiation': 'bg-pink-100 text-pink-700 border-pink-200',
+    'Converted': 'bg-purple-100 text-purple-700 border-purple-200',
+    'Lost': 'bg-red-100 text-red-700 border-red-200',
+    'Archived': 'bg-gray-100 text-gray-700 border-gray-200',
+};
+
+const PRIORITY_COLORS: Record<string, string> = {
+    'Low': 'bg-blue-100 text-blue-700 border-blue-200',
+    'Medium': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    'High': 'bg-orange-100 text-orange-700 border-orange-200',
+    'Urgent': 'bg-red-100 text-red-700 border-red-200',
+};
+
+// ✅ Helper: Get status as string
+const getStatusString = (status: any): string => {
+    if (!status) return 'New';
+    if (typeof status === 'string') {
+        const num = parseInt(status);
+        if (!isNaN(num) && num in STATUS_MAP) return STATUS_MAP[num];
+        return status;
     }
-    // Fallback to mockLeads
-    return mockLeads.find(l => l.id === id);
-  };
-
-  const lead = loadLead();
-
-  const [conversionData, setConversionData] = useState({
-    createContact: true,
-    createOpportunity: true,
-    createAccount: true,
-    contactData: {
-      firstName: lead?.firstName || '',
-      lastName: lead?.lastName || '',
-      email: lead?.email || '',
-      phone: lead?.phone || '',
-      company: lead?.company || '',
-      jobTitle: lead?.jobTitle || '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'USA'
-    },
-    opportunityData: {
-      name: `${lead?.company} - ${lead?.firstName} ${lead?.lastName}`,
-      amount: lead?.budget || 0,
-      probability: 25,
-      expectedCloseDate: '',
-      stage: 'Qualification' as const,
-      description: lead?.notes || '',
-      products: [] as string[],
-      nextStep: 'Schedule needs analysis meeting'
-    },
-    accountData: {
-      name: lead?.company || '',
-      industry: lead?.industry || '',
-      website: '',
-      phone: lead?.phone || '',
-      billingAddress: '',
-      billingCity: '',
-      billingState: '',
-      billingZipCode: '',
-      billingCountry: 'USA',
-      annualRevenue: lead?.budget || 0,
-      numberOfEmployees: 0,
-      description: ''
-    },
-    conversionNotes: ''
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (conversionData.createContact) {
-      if (!conversionData.contactData.firstName.trim()) {
-        newErrors.contactFirstName = 'First name is required';
-      }
-      if (!conversionData.contactData.lastName.trim()) {
-        newErrors.contactLastName = 'Last name is required';
-      }
-      if (!conversionData.contactData.email.trim()) {
-        newErrors.contactEmail = 'Email is required';
-      }
+    if (typeof status === 'number') {
+        return STATUS_MAP[status] || 'New';
     }
+    return String(status);
+};
 
-    if (conversionData.createOpportunity) {
-      if (!conversionData.opportunityData.name.trim()) {
-        newErrors.opportunityName = 'Opportunity name is required';
-      }
-      if (conversionData.opportunityData.amount <= 0) {
-        newErrors.opportunityAmount = 'Amount must be greater than 0';
-      }
-      if (!conversionData.opportunityData.expectedCloseDate) {
-        newErrors.expectedCloseDate = 'Expected close date is required';
-      }
+// ✅ Helper: Get priority as string
+const getPriorityString = (priority: any): string => {
+    if (!priority) return 'Medium';
+    if (typeof priority === 'string') {
+        const num = parseInt(priority);
+        if (!isNaN(num) && num in PRIORITY_MAP) return PRIORITY_MAP[num];
+        return priority;
     }
-
-    if (conversionData.createAccount) {
-      if (!conversionData.accountData.name.trim()) {
-        newErrors.accountName = 'Account name is required';
-      }
+    if (typeof priority === 'number') {
+        return PRIORITY_MAP[priority] || 'Medium';
     }
+    return String(priority);
+};
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+// ✅ Helper: Check if lead is truly converted
+const isTrulyConverted = (lead: LeadDto): boolean => {
+    const status = getStatusString(lead.status);
+    return status === 'Converted' && lead.isConverted === true;
+};
 
-  const handleConvert = async () => {
-    if (!validateForm()) {
-      return;
+// ✅ Helper: Get display status for conversion
+const getDisplayStatus = (lead: LeadDto): string => {
+    const status = getStatusString(lead.status);
+    if (status === 'Converted' && lead.isConverted === true) {
+        return 'Converted';
     }
+    return status;
+};
 
-    if (!lead) return;
+// ✅ Helper: Get full name
+const getFullName = (lead: LeadDto) => {
+    if (lead.fullName) return lead.fullName;
+    return `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+};
 
-    try {
-      let createdContactId: string | undefined;
-      let createdAccountId: string | undefined;
-      let createdOpportunityId: string | undefined;
+// ✅ Helper: Format currency
+const formatCurrency = (amount?: number) => {
+    if (!amount) return '$0';
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+    }).format(amount);
+};
 
-      // 1. Create Contact
-      if (conversionData.createContact) {
-        createdContactId = Date.now().toString();
-        const newContact = {
-          id: createdContactId,
-          firstName: conversionData.contactData.firstName,
-          lastName: conversionData.contactData.lastName,
-          email: conversionData.contactData.email,
-          phone: conversionData.contactData.phone,
-          company: conversionData.contactData.company,
-          jobTitle: conversionData.contactData.jobTitle,
-          address: conversionData.contactData.address,
-          city: conversionData.contactData.city,
-          state: conversionData.contactData.state,
-          zipCode: conversionData.contactData.zipCode,
-          country: conversionData.contactData.country,
-          tags: [],
-          socialMedia: {},
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          lastContactDate: new Date().toISOString(),
-          notes: conversionData.conversionNotes,
-          isActive: true,
-          stage: 'Prospect',
-          owner: lead.assignedTo,
-          teamVisibility: 'team',
-          consentStatus: 'pending',
-          customFields: {},
-          relationshipScore: Math.min(lead.score, 100),
-          lastInteractionType: 'conversion',
-          segmentIds: [],
-          convertedFromLeadId: lead.id,
-          accountId: undefined
-        };
+// ✅ Helper: Get initials
+const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+};
 
-        const storedContacts = localStorage.getItem('contacts');
-        const contacts = storedContacts ? JSON.parse(storedContacts) : [];
-        contacts.push(newContact);
-        localStorage.setItem('contacts', JSON.stringify(contacts));
-        window.dispatchEvent(new CustomEvent('contactsUpdated'));
-      }
+// ✅ Helper: Get score label
+const getScoreLabel = (score: number) => {
+    if (score >= 80) return 'Hot';
+    if (score >= 50) return 'Warm';
+    return 'Cold';
+};
 
-      // 2. Create Account if requested
-      if (conversionData.createAccount) {
-        createdAccountId = (Date.now() + 1).toString();
-        const newAccount = {
-          id: createdAccountId,
-          name: conversionData.accountData.name,
-          industry: conversionData.accountData.industry,
-          website: conversionData.accountData.website,
-          phone: conversionData.accountData.phone,
-          email: lead.email,
-          address: conversionData.accountData.billingAddress,
-          city: conversionData.accountData.billingCity,
-          state: conversionData.accountData.billingState,
-          zipCode: conversionData.accountData.billingZipCode,
-          country: conversionData.accountData.billingCountry,
-          tags: [],
-          owner: lead.assignedTo,
-          accountType: 'Prospect',
-          isActive: true,
-          notes: conversionData.accountData.description,
-          customFields: {
-            annualRevenue: conversionData.accountData.annualRevenue,
-            numberOfEmployees: conversionData.accountData.numberOfEmployees
-          },
-          primaryContactId: createdContactId,
-          contactIds: createdContactId ? [createdContactId] : [],
-          opportunityIds: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 
-        const storedAccounts = localStorage.getItem('accounts');
-        const accounts = storedAccounts ? JSON.parse(storedAccounts) : [];
-        accounts.push(newAccount);
-        localStorage.setItem('accounts', JSON.stringify(accounts));
+const LeadConversion: React.FC = () => {
+    const navigate = useNavigate();
+    const [leads, setLeads] = useState<LeadDto[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('All');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedLead, setSelectedLead] = useState<LeadDto | null>(null);
+    const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+    const [converting, setConverting] = useState(false);
+    const [activeTab, setActiveTab] = useState('converted');
 
-        // Update contact with account ID
-        if (createdContactId) {
-          const storedContacts = localStorage.getItem('contacts');
-          if (storedContacts) {
-            const contacts = JSON.parse(storedContacts);
-            const updatedContacts = contacts.map((c: any) => 
-              c.id === createdContactId ? { ...c, accountId: createdAccountId } : c
-            );
-            localStorage.setItem('contacts', JSON.stringify(updatedContacts));
-          }
+    // Stats
+    const [stats, setStats] = useState({
+        readyForConversion: 0,
+        totalConverted: 0,
+        avgConversionScore: 0,
+        conversionRate: 0,
+        totalLeads: 0,
+    });
+
+    useEffect(() => {
+        fetchLeads();
+    }, []);
+
+    const fetchLeads = async () => {
+        try {
+            setLoading(true);
+            const params: any = { page: 1, pageSize: 200 };
+            const response = await getLeads(params);
+            let data = response.data?.data || response.data || [];
+            setLeads(Array.isArray(data) ? data : []);
+            calculateStats(data);
+        } catch (error) {
+            console.error('Error fetching leads:', error);
+            showToast.error('Failed to load leads');
+        } finally {
+            setLoading(false);
         }
-      }
+    };
 
-      // 3. Create Opportunity if requested
-      if (conversionData.createOpportunity) {
-        if (!createdAccountId && !createdContactId) {
-          showToast.error('Contact or Account is required to create an Opportunity');
-          return;
+    const calculateStats = (leadsData: LeadDto[]) => {
+        const total = leadsData.length;
+
+        const readyForConversion = leadsData.filter(l => {
+            const status = getStatusString(l.status);
+            return status === 'Qualified' && !isTrulyConverted(l);
+        }).length;
+
+        const totalConverted = leadsData.filter(l => isTrulyConverted(l)).length;
+
+        const convertedLeads = leadsData.filter(l => isTrulyConverted(l));
+        const avgConversionScore = convertedLeads.length > 0
+            ? Math.round(convertedLeads.reduce((sum, l) => sum + (l.score || 0), 0) / convertedLeads.length)
+            : 0;
+
+        const conversionRate = total > 0 ? Math.round((totalConverted / total) * 100) : 0;
+
+        setStats({
+            readyForConversion,
+            totalConverted,
+            avgConversionScore,
+            conversionRate,
+            totalLeads: total,
+        });
+    };
+
+    const handleConvert = async () => {
+        if (!selectedLead) return;
+        try {
+            setConverting(true);
+            await convertLeadToCustomer(selectedLead.id);
+            showToast.success(`Lead "${getFullName(selectedLead)}" converted to customer successfully`);
+            setIsConvertModalOpen(false);
+            await fetchLeads();
+        } catch (error: any) {
+            const message = error?.response?.data?.message || 'Conversion failed';
+            showToast.error(message);
+        } finally {
+            setConverting(false);
+        }
+    };
+
+    const getStatusBadge = (status: string, isConverted: boolean = false) => {
+        if (isConverted || status === 'Converted') {
+            return <Badge className="bg-purple-100 text-purple-700 border-purple-200">Converted</Badge>;
+        }
+        return <Badge className={STATUS_COLORS[status] || 'bg-gray-100 text-gray-700'}>{status}</Badge>;
+    };
+
+    const getPriorityBadge = (priority: string) => {
+        return <Badge className={PRIORITY_COLORS[priority] || 'bg-gray-100 text-gray-700'}>{priority}</Badge>;
+    };
+
+    // Filter leads
+    const filteredLeads = leads.filter(lead => {
+        const search = searchTerm.toLowerCase();
+        const name = getFullName(lead).toLowerCase();
+        const email = (lead.email || '').toLowerCase();
+        const company = (lead.companyName || '').toLowerCase();
+        const displayStatus = getDisplayStatus(lead);
+        const isConverted = isTrulyConverted(lead);
+
+        const matchesSearch = name.includes(search) || email.includes(search) || company.includes(search);
+
+        let matchesTab = true;
+        switch (activeTab) {
+            case 'qualified':
+                matchesTab = displayStatus === 'Qualified' && !isConverted;
+                break;
+            case 'converted':
+                matchesTab = isConverted;
+                break;
+            case 'all':
+                matchesTab = true;
+                break;
+            default:
+                matchesTab = true;
         }
 
-        createdOpportunityId = (Date.now() + 2).toString();
-        const newOpportunity = {
-          id: createdOpportunityId,
-          name: conversionData.opportunityData.name,
-          accountId: createdAccountId || '',
-          contactId: createdContactId || '',
-          stage: conversionData.opportunityData.stage,
-          amount: conversionData.opportunityData.amount,
-          probability: conversionData.opportunityData.probability,
-          expectedCloseDate: conversionData.opportunityData.expectedCloseDate,
-          assignedTo: lead.assignedTo,
-          source: lead.source,
-          description: conversionData.opportunityData.description,
-          products: conversionData.opportunityData.products,
-          competitors: [],
-          nextStep: conversionData.opportunityData.nextStep,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
+        const matchesStatus = filterStatus === 'All' || displayStatus === filterStatus;
 
-        const storedOpportunities = localStorage.getItem('opportunities');
-        const opportunities = storedOpportunities ? JSON.parse(storedOpportunities) : [];
-        opportunities.push(newOpportunity);
-        localStorage.setItem('opportunities', JSON.stringify(opportunities));
+        return matchesSearch && matchesTab && matchesStatus;
+    });
 
-        // Update account with opportunity ID
-        if (createdAccountId) {
-          const storedAccounts = localStorage.getItem('accounts');
-          if (storedAccounts) {
-            const accounts = JSON.parse(storedAccounts);
-            const updatedAccounts = accounts.map((a: any) => 
-              a.id === createdAccountId 
-                ? { ...a, opportunityIds: [...a.opportunityIds, createdOpportunityId] }
-                : a
-            );
-            localStorage.setItem('accounts', JSON.stringify(updatedAccounts));
-          }
-        }
-      }
+    const totalPages = Math.ceil(filteredLeads.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedLeads = filteredLeads.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-      // 4. Update lead status
-      const updatedLead = {
-        ...lead,
-        status: 'Converted' as const,
-        isConverted: true,
-        convertedAt: new Date().toISOString(),
-        convertedToContactId: createdContactId,
-        convertedToAccountId: createdAccountId,
-        convertedToOpportunityId: createdOpportunityId,
-        conversionType: [
-          conversionData.createContact && 'Contact',
-          conversionData.createAccount && 'Account', 
-          conversionData.createOpportunity && 'Opportunity'
-        ].filter(Boolean).join('+') as any
-      };
-
-      const storedLeads = localStorage.getItem('leads');
-      if (storedLeads) {
-        const leads = JSON.parse(storedLeads);
-        const updatedLeads = leads.map((l: Lead) => 
-          l.id === lead.id ? updatedLead : l
-        );
-        localStorage.setItem('leads', JSON.stringify(updatedLeads));
-      }
-
-      // Show success message
-      let message = 'Lead converted successfully!';
-      if (conversionData.createContact) message += ' Contact created.';
-      if (conversionData.createAccount) message += ' Account created.';
-      if (conversionData.createOpportunity) message += ' Opportunity created.';
-      
-      showToast.success(message);
-      
-      // Navigate to contacts
-      navigate('/crm/contacts');
-
-    } catch (error) {
-      console.error('Error during conversion:', error);
-      showToast.error('Failed to convert lead. Please try again.');
-    }
-  };
-
-  if (!lead) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Lead not found</h2>
-          <p className="text-gray-600 mb-4">The lead you're trying to convert doesn't exist.</p>
-          <Button onClick={() => navigate('/crm/leads')}>Back to Leads</Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(`/crm/leads/${id}`)}
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Lead
-          </Button>
-          <Separator orientation="vertical" className="h-6" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Convert Lead</h1>
-            <p className="text-gray-600">Convert {lead.firstName} {lead.lastName} from {lead.company}</p>
-          </div>
-        </div>
-      </div>
-
-
-      {/* Conversion Options */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Conversion Options</h2>
-        <p className="text-sm text-gray-600">Select which records to create from this lead</p>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Contact Creation */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-blue-600" />
-                  <span>Create Contact</span>
-                </CardTitle>
-                <Checkbox
-                  checked={conversionData.createContact}
-                  onCheckedChange={(checked) => setConversionData({
-                    ...conversionData, 
-                    createContact: checked as boolean
-                  })}
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {conversionData.createContact ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="contactFirstName">First Name *</Label>
-                      <Input
-                        id="contactFirstName"
-                        value={conversionData.contactData.firstName}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          contactData: {...conversionData.contactData, firstName: e.target.value}
-                        })}
-                        className={errors.contactFirstName ? 'border-red-500' : ''}
-                      />
-                      {errors.contactFirstName && (
-                        <p className="text-sm text-red-500 mt-1">{errors.contactFirstName}</p>
-                      )}
+    // Loading skeleton
+    if (loading) {
+        return (
+            <div className="space-y-6 p-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-lg" />
+                        <div>
+                            <Skeleton className="h-6 w-48" />
+                            <Skeleton className="h-4 w-32 mt-1" />
+                        </div>
                     </div>
-                    <div>
-                      <Label htmlFor="contactLastName">Last Name *</Label>
-                      <Input
-                        id="contactLastName"
-                        value={conversionData.contactData.lastName}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          contactData: {...conversionData.contactData, lastName: e.target.value}
-                        })}
-                        className={errors.contactLastName ? 'border-red-500' : ''}
-                      />
-                      {errors.contactLastName && (
-                        <p className="text-sm text-red-500 mt-1">{errors.contactLastName}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="contactEmail">Email *</Label>
-                      <Input
-                        id="contactEmail"
-                        type="email"
-                        value={conversionData.contactData.email}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          contactData: {...conversionData.contactData, email: e.target.value}
-                        })}
-                        className={errors.contactEmail ? 'border-red-500' : ''}
-                      />
-                      {errors.contactEmail && (
-                        <p className="text-sm text-red-500 mt-1">{errors.contactEmail}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="contactPhone">Phone</Label>
-                      <Input
-                        id="contactPhone"
-                        value={conversionData.contactData.phone}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          contactData: {...conversionData.contactData, phone: e.target.value}
-                        })}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="contactCompany">Company</Label>
-                      <Input
-                        id="contactCompany"
-                        value={conversionData.contactData.company}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          contactData: {...conversionData.contactData, company: e.target.value}
-                        })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="contactJobTitle">Job Title</Label>
-                      <Input
-                        id="contactJobTitle"
-                        value={conversionData.contactData.jobTitle}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          contactData: {...conversionData.contactData, jobTitle: e.target.value}
-                        })}
-                      />
-                    </div>
-                  </div>
+                    <Skeleton className="h-10 w-24" />
                 </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">
-                  Contact creation is disabled. Check the box above to create a contact record.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-
-            {/* Account Creation */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center space-x-2">
-                  <Building className="w-5 h-5 text-purple-600" />
-                  <span>Create Account</span>
-                </CardTitle>
-                <Checkbox
-                  checked={conversionData.createAccount}
-                  onCheckedChange={(checked) => setConversionData({
-                    ...conversionData, 
-                    createAccount: checked as boolean
-                  })}
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {conversionData.createAccount ? (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="accountName">Account Name *</Label>
-                    <Input
-                      id="accountName"
-                      value={conversionData.accountData.name}
-                      onChange={(e) => setConversionData({
-                        ...conversionData,
-                        accountData: {...conversionData.accountData, name: e.target.value}
-                      })}
-                      className={errors.accountName ? 'border-red-500' : ''}
-                    />
-                    {errors.accountName && (
-                      <p className="text-sm text-red-500 mt-1">{errors.accountName}</p>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="accountIndustry">Industry</Label>
-                      <Input
-                        id="accountIndustry"
-                        value={conversionData.accountData.industry}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          accountData: {...conversionData.accountData, industry: e.target.value}
-                        })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="accountPhone">Phone</Label>
-                      <Input
-                        id="accountPhone"
-                        type="tel"
-                        value={conversionData.accountData.phone}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          accountData: {...conversionData.accountData, phone: e.target.value}
-                        })}
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="accountWebsite">Website</Label>
-                      <Input
-                        id="accountWebsite"
-                        type="url"
-                        value={conversionData.accountData.website}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          accountData: {...conversionData.accountData, website: e.target.value}
-                        })}
-                        placeholder="https://example.com"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="annualRevenue">Annual Revenue ($)</Label>
-                      <Input
-                        id="annualRevenue"
-                        type="number"
-                        value={conversionData.accountData.annualRevenue || ''}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          accountData: {...conversionData.accountData, annualRevenue: Number(e.target.value)}
-                        })}
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="numberOfEmployees">Number of Employees</Label>
-                    <Input
-                      id="numberOfEmployees"
-                      type="number"
-                      value={conversionData.accountData.numberOfEmployees || ''}
-                      onChange={(e) => setConversionData({
-                        ...conversionData,
-                        accountData: {...conversionData.accountData, numberOfEmployees: Number(e.target.value)}
-                      })}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="accountDescription">Description</Label>
-                    <Textarea
-                      id="accountDescription"
-                      value={conversionData.accountData.description}
-                      onChange={(e) => setConversionData({
-                        ...conversionData,
-                        accountData: {...conversionData.accountData, description: e.target.value}
-                      })}
-                      rows={3}
-                      placeholder="Describe the account..."
-                    />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <Card key={i}>
+                            <CardContent className="p-4">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-8 w-16 mt-2" />
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">
-                  Account creation is disabled. Check the box above to create an account record.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Opportunity Creation */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center space-x-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                  <span>Create Opportunity</span>
-                </CardTitle>
-                <Checkbox
-                  checked={conversionData.createOpportunity}
-                  onCheckedChange={(checked) => setConversionData({
-                    ...conversionData, 
-                    createOpportunity: checked as boolean
-                  })}
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {conversionData.createOpportunity ? (
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="opportunityName">Opportunity Name *</Label>
-                    <Input
-                      id="opportunityName"
-                      value={conversionData.opportunityData.name}
-                      onChange={(e) => setConversionData({
-                        ...conversionData,
-                        opportunityData: {...conversionData.opportunityData, name: e.target.value}
-                      })}
-                      className={errors.opportunityName ? 'border-red-500' : ''}
-                    />
-                    {errors.opportunityName && (
-                      <p className="text-sm text-red-500 mt-1">{errors.opportunityName}</p>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="opportunityAmount">Amount ($) *</Label>
-                      <Input
-                        id="opportunityAmount"
-                        type="number"
-                        value={conversionData.opportunityData.amount}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          opportunityData: {...conversionData.opportunityData, amount: Number(e.target.value)}
-                        })}
-                        className={errors.opportunityAmount ? 'border-red-500' : ''}
-                      />
-                      {errors.opportunityAmount && (
-                        <p className="text-sm text-red-500 mt-1">{errors.opportunityAmount}</p>
-                      )}
-                    </div>
-                    <div>
-                      <Label htmlFor="probability">Probability (%)</Label>
-                      <Input
-                        id="probability"
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={conversionData.opportunityData.probability}
-                        onChange={(e) => setConversionData({
-                          ...conversionData,
-                          opportunityData: {...conversionData.opportunityData, probability: Number(e.target.value)}
-                        })}
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label htmlFor="expectedCloseDate">Expected Close Date *</Label>
-                    <Input
-                      id="expectedCloseDate"
-                      type="date"
-                      value={conversionData.opportunityData.expectedCloseDate}
-                      onChange={(e) => setConversionData({
-                        ...conversionData,
-                        opportunityData: {...conversionData.opportunityData, expectedCloseDate: e.target.value}
-                      })}
-                      className={errors.expectedCloseDate ? 'border-red-500' : ''}
-                    />
-                    {errors.expectedCloseDate && (
-                      <p className="text-sm text-red-500 mt-1">{errors.expectedCloseDate}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="nextStep">Next Step</Label>
-                    <Input
-                      id="nextStep"
-                      value={conversionData.opportunityData.nextStep}
-                      onChange={(e) => setConversionData({
-                        ...conversionData,
-                        opportunityData: {...conversionData.opportunityData, nextStep: e.target.value}
-                      })}
-                      placeholder="e.g., Schedule product demo"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="opportunityDescription">Description</Label>
-                    <Textarea
-                      id="opportunityDescription"
-                      value={conversionData.opportunityData.description}
-                      onChange={(e) => setConversionData({
-                        ...conversionData,
-                        opportunityData: {...conversionData.opportunityData, description: e.target.value}
-                      })}
-                      rows={3}
-                      placeholder="Describe the opportunity..."
-                    />
-                  </div>
+                <div className="flex gap-4">
+                    <Skeleton className="h-10 flex-1" />
+                    <Skeleton className="h-10 w-32" />
                 </div>
-              ) : (
-                <p className="text-gray-500 text-center py-4">
-                  Opportunity creation is disabled. Check the box above to create an opportunity record.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-        
-        </div>
-      </div>
-
-      {/* Conversion Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Conversion Notes</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={conversionData.conversionNotes}
-            onChange={(e) => setConversionData({
-              ...conversionData, 
-              conversionNotes: e.target.value
-            })}
-            placeholder="Add any notes about this conversion..."
-            rows={3}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Warning */}
-      <Card className="border-orange-200 bg-orange-50">
-        <CardContent className="pt-6">
-          <div className="flex items-start space-x-3">
-            <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
-            <div>
-              <h4 className="font-medium text-orange-900 mb-1">Important</h4>
-              <p className="text-sm text-orange-800">
-                Converting this lead will change its status to "Converted" and create the selected records. 
-                This action cannot be undone. The original lead record will be preserved for audit purposes.
-              </p>
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="flex items-center justify-between py-4 border-b last:border-0">
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <div>
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="h-3 w-24 mt-1" />
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="h-6 w-16" />
+                                <Skeleton className="h-8 w-20" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+        );
+    }
 
-      {/* Actions */}
-      <div className="flex justify-end space-x-4">
-        <Button
-          variant="outline"
-          onClick={() => navigate(`/crm/leads/${id}`)}
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6 p-6"
         >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleConvert}
-          className="bg-orange-600 hover:bg-orange-700"
-          disabled={!conversionData.createContact && !conversionData.createOpportunity && !conversionData.createAccount}
-        >
-          <CheckSquare className="w-4 h-4 mr-2" />
-          Convert Lead
-        </Button>
-      </div>
-    </motion.div>
-  );
-}
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/crm/leads')}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Lead Conversion</h1>
+                        <p className="text-sm text-gray-500">
+                            Convert qualified leads into customers
+                        </p>
+                    </div>
+                </div>
+                <Button
+                    onClick={fetchLeads}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                >
+                    <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+                    Refresh
+                </Button>
+            </div>
+
+            {/* Stats Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-blue-700 font-medium">Ready for Conversion</p>
+                                <p className="text-2xl font-bold text-blue-900">{stats.readyForConversion}</p>
+                            </div>
+                            <div className="p-3 bg-blue-200 rounded-lg">
+                                <UserPlus className="h-6 w-6 text-blue-700" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-emerald-700 font-medium">Total Converted</p>
+                                <p className="text-2xl font-bold text-emerald-900">{stats.totalConverted}</p>
+                            </div>
+                            <div className="p-3 bg-emerald-200 rounded-lg">
+                                <Users className="h-6 w-6 text-emerald-700" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-purple-700 font-medium">Avg. Conversion Score</p>
+                                <p className="text-2xl font-bold text-purple-900">{stats.avgConversionScore}</p>
+                            </div>
+                            <div className="p-3 bg-purple-200 rounded-lg">
+                                <Star className="h-6 w-6 text-purple-700" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-orange-700 font-medium">Conversion Rate</p>
+                                <p className="text-2xl font-bold text-orange-900">{stats.conversionRate}%</p>
+                            </div>
+                            <div className="p-3 bg-orange-200 rounded-lg">
+                                <TrendingUp className="h-6 w-6 text-orange-700" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="qualified" className="flex items-center gap-2">
+                        <CheckCircle size={16} />
+                        Qualified
+                        <Badge variant="secondary" className="ml-1">
+                            {leads.filter(l => {
+                                const status = getStatusString(l.status);
+                                return status === 'Qualified' && !isTrulyConverted(l);
+                            }).length}
+                        </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="converted" className="flex items-center gap-2">
+                        <TrendingUp size={16} />
+                        Converted
+                        <Badge variant="secondary" className="ml-1">
+                            {leads.filter(l => isTrulyConverted(l)).length}
+                        </Badge>
+                    </TabsTrigger>
+                    <TabsTrigger value="all" className="flex items-center gap-2">
+                        <Users size={16} />
+                        All Leads
+                        <Badge variant="secondary" className="ml-1">
+                            {leads.length}
+                        </Badge>
+                    </TabsTrigger>
+                </TabsList>
+            </Tabs>
+
+            {/* Filters */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap gap-4">
+                <div className="flex-1 min-w-[200px] relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                    <Input
+                        placeholder="Search leads by name, email, or company..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+                <Select value={filterStatus} onValueChange={setFilterStatus}>
+                    <SelectTrigger className="w-48">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">All Status</SelectItem>
+                        <SelectItem value="New">New</SelectItem>
+                        <SelectItem value="Contacted">Contacted</SelectItem>
+                        <SelectItem value="Qualified">Qualified</SelectItem>
+                        <SelectItem value="Proposal">Proposal</SelectItem>
+                        <SelectItem value="Negotiation">Negotiation</SelectItem>
+                        <SelectItem value="Converted">Converted</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        setSearchTerm('');
+                        setFilterStatus('All');
+                        setActiveTab('all');
+                        fetchLeads();
+                    }}
+                    className="flex items-center gap-2"
+                >
+                    <XCircle size={16} />
+                    Clear Filters
+                </Button>
+            </div>
+
+            {/* Leads Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lead</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
+                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Value</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Score</th>
+                            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                        {paginatedLeads.length === 0 ? (
+                            <tr>
+                                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
+                                    {activeTab === 'qualified'
+                                        ? 'No qualified leads ready for conversion'
+                                        : activeTab === 'converted'
+                                            ? 'No leads have been converted yet'
+                                            : 'No leads found'}
+                                </td>
+                            </tr>
+                        ) : (
+                            paginatedLeads.map((lead) => {
+                                const displayStatus = getDisplayStatus(lead);
+                                const isConverted = isTrulyConverted(lead);
+                                const isQualified = displayStatus === 'Qualified' && !isConverted;
+                                // ✅ Convert priority to string
+                                const displayPriority = getPriorityString(lead.priority);
+
+                                return (
+                                    <tr key={lead.id} className="hover:bg-gray-50 transition-colors">
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-medium text-sm">
+                                                    {getInitials(lead.firstName, lead.lastName)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900">
+                                                        {getFullName(lead)}
+                                                    </p>
+                                                    {lead.companyName && (
+                                                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                                                            <Building2 size={12} />
+                                                            {lead.companyName}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <p className="text-sm text-gray-600 flex items-center gap-1">
+                                                <Mail size={14} className="text-gray-400" />
+                                                {lead.email}
+                                            </p>
+                                            {lead.phone && (
+                                                <p className="text-xs text-gray-400 flex items-center gap-1">
+                                                    <Phone size={12} />
+                                                    {lead.phone}
+                                                </p>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {isConverted ? (
+                                                <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                                    Converted
+                                                </Badge>
+                                            ) : displayStatus === 'Qualified' ? (
+                                                <Badge className="bg-green-100 text-green-700 border-green-200">
+                                                    Qualified
+                                                </Badge>
+                                            ) : (
+                                                <Badge className={STATUS_COLORS[displayStatus] || 'bg-gray-100 text-gray-700'}>
+                                                    {displayStatus}
+                                                </Badge>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {getPriorityBadge(displayPriority)}
+                                        </td>
+                                        <td className="px-4 py-3 text-right font-medium text-indigo-600">
+                                            {formatCurrency(lead.estimatedValue || lead.budget)}
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            <div className="flex flex-col items-center">
+                                                    <span className={`font-medium ${lead.score >= 70 ? 'text-green-600' : lead.score >= 40 ? 'text-yellow-600' : 'text-red-600'}`}>
+                                                        {lead.score || 0}
+                                                    </span>
+                                                <span className="text-xs text-gray-400">
+                                                        {getScoreLabel(lead.score || 0)}
+                                                    </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-3 text-center">
+                                            {isQualified ? (
+                                                <Button
+                                                    size="sm"
+                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                    onClick={() => {
+                                                        setSelectedLead(lead);
+                                                        setIsConvertModalOpen(true);
+                                                    }}
+                                                >
+                                                    <UserPlus className="h-4 w-4 mr-1" />
+                                                    Convert
+                                                </Button>
+                                            ) : isConverted ? (
+                                                <Badge className="bg-purple-100 text-purple-700 border-purple-200 px-3 py-1">
+                                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                                    Converted
+                                                </Badge>
+                                            ) : (
+                                                <Badge className="bg-gray-100 text-gray-500 border-gray-200 px-3 py-1">
+                                                    <Clock className="h-3 w-3 mr-1" />
+                                                    Not Ready
+                                                </Badge>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })
+                        )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Pagination */}
+                {filteredLeads.length > 0 && (
+                    <div className="px-4 py-3 border-t border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-gray-50">
+                        <p className="text-sm text-gray-500">
+                            Showing <span className="font-medium text-gray-700">{startIndex + 1}</span> to{' '}
+                            <span className="font-medium text-gray-700">{Math.min(startIndex + ITEMS_PER_PAGE, filteredLeads.length)}</span> of{' '}
+                            <span className="font-medium text-gray-700">{filteredLeads.length}</span> leads
+                            {searchTerm && ` (filtered by "${searchTerm}")`}
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                disabled={currentPage === 1}
+                                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronLeft size={16} />
+                            </button>
+                            <span className="text-sm text-gray-500">
+                                Page {currentPage} of {totalPages || 1}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                disabled={currentPage === totalPages || totalPages === 0}
+                                className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronRight size={16} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Convert Modal */}
+            <Dialog open={isConvertModalOpen} onOpenChange={setIsConvertModalOpen}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-emerald-600">
+                            <UserPlus className="h-5 w-5" />
+                            Convert Lead to Customer
+                        </DialogTitle>
+                        <DialogDescription>
+                            Convert this qualified lead into a customer record.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedLead && (
+                        <div className="py-4 space-y-4">
+                            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-semibold text-lg">
+                                        {getInitials(selectedLead.firstName, selectedLead.lastName)}
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-gray-900">
+                                            {getFullName(selectedLead)}
+                                        </p>
+                                        <p className="text-sm text-gray-500">{selectedLead.email}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 text-sm pt-2 border-t border-gray-200">
+                                    <div>
+                                        <span className="text-gray-500">Company:</span>
+                                        <span className="font-medium ml-1">{selectedLead.companyName || 'N/A'}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500">Value:</span>
+                                        <span className="font-medium ml-1">{formatCurrency(selectedLead.estimatedValue || selectedLead.budget)}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500">Status:</span>
+                                        <span className="ml-1">
+                                            {getStatusBadge(getDisplayStatus(selectedLead), isTrulyConverted(selectedLead))}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500">Priority:</span>
+                                        <span className="ml-1 font-medium">
+                                            {getPriorityString(selectedLead.priority)}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-500">Score:</span>
+                                        <span className={`font-medium ml-1 ${(selectedLead.score || 0) >= 70 ? 'text-green-600' : 'text-yellow-600'}`}>
+                                            {selectedLead.score || 0}
+                                        </span>
+                                    </div>
+                                    {selectedLead.phone && (
+                                        <div className="col-span-2">
+                                            <span className="text-gray-500">Phone:</span>
+                                            <span className="ml-1">{selectedLead.phone}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-700">
+                                <AlertCircle className="h-4 w-4 inline mr-1" />
+                                This will create a new customer record with the lead's information.
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsConvertModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            className="bg-emerald-600 hover:bg-emerald-700"
+                            onClick={handleConvert}
+                            disabled={converting}
+                        >
+                            {converting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Converting...
+                                </>
+                            ) : (
+                                <>
+                                    <UserPlus className="h-4 w-4 mr-2" />
+                                    Convert to Customer
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* AI Suggestions */}
+            {stats.totalLeads > 0 && (
+                <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+                    <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                            <div className="p-3 bg-emerald-100 rounded-lg">
+                                <Sparkles className="h-6 w-6 text-emerald-600" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-emerald-900">AI-Powered Insights</h3>
+                                <p className="text-sm text-emerald-700 mt-1">
+                                    {stats.readyForConversion > 0 ? (
+                                        <>
+                                            You have <strong>{stats.readyForConversion}</strong> qualified leads ready for conversion.
+                                            {stats.totalConverted > 0 && (
+                                                <> You've successfully converted <strong>{stats.totalConverted}</strong> leads with an average score of <strong>{stats.avgConversionScore}</strong>.</>
+                                            )}
+                                        </>
+                                    ) : stats.totalConverted > 0 ? (
+                                        <>
+                                            Great job! You've converted <strong>{stats.totalConverted}</strong> leads.
+                                            {stats.readyForConversion === 0 && (
+                                                <> There are no qualified leads ready for conversion at the moment.</>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            Start qualifying leads to identify the best opportunities for conversion.
+                                        </>
+                                    )}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+        </motion.div>
+    );
+};
+
+export default LeadConversion;

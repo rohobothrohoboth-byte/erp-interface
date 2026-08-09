@@ -8,66 +8,83 @@ import type {
 import type { StatChangeDto } from "../../../../../types/core/Settings/statChangeDto";
 
 class LeavePolicyConfigApi {
-  private baseUrl = `${
-    import.meta.env.VITE_HRMM_LEAVE_URL || "hrm/leave/v1"
-  }/LeavePolicyConfig`;
+  private baseUrl = "/hrm/leave/v1/Policy";
 
   private extractErrorMessage(error: any): string {
     if (error.response?.data?.message) return error.response.data.message;
     if (error.response?.data?.errors) {
-      return Object.values(error.response.data.errors).flat().join(", ");
+      const errors = error.response.data.errors;
+      if (typeof errors === 'object') {
+        return Object.values(errors).flat().join(", ");
+      }
+      return errors;
     }
     if (error.message) return error.message;
     return "An unexpected error occurred";
   }
 
-  async getById(id: UUID): Promise<LeavePolicyConfigListDto> {
+  async getActiveById(id: UUID): Promise<LeavePolicyConfigListDto | null> {
     try {
-      const res = await api.get(`${this.baseUrl}/GetPolicyConfig/${id}`);
-      return res.data.data;
-    } catch (error) {
-      throw new Error(this.extractErrorMessage(error));
-    }
-  }
-
-  async getActiveById(id: UUID): Promise<LeavePolicyConfigListDto> {
-    try {
-      const res = await api.get(`${this.baseUrl}/ActivePolicyConfig/${id}`);
-      return res.data.data;
-    } catch (error) {
-      throw new Error(this.extractErrorMessage(error));
+      const response = await api.get(`${this.baseUrl}/Config/Active/${id}`);
+      return response.data?.data || null;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      console.error("Error fetching active config:", error);
+      return null;
     }
   }
 
   async getAllById(id: UUID): Promise<LeavePolicyConfigListDto[]> {
     try {
-      const res = await api.get(`${this.baseUrl}/AllPolicyConfig/${id}`);
-      return res.data.data;
+      const response = await api.get(`${this.baseUrl}/Config/All/${id}`);
+      return response.data?.data || [];
     } catch (error) {
+      console.error("Error fetching configs:", error);
+      return [];
+    }
+  }
+
+  async getById(id: UUID): Promise<LeavePolicyConfigListDto | null> {
+    try {
+      const response = await api.get(`${this.baseUrl}/Config/${id}`);
+      return response.data?.data || null;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
       throw new Error(this.extractErrorMessage(error));
     }
   }
 
-  async create(
-    data: LeavePolicyConfigAddDto,
-  ): Promise<LeavePolicyConfigListDto> {
+  async create(data: LeavePolicyConfigAddDto): Promise<LeavePolicyConfigListDto> {
     try {
-      const res = await api.post(`${this.baseUrl}/AddPolicyConfig`, data);
-      return res.data.data;
-    } catch (error) {
+      console.log("=== API CREATE CONFIGURATION ===");
+      console.log("URL:", `${this.baseUrl}/Config/Add`);
+      console.log("Request Data:", JSON.stringify(data, null, 2));
+
+      const response = await api.post(`${this.baseUrl}/Config/Add`, data);
+
+      console.log("Response Status:", response.status);
+      console.log("Response Data:", response.data);
+
+      return response.data?.data;
+    } catch (error: any) {
+      console.error("=== API ERROR ===");
+      console.error("Status:", error.response?.status);
+      console.error("Error Data:", error.response?.data);
+      console.error("Error Message:", error.response?.data?.message);
+      console.error("Error Errors:", error.response?.data?.errors);
+
       throw new Error(this.extractErrorMessage(error));
     }
   }
 
-  async update(
-    data: LeavePolicyConfigModDto,
-  ): Promise<LeavePolicyConfigListDto> {
+  async update(data: LeavePolicyConfigModDto): Promise<LeavePolicyConfigListDto> {
     try {
-      const res = await api.put(
-        `${this.baseUrl}/ModPolicyConfig/${data.id}`,
-        data,
-      );
-      return res.data.data;
+      const response = await api.put(`${this.baseUrl}/Config/Update/${data.id}`, data);
+      return response.data?.data;
     } catch (error) {
       throw new Error(this.extractErrorMessage(error));
     }
@@ -75,16 +92,15 @@ class LeavePolicyConfigApi {
 
   async changeStatus(data: StatChangeDto): Promise<void> {
     try {
-      await api.post(`${this.baseUrl}/StatPolicyConfig`, data);
+      await api.patch(`${this.baseUrl}/Config/Status`, data);
     } catch (error) {
       throw new Error(this.extractErrorMessage(error));
     }
   }
 
-  async delete(id: UUID) {
+  async delete(id: UUID): Promise<void> {
     try {
-      const res = await api.delete(`${this.baseUrl}/DelPolicyConfig/${id}`);
-      return res.data.data;
+      await api.delete(`${this.baseUrl}/Config/Delete/${id}`);
     } catch (error) {
       throw new Error(this.extractErrorMessage(error));
     }
@@ -100,5 +116,5 @@ export const leavePolicyConfigFetcher = {
   create: (data: LeavePolicyConfigAddDto) => leavePolicyConfigApi.create(data),
   update: (data: LeavePolicyConfigModDto) => leavePolicyConfigApi.update(data),
   changeStatus: (data: StatChangeDto) => leavePolicyConfigApi.changeStatus(data),
-  delete:(id:UUID) => leavePolicyConfigApi.delete(id),
+  delete: (id: UUID) => leavePolicyConfigApi.delete(id),
 };

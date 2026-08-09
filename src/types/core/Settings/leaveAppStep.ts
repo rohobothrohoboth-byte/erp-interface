@@ -1,38 +1,45 @@
 import type { UUID } from "crypto";
-import type { BaseDto } from "../../hr/BaseDto";
+import type { BaseDto } from "./core/BaseDto";
+
 
 export type { UUID };
 
-export interface LeaveAppStepListDto extends BaseDto {
-  stepName: string;
-  stepOrder: number;
-  role: string;
-  isFinal: boolean;
-  roleStr: string;
-  isFinalStr: string;
-  employee: string | null;
-  leaveAppChain: string;
-  leavePolicyId: UUID;
-}
-
-// Add DTO
+// ✅ CHANGE TO PASCALCASE TO MATCH C# BACKEND
 export interface LeaveAppStepAddDto {
-  stepName: string;
-  stepOrder: number;
-  role: string; 
-  employeeId: string | null; 
-  isFinal: boolean;
-  leavePolicyId: UUID; 
+  StepName: string;           // PascalCase
+  StepOrder: number;          // PascalCase
+  Role: string;               // PascalCase
+  EmployeeId?: UUID | null;   // PascalCase
+  IsFinal: boolean;           // PascalCase
+  LeaveAppChainId: string;    // PascalCase
+  TimeoutHours?: number | null; // PascalCase
 }
 
-// Modify/Update DTO
 export interface LeaveAppStepModDto {
-  id: UUID;
-  stepName: string;
-  stepOrder: number;
-  role: string;
-  employeeId: UUID | null;
-  isFinal: boolean;
-  leavePolicyId: UUID;
-  rowVersion: string;
+  Id: UUID;                   // PascalCase
+  StepName: string;           // PascalCase
+  StepOrder: number;          // PascalCase
+  Role: string;               // PascalCase
+  EmployeeId?: UUID | null;   // PascalCase
+  IsFinal: boolean;           // PascalCase
+  TimeoutHours?: number | null; // PascalCase
+  RowVersion: string;         // PascalCase
+}
+
+export interface LeaveAppStepListDto {
+  Id: UUID;                   // PascalCase
+  StepName: string;           // PascalCase
+  StepOrder: number;          // PascalCase
+  Role: string;               // PascalCase
+  RoleStr?: string;           // PascalCase
+  EmployeeId?: UUID | null;   // PascalCase
+  Employee?: string;          // PascalCase
+  IsFinal: boolean;           // PascalCase
+  IsFinalStr?: string;        // PascalCase
+  LeaveAppChain?: string;     // PascalCase
+  TimeoutHours?: number | null; // PascalCase
+  IsDeleted: boolean;         // PascalCase
+  DateAdd: string;            // PascalCase
+  DateMod?: string;           // PascalCase
+  RowVersion?: string;        // PascalCase
 }

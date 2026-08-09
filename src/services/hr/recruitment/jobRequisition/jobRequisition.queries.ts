@@ -1,17 +1,30 @@
+// src/services/hr/recruitment/jobRequisition/jobRequisition.queries.ts
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { jobRequisitionApi } from './jobRequisition.api';
 import { jobRequisitionKeys } from './jobRequisition.key';
-import type { JobReqListDto, JobReqAddDto, JobReqModDto } from '../../../../types/hr/recruit/jobRequisition';
-import type {  ReviewDto } from '../../../../types/hr/recruit/reviewDto';
+import type {
+  JobReqListDto,
+  JobReqAddDto,
+  JobReqModDto
+} from '../../../../types/hr/recruit/jobRequisition';
+import type { ReviewDto } from '../../../../types/hr/recruit/reviewDto';
 
-export const useJobRequisitions = (
-  workforcePlanId?: string,
-  filters?: { search?: string; status?: string },
-) => {
+// ============= QUERIES =============
+
+// ✅ FIX: Get all requisitions (without workforcePlanId filter)
+export const useJobRequisitions = (workforcePlanId?: string, filters?: { search?: string; status?: string }) => {
   return useQuery<JobReqListDto[], Error>({
     queryKey: jobRequisitionKeys.list(workforcePlanId, filters),
-    queryFn: () => jobRequisitionApi.getAllWfpJobReq(workforcePlanId!),
-    enabled: !!workforcePlanId,
+    queryFn: () => {
+      // If workforcePlanId is provided, get by workforce plan
+      if (workforcePlanId) {
+        return jobRequisitionApi.getAllWfpJobReq(workforcePlanId);
+      }
+      // Otherwise get all requisitions
+      return jobRequisitionApi.getAll();
+    },
+    enabled: true, // ✅ Always enabled
     staleTime: 0,
     refetchOnMount: 'always',
   });
@@ -25,19 +38,18 @@ export const useJobRequisition = (id: string | undefined) => {
   });
 };
 
+// ============= MUTATIONS =============
+
 export const useCreateJobRequisition = (options?: {
   onSuccess?: (data: JobReqListDto) => void;
   onError?: (error: Error) => void;
 }) => {
   const queryClient = useQueryClient();
+
   return useMutation<JobReqListDto, Error, JobReqAddDto>({
     mutationFn: jobRequisitionApi.create,
     onSuccess: (newItem) => {
-      queryClient.setQueriesData<JobReqListDto[]>(
-        { queryKey: jobRequisitionKeys.lists() },
-        (old) => (old ? [...old, newItem] : [newItem])
-      );
-      queryClient.refetchQueries({ queryKey: jobRequisitionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: jobRequisitionKeys.lists() });
       options?.onSuccess?.(newItem);
     },
     onError: options?.onError,
@@ -49,14 +61,12 @@ export const useUpdateJobRequisition = (options?: {
   onError?: (error: Error) => void;
 }) => {
   const queryClient = useQueryClient();
+
   return useMutation<JobReqListDto, Error, JobReqModDto>({
     mutationFn: jobRequisitionApi.update,
     onSuccess: (updatedItem) => {
-      queryClient.setQueriesData<JobReqListDto[]>(
-        { queryKey: jobRequisitionKeys.lists() },
-        (old) => old?.map((item) => item.id === updatedItem.id ? updatedItem : item)
-      );
-      queryClient.refetchQueries({ queryKey: jobRequisitionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: jobRequisitionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: jobRequisitionKeys.detail(updatedItem.id) });
       options?.onSuccess?.(updatedItem);
     },
     onError: options?.onError,
@@ -68,14 +78,12 @@ export const useDeleteJobRequisition = (options?: {
   onError?: (error: Error) => void;
 }) => {
   const queryClient = useQueryClient();
+
   return useMutation<void, Error, string>({
     mutationFn: jobRequisitionApi.delete,
     onSuccess: (_, deletedId) => {
-      queryClient.setQueriesData<JobReqListDto[]>(
-        { queryKey: jobRequisitionKeys.lists() },
-        (old) => old?.filter((item) => item.id !== deletedId)
-      );
-      queryClient.refetchQueries({ queryKey: jobRequisitionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: jobRequisitionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: jobRequisitionKeys.detail(deletedId) });
       options?.onSuccess?.();
     },
     onError: options?.onError,
@@ -87,10 +95,11 @@ export const useReviewJobRequisition = (options?: {
   onError?: (error: Error) => void;
 }) => {
   const queryClient = useQueryClient();
+
   return useMutation<void, Error, ReviewDto>({
     mutationFn: jobRequisitionApi.review,
     onSuccess: () => {
-      queryClient.refetchQueries({ queryKey: jobRequisitionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: jobRequisitionKeys.lists() });
       options?.onSuccess?.();
     },
     onError: options?.onError,

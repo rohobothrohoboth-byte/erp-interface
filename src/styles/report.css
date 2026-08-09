@@ -1,0 +1,28 @@
+/* src/styles/report.css */
+
+@media print {
+    body {
+        background: white !important;
+        padding: 20px !important;
+    }
+
+    .report-container {
+        max-width: 100% !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    .page-break {
+        page-break-before: always;
+    }
+
+    .page-break-inside {
+        page-break-inside: avoid;
+    }
+}

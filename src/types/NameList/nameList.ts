@@ -1,8 +1,13 @@
 import type { UUID } from '../List/list';
 
+// types/NameList/nameList.ts
+
 export interface NameListItem {
-  id: UUID;
+  id: string;
   name: string;
+  key?: string;
+  icon?: string;  // Add this
+  order?: number; // Add this
 }
 
 export interface RoleListItem {

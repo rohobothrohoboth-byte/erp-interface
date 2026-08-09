@@ -1,12 +1,20 @@
-import type { JobPostingListDto, JobPostingAddDto, JobPostingModDto, JobPostingViewDto } from '../../../../types/hr/recruit/jobPosting';
+// src/services/hr/recruitment/jobPosting/jobPosting.api.ts
+
+import type {
+  JobPostingListDto,
+  JobPostingAddDto,
+  JobPostingModDto,
+  JobPostingViewDto
+} from '../../../../types/hr/recruit/jobPosting';
 import { api } from '../../../api';
 
 const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobPosting`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;
-  if (error.response?.data?.errors)
+  if (error.response?.data?.errors) {
     return (Object.values(error.response.data.errors) as string[][]).flat().join(', ');
+  }
   return error.message || 'An unexpected error occurred';
 };
 
@@ -24,14 +32,22 @@ export const jobPostingApi = {
     } catch (e) { throw new Error(extractError(e)); }
   },
 
+  // ✅ Changed to return JobPostingViewDto (detail view)
   getById: async (id: string): Promise<JobPostingViewDto> => {
     try {
       const res = await api.get(`${BASE}/GetJobPosting/${id}`);
-      return res.data.data;
+      console.log('📥 JobPosting Detail Response:', res.data);
+      return res.data?.data ?? res.data;
     } catch (e) { throw new Error(extractError(e)); }
   },
 
-  // POST /AddJobPosting — single requisition
+  getByWfp: async (wfpId: string): Promise<JobPostingListDto[]> => {
+    try {
+      const res = await api.get(`${BASE}/JobPostByWfp/${wfpId}`);
+      return normalizeArray(res.data?.data ?? res.data ?? []);
+    } catch (e) { throw new Error(extractError(e)); }
+  },
+
   create: async (data: JobPostingAddDto): Promise<void> => {
     try {
       await api.post(`${BASE}/AddJobPosting`, {
@@ -42,7 +58,6 @@ export const jobPostingApi = {
     } catch (e) { throw new Error(extractError(e)); }
   },
 
-  // POST /AddAllJobPosting — bulk (workforce plan ID)
   createAll: async (data: JobPostingAddDto): Promise<void> => {
     try {
       await api.post(`${BASE}/AddAllJobPosting`, {
@@ -64,13 +79,4 @@ export const jobPostingApi = {
       await api.delete(`${BASE}/DelJobPosting/${id}`);
     } catch (e) { throw new Error(extractError(e)); }
   },
-
-  // GET /JobPostByWfp/{id} — postings for a workforce plan
-  getByWfp: async (wfpId: string): Promise<JobPostingListDto[]> => {
-    try {
-      const res = await api.get(`${BASE}/JobPostByWfp/${wfpId}`);
-      return normalizeArray(res.data?.data ?? res.data ?? []);
-    } catch (e) { throw new Error(extractError(e)); }
-  },
-
 };

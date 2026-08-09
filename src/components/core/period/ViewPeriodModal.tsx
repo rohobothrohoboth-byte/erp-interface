@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Eye } from 'lucide-react';
+import { X, Eye, Calendar } from 'lucide-react';
+import { Button } from '../../ui/button';
 import type { PeriodListDto } from '../../../types/core/period';
 
 interface ViewPeriodModalProps {
@@ -9,130 +10,116 @@ interface ViewPeriodModalProps {
   onClose: () => void;
 }
 
-export const ViewPeriodModal: React.FC<ViewPeriodModalProps> = ({ 
-  period, 
-  isOpen, 
-  onClose 
-}) => {
+export const ViewPeriodModal: React.FC<ViewPeriodModalProps> = ({
+                                                                  period,
+                                                                  isOpen,
+                                                                  onClose
+                                                                }) => {
   if (!isOpen || !period) return null;
 
   const getStatusColor = (status: string): string => {
-    return status === '0' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-  };
-
-  const getStatusText = (status: string): string => {
-    return status === '0' ? 'Active' : 'Inactive';
+    return status === '0' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200';
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">
-          <div className="flex items-center gap-2">
-            <Eye size={20} />
-            <h2 className="text-lg font-bold text-gray-800">Details</h2>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Body - Two Column Layout */}
-        <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Left Column */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              {/* Period Name */}
-              <div>
-                <p className="text-sm text-gray-500">Period Name</p>
-                <p className="text-sm font-medium text-gray-900">{period.name}</p>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-md w-full overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <Eye className="h-4 w-4 text-slate-600 dark:text-slate-400" />
               </div>
+              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                Period Details
+              </h2>
+            </div>
+            <button
+                onClick={onClose}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
 
-              {/* Start Date */}
-              <div>
-                <p className="text-sm text-gray-500">Start Date</p>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{period.dateStartStr}</p>
-                  <p className="text-sm font-medium text-gray-900">{period.dateStartStrAm}</p>
+          {/* Body */}
+          <div className="p-5 space-y-4">
+            <div className="text-center pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex justify-center mb-2">
+                <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full">
+                  <Calendar className="h-6 w-6 text-slate-600 dark:text-slate-400" />
                 </div>
               </div>
+              <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200">
+                {period.name}
+              </h3>
+            </div>
 
-              {/* End Date */}
-              <div>
-                <p className="text-sm text-gray-500">End Date</p>
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{period.dateEndStr}</p>
-                  <p className="text-sm font-medium text-gray-900">{period.dateEndStrAm}</p>
-                </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Quarter</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                {period.quarter}
+              </span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Fiscal Year</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                {period.fiscYear}
+              </span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Start Date</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200 text-right">
+                {period.dateStartStr}
+              </span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500 dark:text-slate-400">ከ</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200 text-right">
+                {period.dateStartStrAm}
+              </span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500 dark:text-slate-400">End Date</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200 text-right">
+                {period.dateEndStr}
+              </span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500 dark:text-slate-400">እስከ</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200 text-right">
+                {period.dateEndStrAm}
+              </span>
+              </div>
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Status</span>
+                <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${getStatusColor(period.isActive)}`}>
+                {period.isActive === "0" ? "Active" : "Inactive"}
+              </span>
               </div>
             </div>
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-4">
-            <div className="space-y-2">
-              {/* Quarter */}
-              <div>
-                <p className="text-sm text-gray-500">Quarter</p>
-                <p className="text-sm font-medium text-gray-900">{period.quarter}</p>
-              </div>
-
-              {/* Fiscal Year */}
-              <div>
-                <p className="text-sm text-gray-500">Fiscal Year</p>
-                <p className="text-sm font-medium text-gray-900">{period.fiscYear}</p>
-              </div>
-
-              {/* Status */}
-              <div>
-                <p className="text-sm text-gray-500">Status</p>
-                <span
-                  className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(
-                    period.isActive
-                  )}`}
-                >
-                  {getStatusText(period.isActive)}
-                </span>
-              </div>
+          {/* Footer */}
+          <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+            <div className="flex justify-center">
+              <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="px-5 h-8 text-sm"
+              >
+                Close
+              </Button>
             </div>
           </div>
-        </div>
-
-        {/* Timestamps */}
-        <div className="border-t px-6 py-2">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <p className="text-sm text-gray-500">
-                Created At: <span className="font-medium">{period.createdAt} / {period.createdAtAm}</span>
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">
-                Modified At: <span className="font-medium">{period.modifiedAt} / {period.modifiedAtAm}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Close Button */}
-        <div className="border-t p-2 flex justify-center">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 transition-colors duration-200"
-          >
-            Close
-          </button>
-        </div>
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
   );
 };

@@ -1,141 +1,107 @@
-import { Input } from '../../../../../ui/input';
-import { Label } from '../../../../../ui/label';
-import { Textarea } from '../../../../../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../ui/select';
-import type { Lead } from '../../../../../../types/crm';
+// src/components/crm/leadManagement/leadGeneration/editLead/steps/EditLeadDetailsStep.tsx
+import React from 'react';
+import { User, Mail, Phone, Building2 } from 'lucide-react';
+import { Button } from '../../../../ui/button';
+import { Input } from '../../../../ui/input';
+import { Label } from '../../../../ui/label';
+import type { UpdateLeadDto } from '../../../../../types/crm/crm.types';
 
-const salesReps = ['Sarah Johnson', 'Mike Wilson', 'Emily Davis', 'Robert Chen', 'Lisa Anderson'];
-
-interface LeadDetailsStepProps {
-  formData: Partial<Lead>;
-  errors: Record<string, string>;
-  leadSourceNames: string[];
-  leadStatusNames: string[];
-  leadCategoryNames: string[];
-  contactMethodNames: string[];
-  settingsLoading: boolean;
-  onChange: (field: keyof Lead, value: any) => void;
+interface EditLeadDetailsStepProps {
+    formData: UpdateLeadDto;
+    onChange: (data: Partial<UpdateLeadDto>) => void;
+    onNext: () => void;
 }
 
-export default function LeadDetailsStep({
-  formData,
-  errors,
-  leadSourceNames,
-  leadStatusNames,
-  leadCategoryNames,
-  contactMethodNames,
-  settingsLoading,
-  onChange,
-}: LeadDetailsStepProps) {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Lead Details</h2>
+const EditLeadDetailsStep: React.FC<EditLeadDetailsStepProps> = ({
+                                                                     formData,
+                                                                     onChange,
+                                                                     onNext,
+                                                                 }) => {
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onNext();
+    };
 
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label className="text-sm text-gray-500">Source</Label>
-          <Select value={formData.source} onValueChange={(v) => onChange('source', v)}>
-            <SelectTrigger className="w-full focus:ring-1 focus:ring-orange-500">
-              <SelectValue placeholder="Select source" />
-            </SelectTrigger>
-            <SelectContent>
-              {settingsLoading ? (
-                <SelectItem value="loading" disabled>Loading...</SelectItem>
-              ) : (
-                leadSourceNames.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+    return (
+        <form onSubmit={handleSubmit}>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <User className="h-5 w-5 text-indigo-600" />
+                    Personal Information
+                </h2>
 
-        <div className="space-y-2">
-          <Label className="text-sm text-gray-500">Status</Label>
-          <Select value={formData.status} onValueChange={(v) => onChange('status', v)}>
-            <SelectTrigger className="w-full focus:ring-1 focus:ring-orange-500">
-              <SelectValue placeholder="Select status" />
-            </SelectTrigger>
-            <SelectContent>
-              {settingsLoading ? (
-                <SelectItem value="loading" disabled>Loading...</SelectItem>
-              ) : (
-                leadStatusNames.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label className="text-sm font-medium">First Name</Label>
+                        <Input
+                            value={formData.firstName || ''}
+                            onChange={(e) => onChange({ firstName: e.target.value })}
+                            className="mt-1"
+                            placeholder="John"
+                        />
+                    </div>
+                    <div>
+                        <Label className="text-sm font-medium">Last Name</Label>
+                        <Input
+                            value={formData.lastName || ''}
+                            onChange={(e) => onChange({ lastName: e.target.value })}
+                            className="mt-1"
+                            placeholder="Doe"
+                        />
+                    </div>
+                </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label className="text-sm text-gray-500">Lead Quality</Label>
-          <Select value={formData.leadQuality} onValueChange={(v) => onChange('leadQuality', v)}>
-            <SelectTrigger className="w-full focus:ring-1 focus:ring-orange-500">
-              <SelectValue placeholder="Select quality" />
-            </SelectTrigger>
-            <SelectContent>
-              {settingsLoading ? (
-                <SelectItem value="loading" disabled>Loading...</SelectItem>
-              ) : (
-                leadCategoryNames.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label className="text-sm font-medium">Email</Label>
+                        <Input
+                            type="email"
+                            value={formData.email || ''}
+                            onChange={(e) => onChange({ email: e.target.value })}
+                            className="mt-1"
+                            placeholder="john@example.com"
+                        />
+                    </div>
+                    <div>
+                        <Label className="text-sm font-medium">Phone</Label>
+                        <Input
+                            value={formData.phone || ''}
+                            onChange={(e) => onChange({ phone: e.target.value })}
+                            className="mt-1"
+                            placeholder="+1 234 567 890"
+                        />
+                    </div>
+                </div>
 
-        <div className="space-y-2">
-          <Label className="text-sm text-gray-500">Preferred Contact Method</Label>
-          <Select value={formData.preferredContactMethod} onValueChange={(v) => onChange('preferredContactMethod', v)}>
-            <SelectTrigger className="w-full focus:ring-1 focus:ring-orange-500">
-              <SelectValue placeholder="Select method" />
-            </SelectTrigger>
-            <SelectContent>
-              {settingsLoading ? (
-                <SelectItem value="loading" disabled>Loading...</SelectItem>
-              ) : (
-                contactMethodNames.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)
-              )}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label className="text-sm font-medium">Mobile</Label>
+                        <Input
+                            value={formData.mobile || ''}
+                            onChange={(e) => onChange({ mobile: e.target.value })}
+                            className="mt-1"
+                            placeholder="+1 234 567 890"
+                        />
+                    </div>
+                    <div>
+                        <Label className="text-sm font-medium">Company Name</Label>
+                        <Input
+                            value={formData.companyName || ''}
+                            onChange={(e) => onChange({ companyName: e.target.value })}
+                            className="mt-1"
+                            placeholder="Acme Corp"
+                        />
+                    </div>
+                </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label className="text-sm text-gray-500">Assigned To</Label>
-          <Select value={formData.assignedTo} onValueChange={(v) => onChange('assignedTo', v)}>
-            <SelectTrigger className="w-full focus:ring-1 focus:ring-orange-500">
-              <SelectValue placeholder="Auto-assign or select sales rep" />
-            </SelectTrigger>
-            <SelectContent>
-              {salesReps.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+                <div className="pt-4 border-t border-gray-200 flex justify-end">
+                    <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
+                        Next Step →
+                    </Button>
+                </div>
+            </div>
+        </form>
+    );
+};
 
-        <div className="space-y-2">
-          <Label className="text-sm text-gray-500">Lead Score (0-100)</Label>
-          <Input
-            type="number"
-            min="0"
-            max="100"
-            value={formData.score || ''}
-            onChange={(e) => onChange('score', e.target.value ? Number(e.target.value) : undefined)}
-            placeholder="0"
-            className="w-full focus:ring-1 focus:ring-orange-500"
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-sm text-gray-500">Notes</Label>
-        <Textarea
-          value={formData.notes}
-          onChange={(e) => onChange('notes', e.target.value)}
-          rows={4}
-          placeholder="Additional notes about this lead..."
-          className="w-full focus:ring-1 focus:ring-orange-500"
-        />
-      </div>
-    </div>
-  );
-}
+export default EditLeadDetailsStep;

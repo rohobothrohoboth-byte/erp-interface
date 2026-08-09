@@ -3,9 +3,9 @@ import type { UUID } from 'crypto';
 
 export type { UUID };
 export interface ReviewDto {
-  id: UUID;
+  id: string;
   appCount: number;
-  status: ReviewStat;
+  status: string; // The status from ReviewStat enum
   comment: string;
 }
 

@@ -4,11 +4,11 @@ import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import BranchTable from "../../components/core/branch/BranchTable";
 import AddHeader from "../../components/core/branch/AddHeader";
-import { 
-  useBranches, 
-  useCreateBranch, 
-  useUpdateBranch, 
-  useDeleteBranch 
+import {
+  useBranches,
+  useCreateBranch,
+  useUpdateBranch,
+  useDeleteBranch
 } from "../../services/core/branch/branch.queries";
 import type {
   BranchListDto,
@@ -17,6 +17,8 @@ import type {
 } from "../../types/core/branch";
 import type { UUID } from "../../types/core/branch";
 import { BranchType, BranchStat } from "../../types/core/enum";
+import { Building2, RefreshCw } from "lucide-react";
+import { Button } from "../../components/ui/button";
 
 interface BranchesPageProps {
   onBack?: () => void;
@@ -25,17 +27,17 @@ interface BranchesPageProps {
 const BranchesPage: React.FC<BranchesPageProps> = () => {
   const [searchParams] = useSearchParams();
   const companyId = searchParams.get("companyId") as UUID | null;
-  
+
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   // React Query hooks
-  const { 
-    data: branches = [], 
-    isLoading, 
+  const {
+    data: branches = [],
+    isLoading,
     error: queryError,
-    refetch 
+    refetch
   } = useBranches(companyId ? { companyId } : undefined);
 
   const createBranchMutation = useCreateBranch();
@@ -83,10 +85,10 @@ const BranchesPage: React.FC<BranchesPageProps> = () => {
 
     return branches.filter((branch) => {
       const basicMatch =
-        (branch.name && branch.name.toLowerCase().includes(lowercasedSearch)) ||
-        (branch.nameAm && branch.nameAm.toLowerCase().includes(lowercasedSearch)) ||
-        (branch.code && branch.code.toLowerCase().includes(lowercasedSearch)) ||
-        (branch.location && branch.location.toLowerCase().includes(lowercasedSearch));
+          (branch.name && branch.name.toLowerCase().includes(lowercasedSearch)) ||
+          (branch.nameAm && branch.nameAm.toLowerCase().includes(lowercasedSearch)) ||
+          (branch.code && branch.code.toLowerCase().includes(lowercasedSearch)) ||
+          (branch.location && branch.location.toLowerCase().includes(lowercasedSearch));
 
       const statusValue = branch.branchStat?.toString() || "";
       const statusText = getStatusText(statusValue);
@@ -137,7 +139,7 @@ const BranchesPage: React.FC<BranchesPageProps> = () => {
         nameAm: updatedBranch.nameAm,
         code: updatedBranch.code,
         location: updatedBranch.location,
-        dateOpened: new Date().toISOString(), // Consider preserving original date
+        dateOpened: new Date().toISOString(),
         branchType: updatedBranch.branchType || BranchType["0"],
         branchStat: updatedBranch.branchStat || BranchStat["0"],
         compId: updatedBranch.compId as UUID,
@@ -192,121 +194,109 @@ const BranchesPage: React.FC<BranchesPageProps> = () => {
     }
   };
 
-  // Handle error display
-  const errorMessage = useMemo(() => {
-    if (queryError) {
-      return queryError.message || "Failed to load branches. Please try again.";
-    }
-    return null;
-  }, [queryError]);
+  const handleCloseError = () => {
+    createBranchMutation.reset();
+    updateBranchMutation.reset();
+    deleteBranchMutation.reset();
+  };
+
+  const errorMessage = queryError?.message || null;
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-      </div>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-300 dark:border-slate-600 border-t-slate-600 dark:border-t-slate-400"></div>
+        </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <motion.h1
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-2xl font-bold bg-gradient-to-r from-emerald-500 to-emerald-700 bg-clip-text text-transparent dark:text-white"
-          >
-            {companyId ? `Company Branches` : "Branches for All Companies"}
-          </motion.h1>
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            <Building2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+              {companyId ? "Company Branches" : "All Branches"}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Manage branch locations and details
+            </p>
+          </div>
         </div>
-      </motion.div>
 
-      <AddHeader
-        searchTerm={searchTerm}
-        onSearchChange={handleSearchChange}
-        onAddBranch={companyId ? handleAddBranch : undefined}
-        defaultCompanyId={companyId as UUID}
-      />
+        {/* Add Header with Search */}
+        <AddHeader
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            onAddBranch={companyId ? handleAddBranch : undefined}
+            defaultCompanyId={companyId as UUID}
+        />
 
-      {/* Error Message */}
-      {errorMessage && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg"
-        >
-          <div className="flex justify-between items-center">
-            <span className="font-medium">
+        {/* Error Message */}
+        {errorMessage && (
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <div className="flex justify-between items-center">
+            <span className="text-sm text-red-700 dark:text-red-400">
               {errorMessage.includes("load") ? (
-                <>
-                  Failed to load branches.{" "}
-                  <button
-                    onClick={() => refetch()}
-                    className="underline hover:text-red-800 font-semibold focus:outline-none"
-                    disabled={isLoading}
-                  >
-                    Try again
-                  </button>
-                </>
+                  <>
+                    Failed to load branches.{" "}
+                    <button
+                        onClick={() => refetch()}
+                        className="underline hover:text-red-800 font-medium"
+                        disabled={isLoading}
+                    >
+                      Try again
+                    </button>
+                  </>
               ) : (
-                errorMessage
+                  errorMessage
               )}
             </span>
-            <button
-              onClick={() => {}}
-              className="text-red-700 hover:text-red-900 font-bold text-lg ml-4"
-            >
-              ×
-            </button>
-          </div>
-        </motion.div>
-      )}
+                <button
+                    onClick={() => {}}
+                    className="text-red-700 dark:text-red-400 hover:text-red-900 font-bold text-lg ml-4"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+        )}
 
-      {/* Mutation Error Display */}
-      {(createBranchMutation.error || updateBranchMutation.error || deleteBranchMutation.error) && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg"
-        >
-          <div className="flex justify-between items-center">
-            <span className="font-medium">
-              {createBranchMutation.error?.message || 
-               updateBranchMutation.error?.message || 
-               deleteBranchMutation.error?.message}
+        {/* Mutation Error Display */}
+        {(createBranchMutation.error || updateBranchMutation.error || deleteBranchMutation.error) && (
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <div className="flex justify-between items-center">
+            <span className="text-sm text-red-700 dark:text-red-400">
+              {createBranchMutation.error?.message ||
+                  updateBranchMutation.error?.message ||
+                  deleteBranchMutation.error?.message}
             </span>
-            <button
-              onClick={() => {
-                createBranchMutation.reset();
-                updateBranchMutation.reset();
-                deleteBranchMutation.reset();
-              }}
-              className="text-red-700 hover:text-red-900 font-bold text-lg ml-4"
-            >
-              ×
-            </button>
-          </div>
-        </motion.div>
-      )}
+                <button
+                    onClick={handleCloseError}
+                    className="text-red-700 dark:text-red-400 hover:text-red-900 font-bold text-lg ml-4"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+        )}
 
-      <BranchTable
-        branches={paginatedBranches}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={filteredBranches.length}
-        onPageChange={handlePageChange}
-        onBranchUpdate={handleBranchUpdate}
-        onBranchStatusChange={handleBranchStatusChange}
-        onBranchDelete={handleBranchDelete}
-      />
-    </div>
+        {/* Branch Table */}
+        <BranchTable
+            branches={paginatedBranches}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredBranches.length}
+            onPageChange={handlePageChange}
+            onBranchUpdate={handleBranchUpdate}
+            onBranchStatusChange={handleBranchStatusChange}
+            onBranchDelete={handleBranchDelete}
+        />
+      </div>
   );
 };
-
+console.log('BranchesPage rendering...');
 export default BranchesPage;

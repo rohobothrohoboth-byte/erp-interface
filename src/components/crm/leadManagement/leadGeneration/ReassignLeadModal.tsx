@@ -1,84 +1,118 @@
-import { motion } from 'framer-motion';
-import { UserPlus } from 'lucide-react';
+// src/components/crm/leadManagement/leadGeneration/ReassignLeadModal.tsx
+import React, { useState } from 'react';
+import { Users, UserPlus } from 'lucide-react';
 import { Button } from '../../../ui/button';
+import { Input } from '../../../ui/input';
 import { Label } from '../../../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../ui/select';
-import type { Lead } from '../../../../types/crm';
-
-const salesReps = ['Sarah Johnson', 'Mike Wilson', 'Emily Davis', 'Robert Chen', 'Lisa Anderson'];
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../../ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../ui/select';
+import type { LeadDto } from '../../../../types/crm/crm.types';
 
 interface ReassignLeadModalProps {
-  lead: Lead | null;
-  isOpen: boolean;
-  selectedRep: string;
-  onRepChange: (rep: string) => void;
-  onConfirm: () => void;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  lead: LeadDto | null;
+  onReassign: (userId: string) => void;
+  loading?: boolean;
+  users?: Array<{ id: string; name: string }>;
 }
 
-export default function ReassignLeadModal({
-  lead,
-  isOpen,
-  selectedRep,
-  onRepChange,
-  onConfirm,
-  onClose,
-}: ReassignLeadModalProps) {
-  if (!isOpen || !lead) return null;
+const ReassignLeadModal: React.FC<ReassignLeadModalProps> = ({
+                                                               open,
+                                                               onOpenChange,
+                                                               lead,
+                                                               onReassign,
+                                                               loading = false,
+                                                               users = [],
+                                                             }) => {
+  const [selectedUserId, setSelectedUserId] = useState('');
+
+  const handleSubmit = () => {
+    if (selectedUserId) {
+      onReassign(selectedUserId);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-md w-full"
-      >
-        {/* Header */}
-        <div className="flex items-center gap-2 border-b px-6 py-2 sticky top-0 bg-white z-10 rounded-t-xl">
-          <UserPlus size={20} className="text-orange-600" />
-          <h2 className="text-lg font-bold text-gray-800">Reassign Lead</h2>
-        </div>
-
-        {/* Body */}
-        <div className="px-6 py-4 space-y-4">
-
-          <div className="space-y-2">
-            <Label htmlFor="salesRep" className="text-sm text-gray-500">
-              Select Sales Rep <span className="text-red-500">*</span>
-            </Label>
-            <Select value={selectedRep} onValueChange={onRepChange}>
-              <SelectTrigger
-                id="salesRep"
-                className="w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent"
-              >
-                <SelectValue placeholder="Choose a sales rep" />
-              </SelectTrigger>
-              <SelectContent>
-                {salesReps.map((rep) => (
-                  <SelectItem key={rep} value={rep}>{rep}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-indigo-600">
+              <UserPlus className="h-5 w-5" />
+              Reassign Lead
+            </DialogTitle>
+            <DialogDescription>
+              Assign this lead to a different user
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="bg-gray-50 rounded-lg p-3">
+              <p className="text-sm text-gray-600">
+                Lead: <strong>{lead?.fullName}</strong>
+              </p>
+              {lead?.companyName && (
+                  <p className="text-sm text-gray-600">
+                    Company: <strong>{lead.companyName}</strong>
+                  </p>
+              )}
+              <p className="text-sm text-gray-600">
+                Current: <strong>{lead?.assignedToUserName || 'Unassigned'}</strong>
+              </p>
+            </div>
+            <div>
+              <Label>Assign To</Label>
+              {users.length > 0 ? (
+                  <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {users.map((user) => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+              ) : (
+                  <Input
+                      className="mt-1"
+                      placeholder="Enter user ID"
+                      value={selectedUserId}
+                      onChange={(e) => setSelectedUserId(e.target.value)}
+                  />
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t px-6 py-3 rounded-b-xl">
-          <div className="flex justify-center items-center gap-2">
-            <Button
-              className="bg-orange-600 hover:bg-orange-700 text-white px-6"
-              onClick={onConfirm}
-              disabled={!selectedRep}
-            >
-              Assign
-            </Button>
-            <Button variant="outline" className="px-6" onClick={onClose}>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
               Cancel
             </Button>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+            <Button
+                className="bg-indigo-600 hover:bg-indigo-700"
+                onClick={handleSubmit}
+                disabled={loading || !selectedUserId}
+            >
+              <Users className="h-4 w-4 mr-2" />
+              {loading ? 'Assigning...' : 'Assign Lead'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
   );
-}
+};
+
+export default ReassignLeadModal;

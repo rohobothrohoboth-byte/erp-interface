@@ -174,7 +174,7 @@ const AddMenuPermissionModal: React.FC<AddMenuPermissionModalProps> = ({ onAddPe
         order: newPermission.order,
       };
       
-      console.log('Sending data to API:', dataToSend);
+
       
       const response = await onAddPermission(dataToSend);
 

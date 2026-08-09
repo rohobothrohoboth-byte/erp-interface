@@ -39,7 +39,16 @@ export interface Step1Dto {
     email: string;
     website?: string;
 }
-
+export interface EmpRevDto
+{
+    id:UUID;
+    decision:boolean;
+}
+export interface EmpRevDto
+{
+    id:UUID;
+    decision:boolean;
+}
 export interface Step2Dto {
     firstName: string;
     middleName: string; // Fixed: was liddleNameAm

@@ -1,496 +1,538 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+// src/pages/crm/contactManagement/ContactDetailPage.tsx
+
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Edit, Phone, Mail, Building, User, Calendar, Briefcase, FileText } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+    ArrowLeft,
+    Edit,
+    Trash2,
+    User,
+    Mail,
+    Phone,
+    Building2,
+    Briefcase,
+    Star,
+    UserCheck,
+    MessageCircle,
+    Linkedin,
+    Twitter,
+    Facebook,
+    Calendar,
+    Clock,
+    Link,
+    CheckCircle,
+    XCircle,
+    Loader2,
+    AlertCircle,
+    Activity,
+    FileText,
+    MoreVertical,
+} from 'lucide-react';
+import { getContactById, deleteContact } from '../../../services/crm/crm.api';
 import { showToast } from '../../../layout/layout';
-import { mockContacts } from '../../../data/crmMockData';
-import ContactOverview from '../../../components/crm/contactManagement/contacts/ContactOverview';
-import ContactActivities from '../../../components/crm/contactManagement/contacts/ContactActivities';
-import ContactOpportunities from '../../../components/crm/contactManagement/contacts/ContactOpportunities';
-import ContactNotes from '../../../components/crm/contactManagement/contacts/ContactNotes';
-import ContactForm from '../../../components/crm/contactManagement/contacts/ContactForm';
-import ContactEmailModal from '../../../components/crm/contactManagement/contacts/ContactEmailModal';
-import AccountForm from '../../../components/crm/accountManagement/components/AccountForm';
-import type { Contact, Account } from '../../../types/crm';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
+import { Card, CardContent } from '../../../components/ui/card';
+import { Avatar, AvatarFallback } from '../../../components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '../../../components/ui/dialog';
+import type { ContactDto } from '../../../types/crm/crm.types';
 
-export default function ContactDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [contact, setContact] = useState<Contact | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+const ContactDetailPage: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const [contact, setContact] = useState<ContactDto | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    // Load contact from localStorage
-    const storedContacts = localStorage.getItem('contacts');
-    if (storedContacts) {
-      try {
-        const contacts = JSON.parse(storedContacts);
-        const foundContact = contacts.find((c: Contact) => c.id === id);
-        if (foundContact) {
-          setContact(foundContact);
-        } else {
-          // Fallback to mock data
-          const mockContact = mockContacts.find(c => c.id === id);
-          if (mockContact) {
-            setContact(mockContact);
-          } else {
-            showToast.error('Contact not found');
-            navigate('/crm/contacts');
-          }
+    useEffect(() => {
+        if (id) {
+            fetchContact(id);
         }
-      } catch (error) {
-        console.error('Error loading contact from localStorage:', error);
-        // Fallback to mock data
-        const foundContact = mockContacts.find(c => c.id === id);
-        if (foundContact) {
-          setContact(foundContact);
-        } else {
-          showToast.error('Contact not found');
-          navigate('/crm/contacts');
-        }
-      }
-    } else {
-      // Fallback to mock data
-      const foundContact = mockContacts.find(c => c.id === id);
-      if (foundContact) {
-        setContact(foundContact);
-      } else {
-        showToast.error('Contact not found');
-        navigate('/crm/contacts');
-      }
-    }
-  }, [id, navigate]);
+    }, [id]);
 
-  const handleEditContact = (contactData: Partial<Contact>) => {
-    if (contact) {
-      const updatedContact = { 
-        ...contact, 
-        ...contactData, 
-        updatedAt: new Date().toISOString() 
-      };
-      setContact(updatedContact);
-      
-      // Update localStorage
-      const storedContacts = localStorage.getItem('contacts');
-      if (storedContacts) {
+    const fetchContact = async (contactId: string) => {
         try {
-          const contacts = JSON.parse(storedContacts);
-          const updatedContacts = contacts.map((c: Contact) => 
-            c.id === contact.id ? updatedContact : c
-          );
-          localStorage.setItem('contacts', JSON.stringify(updatedContacts));
-        } catch (error) {
-          console.error('Error updating contact in localStorage:', error);
+            setLoading(true);
+            setError(null);
+            const response = await getContactById(contactId);
+            const data = response.data?.data || response.data;
+
+            if (!data) {
+                throw new Error('Contact not found');
+            }
+
+            setContact(data);
+        } catch (error: any) {
+            console.error('Error fetching contact:', error);
+            const errorMessage = error?.response?.status === 404
+                ? 'Contact not found'
+                : error?.response?.data?.message || 'Failed to load contact details';
+            setError(errorMessage);
+            showToast.error(errorMessage);
+
+            setTimeout(() => {
+                navigate('/crm/contacts');
+            }, 2000);
+        } finally {
+            setLoading(false);
         }
-      }
-      
-      showToast.success('Contact updated successfully');
-    }
-  };
+    };
 
-  const handleEmailSent = (emailData: { subject: string; message: string }) => {
-    // In a real app, this would send the email via API
-    console.log('Email sent:', emailData);
-    showToast.success('Email sent successfully');
-  };
+    const handleDelete = async () => {
+        if (!contact) return;
+        try {
+            setIsDeleting(true);
+            await deleteContact(contact.id);
+            showToast.success('Contact deleted successfully');
+            navigate('/crm/contacts');
+        } catch (error) {
+            showToast.error('Failed to delete contact');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
-  const handleCreateAccount = () => {
-    setIsAccountDialogOpen(true);
-  };
+    const getInitials = (firstName: string, lastName: string) => {
+        return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+    };
 
-  const handleAccountCreate = (accountData: Partial<Account>) => {
-    if (!contact) return;
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return 'N/A';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    };
 
-    try {
-      // Create new account
-      const newAccountId = Date.now().toString();
-      const newAccount: Account = {
-        id: newAccountId,
-        name: accountData.name || contact.company,
-        industry: accountData.industry || '',
-        website: accountData.website || '',
-        phone: accountData.phone || contact.phone,
-        email: accountData.email || contact.email,
-        address: accountData.address || contact.address,
-        city: accountData.city || contact.city,
-        state: accountData.state || contact.state,
-        zipCode: accountData.zipCode || contact.zipCode,
-        country: accountData.country || contact.country,
-        accountType: accountData.accountType || 'Customer',
-        owner: accountData.owner || contact.owner,
-        isActive: true,
-        primaryContactId: contact.id,
-        contactIds: [contact.id],
-        opportunityIds: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        notes: accountData.notes || '',
-        customFields: accountData.customFields || {},
-        tags: accountData.tags || []
-      };
-
-      // Save account to localStorage
-      const storedAccounts = localStorage.getItem('accounts');
-      const accounts = storedAccounts ? JSON.parse(storedAccounts) : [];
-      accounts.push(newAccount);
-      localStorage.setItem('accounts', JSON.stringify(accounts));
-
-      // Update contact with account ID
-      const updatedContact = {
-        ...contact,
-        accountId: newAccountId,
-        updatedAt: new Date().toISOString()
-      };
-      setContact(updatedContact);
-
-      // Update contact in localStorage
-      const storedContacts = localStorage.getItem('contacts');
-      if (storedContacts) {
-        const contacts = JSON.parse(storedContacts);
-        const updatedContacts = contacts.map((c: Contact) => 
-          c.id === contact.id ? updatedContact : c
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                <p className="mt-4 text-gray-500">Loading contact details...</p>
+            </div>
         );
-        localStorage.setItem('contacts', JSON.stringify(updatedContacts));
-      }
-
-      showToast.success('Account created successfully and linked to contact');
-      setIsAccountDialogOpen(false);
-    } catch (error) {
-      console.error('Error creating account:', error);
-      showToast.error('Failed to create account. Please try again.');
     }
-  };
 
-  if (!contact) {
+    if (error || !contact) {
+        return (
+            <div className="text-center py-12">
+                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-gray-700">Contact not found</h2>
+                <p className="text-gray-500">{error || "The contact you're looking for doesn't exist."}</p>
+                <Button onClick={() => navigate('/crm/contacts')} className="mt-4">
+                    Back to Contacts
+                </Button>
+            </div>
+        );
+    }
+
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading contact...</p>
-        </div>
-      </div>
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6 p-6"
+        >
+            {/* Header */}
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => navigate('/crm/contacts')}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <ArrowLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-14 w-14">
+                            <AvatarFallback className="bg-indigo-100 text-indigo-600 text-lg">
+                                {getInitials(contact.firstName, contact.lastName)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-900">
+                                {contact.firstName} {contact.lastName}
+                            </h1>
+                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                                {contact.title && (
+                                    <span className="text-sm text-gray-500">{contact.title}</span>
+                                )}
+                                {contact.isActive ? (
+                                    <Badge className="bg-green-100 text-green-700 border-green-200">Active</Badge>
+                                ) : (
+                                    <Badge className="bg-red-100 text-red-700 border-red-200">Inactive</Badge>
+                                )}
+                                {contact.isPrimary && (
+                                    <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
+                                        <Star className="h-3 w-3 mr-1" />
+                                        Primary
+                                    </Badge>
+                                )}
+                                {contact.isDecisionMaker && (
+                                    <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                                        <UserCheck className="h-3 w-3 mr-1" />
+                                        Decision Maker
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate(`/crm/contacts/edit/${contact.id}`)}
+                        className="flex items-center gap-2"
+                    >
+                        <Edit size={16} />
+                        Edit
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => setIsDeleteModalOpen(true)}
+                    >
+                        <Trash2 size={16} />
+                    </Button>
+                </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-blue-700 font-medium">Company</p>
+                                <p className="text-lg font-bold text-blue-900">
+                                    {contact.customerName || 'N/A'}
+                                </p>
+                            </div>
+                            <div className="p-3 bg-blue-200 rounded-lg">
+                                <Building2 className="h-6 w-6 text-blue-700" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-green-700 font-medium">Email</p>
+                                <p className="text-lg font-bold text-green-900 truncate">
+                                    {contact.email || 'N/A'}
+                                </p>
+                            </div>
+                            <div className="p-3 bg-green-200 rounded-lg">
+                                <Mail className="h-6 w-6 text-green-700" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-purple-700 font-medium">Phone</p>
+                                <p className="text-lg font-bold text-purple-900">
+                                    {contact.phone || 'N/A'}
+                                </p>
+                            </div>
+                            <div className="p-3 bg-purple-200 rounded-lg">
+                                <Phone className="h-6 w-6 text-purple-700" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="bg-gradient-to-r from-orange-50 to-orange-100 border-orange-200">
+                    <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="text-sm text-orange-700 font-medium">Department</p>
+                                <p className="text-lg font-bold text-orange-900">
+                                    {contact.department || 'N/A'}
+                                </p>
+                            </div>
+                            <div className="p-3 bg-orange-200 rounded-lg">
+                                <Briefcase className="h-6 w-6 text-orange-700" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Contact Details */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Communication Preferences */}
+                    <Card>
+                        <CardContent className="p-6">
+                            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                                <MessageCircle className="h-5 w-5 text-indigo-600" />
+                                Communication Preferences
+                            </h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex items-center gap-2">
+                                    {contact.acceptsEmail ? (
+                                        <CheckCircle className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                        <XCircle className="h-4 w-4 text-red-500" />
+                                    )}
+                                    <span className="text-sm">Accepts Email</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {contact.acceptsSMS ? (
+                                        <CheckCircle className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                        <XCircle className="h-4 w-4 text-red-500" />
+                                    )}
+                                    <span className="text-sm">Accepts SMS</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {contact.acceptsCalls ? (
+                                        <CheckCircle className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                        <XCircle className="h-4 w-4 text-red-500" />
+                                    )}
+                                    <span className="text-sm">Accepts Calls</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    {contact.acceptsMarketing ? (
+                                        <CheckCircle className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                        <XCircle className="h-4 w-4 text-red-500" />
+                                    )}
+                                    <span className="text-sm">Accepts Marketing</span>
+                                </div>
+                            </div>
+                            {contact.preferredContactMethod && (
+                                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                                    <p className="text-sm text-gray-600">
+                                        Preferred Contact Method: <span className="font-medium">{contact.preferredContactMethod}</span>
+                                    </p>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Social Media */}
+                    {(contact.linkedIn || contact.twitter || contact.facebook) && (
+                        <Card>
+                            <CardContent className="p-6">
+                                <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                                    <Link className="h-5 w-5 text-indigo-600" />
+                                    Social Media
+                                </h2>
+                                <div className="space-y-2">
+                                    {contact.linkedIn && (
+                                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                                            <Linkedin className="h-4 w-4 text-blue-600" />
+                                            <a href={contact.linkedIn} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">
+                                                {contact.linkedIn}
+                                            </a>
+                                        </div>
+                                    )}
+                                    {contact.twitter && (
+                                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                                            <Twitter className="h-4 w-4 text-blue-400" />
+                                            <a href={contact.twitter} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline text-sm">
+                                                {contact.twitter}
+                                            </a>
+                                        </div>
+                                    )}
+                                    {contact.facebook && (
+                                        <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                                            <Facebook className="h-4 w-4 text-blue-700" />
+                                            <a href={contact.facebook} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline text-sm">
+                                                {contact.facebook}
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Notes */}
+                    {contact.notes && (
+                        <Card>
+                            <CardContent className="p-6">
+                                <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                                    <FileText className="h-5 w-5 text-indigo-600" />
+                                    Notes
+                                </h2>
+                                <p className="text-gray-700 whitespace-pre-wrap">{contact.notes}</p>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+
+                {/* Sidebar */}
+                <div className="space-y-6">
+                    {/* Contact Info */}
+                    <Card>
+                        <CardContent className="p-6">
+                            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                                <User className="h-5 w-5 text-indigo-600" />
+                                Contact Info
+                            </h2>
+                            <div className="space-y-3">
+                                <div>
+                                    <p className="text-sm text-gray-500">Email</p>
+                                    <p className="font-medium flex items-center gap-2">
+                                        <Mail className="h-4 w-4 text-gray-400" />
+                                        {contact.email || 'N/A'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Phone</p>
+                                    <p className="font-medium flex items-center gap-2">
+                                        <Phone className="h-4 w-4 text-gray-400" />
+                                        {contact.phone || 'N/A'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Mobile</p>
+                                    <p className="font-medium flex items-center gap-2">
+                                        <Phone className="h-4 w-4 text-gray-400" />
+                                        {contact.mobile || 'N/A'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Title</p>
+                                    <p className="font-medium">{contact.title || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Department</p>
+                                    <p className="font-medium">{contact.department || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Company</p>
+                                    <p className="font-medium">{contact.customerName || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Engagement */}
+                    <Card>
+                        <CardContent className="p-6">
+                            <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
+                                <Activity className="h-5 w-5 text-indigo-600" />
+                                Engagement
+                            </h2>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-gray-500">Contact Count</span>
+                                    <span className="font-medium">{contact.contactCount || 0}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-gray-500">Last Contact</span>
+                                    <span className="font-medium">{contact.lastContactDate ? formatDate(contact.lastContactDate) : 'Never'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-gray-500">Created</span>
+                                    <span className="font-medium">{formatDate(contact.createdAt)}</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Quick Actions */}
+                    <Card>
+                        <CardContent className="p-6">
+                            <h2 className="text-lg font-semibold mb-4">Quick Actions</h2>
+                            <div className="space-y-2">
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-start"
+                                    onClick={() => navigate(`/crm/contacts/edit/${contact.id}`)}
+                                >
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Contact
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50"
+                                    onClick={() => setIsDeleteModalOpen(true)}
+                                >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Contact
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+
+            {/* Delete Modal */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                            <Trash2 className="h-5 w-5" />
+                            Delete Contact
+                        </DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to delete this contact? This action cannot be undone.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {contact && (
+                        <div className="py-4">
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <Avatar>
+                                    <AvatarFallback className="bg-indigo-100 text-indigo-600">
+                                        {getInitials(contact.firstName, contact.lastName)}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-medium">
+                                        {contact.firstName} {contact.lastName}
+                                    </p>
+                                    <p className="text-sm text-gray-500">{contact.email || 'No email'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    Deleting...
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Contact
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </motion.div>
     );
-  }
+};
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/crm/contacts')}
-            className="hover:bg-orange-50"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Contacts
-          </Button>
-          <div className="h-6 w-px bg-gray-300" />
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              {contact.firstName} {contact.lastName}
-            </h1>
-            <p className="text-gray-600">{contact.jobTitle} at {contact.company}</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => window.open(`tel:${contact.phone}`, '_self')}
-          >
-            <Phone className="w-4 h-4 mr-2" />
-            Call
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEmailModalOpen(true)}
-          >
-            <Mail className="w-4 h-4 mr-2" />
-            Email
-          </Button>
-          {!contact.accountId && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-orange-50 hover:bg-orange-100 text-orange-700 border-orange-200"
-              onClick={() => handleCreateAccount()}
-            >
-              <Building className="w-4 h-4 mr-2" />
-              Create Account
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Contact Summary Card */}
-      {/* <Card className="border-green-200">
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                <User className="w-8 h-8 text-green-600" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">
-                  {contact.firstName} {contact.lastName}
-                </h3>
-                <Badge className={stageColors[contact.stage]}>
-                  {contact.stage}
-                </Badge>
-              </div>
-            </div>
-
-         
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2 text-sm">
-                <Mail className="w-4 h-4 text-gray-400" />
-                <span>{contact.email}</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm">
-                <Phone className="w-4 h-4 text-gray-400" />
-                <span>{contact.phone}</span>
-              </div>
-              <div className="flex items-center space-x-2 text-sm">
-                <MapPin className="w-4 h-4 text-gray-400" />
-                <span>{contact.city}, {contact.state}</span>
-              </div>
-            </div>
-
-         
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2 text-sm">
-                <Building className="w-4 h-4 text-gray-400" />
-                <span className="font-medium">{contact.company}</span>
-              </div>
-              <div className="text-sm text-gray-600">{contact.jobTitle}</div>
-              <div className="text-sm text-gray-500">
-                Owner: {contact.owner}
-              </div>
-            </div>
-
-            
-            <div className="space-y-2">
-              <div className="text-sm">
-                <span className="text-gray-500">Relationship Score</span>
-                <div className="flex items-center space-x-2 mt-1">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-600 h-2 rounded-full" 
-                      style={{ width: `${contact.relationshipScore}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-sm font-medium">{contact.relationshipScore}</span>
-                </div>
-              </div>
-              <div className="text-sm">
-                <span className="text-gray-500">Last Contact</span>
-                <div className="flex items-center space-x-1 mt-1">
-                  <Calendar className="w-3 h-3 text-gray-400" />
-                  <span className="text-xs">
-                    {new Date(contact.lastContactDate).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        
-          {contact.tags.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center space-x-2">
-                <Tag className="w-4 h-4 text-gray-400" />
-                <div className="flex flex-wrap gap-2">
-                  {contact.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-        
-          {(contact.socialMedia.linkedin || contact.socialMedia.twitter || contact.socialMedia.facebook) && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-500">Social Media:</span>
-                {contact.socialMedia.linkedin && (
-                  <a
-                    href={contact.socialMedia.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center space-x-1 text-blue-600 hover:text-blue-800 text-sm"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    <span>LinkedIn</span>
-                  </a>
-                )}
-                {contact.socialMedia.twitter && (
-                  <a
-                    href={`https://twitter.com/${contact.socialMedia.twitter.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center space-x-1 text-blue-400 hover:text-blue-600 text-sm"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    <span>Twitter</span>
-                  </a>
-                )}
-                {contact.socialMedia.facebook && (
-                  <a
-                    href={contact.socialMedia.facebook}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center space-x-1 text-blue-800 hover:text-blue-900 text-sm"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                    <span>Facebook</span>
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card> */}
-
-      {/* Tabs */}
-      <div className="bg-white rounded-2xl shadow-sm border border-orange-200 p-2">
-        <nav className="flex space-x-2">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-3 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap ${
-              activeTab === 'overview'
-                ? 'bg-orange-50 border border-orange-300 text-orange-700 shadow-sm'
-                : 'text-gray-500 hover:text-orange-700 hover:bg-orange-50'
-            }`}
-          >
-            <User className={`h-5 w-5 ${activeTab === 'overview' ? 'text-orange-600' : 'text-gray-400'}`} />
-            Overview
-            {activeTab === 'overview' && (
-              <div className="w-2 h-2 rounded-full bg-orange-500 ml-1"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('activities')}
-            className={`flex items-center gap-3 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap ${
-              activeTab === 'activities'
-                ? 'bg-orange-50 border border-orange-300 text-orange-700 shadow-sm'
-                : 'text-gray-500 hover:text-orange-700 hover:bg-orange-50'
-            }`}
-          >
-            <Calendar className={`h-5 w-5 ${activeTab === 'activities' ? 'text-orange-600' : 'text-gray-400'}`} />
-            Activities
-            {activeTab === 'activities' && (
-              <div className="w-2 h-2 rounded-full bg-orange-500 ml-1"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('opportunities')}
-            className={`flex items-center gap-3 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap ${
-              activeTab === 'opportunities'
-                ? 'bg-orange-50 border border-orange-300 text-orange-700 shadow-sm'
-                : 'text-gray-500 hover:text-orange-700 hover:bg-orange-50'
-            }`}
-          >
-            <Briefcase className={`h-5 w-5 ${activeTab === 'opportunities' ? 'text-orange-600' : 'text-gray-400'}`} />
-            Opportunities
-            {activeTab === 'opportunities' && (
-              <div className="w-2 h-2 rounded-full bg-orange-500 ml-1"></div>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('notes')}
-            className={`flex items-center gap-3 py-3 px-4 rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap ${
-              activeTab === 'notes'
-                ? 'bg-orange-50 border border-orange-300 text-orange-700 shadow-sm'
-                : 'text-gray-500 hover:text-orange-700 hover:bg-orange-50'
-            }`}
-          >
-            <FileText className={`h-5 w-5 ${activeTab === 'notes' ? 'text-orange-600' : 'text-gray-400'}`} />
-            Notes
-            {activeTab === 'notes' && (
-              <div className="w-2 h-2 rounded-full bg-orange-500 ml-1"></div>
-            )}
-          </button>
-        </nav>
-      </div>
-
-      <div className="mt-4">
-        {activeTab === 'overview' && (
-          <div className="space-y-6">
-            <ContactOverview contact={contact} onEdit={() => setIsEditDialogOpen(true)} />
-          </div>
-        )}
-
-        {activeTab === 'activities' && (
-          <div className="space-y-6">
-            <ContactActivities contactId={contact.id} />
-          </div>
-        )}
-
-        {activeTab === 'opportunities' && (
-          <div className="space-y-6">
-            <ContactOpportunities contactId={contact.id} hasAccount={!!contact.accountId} />
-          </div>
-        )}
-
-        {activeTab === 'notes' && (
-          <div className="space-y-6">
-            <ContactNotes contactId={contact.id} />
-          </div>
-        )}
-      </div>
-
-      {/* Email Modal */}
-      <ContactEmailModal
-        contact={contact}
-        isOpen={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
-        onEmailSent={handleEmailSent}
-      />
-
-      {/* Edit Contact Form */}
-      <ContactForm
-        contact={contact}
-        isOpen={isEditDialogOpen}
-        onClose={() => setIsEditDialogOpen(false)}
-        onSubmit={handleEditContact}
-        mode="edit"
-      />
-
-      {/* Create Account Form */}
-      <AccountForm
-        isOpen={isAccountDialogOpen}
-        onClose={() => setIsAccountDialogOpen(false)}
-        onSubmit={handleAccountCreate}
-        mode="add"
-        initialData={{
-          name: contact.company,
-          phone: contact.phone,
-          email: contact.email,
-          address: contact.address,
-          city: contact.city,
-          state: contact.state,
-          zipCode: contact.zipCode,
-          country: contact.country,
-          owner: contact.owner
-        }}
-      />
-    </motion.div>
-  );
-}
+export default ContactDetailPage;

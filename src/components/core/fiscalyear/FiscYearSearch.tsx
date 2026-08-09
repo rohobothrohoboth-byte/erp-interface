@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { Search, X } from 'lucide-react';
 
 interface FiscYearSearchProps {
@@ -6,57 +5,32 @@ interface FiscYearSearchProps {
   onSearchChange: (term: string) => void;
 }
 
-export const FiscYearSearch: React.FC<FiscYearSearchProps> = ({ 
-  searchTerm, 
-  onSearchChange 
-}) => {
-  const clearSearch = () => {
-    onSearchChange('');
-  };
-
-  const hasSearchTerm = searchTerm !== '';
+export const FiscYearSearch: React.FC<FiscYearSearchProps> = ({
+                                                                searchTerm,
+                                                                onSearchChange
+                                                              }) => {
+  const clearSearch = () => onSearchChange('');
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="bg-white p-4 rounded-lg shadow-sm"
-    >
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex-1">
-          <label htmlFor="fiscal-year-search" className="sr-only">
-            Search fiscal years
-          </label>
-          <div className="relative max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <input
-              id="fiscal-year-search"
-              name="fiscal-year-search"
+      <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 shadow-sm">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
+          <input
               type="text"
-              placeholder="Search fiscal years by name, duration, or status..."
-              className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+              placeholder="Search fiscal years by name or status..."
+              className="w-full pl-9 pr-9 py-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-400"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-            />
-            {/* Clear search "X" button */}
-            {hasSearchTerm && (
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <button
-                  type="button"
+          />
+          {searchTerm && (
+              <button
                   onClick={clearSearch}
-                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                >
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Clear search</span>
-                </button>
-              </div>
-            )}
-          </div>
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <X className="h-4 w-4" />
+              </button>
+          )}
         </div>
       </div>
-    </motion.div>
   );
 };

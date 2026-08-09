@@ -1,21 +1,19 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { FormikProps } from "formik";
 import { Input } from "../../../../ui/input";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "../../../../ui/select";
-// import { Button } from "../../../../../components/ui/button";
-// import { Plus, Trash2 } from "lucide-react";
+import {
+  DollarSign,
+  CreditCard,
+  Shield,
+  Building2,
+  Wallet,
+  TrendingUp,
+  Lock,
+  AlertCircle
+} from "lucide-react";
 import type { RelationDto, AddressDto } from "../../../../../types/hr/employee";
-// import type { UUID } from "crypto";
 import type { ExtendedEmployeeData } from "../AddEmployeeStepForm";
-// import { amharicRegex } from "../../../../../utils/amharic-regex";
-// import DocumentUploadSection from "../AddEmployeeStepForm";
 
 interface FinancialStepProps {
   formikProps: FormikProps<ExtendedEmployeeData>;
@@ -33,27 +31,16 @@ interface FinancialStepProps {
 }
 
 export const FinancialStep: React.FC<FinancialStepProps> = ({
-  formikProps,
-//   mockRelations,
-//   mockAddresses,
-//   guarantorFiles,
-//   stampFiles,
-//   signatureFiles,
-//   onGuarantorFileSelect,
-//   onStampFileSelect,
-//   onSignatureFileSelect,
-//   onGuarantorFileRemove,
-//   onStampFileRemove,
-//   onSignatureFileRemove,
-}) => {
+                                                              formikProps,
+                                                            }) => {
   const { errors, touched, values, handleChange, handleBlur } = formikProps;
 
   const inputClassName = (fieldName: string) =>
-    `w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-      getNestedError(errors, fieldName) && getNestedTouched(touched, fieldName)
-        ? "border-red-500"
-        : "border-gray-300"
-    }`;
+      `w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-emerald-500 transition-all duration-200 ${
+          getNestedError(errors, fieldName) && getNestedTouched(touched, fieldName)
+              ? "border-red-500"
+              : "border-slate-200"
+      }`;
 
   const getNestedError = (errorObj: any, path: string) => {
     return path.split(".").reduce((obj, key) => obj && obj[key], errorObj);
@@ -63,349 +50,253 @@ export const FinancialStep: React.FC<FinancialStepProps> = ({
     return path.split(".").reduce((obj, key) => obj && obj[key], touchedObj);
   };
 
-//   const handleAmharicChange = (
-//     e: React.ChangeEvent<HTMLInputElement>,
-//     fieldName: string
-//   ) => {
-//     const value = e.target.value;
-//     if (value === "" || amharicRegex.test(value)) {
-//       setFieldValue(fieldName, value);
-//     }
-//   };
+  // Section animation variants
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
 
-//   const addGuarantor = () => {
-//     const newGuarantor = {
-//       firstName: "",
-//       firstNameAm: "",
-//       middleName: "",
-//       middleNameAm: "",
-//       lastName: "",
-//       lastNameAm: "",
-//       gender: "" as "0" | "1",
-//       nationality: "Ethiopian",
-//       relationId: "" as UUID,
-//       addressId: "" as UUID,
-//     };
-//     setFieldValue("guarantors", [...values.guarantors, newGuarantor]);
-//   };
-
-//   const removeGuarantor = (index: number) => {
-//     const updatedGuarantors = values.guarantors.filter((_, i) => i !== index);
-//     setFieldValue("guarantors", updatedGuarantors);
-//   };
+  // Helper to format number display
+  const formatNumber = (value: string) => {
+    if (!value) return '';
+    return value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-8"
-    >
-      {/* Header */}
-      <div className="flex items-center text-center gap-2">
-        {/* <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
-          <DollarSign className="w-7 h-7 text-white" />
-        </div> */}
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-          Financial & Guarantors
-        </h2>
-      </div>
-
-      {/* Financial Information */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="lg:col-span-2">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-8 bg-gradient-to-b from-green-400 to-green-600 rounded-full"></div>
-            <h3 className="text-xl font-semibold text-gray-800">
-              Financial Information
-            </h3>
-          </div>
-        </div>
-
-        {/* TIN Number */}
-        <div className="space-y-2">
-          <label
-            htmlFor="financialData.tin"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            TIN Number
-          </label>
-          <Input
-            id="financialData.tin"
-            name="financialData.tin"
-            type="text"
-            value={values.financialData.tin}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={inputClassName("financialData.tin")}
-            placeholder="1234567890"
-          />
-          {getNestedError(errors, "financialData.tin") &&
-            getNestedTouched(touched, "financialData.tin") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getNestedError(errors, "financialData.tin")}
+      <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-8"
+      >
+        {/* Hero Header */}
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="relative"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-2xl blur-xl" />
+          <div className="relative bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-6 border border-emerald-100">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg">
+                <DollarSign className="w-6 h-6 text-white" />
               </div>
-            )}
-        </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-800">Financial & Banking Information</h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Enter the employee's financial and banking details for payroll processing
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
-        {/* Bank Account Number */}
-        <div className="space-y-2">
-          <label
-            htmlFor="financialData.bankAccountNo"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Bank Account Number
-          </label>
-          <Input
-            id="financialData.bankAccountNo"
-            name="financialData.bankAccountNo"
-            type="text"
-            value={values.financialData.bankAccountNo}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={inputClassName("financialData.bankAccountNo")}
-            placeholder="Account number"
-          />
-        </div>
-
-        {/* Pension Number */}
-        <div className="space-y-2">
-          <label
-            htmlFor="financialData.pensionNumber"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Pension Number
-          </label>
-          <Input
-            id="financialData.pensionNumber"
-            name="financialData.pensionNumber"
-            type="text"
-            value={values.financialData.pensionNumber}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={inputClassName("financialData.pensionNumber")}
-            placeholder="Pension number"
-          />
-        </div>
-      </div>
-
-      {/* Guarantors Section - Commented out for now */}
-      {/*
-      <div className="mt-4">
-        <div className="flex items-center justify-between mb-3">
+        {/* Financial Information Section */}
+        <motion.div
+            variants={sectionVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-6"
+        >
           <div className="flex items-center gap-3">
-            <div className="w-2 h-8 bg-gradient-to-b from-yellow-400 to-yellow-600 rounded-full"></div>
-            <h3 className="text-xl font-semibold text-gray-800">
-              Guarantors
-            </h3>
+            <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg">
+              <CreditCard className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-800">Financial Details</h3>
+              <p className="text-sm text-slate-500">Tax, banking, and pension information</p>
+            </div>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={addGuarantor}
-            className="cursor-pointer flex items-center gap-2"
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {/* TIN Number Card */}
+            <div className="group">
+              <div className="relative bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg group-hover:scale-110 transition-transform">
+                    <Shield className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <label className="text-sm font-semibold text-slate-700">
+                    TIN Number
+                  </label>
+                </div>
+                <Input
+                    id="financialData.tin"
+                    name="financialData.tin"
+                    type="text"
+                    value={values.financialData.tin}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={inputClassName("financialData.tin")}
+                    placeholder="1234567890"
+                />
+                {getNestedError(errors, "financialData.tin") &&
+                    getNestedTouched(touched, "financialData.tin") && (
+                        <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {getNestedError(errors, "financialData.tin")}
+                        </p>
+                    )}
+              </div>
+            </div>
+
+            {/* Bank Account Number Card */}
+            <div className="group">
+              <div className="relative bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg group-hover:scale-110 transition-transform">
+                    <Building2 className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Bank Account Number
+                  </label>
+                </div>
+                <Input
+                    id="financialData.bankAccountNo"
+                    name="financialData.bankAccountNo"
+                    type="text"
+                    value={values.financialData.bankAccountNo}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={inputClassName("financialData.bankAccountNo")}
+                    placeholder="100023456789"
+                />
+                {values.financialData.bankAccountNo && (
+                    <p className="text-xs text-slate-400 mt-2">
+                      Account number: {formatNumber(values.financialData.bankAccountNo.slice(-4))}
+                    </p>
+                )}
+              </div>
+            </div>
+
+            {/* Pension Number Card */}
+            <div className="group">
+              <div className="relative bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md transition-all duration-300">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-gradient-to-br from-orange-100 to-orange-200 rounded-lg group-hover:scale-110 transition-transform">
+                    <Wallet className="w-4 h-4 text-orange-600" />
+                  </div>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Pension Number
+                  </label>
+                </div>
+                <Input
+                    id="financialData.pensionNumber"
+                    name="financialData.pensionNumber"
+                    type="text"
+                    value={values.financialData.pensionNumber}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    className={inputClassName("financialData.pensionNumber")}
+                    placeholder="PEN123456789"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-purple-600 font-medium">Tax ID Status</p>
+                  <p className="text-sm font-semibold text-purple-900 mt-1">
+                    {values.financialData.tin ? 'Registered' : 'Not Registered'}
+                  </p>
+                </div>
+                <Shield className={`w-8 h-8 ${values.financialData.tin ? 'text-purple-500' : 'text-purple-300'}`} />
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-blue-600 font-medium">Bank Account</p>
+                  <p className="text-sm font-semibold text-blue-900 mt-1">
+                    {values.financialData.bankAccountNo ? 'Linked' : 'Not Linked'}
+                  </p>
+                </div>
+                <Building2 className={`w-8 h-8 ${values.financialData.bankAccountNo ? 'text-blue-500' : 'text-blue-300'}`} />
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-orange-600 font-medium">Pension Status</p>
+                  <p className="text-sm font-semibold text-orange-900 mt-1">
+                    {values.financialData.pensionNumber ? 'Active' : 'Inactive'}
+                  </p>
+                </div>
+                <Wallet className={`w-8 h-8 ${values.financialData.pensionNumber ? 'text-orange-500' : 'text-orange-300'}`} />
+              </div>
+            </div>
+          </div>
+
+          {/* Information Note */}
+          <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100"
           >
-            <Plus className="w-4 h-4" />
-            Add Guarantor
-          </Button>
+            <div className="flex items-start gap-3">
+              <div className="p-1.5 bg-blue-100 rounded-lg">
+                <Lock className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-blue-800">Secure Financial Information</p>
+                <p className="text-xs text-blue-600 mt-1">
+                  All financial data is encrypted and securely stored. This information is used exclusively for payroll and tax purposes.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* Placeholder for Guarantors Section (commented out) */}
+        {/*
+      <motion.div variants={sectionVariants} className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg">
+            <Users className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-slate-800">Guarantors</h3>
+            <p className="text-sm text-slate-500">Add employee guarantors</p>
+          </div>
         </div>
+        {/* Guarantor content would go here */}
+        {/* </motion.div>
+      */}
 
-        {values.guarantors.map((guarantor, index) => (
-          <div
-            key={index}
-            className="bg-gray-50 p-6 rounded-lg mb-4 border border-gray-200"
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h4 className="font-semibold text-gray-700">
-                Guarantor {index + 1}
-              </h4>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => removeGuarantor(index)}
-                className="cursor-pointer text-red-600 hover:text-red-700 flex items-center gap-1"
-              >
-                <Trash2 className="w-4 h-4" />
-                Remove
-              </Button>
+        {/* Footer Stats */}
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="flex justify-between items-center pt-6 border-t border-slate-200"
+        >
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-xs text-slate-500">Data encrypted</span>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name
-                </label>
-                <Input
-                  value={guarantor.firstName}
-                  onChange={(e) =>
-                    setFieldValue(`guarantors[${index}].firstName`, e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md"
-                  placeholder="First name"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  ስም
-                </label>
-                <Input
-                  value={guarantor.firstNameAm}
-                  onChange={(e) =>
-                    handleAmharicChange(e, `guarantors[${index}].firstNameAm`)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md"
-                  placeholder="አየለ"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Middle Name
-                </label>
-                <Input
-                  value={guarantor.middleName}
-                  onChange={(e) =>
-                    setFieldValue(`guarantors[${index}].middleName`, e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md"
-                  placeholder="Middle name"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  የአባት ስም
-                </label>
-                <Input
-                  value={guarantor.middleNameAm}
-                  onChange={(e) =>
-                    handleAmharicChange(e, `guarantors[${index}].middleNameAm`)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md"
-                  placeholder="በቀለ"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name
-                </label>
-                <Input
-                  value={guarantor.lastName}
-                  onChange={(e) =>
-                    setFieldValue(`guarantors[${index}].lastName`, e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md"
-                  placeholder="Last name"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  የአያት ስም
-                </label>
-                <Input
-                  value={guarantor.lastNameAm}
-                  onChange={(e) =>
-                    handleAmharicChange(e, `guarantors[${index}].lastNameAm`)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md"
-                  placeholder="ዮሐንስ"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Gender
-                </label>
-                <Select
-                  value={guarantor.gender}
-                  onValueChange={(value) =>
-                    setFieldValue(`guarantors[${index}].gender`, value)
-                  }
-                >
-                  <SelectTrigger className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md">
-                    <SelectValue placeholder="Select Gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">Male</SelectItem>
-                    <SelectItem value="1">Female</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nationality
-                </label>
-                <Input
-                  value={guarantor.nationality}
-                  onChange={(e) =>
-                    setFieldValue(`guarantors[${index}].nationality`, e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md"
-                  placeholder="Ethiopian"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Relation
-                </label>
-                <Select
-                  value={guarantor.relationId}
-                  onValueChange={(value) =>
-                    setFieldValue(`guarantors[${index}].relationId`, value)
-                  }
-                >
-                  <SelectTrigger className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md">
-                    <SelectValue placeholder="Select Relation" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockRelations.map((relation) => (
-                      <SelectItem key={relation.id} value={relation.id}>
-                        {relation.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
-                </label>
-                <Select
-                  value={guarantor.addressId}
-                  onValueChange={(value) =>
-                    setFieldValue(`guarantors[${index}].addressId`, value)
-                  }
-                >
-                  <SelectTrigger className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md">
-                    <SelectValue placeholder="Select Address" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockAddresses.map((address) => (
-                      <SelectItem key={address.id} value={address.id}>
-                        {address.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+              <span className="text-xs text-slate-500">Secure connection</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+              <span className="text-xs text-slate-500">PCI compliant</span>
             </div>
           </div>
-        ))}
-      </div>
-      */}
-
-      {/* Document Upload Section - Commented out for now */}
-      {/*
-      <DocumentUploadSection
-        guarantorFiles={guarantorFiles}
-        stampFiles={stampFiles}
-        signatureFiles={signatureFiles}
-        onGuarantorFileSelect={onGuarantorFileSelect}
-        onStampFileSelect={onStampFileSelect}
-        onSignatureFileSelect={onSignatureFileSelect}
-        onGuarantorFileRemove={onGuarantorFileRemove}
-        onStampFileRemove={onStampFileRemove}
-        onSignatureFileRemove={onSignatureFileRemove}
-      />
-      */}
-    </motion.div>
+          <div className="text-xs text-slate-400">
+            All fields are optional unless marked otherwise
+          </div>
+        </motion.div>
+      </motion.div>
   );
 };

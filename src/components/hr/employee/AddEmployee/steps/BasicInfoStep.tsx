@@ -1,12 +1,40 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿// src/components/hr/employee/AddEmployee/steps/BasicInfoStep.tsx
+
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useFormik } from 'formik';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import {
+  User,
+  Briefcase,
+  MapPin,
+  Camera,
+  ChevronRight,
+  AlertCircle,
+  Building2,
+  RefreshCw,
+  Loader2,
+  Shield,
+  CheckCircle
+} from 'lucide-react';
 import { ProfilePictureUpload } from './ProfileUpload';
-import { Input } from '../../../../../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
-import { Gender, EmpType, EmpNature, WorkArrangement, MaritalStat, AddressType } from '../../../../../types/hr/enum';
+import { Input } from '../../../../ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../../../../ui/select';
+import {
+  Gender,
+  EmpType,
+  EmpNature,
+  WorkArrangement,
+  MaritalStat,
+  AddressType
+} from '../../../../../types/hr/enum';
 import type { Step1Dto, UUID } from '../../../../../types/hr/employee/empAddDto';
 import { amharicRegex } from '../../../../../utils/amharic-regex';
 import List from '../../../../List/list';
@@ -17,51 +45,156 @@ import type { NameListItem } from '../../../../../types/NameList/nameList';
 import { jgStepService } from '../../../../../services/core/settings/ModHrm/JgStepService';
 import { zodValidate } from '../../../../../schemas/hr/employee/validateSchema';
 import { basicInfoSchema } from '../../../../../schemas/hr/employee/basicInfoSchema';
+import { useDataScope } from '../../../../../hooks/useDataScope';
+import { useLanguage } from '../../../../../i18n/LanguageContext';
+import toast from 'react-hot-toast';
+
+// ============================================================
+// TYPES
+// ============================================================
 
 interface BasicInfoStepProps {
   data: Partial<Step1Dto & { branchId: UUID }>;
-  onNext: (data: Step1Dto & { branchId: UUID}) => void;
+  onNext: (data: Step1Dto & { branchId: UUID }) => void;
   onBack: () => void;
   loading?: boolean;
 }
 
+// ============================================================
+// FIELD COMPONENT
+// ============================================================
+
+const Field = ({
+                 label,
+                 labelAm,
+                 error,
+                 required,
+                 children,
+                 description,
+                 isLoading
+               }: {
+  label: string;
+  labelAm?: string;
+  error?: string;
+  required?: boolean;
+  children: React.ReactNode;
+  description?: string;
+  isLoading?: boolean;
+}) => (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+        {label}
+        {labelAm && (
+            <span className="text-slate-400 dark:text-slate-500 ml-1 text-xs font-normal">
+          / {labelAm}
+        </span>
+        )}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+        {description && (
+            <span className="text-slate-400 dark:text-slate-500 ml-1 text-xs font-normal">
+          ({description})
+        </span>
+        )}
+      </label>
+      <div className={isLoading ? 'opacity-60 pointer-events-none' : ''}>
+        {children}
+      </div>
+      {error && (
+          <p className="text-red-500 text-xs flex items-center gap-1 mt-1 animate-fadeIn">
+            <AlertCircle className="w-3 h-3" />
+            {error}
+          </p>
+      )}
+    </div>
+);
+
+// ============================================================
+// SECTION HEADER
+// ============================================================
+
+const SectionHeader = ({
+                         icon,
+                         title,
+                         subtitle,
+                         gradient
+                       }: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  gradient: string;
+}) => (
+    <div className="flex items-center gap-3">
+      <div className={`p-2 bg-gradient-to-br ${gradient} rounded-xl shadow-lg`}>
+        {icon}
+      </div>
+      <div>
+        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+          {title}
+        </h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          {subtitle}
+        </p>
+      </div>
+    </div>
+);
+
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
+
 export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
-  data,
-  onNext,
-  loading = false
-}) => {
-  const [branches, setBranches] = useState<NameListItem[]>([]);
+                                                              data,
+                                                              onNext,
+                                                              loading = false
+                                                            }) => {
+  const { t } = useLanguage();
+  const {
+    branchId: userBranchId,
+    branchName,
+    branchNameAm,
+    isLoading: scopeLoading
+  } = useDataScope();
+
+  // Refs
+  const branchesFetchedRef = useRef(false);
+  const formContainerRef = useRef<HTMLDivElement>(null);
+  const isSettingField = useRef(false);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  // State
+  const [allBranches, setAllBranches] = useState<NameListItem[]>([]);
+  const [filteredBranches, setFilteredBranches] = useState<NameListItem[]>([]);
   const [departments, setDepartments] = useState<NameListItem[]>([]);
   const [positions, setPositions] = useState<NameListDto[]>([]);
   const [jobGrades, setJobGrades] = useState<NameListItem[]>([]);
   const [jobGradeSteps, setJobGradeSteps] = useState<NameListItem[]>([]);
+
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
   const [loadingPositions, setLoadingPositions] = useState(false);
   const [loadingJobGrades, setLoadingJobGrades] = useState(false);
   const [loadingJobGradeSteps, setLoadingJobGradeSteps] = useState(false);
+
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [branchError, setBranchError] = useState<string | null>(null);
-  const [departmentError, setDepartmentError] = useState<string | null>(null);
-  const [jobGradeError, setJobGradeError] = useState<string | null>(null);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
 
-  // Scroll to top function
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // ============================================================
+  // DEFAULT VALUES
+  // ============================================================
 
-    if (document.documentElement) {
-      document.documentElement.scrollTop = 0;
-    }
+  const getDefaultEmploymentDate = () =>
+      data.employmentDate || new Date().toISOString().split('T')[0];
 
-    if (document.body) {
-      document.body.scrollTop = 0;
-    }
-  };
+  const defaultBranchId = useMemo(() => {
+    if (userBranchId) return userBranchId;
+    if (data.branchId) return data.branchId;
+    return '';
+  }, [userBranchId, data.branchId]);
 
-  // Set default employment date to today if not provided
-  const getDefaultEmploymentDate = () => {
-    return data.employmentDate || new Date().toISOString().split('T')[0];
-  };
+  // ============================================================
+  // FORMIK
+  // ============================================================
 
   const formik = useFormik<Step1Dto & { branchId: UUID }>({
     initialValues: {
@@ -76,7 +209,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       birthDate: data.birthDate || '',
       maritalStatus: data.maritalStatus || '0' as MaritalStat,
       employmentDate: getDefaultEmploymentDate(),
-      branchId: data.branchId || '' as UUID,
+      branchId: defaultBranchId as UUID,
       jobGradeId: data.jobGradeId || '' as UUID,
       jgStepId: data.jgStepId || '' as UUID,
       positionId: data.positionId || '' as UUID,
@@ -85,1286 +218,1135 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       employmentNature: data.employmentNature || '0' as EmpNature,
       workArrangement: data.workArrangement || '0' as WorkArrangement,
       addressType: data.addressType || '0' as AddressType,
-            country: data.country || '',
-            region: data.region || '',
-            subcity: data.subcity || '',
-            zone: data.zone || '',
-            woreda: data.woreda || '',
-            kebele: data.kebele || '',
-            houseNo: data.houseNo || '',
-            telephone: data.telephone || '',
-            poBox: data.poBox || '',
-            fax: data.fax || '',
-            email: data.email || '',
-            website: data.website || '',
+      country: data.country || '',
+      region: data.region || '',
+      subcity: data.subcity || '',
+      zone: data.zone || '',
+      woreda: data.woreda || '',
+      kebele: data.kebele || '',
+      houseNo: data.houseNo || '',
+      telephone: data.telephone || '',
+      poBox: data.poBox || '',
+      fax: data.fax || '',
+      email: data.email || '',
+      website: data.website || '',
       File: data.File || null,
     },
     validate: zodValidate(basicInfoSchema),
     enableReinitialize: true,
-    validateOnMount: false, // Disable validation on mount
+    validateOnMount: false,
+    validateOnChange: true,
+    validateOnBlur: true,
     onSubmit: async (values) => {
       setSubmitError(null);
+      setSubmitAttempted(true);
 
-      // Prepare the data to send to backend
-      const submitData = {
-        ...values,
-        employmentDate: new Date(values.employmentDate).toISOString(),
-      };
+      // ✅ Manually validate all fields
+      const errors = basicInfoSchema.safeParse(values);
+      if (!errors.success) {
+        // Mark all fields as touched to show errors
+        const allFields = Object.keys(formik.values);
+        allFields.forEach(field => {
+          formik.setFieldTouched(field, true);
+        });
+        // Show toast with error count
+        const errorCount = errors.error.errors.length;
+        toast.error(`Please fix ${errorCount} validation error(s)`);
+        return;
+      }
 
-      // Scroll to top before calling onNext
-      scrollToTop();
-      onNext(submitData);
+      try {
+        onNext({
+          ...values,
+          employmentDate: new Date(values.employmentDate).toISOString()
+        });
+      } catch (error) {
+        setSubmitError(
+            error instanceof Error ? error.message : 'Failed to save. Please try again.'
+        );
+        toast.error('Failed to save basic information');
+      }
     },
   });
 
-  // Fetch branches when component mounts
+  // ============================================================
+  // GET ERROR MESSAGE - Shows errors on submit attempt
+  // ============================================================
+
+  const getErrorMessage = (field: string): string => {
+    const err = formik.errors[field as keyof typeof formik.errors];
+    const isTouched = formik.touched[field as keyof typeof formik.touched];
+    if ((isTouched || submitAttempted) && typeof err === 'string') {
+      return err;
+    }
+    return '';
+  };
+
+  // ============================================================
+  // FETCH BRANCHES
+  // ============================================================
+
   useEffect(() => {
+    if (branchesFetchedRef.current || scopeLoading) return;
+
     const fetchBranches = async () => {
       try {
         setLoadingBranches(true);
-        const branchesData = await hrmmNamesApi.getBranchComp();
-        setBranches(branchesData);
+        setBranchError(null);
+        setFetchAttempted(true);
 
-        // Auto-select first branch if none is selected and we have branches
-        if (!formik.values.branchId && branchesData.length > 0) {
-          const firstBranchId = branchesData[0].id;
-          formik.setFieldValue('branchId', firstBranchId);
+        const branchesData = await hrmmNamesApi.getBranchComp();
+        const branchesArray = Array.isArray(branchesData) ? branchesData : [];
+        setAllBranches(branchesArray);
+
+        let filtered: NameListItem[] = [];
+        if (userBranchId) {
+          filtered = branchesArray.filter(branch => branch.id === userBranchId);
+          if (filtered.length === 0) filtered = branchesArray;
+        } else {
+          filtered = branchesArray;
         }
+
+        setFilteredBranches(filtered);
+
+        if (!isSettingField.current) {
+          isSettingField.current = true;
+          if (userBranchId) {
+            formik.setFieldValue('branchId', userBranchId);
+          } else if (filtered.length > 0 && !formik.values.branchId) {
+            formik.setFieldValue('branchId', filtered[0].id);
+          } else {
+            setBranchError('You do not have access to any branches. Please contact administrator.');
+          }
+          isSettingField.current = false;
+        }
+
+        branchesFetchedRef.current = true;
       } catch (error) {
-        console.error('Error fetching branches:', error);
-        setBranchError('Failed to load branches. Please refresh.');
+        const msg = error instanceof Error ? error.message : 'Failed to load branches';
+        setBranchError(msg);
+        setAllBranches([]);
+        setFilteredBranches([]);
+        toast.error('Failed to load branches');
       } finally {
         setLoadingBranches(false);
       }
     };
 
     fetchBranches();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userBranchId, scopeLoading]);
 
-  // Fetch departments when branch changes
+  // ============================================================
+  // FETCH DEPARTMENTS
+  // ============================================================
+
   useEffect(() => {
-    const fetchDepartmentsByBranch = async () => {
-      if (!formik.values.branchId) {
-        setDepartments([]);
-        return;
-      }
+    if (!formik.values.branchId || loadingDepartments) return;
+
+    const fetchDepts = async () => {
       try {
         setLoadingDepartments(true);
-        formik.setFieldValue('departmentId', '');
+        if (!formik.values.departmentId) {
+          formik.setFieldValue('departmentId', '');
+        }
         const data = await hrmmNamesApi.getBranchDepartmentNames(formik.values.branchId);
-        const mapped: NameListItem[] = data.map(d => ({ id: d.id, name: d.dept }));
+        const mapped: NameListItem[] = data.map(d => ({
+          id: d.id,
+          name: d.dept || d.name || 'Unnamed Department'
+        }));
         setDepartments(mapped);
-        if (mapped.length > 0) formik.setFieldValue('departmentId', mapped[0].id);
+
+        if (!isSettingField.current && mapped.length > 0 && !formik.values.departmentId) {
+          isSettingField.current = true;
+          formik.setFieldValue('departmentId', mapped[0].id);
+          isSettingField.current = false;
+        }
       } catch (error) {
-        console.error('Error fetching departments by branch:', error);
-        setDepartmentError('Failed to load departments. Please refresh.');
+        setDepartments([]);
+        toast.error('Failed to load departments');
       } finally {
         setLoadingDepartments(false);
       }
     };
-
-    fetchDepartmentsByBranch();
+    fetchDepts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formik.values.branchId]);
 
-  // Fetch positions when department selection changes
-  useEffect(() => {
-    const fetchPositionsByDepartment = async () => {
-      if (!formik.values.departmentId) {
-        setPositions([]);
-        return;
-      }
+  // ============================================================
+  // FETCH POSITIONS
+  // ============================================================
 
+  useEffect(() => {
+    if (!formik.values.departmentId || loadingPositions) return;
+
+    const fetchPos = async () => {
       try {
         setLoadingPositions(true);
-        // Clear current position selection when fetching new positions
-        formik.setFieldValue('positionId', '');
+        if (!formik.values.positionId) {
+          formik.setFieldValue('positionId', '');
+        }
+        const data = await hrmmNamesApi.getDepartmentPositions(formik.values.departmentId);
+        setPositions(data);
 
-        // Use nameListService to get department positions
-        const positionsData = await hrmmNamesApi.getDepartmentPositions(formik.values.departmentId);
-        setPositions(positionsData);
-
-        // Auto-select first position if we have positions
-        if (positionsData.length > 0) {
-          formik.setFieldValue('positionId', positionsData[0].id);
+        if (!isSettingField.current && data.length > 0 && !formik.values.positionId) {
+          isSettingField.current = true;
+          formik.setFieldValue('positionId', data[0].id);
+          isSettingField.current = false;
         }
       } catch (error) {
-        console.error('Error fetching positions by department:', error);
         setPositions([]);
+        toast.error('Failed to load positions');
       } finally {
         setLoadingPositions(false);
       }
     };
-
-    fetchPositionsByDepartment();
+    fetchPos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formik.values.departmentId]);
 
-  // Fetch job grades using nameListService when component mounts
+  // ============================================================
+  // FETCH JOB GRADES
+  // ============================================================
+
   useEffect(() => {
-    const fetchJobGrades = async () => {
+    if (loadingJobGrades) return;
+
+    const fetch = async () => {
       try {
         setLoadingJobGrades(true);
-        const jobGradesData = await hrmmNamesApi.getAllJobGradeNames();
-        setJobGrades(jobGradesData);
+        const data = await hrmmNamesApi.getAllJobGradeNames();
+        setJobGrades(data);
 
-        if (!formik.values.jobGradeId && jobGradesData.length > 0) {
-          formik.setFieldValue('jobGradeId', jobGradesData[0].id);
+        if (!isSettingField.current && data.length > 0 && !formik.values.jobGradeId) {
+          isSettingField.current = true;
+          formik.setFieldValue('jobGradeId', data[0].id);
+          isSettingField.current = false;
         }
       } catch (error) {
-        console.error('Error fetching job grades:', error);
-        setJobGradeError('Failed to load job grades. Please refresh.');
+        setJobGrades([]);
+        toast.error('Failed to load job grades');
       } finally {
         setLoadingJobGrades(false);
       }
     };
-
-    fetchJobGrades();
+    fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Fetch job grades using nameListService when component mounts
-useEffect(() => {
-  if (!formik.values.jobGradeId) return;
 
-  const fetchJobGradeSteps = async () => {
-    try {
-      setLoadingJobGradeSteps(true);
+  // ============================================================
+  // FETCH JOB GRADE STEPS
+  // ============================================================
 
-      const jobGradeStepsData = await jgStepService.getJgStepsByJobGrade(
-        formik.values.jobGradeId,
-      );
+  useEffect(() => {
+    if (!formik.values.jobGradeId || loadingJobGradeSteps) return;
 
-      setJobGradeSteps(jobGradeStepsData);
+    const fetch = async () => {
+      try {
+        setLoadingJobGradeSteps(true);
+        const data = await jgStepService.getJgStepsByJobGrade(formik.values.jobGradeId);
+        setJobGradeSteps(data);
 
-      if (jobGradeStepsData.length > 0) {
-        formik.setFieldValue("jobGradeStepId", jobGradeStepsData[0].id);
+        if (!isSettingField.current && data.length > 0 && !formik.values.jgStepId) {
+          isSettingField.current = true;
+          formik.setFieldValue('jgStepId', data[0].id);
+          isSettingField.current = false;
+        }
+      } catch (error) {
+        setJobGradeSteps([]);
+        toast.error('Failed to load job grade steps');
+      } finally {
+        setLoadingJobGradeSteps(false);
       }
-    } catch (error) {
-      console.error("Error fetching job grade steps:", error);
-      setJobGradeSteps([]);
-    } finally {
-      setLoadingJobGradeSteps(false);
-    }
-  };
+    };
+    fetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.jobGradeId]);
 
-  fetchJobGradeSteps();
-}, [formik.values.jobGradeId]);
+  // ============================================================
+  // LIST ITEMS
+  // ============================================================
 
-
-  // Convert branches to ListItem format
-  const branchListItems: ListItem[] = branches.map(branch => ({
-    id: branch.id,
-    name: branch.name
+  const branchListItems: ListItem[] = filteredBranches.map(b => ({
+    id: b.id,
+    name: b.name || b.nameAm || 'Unnamed Branch',
+    nameAm: b.nameAm
   }));
 
-  // Convert departments to ListItem format
-  const departmentListItems: ListItem[] = departments.map(dept => ({
-    id: dept.id,
-    name: dept.name
+  const deptListItems: ListItem[] = departments.map(d => ({
+    id: d.id,
+    name: d.name || d.nameAm || 'Unnamed Department',
+    nameAm: d.nameAm
   }));
 
-  // Convert positions to ListItem format
-  const positionListItems: ListItem[] = positions.map(position => ({
-    id: position.id,
-    name: position.name
+  const posListItems: ListItem[] = positions.map(p => ({
+    id: p.id,
+    name: p.name || p.nameAm || 'Unnamed Position',
+    nameAm: p.nameAm
   }));
 
-  // Convert job grades to ListItem format
-  const jobGradeListItems: ListItem[] = jobGrades.map(grade => ({
-    id: grade.id,
-    name: grade.name
+  const jgListItems: ListItem[] = jobGrades.map(j => ({
+    id: j.id,
+    name: j.name || j.nameAm || 'Unnamed Grade',
+    nameAm: j.nameAm
   }));
 
-   const jobGradeStepsListItems: ListItem[] = jobGradeSteps.map(steps => ({
-    id: steps.id,
-    name: steps.name
+  const jgsListItems: ListItem[] = jobGradeSteps.map(s => ({
+    id: s.id,
+    name: s.name || s.nameAm || 'Unnamed Step',
+    nameAm: s.nameAm
   }));
 
-  // Handle branch selection
-  const handleBranchSelect = (item: ListItem) => {
-    formik.setFieldValue('branchId', item.id);
-    if (submitError && formik.errors.branchId) {
-      setSubmitError(null);
-    }
-  };
-
-  // Handle department selection
-  const handleDepartmentSelect = (item: ListItem) => {
-    formik.setFieldValue('departmentId', item.id);
-    if (submitError && formik.errors.departmentId) {
-      setSubmitError(null);
-    }
-  };
-
-  // Handle position selection
-  const handlePositionSelect = (item: ListItem) => {
-    formik.setFieldValue('positionId', item.id);
-    if (submitError && formik.errors.positionId) {
-      setSubmitError(null);
-    }
-  };
-
-  // Handle job grade selection
-  const handleJobGradeSelect = (item: ListItem) => {
-    formik.setFieldValue('jobGradeId', item.id);
-    if (submitError && formik.errors.jobGradeId) {
-      setSubmitError(null);
-    }
-  };
-
-   // Handle job grade step select
-  const handleJobGradeStepSelect = (item: ListItem) => {
-    formik.setFieldValue('jgStepId', item.id);
-    if (submitError && formik.errors.jgStepId) {
-      setSubmitError(null);
-    }
-  };
-
-  // Amharic input handlers
-  const handleAmharicInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    fieldName: string
-  ) => {
-    const value = e.target.value;
-    if (value === '' || amharicRegex.test(value)) {
-      formik.setFieldValue(fieldName, value);
-    }
-  };
-
-  // Handle profile picture selection
-  const handleProfilePictureSelect = async (file: File) => {
-    try {
-      formik.setFieldValue('File', file);
-    } catch (error) {
-      console.error('Error processing image:', error);
-      setSubmitError('Failed to process the image. Please try again.');
-    }
-  };
-
-  const handleProfilePictureRemove = () => {
-    formik.setFieldValue('File', null);
-  };
+  // ============================================================
+  // HANDLERS
+  // ============================================================
 
   const handlePhoneChange = (value: string) => {
     formik.setFieldValue('telephone', value);
   };
 
-  // Helper function to safely get error messages (kept for display purposes only)
-  const getErrorMessage = (fieldName: string): string => {
-    const error = formik.errors[fieldName as keyof typeof formik.errors];
-    const touched = formik.touched[fieldName as keyof typeof formik.touched];
-
-    if (touched && error) {
-      return typeof error === 'string' ? error : 'Invalid value';
+  const handleProfilePictureSelect = async (file: File) => {
+    try {
+      formik.setFieldValue('File', file);
+      toast.success('Profile picture uploaded');
+    } catch {
+      setSubmitError(t.failedToProcessImage || 'Failed to process image.');
+      toast.error('Failed to upload profile picture');
     }
-    return '';
   };
 
-  // Handle form submission without validation
+  const handleProfilePictureRemove = () => {
+    formik.setFieldValue('File', null);
+    toast.success('Profile picture removed');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
-
-    // Scroll to top before form submission
-    scrollToTop();
+    setSubmitAttempted(true);
     formik.handleSubmit();
   };
 
+  const handleRetryBranches = async () => {
+    try {
+      setLoadingBranches(true);
+      setBranchError(null);
+      const data = await hrmmNamesApi.getBranchComp();
+      const branchesArray = Array.isArray(data) ? data : [];
+      setAllBranches(branchesArray);
+
+      let filtered: NameListItem[] = [];
+      if (userBranchId) {
+        filtered = branchesArray.filter(branch => branch.id === userBranchId);
+        if (filtered.length === 0) filtered = branchesArray;
+      } else {
+        filtered = branchesArray;
+      }
+      setFilteredBranches(filtered);
+
+      if (!isSettingField.current) {
+        isSettingField.current = true;
+        if (userBranchId) {
+          formik.setFieldValue('branchId', userBranchId);
+        } else if (filtered.length > 0 && !formik.values.branchId) {
+          formik.setFieldValue('branchId', filtered[0].id);
+        }
+        isSettingField.current = false;
+      }
+      toast.success('Branches reloaded successfully');
+    } catch (error) {
+      setBranchError('Failed to load branches');
+      toast.error('Failed to reload branches');
+    } finally {
+      setLoadingBranches(false);
+    }
+  };
+
+  // ============================================================
+  // RENDER BRANCH SELECT
+  // ============================================================
+
+  const renderBranchSelect = () => {
+    if (loadingBranches) {
+      return (
+          <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+            <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+            {t.loading || 'Loading branches...'}
+          </span>
+          </div>
+      );
+    }
+
+    if (branchError) {
+      return (
+          <div className="flex flex-col gap-2 p-3 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-red-500" />
+              <span className="text-sm text-red-600 dark:text-red-400">{branchError}</span>
+            </div>
+            <button
+                type="button"
+                onClick={handleRetryBranches}
+                className="self-start px-3 py-1 text-sm bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 rounded-lg transition-colors flex items-center gap-1"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Retry
+            </button>
+          </div>
+      );
+    }
+
+    if (filteredBranches.length === 0) {
+      return (
+          <div className="p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-amber-500" />
+              <span className="text-sm text-amber-600 dark:text-amber-400">
+              {fetchAttempted
+                  ? 'No branches available for your account'
+                  : 'Loading branches...'}
+            </span>
+            </div>
+            {userBranchId && (
+                <p className="text-xs text-amber-500 dark:text-amber-400 mt-1 ml-6">
+                  Your assigned branch ID: {userBranchId}
+                </p>
+            )}
+          </div>
+      );
+    }
+
+    if (filteredBranches.length === 1) {
+      const branch = filteredBranches[0];
+      return (
+          <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-blue-500" />
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
+              {branch.nameAm || branch.name}
+            </span>
+            </div>
+            <p className="text-xs text-blue-500 dark:text-blue-400 mt-1 ml-6">
+              {t.yourAssignedBranch || 'Your assigned branch'}
+            </p>
+          </div>
+      );
+    }
+
+    return (
+        <List
+            items={branchListItems}
+            selectedValue={formik.values.branchId}
+            onSelect={(item) => formik.setFieldValue('branchId', item.id)}
+            placeholder={t.selectBranch || 'Select branch'}
+            disabled={loadingBranches || loading}
+        />
+    );
+  };
+
+  // ============================================================
+  // ANIMATION VARIANTS
+  // ============================================================
+
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.4 }
+    }
+  };
+
+  // ============================================================
+  // GET VALIDATION SUMMARY
+  // ============================================================
+
+  const validationErrors = formik.errors;
+  const hasValidationErrors = Object.keys(validationErrors).length > 0 && submitAttempted;
+
+  // ============================================================
+  // RENDER
+  // ============================================================
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-8"
-    >
-      {/* Error Display */}
-      {submitError && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
+      <motion.div
+          ref={formContainerRef}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4"
-        >
-          <div className="flex items-center">
-            <div className="shrink-0">
-              <svg
-                className="h-5 w-5 text-red-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+          transition={{ duration: 0.3 }}
+          className="space-y-8"
+      >
+        {/* Validation Error Summary */}
+        <AnimatePresence>
+          {hasValidationErrors && (
+              <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-4"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="text-sm text-red-700 mt-1">{submitError}</p>
-            </div>
-            <div className="ml-auto pl-3">
-              <button
-                onClick={() => setSubmitError(null)}
-                className="text-red-800 hover:text-red-900"
-              >
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Personal Information Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-3">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-2 h-8 bg-linear-to-b from-green-400 to-green-600 rounded-full"></div>
-              <h3 className="text-xl font-semibold text-gray-800">
-                Personal Information
-              </h3>
-            </div>
-          </div>
-
-          {/* ስም */}
-          <div className="space-y-2">
-            <label
-              htmlFor="firstNameAm"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              ስም <span className="text-red-500">*</span>
-            </label>
-            <Input
-              id="firstNameAm"
-              name="firstNameAm"
-              type="text"
-              value={formik.values.firstNameAm}
-              onChange={(e) => handleAmharicInputChange(e, "firstNameAm")}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("firstNameAm")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="አየለ"
-              disabled={loading}
-            />
-            {getErrorMessage("firstNameAm") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("firstNameAm")}
-              </div>
-            )}
-          </div>
-
-          {/* የአባት ስም */}
-          <div className="space-y-2">
-            <label
-              htmlFor="middleNameAm"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              የአባት ስም  <span className="text-red-500">*</span>
-            </label>
-            <Input
-              id="middleNameAm"
-              name="middleNameAm"
-              type="text"
-              value={formik.values.middleNameAm}
-              onChange={(e) => handleAmharicInputChange(e, "middleNameAm")}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("middleNameAm")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="በቀለ"
-              disabled={loading}
-            />
-            {getErrorMessage("middleNameAm") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("middleNameAm")}
-              </div>
-            )}
-          </div>
-
-          {/* የአያት ስም */}
-          <div className="space-y-2">
-            <label
-              htmlFor="lastNameAm"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              የአያት ስም  <span className="text-red-500">*</span>
-            </label>
-            <Input
-              id="lastNameAm"
-              name="lastNameAm"
-              type="text"
-              value={formik.values.lastNameAm}
-              onChange={(e) => handleAmharicInputChange(e, "lastNameAm")}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("lastNameAm")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="ዮሐንስ"
-              disabled={loading}
-            />
-            {getErrorMessage("lastNameAm") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("lastNameAm")}
-              </div>
-            )}
-          </div>
-          
-          {/* First Name (English) */}
-          <div className="space-y-2">
-            <label
-              htmlFor="firstName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              First Name (English) <span className="text-red-500">*</span>
-            </label>
-            <Input
-              id="firstName"
-              name="firstName"
-              type="text"
-              value={formik.values.firstName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("firstName")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="John"
-              disabled={loading}
-            />
-            {getErrorMessage("firstName") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("firstName")}
-              </div>
-            )}
-          </div>
-
-          {/* Middle Name (English) */}
-          <div className="space-y-2">
-            <label
-              htmlFor="middleName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Middle Name (English)  <span className="text-red-500">*</span>
-            </label>
-            <Input
-              id="middleName"
-              name="middleName"
-              type="text"
-              value={formik.values.middleName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("middleName")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="Michael"
-              disabled={loading}
-            />
-            {getErrorMessage("middleName") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("middleName")}
-              </div>
-            )}
-          </div>
-
-          {/* Last Name (English) */}
-          <div className="space-y-2">
-            <label
-              htmlFor="lastName"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Last Name (English)  <span className="text-red-500">*</span>
-            </label>
-            <Input
-              id="lastName"
-              name="lastName"
-              type="text"
-              value={formik.values.lastName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                getErrorMessage("lastName")
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}
-              placeholder="Doe"
-              disabled={loading}
-            />
-            {getErrorMessage("lastName") && (
-              <div className="text-red-500 text-xs mt-1">
-                {getErrorMessage("lastName")}
-              </div>
-            )}
-          </div>
-
-
-          {/* Gender, Nationality, Birth Date, Marital Status — one row */}
-          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Gender */}
-            <div className="space-y-2">
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
-                Gender <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={formik.values.gender}
-                onValueChange={(value: Gender) => formik.setFieldValue("gender", value)}
-                disabled={loading}
-              >
-                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("gender") ? "border-red-500" : "border-gray-300"}`}>
-                  <SelectValue placeholder="Select Gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(Gender).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>{value}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getErrorMessage("gender") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("gender")}</div>}
-            </div>
-
-            {/* Nationality */}
-            <div className="space-y-2">
-              <label htmlFor="nationality" className="block text-sm font-medium text-gray-700 mb-1">
-                Nationality <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="nationality"
-                name="nationality"
-                type="text"
-                value={formik.values.nationality}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("nationality") ? "border-red-500" : "border-gray-300"}`}
-                placeholder="Ethiopian"
-                disabled={loading}
-              />
-              {getErrorMessage("nationality") && <div className="text-red-500 text-xs mt-1">{getErrorMessage("nationality")}</div>}
-            </div>
-
-            {/* Birth Date */}
-            <div className="space-y-2">
-              <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700 mb-1">
-                Birth Date <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="birthDate"
-                name="birthDate"
-                type="date"
-                value={formik.values.birthDate}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('birthDate') ? "border-red-500" : "border-gray-300"}`}
-                disabled={loading}
-              />
-              {getErrorMessage('birthDate') && <div className="text-red-500 text-xs mt-1">{getErrorMessage('birthDate')}</div>}
-            </div>
-
-            {/* Marital Status */}
-            <div className="space-y-2">
-              <label htmlFor="maritalStatus" className="block text-sm font-medium text-gray-700 mb-1">
-                Marital Status <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={formik.values.maritalStatus}
-                onValueChange={(value: MaritalStat) => formik.setFieldValue('maritalStatus', value)}
-                disabled={loading}
-              >
-                <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage('maritalStatus') ? "border-red-500" : "border-gray-300"}`}>
-                  <SelectValue placeholder="Select marital status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(MaritalStat).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>{value}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getErrorMessage('maritalStatus') && <div className="text-red-500 text-xs mt-1">{getErrorMessage('maritalStatus')}</div>}
-            </div>
-          </div>
-
-        </div>
-
-        {/* Employment Details Section */}
-        <div className="mt-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-2 h-8 bg-linear-to-b from-blue-400 to-blue-600 rounded-full"></div>
-            <h3 className="text-xl font-semibold text-gray-800">
-              Employment Details
-            </h3>
-          </div>
-
-          {/* Row 1: Branch, Department, Employement Date, Position */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-            {/* Branch - Using List Component */}
-            <div className="space-y-2">
-              <List
-                items={branchListItems}
-                selectedValue={formik.values.branchId}
-                onSelect={handleBranchSelect}
-                label="Select Branch"
-                placeholder="Select a branch"
-                disabled={loadingBranches || loading}
-              />
-              {loadingBranches && (
-                <p className="text-sm text-gray-500">Loading branches...</p>
-              )}
-              {/* {branchError && (
-                <p className="text-sm text-amber-600">{branchError}</p>
-              )} */}
-              {getErrorMessage("branchId") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("branchId")}
-                </div>
-              )}
-            </div>
-
-            {/* Department - Using List Component */}
-            <div className="space-y-2">
-              <List
-                items={departmentListItems}
-                selectedValue={formik.values.departmentId}
-                onSelect={handleDepartmentSelect}
-                label={
-  <>
-    Select Department <span className="text-red-500">*</span>
-  </>
-}
-                placeholder={
-                  departments.length === 0
-                    ? "No departments available"
-                    : "Select a department"
-                }
-                disabled={
-                  loadingDepartments || loading || departments.length === 0
-                }
-              />
-              {loadingDepartments && (
-                <p className="text-sm text-gray-500">Loading departments...</p>
-              )}
-              {/* {departmentError && (
-                <p className="text-sm text-amber-600">{departmentError}</p>
-              )} */}
-              {getErrorMessage("departmentId") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("departmentId")}
-                </div>
-              )}
-            </div>
-
-            {/* Position - Using List Component */}
-            <div className="space-y-2">
-              <List
-                items={positionListItems}
-                selectedValue={formik.values.positionId}
-                onSelect={handlePositionSelect}
-               label={
-  <>
-    Select Position <span className="text-red-500">*</span>
-  </>
-}
-                placeholder={
-                  !formik.values.departmentId
-                    ? "Select a department first"
-                    : positions.length === 0
-                      ? "No positions available"
-                      : "Select a position"
-                }
-                disabled={
-                  loadingPositions ||
-                  loading ||
-                  !formik.values.departmentId ||
-                  positions.length === 0
-                }
-              />
-              {loadingPositions && (
-                <p className="text-sm text-gray-500">Loading positions...</p>
-              )}
-              {formik.values.departmentId &&
-                positions.length === 0 &&
-                !loadingPositions && (
-                  <p className="text-sm text-gray-500">
-                    No positions available for this department
-                  </p>
-                )}
-              {getErrorMessage("positionId") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("positionId")}
-                </div>
-              )}
-            </div>
-
-            {/* Employment Date */}
-            <div className="space-y-2">
-              <label
-                htmlFor="employmentDate"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Employment Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="employmentDate"
-                name="employmentDate"
-                type="date"
-                value={formik.values.employmentDate}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                  getErrorMessage("employmentDate")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-                disabled={loading}
-              />
-              {getErrorMessage("employmentDate") && (
-                <p className="text-red-500 text-sm mt-1">
-                  {getErrorMessage("employmentDate")}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Row 2: Job Grade, Employment Type, Employment Nature */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            {/* Job Grade - Using List Component */}
-            <div className="space-y-2">
-              <List
-                items={jobGradeListItems}
-                selectedValue={formik.values.jobGradeId}
-                onSelect={handleJobGradeSelect}
-              label={
-  <>
-    Select Job Grade <span className="text-red-500">*</span>
-  </>
-}
-                placeholder="Select a job grade"
-                disabled={loadingJobGrades || loading}
-              />
-              {loadingJobGrades && (
-                <p className="text-sm text-gray-500">Loading job grades...</p>
-              )}
-              {jobGradeError && (
-                <p className="text-sm text-amber-600">{jobGradeError}</p>
-              )}
-              {getErrorMessage("jobGradeId") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("jobGradeId")}
-                </div>
-              )}
-            </div>
-
-            {/* Job Grade step - Using List Component */}
-            <div className="space-y-2">
-              <List
-                items={jobGradeStepsListItems}
-                selectedValue={formik.values.jgStepId}
-                onSelect={handleJobGradeStepSelect}
-label={
-  <>
-    Select  Job Grade Step <span className="text-red-500">*</span>
-  </>
-}                placeholder="Select a job grade step"
-                disabled={loadingJobGradeSteps || loading}
-              />
-              {loadingJobGradeSteps && (
-                <p className="text-sm text-gray-500">
-                  Loading job grade steps...
-                </p>
-              )}
-              {getErrorMessage("jgStepId") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("jgStepId")}
-                </div>
-              )}
-            </div>
-
-            {/* Employment Type */}
-            <div className="space-y-2">
-              <label
-                htmlFor="employmentType"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Employment Type  <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={formik.values.employmentType}
-                onValueChange={(value: EmpType) =>
-                  formik.setFieldValue("employmentType", value)
-                }
-                disabled={loading}
-              >
-                <SelectTrigger
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                    getErrorMessage("employmentType")
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <SelectValue placeholder="Select Employment Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(EmpType).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getErrorMessage("employmentType") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("employmentType")}
-                </div>
-              )}
-            </div>
-
-            {/* Employment Nature */}
-            <div className="space-y-2">
-              <label
-                htmlFor="employmentNature"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Employment Nature  <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={formik.values.employmentNature}
-                onValueChange={(value: EmpNature) =>
-                  formik.setFieldValue("employmentNature", value)
-                }
-                disabled={loading}
-              >
-                <SelectTrigger
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                    getErrorMessage("employmentNature")
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <SelectValue placeholder="Select Employment Nature" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(EmpNature).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getErrorMessage("employmentNature") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("employmentNature")}
-                </div>
-              )}
-            </div>
-
-            {/* Work Arrangement */}
-            <div className="space-y-2">
-              <label
-                htmlFor="employmentNature"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Work Arrangement  <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={formik.values.workArrangement}
-                onValueChange={(value: WorkArrangement) =>
-                  formik.setFieldValue("workArrangement", value)
-                }
-                disabled={loading}
-              >
-                <SelectTrigger
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                    getErrorMessage("workArrangement")
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <SelectValue placeholder="Select Work Arrangement" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(WorkArrangement).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getErrorMessage("workArrangement") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("workArrangement")}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-          {/* Address Information Section */}
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-2 h-8 bg-linear-to-b from-green-400 to-green-600 rounded-full"></div>
-                    <h3 className="text-xl font-semibold text-gray-800">Address Information</h3>
-                  </div>
-        
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {/* Address Type */}
-                    <div className="space-y-2">
-                      <label htmlFor="addressType" className="block text-sm font-medium text-gray-700 mb-1">
-                        Address Type <span className="text-red-500">*</span>
-                      </label>
-                      <Select
-          value={formik.values.addressType}
-          onValueChange={(value: AddressType) => formik.setFieldValue('addressType', value)}
-          disabled={loading}
-        >
-          <SelectTrigger className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-            getErrorMessage('addressType') ? "border-red-500" : "border-gray-300"
-          }`}>
-            <SelectValue placeholder="Select address type" />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(AddressType).map(([key, value]) => {
-              const isWorkPlace = key === "1" || value === 'Work Place';
-              return (
-                <SelectItem 
-                  key={key} 
-                  value={key}
-                  disabled={isWorkPlace}
-                  className={isWorkPlace ? "opacity-50 cursor-not-allowed" : ""}
-                >
-                  <div className="flex items-center justify-between">
-                    <span>{value}</span>
-                  </div>
-                </SelectItem>
-              );
-            })}
-          </SelectContent>
-        </Select>
-                      {getErrorMessage('addressType') && (
-                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('addressType')}</div>
-                      )}
-                    </div>
-        
-                    {/* Country */}
-                    <div className="space-y-2">
-                      <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
-                        Country  <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        id="country"
-                        name="country"
-                        value={formik.values.country}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                          getErrorMessage('country') ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Ethiopia"
-                        disabled={loading}
-                      />
-                      {getErrorMessage('country') && (
-                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('country')}</div>
-                      )}
-                    </div>
-        
-                    {/* Region */}
-                    <div className="space-y-2">
-                      <label htmlFor="region" className="block text-sm font-medium text-gray-700 mb-1">
-                        Region  <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        id="region"
-                        name="region"
-                        value={formik.values.region}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                          getErrorMessage('region') ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Addis Ababa"
-                        disabled={loading}
-                      />
-                      {getErrorMessage('region') && (
-                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('region')}</div>
-                      )}
-                    </div>
-        
-                    {/* Telephone */}
-                    <div className="space-y-2">
-                      <label htmlFor="telephone" className="block text-sm font-medium text-gray-700 mb-1">
-                        Telephone  <span className="text-red-500">*</span>
-                      </label>
-                      <div className={`w-full border rounded-md transition-colors duration-200 ${
-                        getErrorMessage('telephone') ? "border-red-500" : "border-gray-300"
-                      }`}>
-                        <PhoneInput
-                          country={'et'} // Default to Ethiopia
-                          value={formik.values.telephone}
-                          onChange={handlePhoneChange}
-                          disabled={loading}
-                          inputProps={{
-                            name: "telephone",
-                            onBlur: formik.handleBlur,
-                            disabled: loading
-                          }}
-                          inputStyle={{
-                            width: '100%',
-                            height: '42px',
-                            paddingLeft: '48px',
-                            outline: 'none',
-                            fontSize: '14px',
-                            borderRadius: '6px',
-                            border: 'none',
-                            ...(loading && { backgroundColor: '#f3f4f6', cursor: 'not-allowed' })
-                          }}
-                          buttonStyle={{
-                            border: 'none',
-                            borderRight: '1px solid #ccc',
-                            borderRadius: '6px 0 0 6px',
-                            backgroundColor: '#f8f9fa',
-                            ...(loading && { cursor: 'not-allowed' })
-                          }}
-                          containerStyle={{
-                            width: '100%'
-                          }}
-                          dropdownStyle={{
-                            borderRadius: '6px'
-                          }}
-                        />
-                      </div>
-                      {getErrorMessage('telephone') && (
-                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('telephone')}</div>
-                      )}
-                    </div>
-        
-                    {/* Subcity  */}
-                    <div className="space-y-2">
-                      <label htmlFor="subcity" className="block text-sm font-medium text-gray-700 mb-1">
-                        Subcity  <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        id="subcity"
-                        name="subcity"
-                        value={formik.values.subcity}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className={`w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                          getErrorMessage('subcity') ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Kirkos"
-                        disabled={loading}
-                      />
-                       {getErrorMessage('subcity') && (
-                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('subcity')}</div>
-                      )}
-                    </div>
-        
-                    {/* Zone - Optional */}
-                    <div className="space-y-2">
-                      <label htmlFor="zone" className="block text-sm font-medium text-gray-700 mb-1">
-                        Zone
-                      </label>
-                      <Input
-                        id="zone"
-                        name="zone"
-                        value={formik.values.zone}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                        placeholder="Zone 3"
-                        disabled={loading}
-                      />
-                    </div>
-        
-                    {/* Woreda  */}
-                    <div className="space-y-2">
-                      <label htmlFor="woreda" className="block text-sm font-medium text-gray-700 mb-1">
-                        Woreda  <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        id="woreda"
-                        name="woreda"
-                        value={formik.values.woreda}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className={`w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200  ${
-                          getErrorMessage('woreda') ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="08"
-                        disabled={loading}
-                      />
-                       {getErrorMessage('woreda') && (
-                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('woreda')}</div>
-                      )}
-                    </div>
-        
-                    {/* Kebele - Optional */}
-                    <div className="space-y-2">
-                      <label htmlFor="kebele" className="block text-sm font-medium text-gray-700 mb-1">
-                        Kebele
-                      </label>
-                      <Input
-                        id="kebele"
-                        name="kebele"
-                        value={formik.values.kebele}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                        placeholder="09"
-                        disabled={loading}
-                      />
-                    </div>
-        
-                    {/* House Number  */}
-                    <div className="space-y-2">
-                      <label htmlFor="houseNo" className="block text-sm font-medium text-gray-700 mb-1">
-                        House Number  <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        id="houseNo"
-                        name="houseNo"
-                        value={formik.values.houseNo}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className={`w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                          getErrorMessage('houseNo') ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="H-123"
-                        disabled={loading}
-                      />
-                       {getErrorMessage('houseNo') && (
-                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('houseNo')}</div>
-                      )}
-                    </div>
-        
-                    {/* P.O. Box - Optional */}
-                    <div className="space-y-2">
-                      <label htmlFor="poBox" className="block text-sm font-medium text-gray-700 mb-1">
-                        P.O. Box
-                      </label>
-                      <Input
-                        id="poBox"
-                        name="poBox"
-                        value={formik.values.poBox}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                        placeholder="1234"
-                        disabled={loading}
-                      />
-                    </div>
-        
-                    {/* Fax - Optional */}
-                    <div className="space-y-2">
-                      <label htmlFor="fax" className="block text-sm font-medium text-gray-700 mb-1">
-                        Fax
-                      </label>
-                      <Input
-                        id="fax"
-                        name="fax"
-                        value={formik.values.fax}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                        placeholder="+251111223344"
-                        disabled={loading}
-                      />
-                    </div>
-        
-                    {/* Email  */}
-                    <div className="space-y-2">
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                        Email  <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={formik.values.email}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className={`w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                          getErrorMessage('email') ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="example@email.com"
-                        disabled={loading}
-                      />
-                       {getErrorMessage('email') && (
-                        <div className="text-red-500 text-xs mt-1">{getErrorMessage('email')}</div>
-                      )}
-                    </div>
-        
-                    {/* Website - Optional */}
-                    <div className="space-y-2">
-                      <label htmlFor="website" className="block text-sm font-medium text-gray-700 mb-1">
-                        Website
-                      </label>
-                      <Input
-                        id="website"
-                        name="website"
-                        value={formik.values.website}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                        placeholder="https://example.com"
-                        disabled={loading}
-                      />
-                    </div>
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-700 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-700 dark:text-red-400">
+                      {t.pleaseFixErrors || 'Please fix the following errors:'}
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {Object.entries(validationErrors).map(([field, error]) => {
+                        if (typeof error === 'string' && error.length > 0) {
+                          const fieldName = field
+                              .replace(/([A-Z])/g, ' $1')
+                              .replace(/^./, str => str.toUpperCase());
+                          return (
+                              <li key={field} className="text-sm text-red-600 dark:text-red-400 flex items-start gap-2">
+                                <span className="text-red-500">•</span>
+                                <span><strong>{fieldName}:</strong> {error}</span>
+                              </li>
+                          );
+                        }
+                        return null;
+                      })}
+                    </ul>
                   </div>
                 </div>
+              </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Profile Picture Section - Moved to bottom with increased size */}
-        <div className="mt-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-2 h-8 bg-linear-to-b from-purple-400 to-purple-600 rounded-full"></div>
-            <h3 className="text-xl font-semibold text-gray-800">
-              Profile Picture
-            </h3>
-          </div>
+        {/* Submit Error */}
+        <AnimatePresence>
+          {submitError && (
+              <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-700 dark:text-red-400" />
+                  <p className="text-sm text-red-700 dark:text-red-400">{submitError}</p>
+                </div>
+              </motion.div>
+          )}
+        </AnimatePresence>
 
-          <div className="flex flex-col items-center">
-            <div className="w-80 h-80">
-              {" "}
-              {/* Increased size */}
-              <ProfilePictureUpload
-                profilePicture={formik.values.File}
-                onProfilePictureSelect={handleProfilePictureSelect}
-                onProfilePictureRemove={handleProfilePictureRemove}
-                size="large"
-              />
-
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-end pt-6">
-          <button
-            type="submit"
-            disabled={loading} // Only disable when loading, not based on form validation
-            className="px-8 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* ============================================
+        PERSONAL INFORMATION
+        ============================================ */}
+          <motion.div
+              variants={sectionVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-6"
           >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Saving...
-              </>
-            ) : (
-              "Save & Continue"
-            )}
-          </button>
-        </div>
-      </form>
-    </motion.div>
+            <SectionHeader
+                icon={<User className="w-5 h-5 text-white" />}
+                title={t.personalInformation || 'Personal Information / የግል መረጃ'}
+                subtitle={t.basicPersonalDetails || 'Basic personal details / መሰረታዊ የግል መረጃ'}
+                gradient="from-blue-500 to-indigo-600"
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* Amharic Name Fields */}
+              <Field
+                  label="ስም"
+                  labelAm="First Name (Amharic)"
+                  required
+                  error={getErrorMessage('firstNameAm')}
+              >
+                <Input
+                    name="firstNameAm"
+                    value={formik.values.firstNameAm}
+                    onChange={(e) => {
+                      if (e.target.value === '' || amharicRegex.test(e.target.value)) {
+                        formik.setFieldValue('firstNameAm', e.target.value);
+                      }
+                    }}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="አየለ"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field
+                  label="የአባት ስም"
+                  labelAm="Middle Name (Amharic)"
+                  required
+                  error={getErrorMessage('middleNameAm')}
+              >
+                <Input
+                    name="middleNameAm"
+                    value={formik.values.middleNameAm}
+                    onChange={(e) => {
+                      if (e.target.value === '' || amharicRegex.test(e.target.value)) {
+                        formik.setFieldValue('middleNameAm', e.target.value);
+                      }
+                    }}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="በቀለ"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field
+                  label="የአያት ስም"
+                  labelAm="Last Name (Amharic)"
+                  required
+                  error={getErrorMessage('lastNameAm')}
+              >
+                <Input
+                    name="lastNameAm"
+                    value={formik.values.lastNameAm}
+                    onChange={(e) => {
+                      if (e.target.value === '' || amharicRegex.test(e.target.value)) {
+                        formik.setFieldValue('lastNameAm', e.target.value);
+                      }
+                    }}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="ዮሐንስ"
+                    disabled={loading}
+                />
+              </Field>
+
+              {/* English Name Fields */}
+              <Field
+                  label="First Name"
+                  labelAm="ስም (እንግሊዝኛ)"
+                  required
+                  error={getErrorMessage('firstName')}
+              >
+                <Input
+                    name="firstName"
+                    value={formik.values.firstName}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="John"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field
+                  label="Middle Name"
+                  labelAm="የአባት ስም (እንግሊዝኛ)"
+                  required
+                  error={getErrorMessage('middleName')}
+              >
+                <Input
+                    name="middleName"
+                    value={formik.values.middleName}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="Michael"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field
+                  label="Last Name"
+                  labelAm="የአያት ስም (እንግሊዝኛ)"
+                  required
+                  error={getErrorMessage('lastName')}
+              >
+                <Input
+                    name="lastName"
+                    value={formik.values.lastName}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="Doe"
+                    disabled={loading}
+                />
+              </Field>
+
+              {/* Other Personal Fields */}
+              <Field label="Gender" labelAm="ፆታ" required>
+                <Select
+                    value={formik.values.gender}
+                    onValueChange={(v: Gender) => formik.setFieldValue('gender', v)}
+                    disabled={loading}
+                >
+                  <SelectTrigger className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700">
+                    <SelectValue placeholder={t.selectGender || 'Select Gender'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(Gender).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field label="Nationality" labelAm="ዜግነት" required>
+                <Input
+                    name="nationality"
+                    value={formik.values.nationality}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="Ethiopian"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Birth Date" labelAm="የትውልድ ቀን" required>
+                <Input
+                    name="birthDate"
+                    type="date"
+                    value={formik.values.birthDate}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Marital Status" labelAm="የጋብቻ ሁኔታ" required>
+                <Select
+                    value={formik.values.maritalStatus}
+                    onValueChange={(v: MaritalStat) => formik.setFieldValue('maritalStatus', v)}
+                    disabled={loading}
+                >
+                  <SelectTrigger className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700">
+                    <SelectValue placeholder={t.select || 'Select'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(MaritalStat).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+          </motion.div>
+
+          {/* ============================================
+        EMPLOYMENT DETAILS
+        ============================================ */}
+          <motion.div
+              variants={sectionVariants}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: 0.1 }}
+              className="space-y-6"
+          >
+            <SectionHeader
+                icon={<Briefcase className="w-5 h-5 text-white" />}
+                title={t.employmentDetails || 'Employment Details / የስራ መረጃ'}
+                subtitle={t.jobAndEmploymentInfo || 'Job and employment information / የስራ እና የቅጥር መረጃ'}
+                gradient="from-emerald-500 to-teal-600"
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+              <Field
+                  label="Branch"
+                  labelAm="ቅርንጫፍ"
+                  required
+                  error={getErrorMessage('branchId')}
+                  description={
+                    userBranchId
+                        ? `Assigned: ${branchName || 'Your branch'}`
+                        : undefined
+                  }
+              >
+                {renderBranchSelect()}
+              </Field>
+
+              <Field label="Department" labelAm="ዲፓርትመንት" required>
+                <List
+                    items={deptListItems}
+                    selectedValue={formik.values.departmentId}
+                    onSelect={(item) => formik.setFieldValue('departmentId', item.id)}
+                    placeholder={
+                      loadingDepartments
+                          ? t.loading || 'Loading...'
+                          : deptListItems.length === 0
+                              ? t.noDepartments || 'No departments'
+                              : t.selectDepartment || 'Select department'
+                    }
+                    disabled={loadingDepartments || loading || deptListItems.length === 0}
+                />
+              </Field>
+
+              <Field label="Position" labelAm="ሹመት" required>
+                <List
+                    items={posListItems}
+                    selectedValue={formik.values.positionId}
+                    onSelect={(item) => formik.setFieldValue('positionId', item.id)}
+                    placeholder={
+                      loadingPositions
+                          ? t.loading || 'Loading...'
+                          : !formik.values.departmentId
+                              ? t.selectDepartmentFirst || 'Select department first'
+                              : posListItems.length === 0
+                                  ? t.noPositions || 'No positions'
+                                  : t.selectPosition || 'Select position'
+                    }
+                    disabled={
+                        loadingPositions ||
+                        loading ||
+                        !formik.values.departmentId ||
+                        posListItems.length === 0
+                    }
+                />
+              </Field>
+
+              <Field label="Employment Date" labelAm="የቅጥር ቀን" required>
+                <Input
+                    name="employmentDate"
+                    type="date"
+                    value={formik.values.employmentDate}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Job Grade" labelAm="የስራ ደረጃ" required>
+                <List
+                    items={jgListItems}
+                    selectedValue={formik.values.jobGradeId}
+                    onSelect={(item) => formik.setFieldValue('jobGradeId', item.id)}
+                    placeholder={
+                      loadingJobGrades
+                          ? t.loading || 'Loading...'
+                          : t.selectJobGrade || 'Select job grade'
+                    }
+                    disabled={loadingJobGrades || loading}
+                />
+              </Field>
+
+              <Field label="Job Grade Step" labelAm="የስራ ደረጃ እርምጃ" required>
+                <List
+                    items={jgsListItems}
+                    selectedValue={formik.values.jgStepId}
+                    onSelect={(item) => formik.setFieldValue('jgStepId', item.id)}
+                    placeholder={
+                      loadingJobGradeSteps
+                          ? t.loading || 'Loading...'
+                          : t.selectStep || 'Select step'
+                    }
+                    disabled={loadingJobGradeSteps || loading}
+                />
+              </Field>
+
+              <Field label="Employment Type" labelAm="የቅጥር አይነት" required>
+                <Select
+                    value={formik.values.employmentType}
+                    onValueChange={(v: EmpType) => formik.setFieldValue('employmentType', v)}
+                    disabled={loading}
+                >
+                  <SelectTrigger className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700">
+                    <SelectValue placeholder={t.select || 'Select'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(EmpType).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field label="Employment Nature" labelAm="የቅጥር ባህሪ" required>
+                <Select
+                    value={formik.values.employmentNature}
+                    onValueChange={(v: EmpNature) => formik.setFieldValue('employmentNature', v)}
+                    disabled={loading}
+                >
+                  <SelectTrigger className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700">
+                    <SelectValue placeholder={t.select || 'Select'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(EmpNature).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field label="Work Arrangement" labelAm="የስራ አደረጃጀት" required>
+                <Select
+                    value={formik.values.workArrangement}
+                    onValueChange={(v: WorkArrangement) => formik.setFieldValue('workArrangement', v)}
+                    disabled={loading}
+                >
+                  <SelectTrigger className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700">
+                    <SelectValue placeholder={t.select || 'Select'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(WorkArrangement).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+          </motion.div>
+
+          {/* ============================================
+        ADDRESS INFORMATION
+        ============================================ */}
+          <motion.div
+              variants={sectionVariants}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: 0.2 }}
+              className="space-y-6"
+          >
+            <SectionHeader
+                icon={<MapPin className="w-5 h-5 text-white" />}
+                title={t.addressInformation || 'Address Information / የአድራሻ መረጃ'}
+                subtitle={
+                    t.contactAndLocationDetails ||
+                    'Contact and location details / የእውቂያ እና የአካባቢ መረጃ'
+                }
+                gradient="from-purple-500 to-pink-600"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <Field label="Address Type" labelAm="የአድራሻ አይነት" required>
+                <Select
+                    value={formik.values.addressType}
+                    onValueChange={(v: AddressType) => formik.setFieldValue('addressType', v)}
+                    disabled={loading}
+                >
+                  <SelectTrigger className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700">
+                    <SelectValue placeholder={t.selectType || 'Select type'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(AddressType).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>
+                          {v}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field label="Country" labelAm="ሀገር" required>
+                <Input
+                    name="country"
+                    value={formik.values.country}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="Ethiopia"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Region" labelAm="ክልል" required>
+                <Input
+                    name="region"
+                    value={formik.values.region}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="Addis Ababa"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Telephone" labelAm="ስልክ" required>
+                <PhoneInput
+                    country={'et'}
+                    value={formik.values.telephone}
+                    onChange={handlePhoneChange}
+                    disabled={loading}
+                    inputProps={{
+                      name: 'telephone',
+                      onBlur: formik.handleBlur
+                    }}
+                    containerClass="w-full"
+                    inputClass="!w-full !px-4 !py-2.5 !rounded-xl !border-slate-200 dark:!border-slate-700 dark:!bg-slate-800 dark:!text-white"
+                />
+              </Field>
+
+              <Field label="Subcity" labelAm="ክፍለ ከተማ" required>
+                <Input
+                    name="subcity"
+                    value={formik.values.subcity}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="Kirkos"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Woreda" labelAm="ወረዳ" required>
+                <Input
+                    name="woreda"
+                    value={formik.values.woreda}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="08"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="House Number" labelAm="የቤት ቁጥር" required>
+                <Input
+                    name="houseNo"
+                    value={formik.values.houseNo}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="H-123"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Email" labelAm="ኢሜይል" required>
+                <Input
+                    name="email"
+                    type="email"
+                    value={formik.values.email}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="example@email.com"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Zone" labelAm="ዞን">
+                <Input
+                    name="zone"
+                    value={formik.values.zone}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="Zone 3"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Kebele" labelAm="ቀበሌ">
+                <Input
+                    name="kebele"
+                    value={formik.values.kebele}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="09"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="P.O. Box" labelAm="ፖስታ ሳጥን">
+                <Input
+                    name="poBox"
+                    value={formik.values.poBox}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="1234"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Fax" labelAm="ፋክስ">
+                <Input
+                    name="fax"
+                    value={formik.values.fax}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="+251111223344"
+                    disabled={loading}
+                />
+              </Field>
+
+              <Field label="Website" labelAm="ድረ ገጽ">
+                <Input
+                    name="website"
+                    value={formik.values.website}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border rounded-xl dark:bg-slate-800 dark:border-slate-700"
+                    placeholder="https://example.com"
+                    disabled={loading}
+                />
+              </Field>
+            </div>
+          </motion.div>
+
+          {/* ============================================
+        PROFILE PICTURE
+        ============================================ */}
+          <motion.div
+              variants={sectionVariants}
+              initial="hidden"
+              animate="visible"
+              transition={{ delay: 0.3 }}
+              className="space-y-6"
+          >
+            <SectionHeader
+                icon={<Camera className="w-5 h-5 text-white" />}
+                title={t.profilePicture || 'Profile Picture / የመገለጫ ምስል'}
+                subtitle={
+                    t.uploadPhotoForIdentification ||
+                    'Upload a photo for employee identification / ለሰራተኛ መለያ ፎቶ ይስቀሉ'
+                }
+                gradient="from-amber-500 to-orange-600"
+            />
+
+            <div className="flex justify-center py-4">
+              <div className="w-64 h-64">
+                <ProfilePictureUpload
+                    profilePicture={formik.values.File}
+                    onProfilePictureSelect={handleProfilePictureSelect}
+                    onProfilePictureRemove={handleProfilePictureRemove}
+                    size="large"
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* ============================================
+        SUBMIT BUTTON
+        ============================================ */}
+          <div className="flex justify-end pt-6 border-t border-slate-200 dark:border-slate-700">
+            <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:shadow-lg disabled:opacity-50 flex items-center gap-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {t.saving || 'Saving...'} / በማስቀመጥ ላይ...
+                  </>
+              ) : (
+                  <>
+                    {t.saveAndContinue || 'Save & Continue'} / አስቀምጥ እና ቀጥል
+                    <ChevronRight className="w-4 h-4" />
+                  </>
+              )}
+            </button>
+          </div>
+        </form>
+      </motion.div>
   );
 };
+
+export default BasicInfoStep;

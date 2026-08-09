@@ -63,13 +63,7 @@ const LeavePolicySearchFilters: React.FC<LeavePolicySearchFiltersProps> = ({
           </div>
         </div>
         <div className="flex gap-2 sm:flex-row flex-col">
-          <Button
-            variant="outline"
-            onClick={onAssignPolicy}
-            className="flex items-center gap-2 cursor-pointer border-white bg-red-500 hover:bg-red-600  hover:text-white text-white"
-          >
-            <span>Assign Policy</span>
-          </Button>
+
           <Button
             onClick={onAddClick}
             size="sm"

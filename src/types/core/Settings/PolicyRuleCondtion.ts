@@ -14,10 +14,10 @@ export interface PolicyRuleCondListDto extends BaseDto {
 }
 
 export interface PolicyRuleCondAddDto {
-  field: string;
-  operator: string;
-  value: string;
-  policyAssRuleId: UUID;
+  Field: string;                    // PascalCase
+  Operator: string;                 // PascalCase
+  Value: string;                    // PascalCase
+  PolicyAssignmentRuleId: UUID;     // PascalCase
 }
 
 export interface PolicyRuleCondModDto {

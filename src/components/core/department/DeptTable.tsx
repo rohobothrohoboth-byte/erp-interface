@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   ChevronLeft,
   ChevronRight,
@@ -7,8 +6,10 @@ import {
   Trash2,
   Eye,
   PenBox,
+  Building2,
 } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover';
+import { Button } from '../../ui/button';
 import DeleteDeptModal from './DeleteDeptModal';
 import ViewDeptModal from './ViewDeptModal';
 import type { EditDeptDto, DeptListDto, UUID } from '../../../types/core/dept';
@@ -25,14 +26,14 @@ interface DepartmentTableProps {
 }
 
 const DepartmentTable: React.FC<DepartmentTableProps> = ({
-  departments,
-  currentPage,
-  totalPages,
-  totalItems,
-  onPageChange,
-  onEditDepartment,
-  onDepartmentDelete,
-}) => {
+                                                           departments,
+                                                           currentPage,
+                                                           totalPages,
+                                                           totalItems,
+                                                           onPageChange,
+                                                           onEditDepartment,
+                                                           onDepartmentDelete,
+                                                         }) => {
   const [selectedDepartment, setSelectedDepartment] = useState<DeptListDto | null>(null);
   const [activeModal, setActiveModal] = useState<'view' | 'delete' | null>(null);
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
@@ -44,7 +45,6 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({
   };
 
   const handleEdit = (department: DeptListDto) => {
-    // Call the parent's edit handler directly
     onEditDepartment({
       id: department.id,
       name: department.name,
@@ -68,238 +68,170 @@ const DepartmentTable: React.FC<DepartmentTableProps> = ({
     setSelectedDepartment(null);
   };
 
-  const handleCloseModal = () => {
-    setActiveModal(null);
-    setSelectedDepartment(null);
-  };
-
   const getStatusColor = (status: string): string => {
-    return status === "0" 
-      ? "bg-green-100 text-green-800 border border-green-200"  // Active - Green
-      : "bg-red-100 text-red-800 border border-red-200";       // Inactive - Red
+    return status === "0"
+        ? "bg-green-50 text-green-700 border-green-200"
+        : "bg-red-50 text-red-700 border-red-200";
   };
 
-  // Animation variants for table rows
-  const rowVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (index: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: index * 0.1,
-        duration: 0.3
-      }
-    })
-  };
+  const startItem = (currentPage - 1) * 8 + 1;
+  const endItem = Math.min(currentPage * 8, totalItems);
+  const totalPagesArray = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (
-    <>
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="rounded-xl shadow-sm overflow-hidden bg-white"
-      >
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-white">
+      <>
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+              <thead className="bg-slate-50 dark:bg-slate-800/50">
               <tr>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Department
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Branch
                 </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">
-                  Amharic Name
-                </th>
-                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Status
                 </th>
-                <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {departments.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
-                    No departments found
-                  </td>
-                </tr>
+                  <tr>
+                    <td colSpan={4} className="px-4 py-12 text-center text-slate-500 dark:text-slate-400">
+                      No departments found
+                    </td>
+                  </tr>
               ) : (
-                departments.map((department, index) => (
-                  <motion.tr 
-                    key={department.id}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    variants={rowVariants}
-                    className="transition-colors hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-1 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <motion.div 
-                          whileHover={{ rotate: 10 }}
-                          className="shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center"
-                        >
-                          <span className="text-emerald-600 font-medium">
-                            {department.name.charAt(0).toUpperCase()}
-                          </span>
-                        </motion.div>
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-30 md:max-w-none">
-                            {department.name}
+                  departments.map((department) => (
+                      <tr key={department.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                              <Building2 className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                {department.name}
+                              </div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400">
+                                {department.nameAm}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500 truncate max-w-30 md:max-w-none">
-                            {department.nameAm}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <span>{department.branch}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
-                      <div className="text-sm text-gray-900">
-                        {department.nameAm}
-                      </div>
-                    </td>
-                    <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(department.deptStat)}`}>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
+                          {department.branch}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${getStatusColor(department.deptStat)}`}>
                         {department.deptStatStr}
                       </span>
-                    </td>
-                    <td className="px-4 py-1 whitespace-nowrap text-right text-sm font-medium">
-                      <Popover open={popoverOpen === department.id} onOpenChange={(open) => setPopoverOpen(open ? department.id : null)}>
-                        <PopoverTrigger asChild>
-                          <motion.button 
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100"
-                          >
-                            <MoreVertical className="h-5 w-5" />
-                          </motion.button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-48 p-0" align="end">
-                          <div className="py-1">
-                            <button 
-                              onClick={() => handleViewDetails(department)}
-                              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
-                            >
-                              <Eye size={16} />
-                              View Details
-                            </button>
-                            <button 
-                              onClick={() => handleEdit(department)}
-                              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
-                            >
-                              <PenBox size={16} />
-                              Edit
-                            </button>
-                            <button 
-                              onClick={() => handleDelete(department)}
-                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
-                            >
-                              <Trash2 size={16} />
-                              Delete
-                            </button>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </td>
-                  </motion.tr>
-                ))
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right">
+                          <Popover open={popoverOpen === department.id} onOpenChange={(open) => setPopoverOpen(open ? department.id : null)}>
+                            <PopoverTrigger asChild>
+                              <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                <MoreVertical className="h-4 w-4" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-36 p-1 rounded-lg shadow-lg" align="end">
+                              <button
+                                  onClick={() => handleViewDetails(department)}
+                                  className="w-full text-left px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md flex items-center gap-2"
+                              >
+                                <Eye size={14} />
+                                View
+                              </button>
+                              <button
+                                  onClick={() => handleEdit(department)}
+                                  className="w-full text-left px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md flex items-center gap-2"
+                              >
+                                <PenBox size={14} />
+                                Edit
+                              </button>
+                              <button
+                                  onClick={() => handleDelete(department)}
+                                  className="w-full text-left px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md flex items-center gap-2"
+                              >
+                                <Trash2 size={14} />
+                                Delete
+                              </button>
+                            </PopoverContent>
+                          </Popover>
+                        </td>
+                      </tr>
+                  ))
               )}
-            </tbody>
-          </table>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+              <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-slate-500 dark:text-slate-400">
+                    Showing {startItem} to {endItem} of {totalItems} departments
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="h-8 w-8 p-0"
+                    >
+                      <ChevronLeft size={16} />
+                    </Button>
+                    {totalPagesArray.map((page) => (
+                        <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => onPageChange(page)}
+                            className={`h-8 w-8 p-0 ${currentPage === page ? 'bg-slate-800 dark:bg-slate-700 text-white' : ''}`}
+                        >
+                          {page}
+                        </Button>
+                    ))}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onPageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="h-8 w-8 p-0"
+                    >
+                      <ChevronRight size={16} />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+          )}
         </div>
 
-        {/* Pagination */}
-        <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing <span className="font-medium">{(currentPage - 1) * 8 + 1}</span> to{' '}
-                <span className="font-medium">{Math.min(currentPage * 8, totalItems)}</span> of{' '}
-                <span className="font-medium">{totalItems}</span> departments
-              </p>
-            </div>
-            <div>
-              <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                <button
-                  onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <span className="sr-only">Previous</span>
-                  <ChevronLeft size={16} />
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => onPageChange(page)}
-                    className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                      currentPage === page
-                        ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600'
-                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button
-                  onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <span className="sr-only">Next</span>
-                  <ChevronRight size={16} />
-                </button>
-              </nav>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+        {/* Modals */}
+        {activeModal === 'view' && selectedDepartment && (
+            <ViewDeptModal
+                selectedDepartment={selectedDepartment}
+                onClose={() => setActiveModal(null)}
+                getStatusColor={getStatusColor}
+            />
+        )}
 
-      {/* View Details Modal */}
-      {activeModal === 'view' && (
-        <ViewDeptModal
-          selectedDepartment={selectedDepartment}
-          onClose={handleCloseModal}
-          getStatusColor={getStatusColor}
-        />
-      )}
-
-      {/* Delete Modal */}
-      {activeModal === 'delete' && (
-        <DeleteDeptModal
-          department={selectedDepartment}
-          isOpen={true}
-          onClose={handleCloseModal}
-          onConfirm={handleConfirmDelete}
-        />
-      )}
-    </>
+        {activeModal === 'delete' && selectedDepartment && (
+            <DeleteDeptModal
+                department={selectedDepartment}
+                isOpen={true}
+                onClose={() => setActiveModal(null)}
+                onConfirm={handleConfirmDelete}
+            />
+        )}
+      </>
   );
 };
 

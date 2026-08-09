@@ -4,6 +4,7 @@ import type { BaseDto } from '../../hr/BaseDto';
 export type { UUID };
 
 // Leave Policy Types
+// types/core/Settings/leavepolicy.ts
 export interface LeavePolicyListDto extends BaseDto {
   leaveTypeId: UUID;
   code: string;
@@ -15,14 +16,16 @@ export interface LeavePolicyListDto extends BaseDto {
   statusStr: string;
   allowEncashmentStr: string;
   requiresAttachmentStr: string;
+  rowVersion?: string; // Add this field - make it optional
 }
+// In your types file (leavepolicy.ts)
 export interface LeavePolicyAddDto {
-  name: string;
   code: string;
+  name: string;
   allowEncashment: boolean;
   requiresAttachment: boolean;
-  status: string;
   leaveTypeId: UUID;
+  status?: string;  // Make status optional since backend sets it
 }
 
 export interface LeavePolicyModDto {

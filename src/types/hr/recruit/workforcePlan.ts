@@ -1,46 +1,67 @@
-import type { BaseDto } from "./BaseDto";
-import type { UUID } from 'crypto';
+// src/types/hr/recruit/workforcePlan.ts
 
-export type { UUID };
-
-/* =======================
-   WorkforcePlanListDto
-======================= */
-export interface WorkforcePlanListDto extends BaseDto {
+export interface WorkforcePlanListDto {
+  id: string;
   planCode: string;
   title: string;
   desc: string;
-  startDate: string;
-  endDate: string;
-  totalPositions: number;
-  appPositions: number;
-  statusStr: string;
   department: string;
-  period: string;
-  requistionBy: string;
-}
-
-/* =======================
-   WorkforcePlanAddDto
-======================= */
-export interface WorkforcePlanAddDto {
-  title: string;
-  desc: string;
+  departmentId: string;
+  year: number;
   startDate: string;
   endDate: string;
   totalPositions: number;
-  periodId?: UUID;
+  filledPositions: number;
+  openPositions: number;
+  statusStr: 'Draft' | 'Pending' | 'Approved' | 'Active' | 'Completed' | 'Cancelled' | 'Rejected';
+  requistionBy: string;
+  requistionById: string;
+  budget: number;
+  budgetCurrency: string;
+  reviewComment: string | null;
+  reviewedBy: string | null;
+  reviewedDate: string | null;
+  createdDate: string;
+  rowVersion: string;
 }
 
-/* =======================
-   WorkforcePlanModDto
-======================= */
-export interface WorkforcePlanModDto {
-  id: UUID;
+export interface WorkforcePlanAddDto {
+  planCode: string;
   title: string;
   desc: string;
-  startDate: Date;
-  endDate: Date;
+  departmentId: string;
+  year: number;
+  startDate: string;
+  endDate: string;
   totalPositions: number;
+  budget: number;
+  budgetCurrency: string;
+}
+
+export interface WorkforcePlanModDto {
+  id: string;
+  planCode: string;
+  title: string;
+  desc: string;
+  departmentId: string;
+  year: number;
+  startDate: string;
+  endDate: string;
+  totalPositions: number;
+  budget: number;
+  budgetCurrency: string;
+  statusStr: 'Draft' | 'Pending' | 'Approved' | 'Active' | 'Completed' | 'Cancelled' | 'Rejected';
   rowVersion: string;
+}
+
+export interface WorkforcePlanStatsDto {
+  totalPlans: number;
+  activePlans: number;
+  pendingPlans: number;
+  completedPlans: number;
+  cancelledPlans: number;
+  totalPositions: number;
+  filledPositions: number;
+  openPositions: number;
+  totalBudget: number;
 }

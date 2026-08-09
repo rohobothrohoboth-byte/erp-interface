@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
+// src/components/crm/leadManagement/leadGeneration/LeadGenerationSection.tsx
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { showToast } from '../../../../layout/layout';
-import { mockLeads } from '../../../../data/crmMockData';
+import { getLeads, deleteLead, assignLead } from '../../../../services/crm/crm.api';
+import type { LeadDto } from '../../../../types/crm/crm.types';
 import LeadGenerationHeader from './LeadGenerationHeader';
 import LeadGenerationSearchFilter from './LeadGenerationSearchFilter';
 import LeadGenerationTable from './LeadGenerationTable';
-import type { Lead } from '../../../../types/crm';
+import DeleteLeadModal from './DeleteLeadModal';
+import ReassignLeadModal from './ReassignLeadModal';
 
 interface FilterState {
   searchTerm: string;
@@ -17,22 +21,12 @@ interface FilterState {
 }
 
 export default function LeadGenerationSection() {
-  const loadLeads = () => {
-    const storedLeads = localStorage.getItem('leads');
-    if (storedLeads) {
-      try {
-        return JSON.parse(storedLeads);
-      } catch (error) {
-        console.error('Error parsing stored leads:', error);
-        return mockLeads;
-      }
-    }
-    // Persist mock leads to localStorage so edit page can find them
-    localStorage.setItem('leads', JSON.stringify(mockLeads));
-    return mockLeads;
-  };
-
-  const [leads, setLeads] = useState<Lead[]>(loadLeads());
+  const navigate = useNavigate();
+  const [leads, setLeads] = useState<LeadDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedLead, setSelectedLead] = useState<LeadDto | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isReassignModalOpen, setIsReassignModalOpen] = useState(false);
   const [filters, setFilters] = useState<FilterState>({
     searchTerm: '',
     status: 'all',
@@ -42,90 +36,64 @@ export default function LeadGenerationSection() {
     dateRange: 'all'
   });
 
-  useEffect(() => {
-    const reloadLeads = () => {
-      const storedLeads = localStorage.getItem('leads');
-      if (storedLeads) {
-        try {
-          const parsedLeads = JSON.parse(storedLeads);
-          setLeads(parsedLeads);
-        } catch (error) {
-          console.error('Error parsing stored leads:', error);
-        }
+  const fetchLeads = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getLeads({ isActive: true });
+      if (response.data.success) {
+        setLeads(response.data.data || []);
       }
-    };
-
-    reloadLeads();
-    window.addEventListener('storage', reloadLeads);
-    window.addEventListener('focus', reloadLeads);
-
-    return () => {
-      window.removeEventListener('storage', reloadLeads);
-      window.removeEventListener('focus', reloadLeads);
-    };
+    } catch (error) {
+      console.error('Error fetching leads:', error);
+      showToast.error('Failed to load leads');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
+
   const filteredLeads = leads.filter(lead => {
-    const matchesSearch = 
-      lead.firstName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      lead.lastName.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      lead.email.toLowerCase().includes(filters.searchTerm.toLowerCase()) ||
-      lead.company.toLowerCase().includes(filters.searchTerm.toLowerCase());
-    
+    const matchesSearch =
+        (lead.fullName?.toLowerCase().includes(filters.searchTerm.toLowerCase()) || false) ||
+        (lead.email?.toLowerCase().includes(filters.searchTerm.toLowerCase()) || false) ||
+        (lead.companyName?.toLowerCase().includes(filters.searchTerm.toLowerCase()) || false);
+
     const matchesStatus = filters.status === 'all' || lead.status === filters.status;
     const matchesSource = filters.source === 'all' || lead.source === filters.source;
-    const matchesAssignedTo = filters.assignedTo === 'all' || 
-      (filters.assignedTo === 'unassigned' ? !lead.assignedTo : lead.assignedTo === filters.assignedTo);
-    
-    const matchesScore = filters.scoreRange === 'all' || 
-      (filters.scoreRange === 'hot' && lead.score >= 80) ||
-      (filters.scoreRange === 'warm' && lead.score >= 60 && lead.score < 80) ||
-      (filters.scoreRange === 'cold' && lead.score < 60);
-    
-    const matchesDate = filters.dateRange === 'all' || (() => {
-      const leadDate = new Date(lead.createdAt);
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
-      switch (filters.dateRange) {
-        case 'today':
-          return leadDate >= today;
-        case 'week':
-          const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-          return leadDate >= weekAgo;
-        case 'month':
-          const monthAgo = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
-          return leadDate >= monthAgo;
-        case 'quarter':
-          const quarterAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
-          return leadDate >= quarterAgo;
-        default:
-          return true;
-      }
-    })();
-    
-    return matchesSearch && matchesStatus && matchesSource && matchesAssignedTo && matchesScore && matchesDate;
+    const matchesAssignedTo = filters.assignedTo === 'all' ||
+        (filters.assignedTo === 'unassigned' ? !lead.assignedToUserId : lead.assignedToUserId === filters.assignedTo);
+
+    const matchesScore = filters.scoreRange === 'all' ||
+        (filters.scoreRange === 'hot' && (lead.score || 0) >= 80) ||
+        (filters.scoreRange === 'warm' && (lead.score || 0) >= 60 && (lead.score || 0) < 80) ||
+        (filters.scoreRange === 'cold' && (lead.score || 0) < 60);
+
+    return matchesSearch && matchesStatus && matchesSource && matchesAssignedTo && matchesScore;
   });
 
-  const handleEditLead = (lead: Lead) => {
-    console.log('Edit lead:', lead);
+  const handleDelete = async (leadId: string) => {
+    try {
+      await deleteLead(leadId);
+      showToast.success('Lead deleted successfully');
+      await fetchLeads();
+    } catch (error) {
+      console.error('Error deleting lead:', error);
+      showToast.error('Failed to delete lead');
+    }
   };
 
-  const handleDeleteLead = (leadId: string) => {
-    const updatedLeads = leads.filter(lead => lead.id !== leadId);
-    setLeads(updatedLeads);
-    localStorage.setItem('leads', JSON.stringify(updatedLeads));
-    showToast.success('Lead deleted successfully');
-  };
-
-  const handleAssignRep = (leadId: string, repName: string) => {
-    const updatedLeads = leads.map(lead => 
-      lead.id === leadId 
-        ? { ...lead, assignedTo: repName, updatedAt: new Date().toISOString() }
-        : lead
-    );
-    setLeads(updatedLeads);
-    localStorage.setItem('leads', JSON.stringify(updatedLeads));
+  const handleReassign = async (leadId: string, userId: string) => {
+    try {
+      await assignLead(leadId, userId);
+      showToast.success('Lead reassigned successfully');
+      await fetchLeads();
+    } catch (error) {
+      console.error('Error reassigning lead:', error);
+      showToast.error('Failed to reassign lead');
+    }
   };
 
   const clearFilters = () => {
@@ -140,30 +108,66 @@ export default function LeadGenerationSection() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
-      <LeadGenerationHeader
-        totalCount={leads.length}
-        filteredCount={filteredLeads.length}
-        selectedCount={0}
-      />
+      <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-6"
+      >
+        <LeadGenerationHeader totalCount={leads.length} filteredCount={filteredLeads.length} />
 
-      <LeadGenerationSearchFilter
-        filters={filters}
-        onFiltersChange={setFilters}
-        onClearFilters={clearFilters}
-      />
+        <LeadGenerationSearchFilter
+            filters={filters}
+            onFiltersChange={setFilters}
+            onClearFilters={clearFilters}
+        />
 
-      <LeadGenerationTable
-        leads={filteredLeads}
-        onEdit={handleEditLead}
-        onDelete={handleDeleteLead}
-        onAssignRep={handleAssignRep}
-      />
-    </motion.div>
+        <LeadGenerationTable
+            leads={filteredLeads}
+            loading={loading}
+            onEdit={(lead) => navigate(`/crm/leads/${lead.id}/edit`)}
+            onDelete={(lead) => {
+              setSelectedLead(lead);
+              setIsDeleteModalOpen(true);
+            }}
+            onReassign={(lead) => {
+              setSelectedLead(lead);
+              setIsReassignModalOpen(true);
+            }}
+            onRefresh={fetchLeads}
+        />
+
+        <DeleteLeadModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => {
+              setIsDeleteModalOpen(false);
+              setSelectedLead(null);
+            }}
+            onConfirm={() => {
+              if (selectedLead) {
+                handleDelete(selectedLead.id);
+                setIsDeleteModalOpen(false);
+                setSelectedLead(null);
+              }
+            }}
+            leadName={selectedLead?.fullName || ''}
+        />
+
+        <ReassignLeadModal
+            isOpen={isReassignModalOpen}
+            onClose={() => {
+              setIsReassignModalOpen(false);
+              setSelectedLead(null);
+            }}
+            onConfirm={(userId) => {
+              if (selectedLead) {
+                handleReassign(selectedLead.id, userId);
+                setIsReassignModalOpen(false);
+                setSelectedLead(null);
+              }
+            }}
+            lead={selectedLead}
+        />
+      </motion.div>
   );
 }

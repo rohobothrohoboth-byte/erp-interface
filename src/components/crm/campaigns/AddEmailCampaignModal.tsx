@@ -1,271 +1,393 @@
-import { useState, useEffect } from 'react';
+// src/components/crm/campaigns/AddEmailCampaignModal.tsx
+
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Mail } from 'lucide-react';
+import {
+  X,
+  Mail,
+  Send,
+  Users,
+  Calendar,
+  Clock,
+  Tag,
+  FileText,
+  Loader2,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../ui/dialog';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
 import { Textarea } from '../../ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
-import { Checkbox } from '../../ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs';
+import { Badge } from '../../ui/badge';
+import { Switch } from '../../ui/switch';
+import { showToast } from '../../../layout/layout';
+import { createCampaign } from '../../../services/crm/crm.api';
+import type { CreateCampaignDto } from '../../../types/crm/crm.types';
 
 interface AddEmailCampaignModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (campaignData: any) => void;
-  editingCampaign?: any;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-const statusOptions = ['Draft', 'Scheduled', 'Sent', 'Cancelled'];
-const targetTypeOptions = ['Leads', 'Customers', 'Contacts'];
+interface EmailCampaignFormData {
+  name: string;
+  description: string;
+  subject: string;
+  content: string;
+  type: string;
+  status: string;
+  targetAudience: string;
+  targetCount: number;
+  scheduledDate: string;
+  budget: number;
+  expectedRevenue: number;
+  tags: string[];
+}
 
-const emailTemplates = [
-  { id: 'welcome', name: 'Welcome Email', subject: 'Welcome to {{company_name}}!', previewText: "We're excited to have you on board", body: 'Dear {{first_name}},\n\nWelcome to {{company_name}}! We\'re thrilled to have you join our community.\n\nBest regards,\nThe Team' },
-  { id: 'promotion', name: 'Promotional Email', subject: 'Special Offer Just for You!', previewText: "Don't miss out on this exclusive deal", body: 'Hi {{first_name}},\n\nWe have an exclusive offer just for you! Get {{discount}}% off on your next purchase.\n\nUse code: {{promo_code}}\n\nBest regards,\nSales Team' },
-  { id: 'newsletter', name: 'Newsletter', subject: '{{company_name}} Monthly Newsletter', previewText: 'Your monthly update is here', body: 'Hello {{first_name}},\n\nHere\'s what\'s new this month at {{company_name}}.\n\n{{newsletter_content}}\n\nStay connected,\nThe Team' },
-  { id: 'followup', name: 'Follow-up Email', subject: 'Following up on our conversation', previewText: "Let's continue our discussion", body: 'Hi {{first_name}},\n\nI wanted to follow up on our recent conversation about {{topic}}.\n\nLooking forward to hearing from you.\n\nBest regards,\n{{sender_name}}' }
-];
-
-const emptyForm = {
-  campaignId: '', templateId: '', subject: '', previewText: '', body: '',
-  sendToAll: true, targetType: 'Leads', selectedRecipients: [] as string[],
-  scheduledDate: '', status: 'Draft'
+const defaultFormData: EmailCampaignFormData = {
+  name: '',
+  description: '',
+  subject: '',
+  content: '',
+  type: 'Email',
+  status: 'Draft',
+  targetAudience: 'All Customers',
+  targetCount: 1000,
+  scheduledDate: '',
+  budget: 0,
+  expectedRevenue: 0,
+  tags: [],
 };
 
-export default function AddEmailCampaignModal({ isOpen, onClose, onSubmit, editingCampaign }: AddEmailCampaignModalProps) {
-  const [campaigns, setCampaigns] = useState<any[]>([]);
-  const [leads, setLeads] = useState<any[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [contacts, setContacts] = useState<any[]>([]);
-  const [formData, setFormData] = useState(emptyForm);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+const audienceOptions = [
+  'All Customers',
+  'New Customers',
+  'Active Customers',
+  'Inactive Customers',
+  'VIP Customers',
+  'Specific Segment',
+];
+
+const tagOptions = [
+  'Newsletter',
+  'Promotional',
+  'Product Launch',
+  'Event',
+  'Webinar',
+  'Survey',
+  'Welcome',
+  'Re-engagement',
+];
+
+export const AddEmailCampaignModal: React.FC<AddEmailCampaignModalProps> = ({
+                                                                              open,
+                                                                              onOpenChange,
+                                                                              onSuccess,
+                                                                            }) => {
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('content');
+  const [formData, setFormData] = useState<EmailCampaignFormData>(defaultFormData);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   useEffect(() => {
-    const stored = (key: string) => { const v = localStorage.getItem(key); return v ? JSON.parse(v) : []; };
-    setCampaigns(stored('campaigns'));
-    setLeads(stored('leads'));
-    const allContacts = stored('contacts');
-    setContacts(allContacts);
-    setCustomers(allContacts.filter((c: any) => c.type === 'Customer'));
-  }, []);
-
-  useEffect(() => {
-    if (editingCampaign) {
-      setFormData({
-        campaignId: editingCampaign.campaignId || '',
-        templateId: editingCampaign.templateId || '',
-        subject: editingCampaign.subject || '',
-        previewText: editingCampaign.previewText || '',
-        body: editingCampaign.body || '',
-        sendToAll: editingCampaign.sendToAll !== undefined ? editingCampaign.sendToAll : true,
-        targetType: editingCampaign.targetType || 'Leads',
-        selectedRecipients: editingCampaign.selectedRecipients || [],
-        scheduledDate: editingCampaign.scheduledDate || '',
-        status: editingCampaign.status || 'Draft'
-      });
-    } else {
-      setFormData(emptyForm);
+    if (!open) {
+      setFormData(defaultFormData);
+      setSelectedTags([]);
+      setActiveTab('content');
     }
-  }, [editingCampaign, isOpen]);
+  }, [open]);
 
-  const validate = () => {
-    const e: Record<string, string> = {};
-    if (!formData.campaignId) e.campaignId = 'Campaign is required';
-    if (!formData.subject.trim()) e.subject = 'Subject is required';
-    if (!formData.body.trim()) e.body = 'Message is required';
-    if (!formData.sendToAll && formData.selectedRecipients.length === 0) e.selectedRecipients = 'Please select at least one recipient';
-    if (formData.status === 'Scheduled' && !formData.scheduledDate) e.scheduledDate = 'Scheduled date is required';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleChange = (field: string, value: any) => {
-    if (field === 'templateId') {
-      const t = emailTemplates.find(t => t.id === value);
-      if (t) {
-        setFormData(prev => ({ ...prev, templateId: value, subject: t.subject, previewText: t.previewText, body: t.body }));
-        return;
-      }
-    }
+  const handleChange = (field: keyof EmailCampaignFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
-  const toggleRecipient = (id: string) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedRecipients: prev.selectedRecipients.includes(id)
-        ? prev.selectedRecipients.filter(r => r !== id)
-        : [...prev.selectedRecipients, id]
-    }));
-  };
-
-  const getRecipients = () => {
-    if (formData.targetType === 'Leads') return leads;
-    if (formData.targetType === 'Customers') return customers;
-    return contacts;
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev =>
+        prev.includes(tag)
+            ? prev.filter(t => t !== tag)
+            : [...prev, tag]
+    );
   };
 
   const handleSubmit = async () => {
-    if (!validate()) return;
-    setIsSubmitting(true);
+    if (!formData.name.trim() || !formData.subject.trim() || !formData.content.trim()) {
+      showToast.error('Please fill in all required fields');
+      return;
+    }
+
     try {
-      await onSubmit(formData);
-      if (!editingCampaign) setFormData(emptyForm);
-      setErrors({});
-    } catch (err) {
-      console.error(err);
+      setLoading(true);
+      const campaignData: CreateCampaignDto = {
+        name: formData.name,
+        description: formData.description,
+        type: 'Email',
+        status: formData.status,
+        targetAudience: formData.targetAudience,
+        targetCount: formData.targetCount,
+        budget: formData.budget || undefined,
+        expectedRevenue: formData.expectedRevenue || undefined,
+        contentJson: JSON.stringify({
+          subject: formData.subject,
+          content: formData.content,
+          tags: selectedTags,
+        }),
+        metricsJson: JSON.stringify({
+          scheduledDate: formData.scheduledDate,
+        }),
+      };
+
+      await createCampaign(campaignData);
+      showToast.success('Email campaign created successfully!');
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error: any) {
+      console.error('Error creating email campaign:', error);
+      showToast.error(error?.response?.data?.message || 'Failed to create email campaign');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const selectedCampaign = campaigns.find(c => c.id === formData.campaignId);
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
-      >
-        <div className="flex items-center gap-2 border-b px-6 py-2 sticky top-0 bg-white z-10">
-          <Mail className="w-5 h-5 text-orange-600" />
-          <h2 className="text-base font-semibold text-gray-800">
-            {editingCampaign ? 'Edit Email Campaign' : 'Create New Email Campaign'}
-          </h2>
-        </div>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-indigo-600">
+              <Mail className="h-5 w-5" />
+              Create Email Campaign
+            </DialogTitle>
+            <DialogDescription>
+              Create a new email marketing campaign
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="px-6 py-4">
-          <div className="grid grid-cols-2 gap-6">
-            {/* Left Column */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <Label>Campaign <span className="text-red-500">*</span></Label>
-                <Select value={formData.campaignId} onValueChange={v => handleChange('campaignId', v)}>
-                  <SelectTrigger className={errors.campaignId ? 'border-red-500' : ''}>
-                    <SelectValue placeholder="Select campaign" />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="content" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Content
+              </TabsTrigger>
+              <TabsTrigger value="audience" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Audience
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Settings
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="content" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Campaign Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                    value={formData.name}
+                    onChange={(e) => handleChange('name', e.target.value)}
+                    placeholder="e.g., Summer Newsletter 2024"
+                    className="h-10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Subject Line <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                    value={formData.subject}
+                    onChange={(e) => handleChange('subject', e.target.value)}
+                    placeholder="Enter email subject line..."
+                    className="h-10"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Email Content <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                    value={formData.content}
+                    onChange={(e) => handleChange('content', e.target.value)}
+                    placeholder="Write your email content here..."
+                    rows={8}
+                    className="resize-none font-mono"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tags</Label>
+                <div className="flex flex-wrap gap-2">
+                  {tagOptions.map((tag) => (
+                      <Badge
+                          key={tag}
+                          variant={selectedTags.includes(tag) ? 'default' : 'outline'}
+                          className="cursor-pointer px-3 py-1"
+                          onClick={() => handleTagToggle(tag)}
+                      >
+                        {tag}
+                      </Badge>
+                  ))}
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="audience" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Target Audience</Label>
+                <Select
+                    value={formData.targetAudience}
+                    onValueChange={(value) => handleChange('targetAudience', value)}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select audience" />
                   </SelectTrigger>
                   <SelectContent>
-                    {campaigns.length === 0
-                      ? <SelectItem value="none" disabled>No campaigns available</SelectItem>
-                      : campaigns.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)
-                    }
-                  </SelectContent>
-                </Select>
-                {errors.campaignId && <p className="text-xs text-red-500">{errors.campaignId}</p>}
-                {selectedCampaign && <p className="text-xs text-gray-500">Target: {selectedCampaign.targetAudience} | Budget: ${selectedCampaign.budget}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <Label>Subject <span className="text-red-500">*</span></Label>
-                <Input value={formData.subject} onChange={e => handleChange('subject', e.target.value)} placeholder="Email subject" className={errors.subject ? 'border-red-500' : ''} />
-                {errors.subject && <p className="text-xs text-red-500">{errors.subject}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <Label>Preview Text</Label>
-                <Input value={formData.previewText} onChange={e => handleChange('previewText', e.target.value)} placeholder="Preview text shown in inbox" />
-              </div>
-
-              <div className="space-y-1">
-                <Label>Message <span className="text-red-500">*</span></Label>
-                <Textarea value={formData.body} onChange={e => handleChange('body', e.target.value)} placeholder="Type your email message here..." rows={8} className={errors.body ? 'border-red-500' : ''} />
-                {errors.body && <p className="text-xs text-red-500">{errors.body}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <Label>Email Template (Optional)</Label>
-                <Select value={formData.templateId} onValueChange={v => handleChange('templateId', v)}>
-                  <SelectTrigger><SelectValue placeholder="Select template to auto-fill" /></SelectTrigger>
-                  <SelectContent>
-                    {emailTemplates.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <Label>Target Type <span className="text-red-500">*</span></Label>
-                <Select value={formData.targetType} onValueChange={v => { handleChange('targetType', v); handleChange('selectedRecipients', []); handleChange('sendToAll', false); }}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {targetTypeOptions.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label>Select Recipients <span className="text-red-500">*</span></Label>
-                <Select value={formData.sendToAll ? 'all' : ''} onValueChange={v => { if (v === 'all') { handleChange('sendToAll', true); handleChange('selectedRecipients', []); } else { handleChange('sendToAll', false); toggleRecipient(v); } }}>
-                  <SelectTrigger className={errors.selectedRecipients ? 'border-red-500' : ''}>
-                    <SelectValue placeholder={formData.sendToAll ? `All ${formData.targetType}` : formData.selectedRecipients.length > 0 ? `${formData.selectedRecipients.length} selected` : 'Select recipients'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      <div className="flex items-center gap-2">
-                        <Checkbox checked={formData.sendToAll} onCheckedChange={c => { handleChange('sendToAll', c); if (c) handleChange('selectedRecipients', []); }} className="data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600" />
-                        <span className="font-medium">Select All {formData.targetType}</span>
-                      </div>
-                    </SelectItem>
-                    {getRecipients().length === 0
-                      ? <SelectItem value="none" disabled>No {formData.targetType.toLowerCase()} available</SelectItem>
-                      : getRecipients().map((r: any) => (
-                        <SelectItem key={r.id} value={r.id}>
-                          <div className="flex items-center gap-2">
-                            <Checkbox checked={formData.selectedRecipients.includes(r.id)} onCheckedChange={() => { handleChange('sendToAll', false); toggleRecipient(r.id); }} className="data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600" />
-                            <div>
-                              <div className="text-sm font-medium">{r.firstName} {r.lastName}</div>
-                              <div className="text-xs text-gray-500">{r.email}{r.company && ` • ${r.company}`}</div>
-                            </div>
-                          </div>
+                    {audienceOptions.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
                         </SelectItem>
-                      ))
-                    }
-                  </SelectContent>
-                </Select>
-                {errors.selectedRecipients && <p className="text-xs text-red-500">{errors.selectedRecipients}</p>}
-                {(formData.sendToAll || formData.selectedRecipients.length > 0) && (
-                  <p className="text-xs text-orange-600 font-medium">✓ {formData.sendToAll ? `All ${formData.targetType}` : `${formData.selectedRecipients.length} recipient(s)`} selected</p>
-                )}
-              </div>
-
-              <div className="space-y-1">
-                <Label>Status</Label>
-                <Select value={formData.status} onValueChange={v => handleChange('status', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label>Scheduled Date {formData.status === 'Scheduled' && <span className="text-red-500">*</span>}</Label>
-                <Input type="datetime-local" value={formData.scheduledDate} onChange={e => handleChange('scheduledDate', e.target.value)} className={errors.scheduledDate ? 'border-red-500' : ''} />
-                {errors.scheduledDate && <p className="text-xs text-red-500">{errors.scheduledDate}</p>}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Target Count</Label>
+                <Input
+                    type="number"
+                    value={formData.targetCount}
+                    onChange={(e) => handleChange('targetCount', parseInt(e.target.value) || 0)}
+                    className="h-10"
+                />
               </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="border-t px-6 py-2">
-          <div className="flex justify-center items-center gap-1.5">
-            <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-orange-600 hover:bg-orange-700 text-white">
-              {isSubmitting
-                ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />{editingCampaign ? 'Updating...' : 'Creating...'}</>
-                : editingCampaign ? 'Update Campaign' : 'Create Campaign'
-              }
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-blue-700 font-medium">Audience Sizing</p>
+                    <p className="text-sm text-blue-600">
+                      This campaign will be sent to approximately <strong>{formData.targetCount.toLocaleString()}</strong> recipients.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Status</Label>
+                  <Select
+                      value={formData.status}
+                      onValueChange={(value) => handleChange('status', value)}
+                  >
+                    <SelectTrigger className="h-10">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Draft">Draft</SelectItem>
+                      <SelectItem value="Active">Active</SelectItem>
+                      <SelectItem value="Paused">Paused</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Scheduled Date</Label>
+                  <Input
+                      type="datetime-local"
+                      value={formData.scheduledDate}
+                      onChange={(e) => handleChange('scheduledDate', e.target.value)}
+                      className="h-10"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Budget</Label>
+                  <Input
+                      type="number"
+                      value={formData.budget}
+                      onChange={(e) => handleChange('budget', parseFloat(e.target.value) || 0)}
+                      className="h-10"
+                      placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Expected Revenue</Label>
+                  <Input
+                      type="number"
+                      value={formData.expectedRevenue}
+                      onChange={(e) => handleChange('expectedRevenue', parseFloat(e.target.value) || 0)}
+                      className="h-10"
+                      placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div className="flex items-start gap-2">
+                  <Clock className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-yellow-700 font-medium">Scheduling</p>
+                    <p className="text-sm text-yellow-600">
+                      {formData.scheduledDate
+                          ? `Campaign will be sent on ${new Date(formData.scheduledDate).toLocaleString()}`
+                          : 'No schedule set. Campaign will be sent immediately when activated.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
             </Button>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+            <Button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+              ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Create Campaign
+                  </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
   );
-}
+};
+
+export default AddEmailCampaignModal;

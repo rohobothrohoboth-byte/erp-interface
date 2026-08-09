@@ -287,3 +287,27 @@ export const Relation = {
 
 export type Relation =
   (typeof Relation)[keyof typeof Relation];
+
+// In your enum.ts file, add/update these exports:
+
+export const ApprovalRole = {
+  "0": "Manager",
+  "1": "HR",
+  "2": "HOD",
+  "3": "CEO",
+  "4": "Team Lead",
+  "5": "Department Head",
+} as const;
+
+export type ApprovalRole = typeof ApprovalRole[keyof typeof ApprovalRole];
+
+export const ApprovalRoleAm = {
+  "0": "ሥራ አስኪያጅ",
+  "1": "ሰው ሃይል",
+  "2": "የክፍል ኃላፊ",
+  "3": "ዋና ሥራ አስኪያጅ",
+  "4": "ቡድን መሪ",
+  "5": "ክፍል ኃላፊ",
+} as const;
+
+export type ApprovalRoleAm = typeof ApprovalRoleAm[keyof typeof ApprovalRoleAm];

@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { X, BadgePlus } from "lucide-react";
+import { X, Calendar, Plus } from "lucide-react";
 import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
 import type { AddPeriodDto, UUID } from "../../../types/core/period";
 import toast from "react-hot-toast";
-import List from "../../List/list";
-import type { ListItem } from "../../../types/List/list";
 import { fiscalYearApi } from "../../../services/core/fiscalyear/fisc.api";
 import { Quarter } from "../../../types/core/enum";
 import {
@@ -14,8 +14,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../../../components/ui/select";
-import { Label } from "@radix-ui/react-label";
+} from "../../ui/select";
 
 interface AddPeriodModalProps {
   open: boolean;
@@ -26,26 +25,21 @@ interface AddPeriodModalProps {
 }
 
 export const AddPeriodModal = ({
-  open,
-  onOpenChange,
-  newPeriod,
-  setNewPeriod,
-  onAddPeriod,
-}: AddPeriodModalProps) => {
+                                 open,
+                                 onOpenChange,
+                                 newPeriod,
+                                 setNewPeriod,
+                                 onAddPeriod,
+                               }: AddPeriodModalProps) => {
   const [loading, setLoading] = useState(false);
-  const [fiscalYears, setFiscalYears] = useState<ListItem[]>([]);
+  const [fiscalYears, setFiscalYears] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingFiscalYears, setLoadingFiscalYears] = useState(false);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const quarterOptions = Object.entries(Quarter).map(([key, value]) => ({
-    key,
-    value,
-  }));
+  const quarterOptions = Object.entries(Quarter).map(([key, value]) => ({ key, value }));
 
   useEffect(() => {
     if (open) {
       fetchFiscalYears();
-      setFormErrors({});
     }
   }, [open]);
 
@@ -53,337 +47,198 @@ export const AddPeriodModal = ({
     try {
       setLoadingFiscalYears(true);
       const fiscalYearsData = await fiscalYearApi.getAllFiscalYears();
-      const fiscalYearListItems: ListItem[] = fiscalYearsData.map((fy) => ({
-        id: fy.id,
-        name: fy.name,
-      }));
-      setFiscalYears(fiscalYearListItems);
+      setFiscalYears(fiscalYearsData);
     } catch (error) {
       console.error("Error fetching fiscal years:", error);
       toast.error("Failed to load fiscal years");
-      setFiscalYears([]);
     } finally {
       setLoadingFiscalYears(false);
     }
   };
 
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-
-    if (!newPeriod.name?.trim()) {
-      errors.name = "Period name is required";
-    }
-
-    if (!newPeriod.dateStart) {
-      errors.dateStart = "Start date is required";
-    }
-
-    if (!newPeriod.dateEnd) {
-      errors.dateEnd = "End date is required";
-    }
-
-    if (!newPeriod.quarter) {
-      errors.quarterId = "Quarter is required";
-    }
-
-    if (!newPeriod.fiscalYearId) {
-      errors.fiscalYearId = "Fiscal year is required";
-    }
-
-    // Date validation
-    if (newPeriod.dateStart && newPeriod.dateEnd) {
-      const startDate = new Date(newPeriod.dateStart);
-      const endDate = new Date(newPeriod.dateEnd);
-
-      if (endDate <= startDate) {
-        errors.dateEnd = "End date must be after start date";
-      }
-    }
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error("Please fix the form errors before submitting");
+    if (!newPeriod.name || !newPeriod.dateStart || !newPeriod.dateEnd || !newPeriod.quarter || !newPeriod.fiscalYearId) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+
+    const startDate = new Date(newPeriod.dateStart);
+    const endDate = new Date(newPeriod.dateEnd);
+    if (endDate <= startDate) {
+      toast.error("End date must be after start date");
       return;
     }
 
     setLoading(true);
-
     try {
-      const response = await onAddPeriod();
-      
-      const successMessage = 
-        response?.data?.message || 
-        response?.message || 
-        '';
-      
-      toast.success(successMessage);
-      
-      // Only close modal if successful
+      await onAddPeriod();
+      toast.success("Period added successfully");
       onOpenChange(false);
     } catch (error: any) {
-      const errorMessage = error.message || '';
-      toast.error(errorMessage);
-      console.error("Error adding period:", error);
+      toast.error(error.message || "Failed to add period");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleQuarterChange = (value: string) => {
-    // Convert string to Quarter type
-    setNewPeriod({ ...newPeriod, quarter: value as Quarter });
-    // Clear error for this field
-    if (formErrors.quarterId) {
-      setFormErrors((prev) => ({ ...prev, quarterId: "" }));
-    }
-  };
-
-  const handleSelectFiscalYear = (item: ListItem) => {
-    setNewPeriod({
-      ...newPeriod,
-      fiscalYearId: item.id as UUID,
-    });
-    // Clear error for this field
-    if (formErrors.fiscalYearId) {
-      setFormErrors((prev) => ({ ...prev, fiscalYearId: "" }));
-    }
-  };
-
-  const handleInputChange = (field: keyof AddPeriodDto, value: string) => {
-    setNewPeriod({ ...newPeriod, [field]: value });
-    // Clear error for this field when user starts typing
-    if (formErrors[field]) {
-      setFormErrors((prev) => ({ ...prev, [field]: "" }));
-    }
-  };
-
-  const handleCancel = () => {
-    if (!loading) {
-      // Reset form
-      setNewPeriod({
-        name: "",
-        dateStart: new Date().toISOString().split("T")[0],
-        dateEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split("T")[0],
-        quarter: "" as Quarter,
-        fiscalYearId: "" as UUID,
-      });
-      setFormErrors({});
-      onOpenChange(false);
-    }
-  };
-
-  const handleClose = () => {
-    handleCancel();
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
+    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } }
   };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">
-          <div className="flex items-center gap-2">
-            <BadgePlus size={20} />
-            <h2 className="text-lg font-bold text-gray-800">Add New</h2>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <motion.div
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-md w-full overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <Calendar className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </div>
+              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                Add Period
+              </h2>
+            </div>
+            <button
+                onClick={() => onOpenChange(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X size={18} />
+            </button>
           </div>
-          <button
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-            disabled={loading}
-          >
-            <X size={24} />
-          </button>
-        </div>
 
-        {/* Body */}
-        <div className="px-6">
+          {/* Body */}
           <form onSubmit={handleSubmit}>
-            <div className="py-4 space-y-4">
+            <div className="p-5 space-y-4">
               {/* Period Name */}
-              <div className="space-y-2">
-                <label
-                  htmlFor="periodName"
-                  className="block text-sm font-medium text-gray-700"
-                >
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Period Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="periodName"
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent ${
-                    formErrors.name ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="e.g., January 2024, Q1 Review"
-                  value={newPeriod.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  required
-                  disabled={loading}
+                </Label>
+                <Input
+                    type="text"
+                    placeholder="e.g., Q1 2024"
+                    value={newPeriod.name}
+                    onChange={(e) => setNewPeriod({ ...newPeriod, name: e.target.value })}
+                    className="h-9 text-sm"
+                    required
+                    disabled={loading}
                 />
-                {formErrors.name && (
-                  <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
-                )}
               </div>
 
-              {/* Quarter and Fiscal Year Selection - Side by Side */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Quarter Selection */}
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="quarter"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+              {/* Quarter and Fiscal Year */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                     Quarter <span className="text-red-500">*</span>
                   </Label>
                   <Select
-                    value={newPeriod.quarter}
-                    onValueChange={handleQuarterChange}
-                    disabled={loading}
+                      value={newPeriod.quarter}
+                      onValueChange={(value) => setNewPeriod({ ...newPeriod, quarter: value as Quarter })}
+                      disabled={loading}
                   >
-                    <SelectTrigger
-                      id="quarter"
-                      className={`w-full focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent ${
-                        formErrors.quarterId ? "border-red-500" : ""
-                      }`}
-                    >
-                      <SelectValue placeholder="Select Quarter" />
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Select quarter" />
                     </SelectTrigger>
                     <SelectContent>
                       {quarterOptions.map((option) => (
-                        <SelectItem key={option.key} value={option.key}>
-                          {option.value}
-                        </SelectItem>
+                          <SelectItem key={option.key} value={option.key}>
+                            {option.value}
+                          </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  {formErrors.quarterId && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.quarterId}
-                    </p>
-                  )}
                 </div>
 
-                {/* Fiscal Year Selection */}
-                <div className="space-y-2">
-                  <List
-                    items={fiscalYears}
-                    selectedValue={newPeriod.fiscalYearId}
-                    onSelect={handleSelectFiscalYear}
-                    label="Fiscal Year"
-                    placeholder="Select a fiscal year"
-                    required
-                    disabled={loadingFiscalYears || loading}
-                  />
-                  {loadingFiscalYears && (
-                    <p className="text-sm text-gray-500 mt-1">
-                      Loading fiscal years...
-                    </p>
-                  )}
-                  {formErrors.fiscalYearId && !loadingFiscalYears && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.fiscalYearId}
-                    </p>
-                  )}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Fiscal Year <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                      value={newPeriod.fiscalYearId}
+                      onValueChange={(value) => setNewPeriod({ ...newPeriod, fiscalYearId: value as UUID })}
+                      disabled={loadingFiscalYears || loading}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Select fiscal year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fiscalYears.map((fy) => (
+                          <SelectItem key={fy.id} value={fy.id}>
+                            {fy.name}
+                          </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              {/* Start and End Dates - Side by Side */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="startDate"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+              {/* Start and End Dates */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                     Start Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="startDate"
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent ${
-                      formErrors.dateStart
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
-                    value={newPeriod.dateStart}
-                    onChange={(e) =>
-                      handleInputChange("dateStart", e.target.value)
-                    }
-                    required
-                    disabled={loading}
+                  </Label>
+                  <Input
+                      type="date"
+                      value={newPeriod.dateStart}
+                      onChange={(e) => setNewPeriod({ ...newPeriod, dateStart: e.target.value })}
+                      className="h-9 text-sm"
+                      required
+                      disabled={loading}
                   />
-                  {formErrors.dateStart && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.dateStart}
-                    </p>
-                  )}
                 </div>
 
-                <div className="space-y-2">
-                  <label
-                    htmlFor="endDate"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                     End Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    id="endDate"
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent ${
-                      formErrors.dateEnd ? "border-red-500" : "border-gray-300"
-                    }`}
-                    value={newPeriod.dateEnd}
-                    onChange={(e) =>
-                      handleInputChange("dateEnd", e.target.value)
-                    }
-                    required
-                    disabled={loading}
+                  </Label>
+                  <Input
+                      type="date"
+                      value={newPeriod.dateEnd}
+                      onChange={(e) => setNewPeriod({ ...newPeriod, dateEnd: e.target.value })}
+                      className="h-9 text-sm"
+                      required
+                      disabled={loading}
                   />
-                  {formErrors.dateEnd && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {formErrors.dateEnd}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="border-t px-6 py-2">
-              <div className="mx-auto flex justify-center items-center gap-1.5">
+            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+              <div className="flex justify-center gap-2">
                 <Button
-                  type="submit"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer px-6"
-                  disabled={loading || loadingFiscalYears}
+                    type="submit"
+                    className="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white px-5 h-8 text-sm"
+                    disabled={loading}
                 >
-                  {loading ? "Adding..." : "Save Period"}
+                  {loading ? "Saving..." : "Save"}
                 </Button>
                 <Button
-                  type="button"
-                  variant="outline"
-                  className="cursor-pointer px-6"
-                  onClick={handleCancel}
-                  disabled={loading}
+                    type="button"
+                    variant="outline"
+                    onClick={() => onOpenChange(false)}
+                    className="px-5 h-8 text-sm"
+                    disabled={loading}
                 >
                   Cancel
                 </Button>
               </div>
             </div>
           </form>
-        </div>
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
   );
 };

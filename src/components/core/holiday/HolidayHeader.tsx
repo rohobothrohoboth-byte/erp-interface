@@ -1,16 +1,16 @@
-import { motion } from 'framer-motion';
-import { BadgePlus, History } from 'lucide-react';
-import { DialogTrigger } from '../../ui/dialog';
+import { Plus, History, Calendar } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { useNavigate } from 'react-router-dom';
 
-export const HolidayHeader = ({ 
-  setDialogOpen, 
-  totalItems,
-}: { 
+interface HolidayHeaderProps {
   setDialogOpen: (open: boolean) => void;
   totalItems?: number;
-}) => {
+}
+
+export const HolidayHeader = ({
+                                setDialogOpen,
+                                totalItems,
+                              }: HolidayHeaderProps) => {
   const navigate = useNavigate();
 
   const handleViewHistory = () => {
@@ -18,50 +18,40 @@ export const HolidayHeader = ({
   };
 
   return (
-    <div className="p-2">
-      <div className="w-full mx-auto flex md:flex-row flex-col md:justify-between md:items-center gap-2">
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.4 }}
-          className="flex flex-col space-y-2"
-        >
-          <h1 className="text-2xl font-bold">
-            <span className="bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 bg-clip-text text-transparent mr-2">
-              Public
-            </span>
-            Holidays
-          </h1>
-          {totalItems !== undefined && (
-            <p className="text-sm text-gray-600">
-              {totalItems} holiday{totalItems !== 1 ? 's' : ''} this year
-            </p>
-          )}
-        </motion.div>
-        
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-5">
         <div className="flex items-center gap-3">
-          {/* Add Public Holiday Button */}
-          <DialogTrigger asChild>
-            <Button
-              className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:bg-emerald-700 rounded-md text-white flex items-center gap-2 cursor-pointer"
-              onClick={() => setDialogOpen(true)}
-            >
-              <BadgePlus size={18} />
-              <span>Add Holiday</span>
-            </Button>
-          </DialogTrigger>
-          
-          {/* View History Button */}
+          <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            <Calendar className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+              Public Holidays
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Manage holiday calendar and observances
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
           <Button
-            onClick={handleViewHistory}
-            variant="outline"
-            className="flex items-center gap-2 cursor-pointer border-emerald-200"
+              onClick={handleViewHistory}
+              variant="outline"
+              size="sm"
+              className="h-8 px-3 text-sm"
           >
-            <History size={18} />
-            <span>View History</span>
+            <History size={14} className="mr-1.5" />
+            History
+          </Button>
+          <Button
+              onClick={() => setDialogOpen(true)}
+              size="sm"
+              className="h-8 px-3 text-sm"
+          >
+            <Plus size={14} className="mr-1.5" />
+            Add Holiday
           </Button>
         </div>
       </div>
-    </div>
   );
 };

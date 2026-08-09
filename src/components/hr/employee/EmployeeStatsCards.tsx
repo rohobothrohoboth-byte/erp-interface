@@ -1,210 +1,199 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { User, Users, Clock, TrendingUp, TrendingDown } from 'lucide-react';
+import {
+  Users,
+  UserCheck,
+  UserPlus,
+  Clock,
+  PauseCircle,
+  UserX,
+  Award,
+  Activity,
+  Calendar,
+  Eye,
+  Building2
+} from 'lucide-react';
+import { useLanguage } from '../../../i18n/LanguageContext';
+import { useNavigate } from 'react-router-dom';
 
-interface EmployeeStatsCardsProps {
+// ============================================================
+// TYPES
+// ============================================================
+
+interface HrDashboardResponse {
   totalEmployees: number;
   activeEmployees: number;
-  onLeaveEmployees: number;
-  previousTotal?: number;
-  previousActive?: number;
-  previousOnLeave?: number;
+  pendingEmployeesCount: number;
+  suspendedEmployees: number;
+  retiredEmployees: number;
+  standByEmployees: number;
+  terminatedEmployees: number;
+  leaveEmployees: number;
+  rejectedEmployees: number;
+  totalDepartments: number;
+  totalPositions: number;
+  employeesByDepartment: Record<string, number>;
+  employeesByPosition: Record<string, number>;
+  employeesByStatus: Record<string, number>;
+  generatedAt: string;
+  cacheDurationSeconds: number;
 }
+
+interface EmployeeStatsCardsProps {
+  data?: HrDashboardResponse | any; // ✅ Allow any type
+  loading?: boolean;
+  onStatClick?: (statKey: string, value: number) => void;
+}
+
+// ============================================================
+// STATS CONFIGURATION
+// ============================================================
+
+const STATS_CONFIG = [
+  { key: "total", titleKey: "totalEmployees", icon: Users, color: "blue" as const },
+  { key: "active", titleKey: "active", icon: UserCheck, color: "green" as const },
+  { key: "pending", titleKey: "pending", icon: UserPlus, color: "amber" as const },
+  { key: "onLeave", titleKey: "onLeave", icon: Clock, color: "purple" as const },
+  { key: "suspended", titleKey: "suspended", icon: PauseCircle, color: "red" as const },
+  { key: "terminated", titleKey: "terminated", icon: UserX, color: "red" as const },
+  { key: "retired", titleKey: "retired", icon: Award, color: "slate" as const },
+  { key: "standby", titleKey: "standby", icon: Activity, color: "slate" as const },
+  { key: "rejected", titleKey: "rejected", icon: UserX, color: "slate" as const },
+];
+
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 
 const EmployeeStatsCards: React.FC<EmployeeStatsCardsProps> = ({
-  totalEmployees,
-  activeEmployees,
-  onLeaveEmployees,
-  previousTotal,
-  previousActive,
-  previousOnLeave
-}) => {
-  // Calculate percentage changes if previous data is provided
-  const calculateChange = (current: number, previous?: number): number | undefined => {
-    if (previous === undefined || previous === 0) return undefined;
-    return ((current - previous) / previous) * 100;
+                                                                 data,
+                                                                 loading = false,
+                                                                 onStatClick,
+                                                               }) => {
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+
+  // ✅ Map data from backend format to component format
+  const mappedData = {
+    totalEmployees: data?.EmpTot ?? data?.totalEmployees ?? 0,
+    activeEmployees: data?.EmpAct ?? data?.activeEmployees ?? 0,
+    pendingEmployeesCount: data?.EmpPen ?? data?.pendingEmployeesCount ?? 0,
+    suspendedEmployees: data?.EmpSus ?? data?.suspendedEmployees ?? 0,
+    retiredEmployees: data?.EmpRet ?? data?.retiredEmployees ?? 0,
+    standByEmployees: data?.EmpStd ?? data?.standByEmployees ?? 0,
+    terminatedEmployees: data?.EmpTer ?? data?.terminatedEmployees ?? 0,
+    leaveEmployees: data?.EmpLeave ?? data?.leaveEmployees ?? 0,
+    rejectedEmployees: data?.EmpRej ?? data?.rejectedEmployees ?? 0,
+    totalDepartments: data?.totalDepartments ?? 0,
+    totalPositions: data?.totalPositions ?? 0,
   };
 
-  const totalChange = calculateChange(totalEmployees, previousTotal);
-  const activeChange = calculateChange(activeEmployees, previousActive);
-  const onLeaveChange = calculateChange(onLeaveEmployees, previousOnLeave);
+  // ✅ Debug: Log mapped data
+  console.log('📊 Mapped Stats Data:', mappedData);
 
-  return (
-    <motion.div 
-      variants={itemVariants}
-      className="grid grid-cols-1 md:grid-cols-3 gap-5"
-    >
-      <StatCard 
-        title="Total Employees" 
-        value={totalEmployees.toString()} 
-        change={totalChange}
-        icon={Users} 
-        color="bg-blue-50 border-blue-100 hover:ring-1 hover:ring-blue-300"
-        trend="total"
-      />
-      <StatCard 
-        title="Active Employees" 
-        value={activeEmployees.toString()} 
-        change={activeChange}
-        icon={User} 
-        color="bg-green-50 border-green-100 hover:ring-1 hover:ring-green-300"
-        trend="positive"
-      />
-      <StatCard 
-        title="On Leave" 
-        value={onLeaveEmployees.toString()} 
-        change={onLeaveChange}
-        icon={Clock} 
-        color="bg-amber-50 border-amber-100 hover:ring-1 hover:ring-amber-300"
-        trend="negative"
-      />
-    </motion.div>
-  );
-};
-
-interface StatCardProps {
-  title: string;
-  value: string;
-  change?: number;
-  icon: React.ComponentType<{ size: number; className?: string }>;
-  color: string;
-  trend?: 'positive' | 'negative' | 'neutral' | 'total';
-}
-
-const StatCard = ({ title, value, change, icon: Icon, color, trend = 'neutral' }: StatCardProps) => {
-  const getTrendConfig = () => {
-    switch (trend) {
-      case 'positive':
-        return {
-          bgColor: 'bg-green-100',
-          textColor: 'text-green-800',
-          icon: TrendingUp,
-          iconColor: 'text-green-600'
-        };
-      case 'negative':
-        return {
-          bgColor: 'bg-amber-100',
-          textColor: 'text-amber-800',
-          icon: TrendingDown,
-          iconColor: 'text-amber-600'
-        };
-      case 'total':
-        return {
-          bgColor: 'bg-blue-100',
-          textColor: 'text-blue-800',
-          icon: TrendingUp,
-          iconColor: 'text-blue-600'
-        };
-      default:
-        return {
-          bgColor: 'bg-gray-100',
-          textColor: 'text-gray-800',
-          icon: TrendingUp,
-          iconColor: 'text-gray-600'
-        };
+  // Get translations
+  const getTrans = (key: string): string => {
+    if (t && typeof t === 'function') {
+      return t(key) || key;
     }
+    return key;
   };
 
-  const trendConfig = getTrendConfig();
-  const TrendIcon = trendConfig.icon;
-
-  // Determine icon color based on card type
-  const getIconColor = () => {
-    switch (trend) {
-      case 'positive': return 'text-green-600';
-      case 'negative': return 'text-amber-600';
-      case 'total': return 'text-blue-600';
-      default: return 'text-gray-600';
+  // Handle card click
+  const handleCardClick = (statKey: string, value: number) => {
+    if (onStatClick) {
+      onStatClick(statKey, value);
     }
+
+    navigate('/hr/employees/record', {
+      state: {
+        filter: statKey,
+        filterValue: statKey === 'total' ? 'all' : statKey,
+      },
+    });
   };
 
-  const hasValidChange = change !== undefined && !isNaN(change) && change !== 0;
-
-  return (
-    <motion.div 
-      variants={statCardVariants}
-      initial="hidden"
-      animate="visible"
-      whileHover="hover"
-      className={`p-6 rounded-xl border ${color} flex items-center shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group`}
-    >
-      <div className={`p-3 rounded-full bg-white bg-opacity-70 mr-4 shadow-inner group-hover:scale-110 transition-transform duration-300 ${getIconColor().replace('text', 'bg').replace('-600', '-100')}`}>
-        <Icon className={`${getIconColor()} opacity-90`} size={24} />
-      </div>
-      <div className="flex-1">
-        <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-        <div className="flex items-center justify-between">
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          {hasValidChange && (
-            <motion.div 
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className={`flex items-center space-x-1 px-2 py-1 rounded-full ${trendConfig.bgColor} ${trendConfig.textColor}`}
-            >
-              <TrendIcon size={14} className={trendConfig.iconColor} />
-              <span className="text-xs font-semibold">
-                {change > 0 ? '+' : ''}{change.toFixed(1)}%
-              </span>
-            </motion.div>
-          )}
+  // Loading state
+  if (loading) {
+    return (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-9 gap-3">
+          {Array.from({ length: 9 }).map((_, i) => (
+              <div
+                  key={i}
+                  className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-4 animate-pulse"
+              >
+                <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16 mb-2" />
+                <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-12" />
+                <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded w-20 mt-2" />
+              </div>
+          ))}
         </div>
-        {/* Optional: Add a subtle progress bar */}
-        {hasValidChange && (
-          <div className="mt-2 w-full bg-gray-200 rounded-full h-1">
-            <motion.div 
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(Math.abs(change), 100)}%` }}
-              transition={{ delay: 0.2, duration: 0.8 }}
-              className={`h-1 rounded-full ${
-                change > 0 ? 'bg-green-500' : 'bg-amber-500'
-              }`}
-            />
-          </div>
-        )}
+    );
+  }
+
+  // No data state
+  if (!data || mappedData.totalEmployees === 0) {
+    return (
+        <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-8 text-center">
+          <Users className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            No Data Available
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Unable to load employee statistics.
+          </p>
+        </div>
+    );
+  }
+
+  // Stats with mapped values
+  const stats = [
+    { key: "total", title: getTrans("totalEmployees"), value: mappedData.totalEmployees, icon: Users, color: "blue" as const },
+    { key: "active", title: getTrans("active"), value: mappedData.activeEmployees, icon: UserCheck, color: "green" as const },
+    { key: "pending", title: getTrans("pending"), value: mappedData.pendingEmployeesCount, icon: UserPlus, color: "amber" as const },
+    { key: "onLeave", title: getTrans("onLeave"), value: mappedData.leaveEmployees, icon: Clock, color: "purple" as const },
+    { key: "suspended", title: getTrans("suspended"), value: mappedData.suspendedEmployees, icon: PauseCircle, color: "red" as const },
+    { key: "terminated", title: getTrans("terminated"), value: mappedData.terminatedEmployees, icon: UserX, color: "red" as const },
+    { key: "retired", title: getTrans("retired"), value: mappedData.retiredEmployees, icon: Award, color: "slate" as const },
+    { key: "standby", title: getTrans("standby"), value: mappedData.standByEmployees, icon: Activity, color: "slate" as const },
+    { key: "rejected", title: getTrans("rejected"), value: mappedData.rejectedEmployees, icon: UserX, color: "slate" as const },
+  ];
+
+  return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-9 gap-3">
+          {stats.map((stat) => (
+              <motion.div
+                  key={stat.key}
+                  whileHover={{ y: -2 }}
+                  onClick={() => handleCardClick(stat.key, stat.value)}
+                  className={`bg-white dark:bg-slate-900 rounded-lg border p-4 shadow-sm hover:shadow-md transition-all cursor-pointer group ${
+                      stat.value === 0 ? 'opacity-50' : ''
+                  }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                      {stat.title}
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800 dark:text-slate-200 mt-1">
+                      {stat.value.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700">
+                    <stat.icon className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                  </div>
+                </div>
+                <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                View all {stat.title.toLowerCase()} <Eye className="w-3 h-3" />
+              </span>
+                </div>
+              </motion.div>
+          ))}
+        </div>
       </div>
-    </motion.div>
   );
-};
-
-const statCardVariants = {
-  hidden: { 
-    scale: 0.9, 
-    opacity: 0,
-    y: 20
-  },
-  visible: {
-    scale: 1,
-    opacity: 1,
-    y: 0,
-    transition: {
-      type: "spring",
-      stiffness: 150,
-      damping: 10
-    }
-  },
-  hover: {
-    scale: 1.03,
-    y: -2,
-    transition: { 
-      duration: 0.2,
-      ease: "easeOut"
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0, 
-    opacity: 1,
-    transition: { 
-      type: 'spring', 
-      stiffness: 100, 
-      damping: 15,
-      duration: 0.5,
-      staggerChildren: 0.1
-    }
-  }
 };
 
 export default EmployeeStatsCards;

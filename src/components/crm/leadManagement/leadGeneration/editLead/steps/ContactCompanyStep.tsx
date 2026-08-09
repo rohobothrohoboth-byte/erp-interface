@@ -1,153 +1,254 @@
-import { Input } from '../../../../../ui/input';
-import { Label } from '../../../../../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../ui/select';
-import type { Lead } from '../../../../../../types/crm';
+// src/components/crm/leadManagement/leadGeneration/editLead/steps/EditContactCompanyStep.tsx
+import React from 'react';
+import { MapPin, Briefcase, DollarSign, Calendar, FileText, ArrowLeft, Save } from 'lucide-react';
+import { Button } from '../../../../ui/button';
+import { Input } from '../../../../ui/input';
+import { Label } from '../../../../ui/label';
+import { Textarea } from '../../../../ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../../../ui/select';
+import type { UpdateLeadDto } from '../../../../../types/crm/crm.types';
 
-interface ContactCompanyStepProps {
-  formData: Partial<Lead>;
-  errors: Record<string, string>;
-  industryNames: string[];
-  settingsLoading: boolean;
-  onChange: (field: keyof Lead, value: any) => void;
+interface EditContactCompanyStepProps {
+  formData: UpdateLeadDto;
+  onChange: (data: Partial<UpdateLeadDto>) => void;
+  onBack: () => void;
+  onSubmit: () => void;
+  loading?: boolean;
 }
 
-export default function ContactCompanyStep({
-  formData,
-  errors,
-  industryNames,
-  settingsLoading,
-  onChange,
-}: ContactCompanyStepProps) {
+const EditContactCompanyStep: React.FC<EditContactCompanyStepProps> = ({
+                                                                         formData,
+                                                                         onChange,
+                                                                         onBack,
+                                                                         onSubmit,
+                                                                         loading = false,
+                                                                       }) => {
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Contact & Company Information</h2>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+          <Briefcase className="h-5 w-5 text-indigo-600" />
+          Company & Additional Details
+        </h2>
 
-      <div className="border-b pb-6 mb-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="firstName" className="text-sm text-gray-500">
-              First Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="firstName"
-              value={formData.firstName}
-              onChange={(e) => onChange('firstName', e.target.value)}
-              className={`w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent ${errors.firstName ? 'border-red-500' : ''}`}
-            />
-            {errors.firstName && <p className="text-sm text-red-500 mt-1">{errors.firstName}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="lastName" className="text-sm text-gray-500">
-              Last Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="lastName"
-              value={formData.lastName}
-              onChange={(e) => onChange('lastName', e.target.value)}
-              className={`w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent ${errors.lastName ? 'border-red-500' : ''}`}
-            />
-            {errors.lastName && <p className="text-sm text-red-500 mt-1">{errors.lastName}</p>}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-6 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm text-gray-500">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => onChange('email', e.target.value)}
-              className={`w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent ${errors.email ? 'border-red-500' : ''}`}
-            />
-            {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone" className="text-sm text-gray-500">Phone</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => onChange('phone', e.target.value)}
-              placeholder="+1-555-0123"
-              className="w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent"
-            />
+        {/* Address */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-gray-400" />
+            Address
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <Label className="text-sm font-medium">Address</Label>
+              <Input
+                  value={formData.address || ''}
+                  onChange={(e) => onChange({ address: e.target.value })}
+                  className="mt-1"
+                  placeholder="123 Main St"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">City</Label>
+              <Input
+                  value={formData.city || ''}
+                  onChange={(e) => onChange({ city: e.target.value })}
+                  className="mt-1"
+                  placeholder="New York"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">State</Label>
+              <Input
+                  value={formData.state || ''}
+                  onChange={(e) => onChange({ state: e.target.value })}
+                  className="mt-1"
+                  placeholder="NY"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Country</Label>
+              <Input
+                  value={formData.country || ''}
+                  onChange={(e) => onChange({ country: e.target.value })}
+                  className="mt-1"
+                  placeholder="United States"
+              />
+            </div>
           </div>
         </div>
 
-        {errors.contact && <p className="text-sm text-red-500 mt-2">{errors.contact}</p>}
+        {/* Lead Details */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Lead Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-sm font-medium">Status</Label>
+              <Select
+                  value={formData.status || 'New'}
+                  onValueChange={(value) => onChange({ status: value })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="New">New</SelectItem>
+                  <SelectItem value="Contacted">Contacted</SelectItem>
+                  <SelectItem value="Qualified">Qualified</SelectItem>
+                  <SelectItem value="Proposal">Proposal</SelectItem>
+                  <SelectItem value="Negotiation">Negotiation</SelectItem>
+                  <SelectItem value="Converted">Converted</SelectItem>
+                  <SelectItem value="Lost">Lost</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Source</Label>
+              <Select
+                  value={formData.source || 'Website'}
+                  onValueChange={(value) => onChange({ source: value })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Website">Website</SelectItem>
+                  <SelectItem value="Referral">Referral</SelectItem>
+                  <SelectItem value="SocialMedia">Social Media</SelectItem>
+                  <SelectItem value="Email">Email</SelectItem>
+                  <SelectItem value="ColdCall">Cold Call</SelectItem>
+                  <SelectItem value="Event">Event</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Priority</Label>
+              <Select
+                  value={formData.priority || 'Medium'}
+                  onValueChange={(value) => onChange({ priority: value })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Low">Low</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Industry</Label>
+              <Select
+                  value={formData.industry || ''}
+                  onValueChange={(value) => onChange({ industry: value })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Select industry" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="RealEstate">Real Estate</SelectItem>
+                  <SelectItem value="Technology">Technology</SelectItem>
+                  <SelectItem value="Healthcare">Healthcare</SelectItem>
+                  <SelectItem value="Finance">Finance</SelectItem>
+                  <SelectItem value="Manufacturing">Manufacturing</SelectItem>
+                  <SelectItem value="Retail">Retail</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Title</Label>
+              <Input
+                  value={formData.title || ''}
+                  onChange={(e) => onChange({ title: e.target.value })}
+                  className="mt-1"
+                  placeholder="Sales Manager"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Tags</Label>
+              <Input
+                  value={formData.tags || ''}
+                  onChange={(e) => onChange({ tags: e.target.value })}
+                  className="mt-1"
+                  placeholder="enterprise, high-value"
+              />
+            </div>
+          </div>
+        </div>
 
-        <div className="mt-4 space-y-2">
-          <Label htmlFor="jobTitle" className="text-sm text-gray-500">Job Title</Label>
-          <Input
-            id="jobTitle"
-            value={formData.jobTitle}
-            onChange={(e) => onChange('jobTitle', e.target.value)}
-            className="w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent"
+        {/* Financial */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-gray-400" />
+            Financial Information
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-sm font-medium">Budget</Label>
+              <Input
+                  type="number"
+                  value={formData.budget || ''}
+                  onChange={(e) => onChange({ budget: parseFloat(e.target.value) || undefined })}
+                  className="mt-1"
+                  placeholder="100000"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Estimated Value</Label>
+              <Input
+                  type="number"
+                  value={formData.estimatedValue || ''}
+                  onChange={(e) => onChange({ estimatedValue: parseFloat(e.target.value) || undefined })}
+                  className="mt-1"
+                  placeholder="50000"
+              />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Expected Close Date</Label>
+              <Input
+                  type="date"
+                  value={formData.expectedCloseDate || ''}
+                  onChange={(e) => onChange({ expectedCloseDate: e.target.value })}
+                  className="mt-1"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Description */}
+        <div>
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <FileText className="h-4 w-4 text-gray-400" />
+            Description
+          </Label>
+          <Textarea
+              value={formData.description || ''}
+              onChange={(e) => onChange({ description: e.target.value })}
+              className="mt-1"
+              placeholder="Enter lead description, requirements, or notes..."
+              rows={4}
           />
         </div>
-      </div>
 
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Company Information</h3>
-        <div className="grid grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="company" className="text-sm text-gray-500">
-              Company <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="company"
-              value={formData.company}
-              onChange={(e) => onChange('company', e.target.value)}
-              className={`w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent ${errors.company ? 'border-red-500' : ''}`}
-            />
-            {errors.company && <p className="text-sm text-red-500 mt-1">{errors.company}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="industry" className="text-sm text-gray-500">Industry</Label>
-            <Select value={formData.industry} onValueChange={(v) => onChange('industry', v)}>
-              <SelectTrigger className="w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent">
-                <SelectValue placeholder="Select industry" />
-              </SelectTrigger>
-              <SelectContent>
-                {settingsLoading ? (
-                  <SelectItem value="loading" disabled>Loading...</SelectItem>
-                ) : (
-                  industryNames.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-6 mt-4">
-          <div className="space-y-2">
-            <Label htmlFor="budget" className="text-sm text-gray-500">Budget ($)</Label>
-            <Input
-              id="budget"
-              type="number"
-              value={formData.budget || ''}
-              onChange={(e) => onChange('budget', e.target.value ? Number(e.target.value) : undefined)}
-              placeholder="0"
-              className="w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="timeline" className="text-sm text-gray-500">Timeline</Label>
-            <Input
-              id="timeline"
-              value={formData.timeline}
-              onChange={(e) => onChange('timeline', e.target.value)}
-              placeholder="e.g., Q2 2024, Immediate"
-              className="w-full focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-transparent"
-            />
-          </div>
+        {/* Actions */}
+        <div className="pt-4 border-t border-gray-200 flex justify-between">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <Button onClick={onSubmit} disabled={loading} className="bg-indigo-600 hover:bg-indigo-700">
+            <Save className="h-4 w-4 mr-2" />
+            {loading ? 'Saving...' : 'Update Lead'}
+          </Button>
         </div>
       </div>
-    </div>
   );
-}
+};
+
+export default EditContactCompanyStep;

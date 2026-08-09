@@ -1,159 +1,181 @@
+// src/components/settings/hrSettings/leave/LeavePolicyConfig/leavePolicyConfigSection.tsx
 import { motion } from "framer-motion";
-import React, { useState } from "react";
-import type { LeavePolicyConfigAddDto, LeavePolicyConfigListDto, UUID } from "../../../../../types/core/Settings/leavePolicyConfig";
+import React, { useState, useEffect } from "react";
+import { Settings } from "lucide-react";
+import type { LeavePolicyConfigAddDto, LeavePolicyConfigListDto, LeavePolicyConfigModDto, UUID } from "../../../../../types/core/Settings/leavePolicyConfig";
 import LeavePolicyConfigHeader from "./LeavePolicyConfig/leaveConfigHeader";
-import LeaveAppChainSection from "../LeaveAppChain/LeaveAppChainSection";
 import LeavePolicyConfigTable from "./LeavePolicyConfig/LeavePolicyConfigTable";
-import PolicyAssignmentRuleSection from "../PolicyAssignmentRule/PolicyAssignmenRuleSection";
-import { useActiveFiscalYearNames } from "../../../../../services/core/fiscalyear/fiscNames.queries";
-import { useNavigate } from "react-router-dom";
-import { useActiveLeavePolicyConfig, useCreateLeavePolicyConfig } from "../../../../../services/core/settings/ModHrm/LeavePolicyConfigService/leavePolicyConfig.queries";
 import AddLeavePolicyConfig from "./LeavePolicyConfig/AddLeavePolicyConfig";
+import EditLeavePolicyConfigModal from "./LeavePolicyConfig/EdiLeavePolicyConfig";
+import { useActiveFiscalYear } from "../../../../../services/core/fiscalyear/fiscNames.api";
+import { useActiveLeavePolicyConfig, useCreateLeavePolicyConfig, useUpdateLeavePolicyConfig } from "../../../../../services/core/settings/ModHrm/LeavePolicyConfigService/leavePolicyConfig.queries";
+import type { NameListItem } from "../../../../../types/NameList/nameList";
+import toast from "react-hot-toast";
 
 interface LeavePolicyConfigSectionProps {
-  leavePolicyId: UUID;
+    leavePolicyId: UUID;
 }
 
-//    const [loading, setLoading] = useState(true);
-//    const [error, setError] = useState<string | null>(null);
-const mockActiveConfig: LeavePolicyConfigListDto[] = [{
-  id: "bf250852-ed18-4dfa-931e-c726f191e38a",
-  annualEntitlement: 30,
-  accrualFrequency: "MONTHLY",
-  accrualRate: 2.5,
-  maxDaysPerReq: 25,
-  maxCarryOverDays: 15,
-  minServiceMonths: 6,
-  isActive: true,
-
-  annualEntitlementStr: "30 days",
-  accrualFrequencyStr: "Monthly",
-  accrualRateStr: "2.5",
-  maxDaysPerReqStr: "25",
-  maxCarryOverDaysStr: "15",
-  minServiceMonthsStr: "6",
-  isActiveStr: "Active",
-
-  leavePolicy: "Executive & Senior Leave Policy",
-  fiscalYear: "2025/2026",
-  isDeleted: false,
-  rowVersion: "AAAdE",
-  createdAt: "2025-10-01T10:00:00Z",
-  createdAtAm: "2025-10-01T10:00:00Z",
-  modifiedAtAm: "2025-10-01T10:00:00Z",
-  modifiedAt: "2025-10-01T10:00:00Z",
-}];
-
-const LeavePolicyConfigSection: React.FC<LeavePolicyConfigSectionProps> = ({
-  leavePolicyId,
-}) => {
-    const navigate = useNavigate();
-      const {
+const LeavePolicyConfigSection: React.FC<LeavePolicyConfigSectionProps> = ({ leavePolicyId }) => {
+    const {
         data: activeConfig,
         isLoading,
         isError,
         error,
-      } = useActiveLeavePolicyConfig(leavePolicyId);
+        refetch,
+    } = useActiveLeavePolicyConfig(leavePolicyId);
 
     const [isAddPolicyModalOpen, setIsAddPolicyModalOpen] = useState(false);
-      const [editingPolicy, setEditingPolicy] = useState<LeavePolicyConfigListDto | null>(
-        null
-      );
-      const [deletingPolicy, setDeletingPolicy] =
-        useState<LeavePolicyConfigListDto | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedConfig, setSelectedConfig] = useState<LeavePolicyConfigListDto | null>(null);
+    const [fiscalYearsList, setFiscalYearsList] = useState<NameListItem[]>([]);
+    const { data: activeFiscalYear } = useActiveFiscalYear();
 
-      const { data: fy = [] } = useActiveFiscalYearNames();
-      const createPolicyConfig = useCreateLeavePolicyConfig();
-      const handleAddLeavePolicyConfig = async (leavePolicyConfig: LeavePolicyConfigAddDto) => {
-       
+    const createPolicyConfig = useCreateLeavePolicyConfig();
+    const updatePolicyConfig = useUpdateLeavePolicyConfig();
+
+    useEffect(() => {
+        const fetchFiscalYears = async () => {
+            try {
+                const { fiscalYearApi } = await import("../../../../../services/core/fiscalyear/fisc.api");
+                const years = await fiscalYearApi.getAllFiscalYears();
+                const mappedYears = years.map(y => ({ id: y.id, name: y.name }));
+                setFiscalYearsList(mappedYears);
+            } catch (error) {
+                console.error("Error fetching fiscal years:", error);
+            }
+        };
+        fetchFiscalYears();
+    }, []);
+
+    const handleAddLeavePolicyConfig = async (leavePolicyConfig: LeavePolicyConfigAddDto) => {
         try {
-          await createPolicyConfig.mutateAsync(leavePolicyConfig);
-        } catch (err) {
-          console.error("Failed to create policy:", err);
-         
+            await createPolicyConfig.mutateAsync(leavePolicyConfig);
+            toast.success("Policy configuration added successfully");
+            setIsAddPolicyModalOpen(false);
+            refetch();
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to create policy configuration");
         }
-      };
-    
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <LeaveAppChainSection leavePolicyId={leavePolicyId} />
-      </motion.div>
-      {/* Error Banner */}
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg"
-        >
-          <div className="flex justify-between items-center">
-            <span className="font-medium">{error.message}</span>
-            <button
-              onClick={() => {}}
-              className="text-red-700 hover:text-red-900 font-bold text-lg ml-4"
-            >
-              ×
-            </button>
-          </div>
-        </motion.div>
-      )}
+    };
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="flex justify-center items-center py-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+    // Edit handler - opens the edit modal
+    const handleEditConfig = (config: LeavePolicyConfigListDto) => {
+        console.log("Opening edit modal for config:", config);
+        setSelectedConfig(config);
+        setIsEditModalOpen(true);
+    };
+
+    // Update handler - saves the edited config
+    const handleUpdateConfig = async (configData: LeavePolicyConfigModDto) => {
+        try {
+            await updatePolicyConfig.mutateAsync(configData);
+            toast.success("Policy configuration updated successfully");
+            setIsEditModalOpen(false);
+            setSelectedConfig(null);
+            refetch();
+        } catch (err: any) {
+            toast.error(err?.message || "Failed to update policy configuration");
+        }
+    };
+
+    // Delete handler (optional)
+    const handleDeleteConfig = async (config: LeavePolicyConfigListDto) => {
+        // Implement delete logic if needed
+        console.log("Delete config:", config);
+    };
+
+    // Toggle status handler (optional)
+    const handleToggleStatus = async (config: LeavePolicyConfigListDto) => {
+        // Implement status toggle if needed
+        console.log("Toggle status for:", config);
+    };
+
+    // Show loading state
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
+            </div>
+        );
+    }
+
+    // Show error state
+    if (isError) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                <p className="text-red-600">Error loading configuration: {error?.message}</p>
+                <button
+                    onClick={() => refetch()}
+                    className="mt-2 px-3 py-1 bg-red-600 text-white rounded-md text-sm hover:bg-red-700"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-4">
+            {/* Show existing configuration if present */}
+            {activeConfig ? (
+                <div>
+                    <LeavePolicyConfigHeader onAddClick={() => setIsAddPolicyModalOpen(true)} />
+                    <LeavePolicyConfigTable
+                        leavePolicyConfig={[activeConfig]}
+                        currentPage={1}
+                        totalPages={1}
+                        totalItems={1}
+                        isLoading={false}
+                        onPageChange={() => {}}
+                        onEdit={handleEditConfig}  // ← FIXED: Use the actual edit handler
+                        onDelete={handleDeleteConfig}
+                        onToggleStatus={handleToggleStatus}
+                    />
+                </div>
+            ) : (
+                /* Show empty state with add button */
+                <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                    <div className="max-w-sm mx-auto">
+                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Settings className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-1">No Policy Configuration</h3>
+                        <p className="text-gray-500 text-sm mb-4">
+                            Configure how leave days are earned, accrual rates, and usage limits.
+                        </p>
+                        <button
+                            onClick={() => setIsAddPolicyModalOpen(true)}
+                            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                        >
+                            + Add Configuration
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Configuration Modal */}
+            <AddLeavePolicyConfig
+                isOpen={isAddPolicyModalOpen}
+                onClose={() => setIsAddPolicyModalOpen(false)}
+                leavePolicyId={leavePolicyId}
+                fiscalYear={fiscalYearsList}
+                onAddLeavePolicyConfig={handleAddLeavePolicyConfig}
+            />
+
+            {/* Edit Configuration Modal - ADD THIS */}
+            <EditLeavePolicyConfigModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedConfig(null);
+                }}
+                config={selectedConfig}
+                fiscalYears={fiscalYearsList}
+                onUpdateConfig={handleUpdateConfig}
+            />
         </div>
-      )}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="border rounded-lg">
-      
-        <LeavePolicyConfigHeader
-          onAddClick={() => setIsAddPolicyModalOpen(true)}
-          onViewHistory={() =>
-            navigate(
-              `/settings/hr/leave/leavePolicyConfigHistory/${leavePolicyId}`,
-            )
-          }
-          
-        />
-        <LeavePolicyConfigTable
-          leavePolicyConfig={activeConfig ? [activeConfig] : []}
-          currentPage={1}
-          totalPages={1}
-          totalItems={activeConfig ? 1 : 0}
-          isLoading={isLoading}
-          onPageChange={() => {}}
-          onEdit={setEditingPolicy as any}
-          onDelete={setDeletingPolicy as any}
-        />
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="pb-2"
-      ></motion.div>
-
-      {/* Modals */}
-      <AddLeavePolicyConfig
-        isOpen={isAddPolicyModalOpen}
-        onClose={() => setIsAddPolicyModalOpen(false)}
-        leavePolicyId={leavePolicyId}
-        fiscalYear={fy}
-        onAddLeavePolicyConfig={handleAddLeavePolicyConfig}
-        // leaveTypeOptions={leaveTypeOptions}
-      />
-      <PolicyAssignmentRuleSection leavePolicyId={leavePolicyId} />
-    </div>
-  );
+    );
 };
 
 export default LeavePolicyConfigSection;

@@ -1,9 +1,16 @@
-import type { BaseDto } from './BaseDto';
+// src/types/hr/recruit/onboardingTask.ts
 
-export interface OnboardingTaskListDto extends BaseDto {
+export interface OnboardingTaskListDto {
+  id: string;
   taskName: string;
   description: string;
   sequenceOrder: number;
+  isDeleted: boolean;
+  dateAdd: string;
+  dateAddAm: string;
+  dateMod: string | null;
+  dateModAm: string;
+  rowVersion: string; // ✅ Must be included
 }
 
 export interface OnboardingTaskAddDto {
@@ -12,7 +19,10 @@ export interface OnboardingTaskAddDto {
   sequenceOrder: number;
 }
 
-export interface OnboardingTaskModDto extends OnboardingTaskAddDto {
+export interface OnboardingTaskModDto {
   id: string;
-  rowVersion: string;
+  taskName: string;
+  description: string;
+  sequenceOrder: number;
+  rowVersion: string; // ✅ Required for concurrency
 }

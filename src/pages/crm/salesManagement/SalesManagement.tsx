@@ -1,84 +1,44 @@
-import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { Target, FileText, Package } from 'lucide-react';
-import { Card, CardContent } from '../../../components/ui/card';
+// src/pages/crm/salesManagement/SalesManagement.tsx
 
-export default function SalesManagementPage() {
-  const navigate = useNavigate();
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import OpportunitiesPage from './OpportunitiesPage';
+import OpportunityDetailPage from './OpportunityDetailPage';
+import QuotationsPage from './QuotationsPage';
+import OrdersPage from './OrdersPage';
+import OrderDetailPage from './OrderDetailPage';
+import ContractsPage from './ContractsPage';
+import SalesForecastPage from './SalesForecastPage';
 
-  const sections = [
-    {
-      title: 'Opportunities',
-      description: 'Manage sales opportunities and track deals',
-      icon: Target,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-      path: '/crm/sales/opportunities'
-    },
-    {
-      title: 'Quotations',
-      description: 'Create and manage sales quotations',
-      icon: FileText,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      path: '/crm/quotations'
-    },
-    {
-      title: 'Orders',
-      description: 'Track and manage customer orders',
-      icon: Package,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-      path: '/crm/orders'
-    }
-  ];
+const SalesManagement: React.FC = () => {
+    return (
+        <Routes>
+            {/* Redirect /crm/sales to /crm/sales/opportunities */}
+            <Route path="/" element={<Navigate to="/crm/sales/opportunities" replace />} />
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Sales Management</h1>
-        <p className="text-gray-600">Manage opportunities, quotations, and orders</p>
-      </div>
+            {/* Static Routes */}
+            <Route path="opportunities" element={<OpportunitiesPage />} />
+            <Route path="opportunities/add" element={<OpportunitiesPage />} />
+            <Route path="quotes" element={<QuotationsPage />} />
+            <Route path="quotes/add" element={<QuotationsPage />} />
+            <Route path="orders" element={<OrdersPage />} />
+            <Route path="orders/add" element={<OrdersPage />} />
+            <Route path="contracts" element={<ContractsPage />} />
+            <Route path="forecast" element={<SalesForecastPage />} />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {sections.map((section) => {
-          const IconComponent = section.icon;
-          
-          return (
-            <motion.div
-              key={section.title}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => navigate(section.path)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className={`w-12 h-12 ${section.bgColor} rounded-lg flex items-center justify-center`}>
-                      <IconComponent className={`w-6 h-6 ${section.color}`} />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        {section.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm">
-                        {section.description}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
-      </div>
-    </motion.div>
-  );
-}
+            {/* Edit Routes - Static paths with :id */}
+            <Route path="opportunities/edit/:id" element={<OpportunityDetailPage />} />
+            <Route path="quotes/edit/:id" element={<QuotationsPage />} />
+            <Route path="orders/edit/:id" element={<OrderDetailPage />} />
+            <Route path="contracts/edit/:id" element={<ContractsPage />} />
+
+            {/* Dynamic Routes - MUST be last */}
+            <Route path="opportunities/:id" element={<OpportunityDetailPage />} />
+            <Route path="quotes/:id" element={<QuotationsPage />} />
+            <Route path="orders/:id" element={<OrderDetailPage />} />
+            <Route path="contracts/:id" element={<ContractsPage />} />
+        </Routes>
+    );
+};
+
+export default SalesManagement;

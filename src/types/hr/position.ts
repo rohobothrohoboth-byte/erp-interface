@@ -81,27 +81,36 @@ export interface PositionExpModDto {
   rowVersion: string;
 }
 
-// Position Education Types
+// types/hr/position.ts
+
 export interface PositionEduListDto extends BaseDto {
   positionId: UUID;
   educationQualId: UUID;
-  educationLevelId: UUID;
+  educationLevel: string; // This is the string value like "Bachelor Degree"
   educationQual: string;
-  educationLevel: string;
+  positionName?: string;
 }
 
 export interface PositionEduAddDto {
   positionId: UUID;
   educationQualId: UUID;
-  educationLevelId: UUID;
+  educationLevel: string; // Send the string value
 }
 
 export interface PositionEduModDto {
   id: UUID;
   positionId: UUID;
   educationQualId: UUID;
-  educationLevelId: UUID;
+  educationLevel: string; // Send the string value
   rowVersion: string;
+}
+
+export interface BaseDto {
+  id: UUID;
+  isDeleted: boolean;
+  rowVersion: string;
+  dateAdd: string;
+  dateMod: string | null;
 }
 
 // Position Requirement Types

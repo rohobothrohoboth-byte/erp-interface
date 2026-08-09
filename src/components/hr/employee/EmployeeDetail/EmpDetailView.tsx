@@ -1,84 +1,65 @@
-import { memo, useState, useCallback, lazy, Suspense } from 'react';
+import React, { memo, useState, useCallback, Suspense, lazy } from 'react';
 import { useParams } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { EmpDetailHeader } from './EmpDetailHeader';
-import { empDetailApi } from '../../../../services/hr/employee/empDetail/empDetail.api';
-import { empDetailKeys } from '../../../../services/hr/employee/empDetail/empDetail.queries';
-import { DetailSkeleton } from './LoadState';
+import { AlertCircle } from 'lucide-react';
+import { useLanguage } from '../../../../i18n/LanguageContext';
 
-const STALE = 5 * 60 * 1000;
-
-const OverviewTab     = lazy(() => import('./OverviewTab').then(m => ({ default: m.OverviewTab })));
-const BasicInfoTab    = lazy(() => import('./BasicInfoTab').then(m => ({ default: m.BasicInfoTab })));
+const OverviewTab = lazy(() => import('./OverviewTab').then(m => ({ default: m.OverviewTab })));
+const BasicInfoTab = lazy(() => import('./BasicInfoTab').then(m => ({ default: m.BasicInfoTab })));
 const BiographicalTab = lazy(() => import('./BiographicalTab').then(m => ({ default: m.BiographicalTab })));
-const EmergencyTab    = lazy(() => import('./EmergencyTab').then(m => ({ default: m.EmergencyTab })));
-const FamilyTab       = lazy(() => import('./FamilyTab').then(m => ({ default: m.FamilyTab })));
-const GuarantorTab    = lazy(() => import('./GuarantorTab').then(m => ({ default: m.GuarantorTab })));
-const DocumentsTab    = lazy(() => import('./DocumentsTab').then(m => ({ default: m.DocumentsTab })));
+const EmergencyTab = lazy(() => import('./EmergencyTab').then(m => ({ default: m.EmergencyTab })));
+const FamilyTab = lazy(() => import('./FamilyTab').then(m => ({ default: m.FamilyTab })));
+const GuarantorTab = lazy(() => import('./GuarantorTab').then(m => ({ default: m.GuarantorTab })));
+const DocumentsTab = lazy(() => import('./DocumentsTab').then(m => ({ default: m.DocumentsTab })));
 
-type TabComponent = React.ComponentType<{ employeeId: string }>;
-
-const TAB_MAP: Record<string, TabComponent> = {
-  overview:  OverviewTab,
-  basic:     BasicInfoTab,
-  bio:       BiographicalTab,
-  emergency: EmergencyTab,
-  family:    FamilyTab,
-  guarantor: GuarantorTab,
-  documents: DocumentsTab,
+const TAB_MAP: Record<string, React.ComponentType<{ employeeId: string }>> = {
+    overview: OverviewTab, basic: BasicInfoTab, bio: BiographicalTab,
+    emergency: EmergencyTab, family: FamilyTab, guarantor: GuarantorTab, documents: DocumentsTab,
 };
 
-const TabFallback = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-    {Array.from({ length: 4 }).map((_, i) => <DetailSkeleton key={i} rows={3} />)}
-  </div>
-);
+const TabLoader = () => {
+    const { t } = useLanguage();
+    return (
+        <div className="flex items-center justify-center py-16">
+            <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+    );
+};
 
 export const EmpDetailView = memo(function EmpDetailView() {
-  const { id } = useParams<{ id: string }>();
-  const employeeId = id ?? '';
-  const [activeTab, setActiveTab] = useState('overview');
-  const queryClient = useQueryClient();
+    const { t } = useLanguage();
+    const { id } = useParams<{ id: string }>();
+    const employeeId = id ?? '';
+    const [activeTab, setActiveTab] = useState('overview');
 
-  // Prefetch all data on mount
-  useState(() => {
-    if (!employeeId) return;
-    const opts = (fn: () => Promise<unknown>, key: readonly unknown[]) =>
-      ({ queryKey: key, queryFn: fn, staleTime: STALE });
+    const handleTabChange = useCallback((tabId: string) => setActiveTab(tabId), []);
 
-    queryClient.prefetchQuery(opts(() => empDetailApi.getInfo(employeeId),      empDetailKeys.info(employeeId)));
-    queryClient.prefetchQuery(opts(() => empDetailApi.getPhoto(employeeId),     empDetailKeys.photo(employeeId)));
-    queryClient.prefetchQuery(opts(() => empDetailApi.getOverview(employeeId),  empDetailKeys.overview(employeeId)));
-    queryClient.prefetchQuery(opts(() => empDetailApi.getBasic(employeeId),     empDetailKeys.basic(employeeId)));
-    queryClient.prefetchQuery(opts(() => empDetailApi.getBio(employeeId),       empDetailKeys.bio(employeeId)));
-    queryClient.prefetchQuery(opts(() => empDetailApi.getContact(employeeId),   empDetailKeys.contact(employeeId)));
-    queryClient.prefetchQuery(opts(() => empDetailApi.getFamily(employeeId),    empDetailKeys.family(employeeId)));
-    queryClient.prefetchQuery(opts(() => empDetailApi.getLeave(employeeId),     empDetailKeys.leave(employeeId)));
-  });
+    const ActiveTab = TAB_MAP[activeTab] || OverviewTab;
 
-  const handleTabChange = useCallback((id: string) => setActiveTab(id), []);
+    if (!employeeId) {
+        return (
+            <div className="flex items-center justify-center p-8">
+                <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-md">
+                    <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <AlertCircle className="w-10 h-10 text-amber-600" />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">{t.employeeNotFound || 'Employee Not Found'}</h2>
+                    <p className="text-slate-500">{t.requestedEmployeeNotFound || 'The requested employee could not be found.'}</p>
+                </div>
+            </div>
+        );
+    }
 
-  const ActiveTab = TAB_MAP[activeTab] ?? OverviewTab;
-
-  if (!employeeId) return (
-    <div className="flex items-center justify-center py-20">
-      <p className="text-gray-500">Employee not found.</p>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-gray-50  overflow-y-auto h-full pb-8">
-      <EmpDetailHeader
-        employeeId={employeeId}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-      />
-      <Suspense fallback={<TabFallback />}>
-        <ActiveTab employeeId={employeeId} />
-      </Suspense>
-    </div>
-  );
+    return (
+        <div>
+            <EmpDetailHeader employeeId={employeeId} activeTab={activeTab} onTabChange={handleTabChange} />
+            <div key={activeTab} className="mt-6">
+                <Suspense fallback={<TabLoader />}>
+                    <ActiveTab employeeId={employeeId} />
+                </Suspense>
+            </div>
+        </div>
+    );
 });
 
 export default EmpDetailView;
-

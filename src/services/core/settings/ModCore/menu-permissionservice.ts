@@ -8,60 +8,45 @@ import type {
 import type { NameListItem } from '../../../../types/NameList/nameList';
 
 class MenuPermissionService {
-  private baseUrl = `/auth/v1/PerMenu`; 
-  private namesBaseUrl = `/auth/v1/Names`;
+  // CHANGED: Use merged Permission endpoint
+  private baseUrl = `/auth/v1/Permission`;
+  // CHANGED: Names endpoints also moved to Permission
+  private namesBaseUrl = `/auth/v1/Permission`;
 
   private extractErrorMessage(error: any): string {
-    // Check for specific database constraint violations
     if (error.response?.data?.message) {
       const message = error.response.data.message;
-      
-      // Handle PostgreSQL unique constraint violation (23505)
       if (message.includes('23505') || message.toLowerCase().includes('duplicate') || message.toLowerCase().includes('unique constraint')) {
         if (message.toLowerCase().includes('key') || message.toLowerCase().includes('permenu_key')) {
           return 'A menu permission with this key already exists. Please use a different key.';
         }
         return 'This value already exists. Please use a different value.';
       }
-      
-      // Handle other common database errors
       if (message.includes('23503')) {
         return 'Invalid reference. Please check your module selection.';
       }
-      
       if (message.includes('23502')) {
         return 'Required field is missing. Please fill all required fields.';
       }
-      
       return message;
     }
-    
     if (error.response?.data?.errors) {
       const errors = error.response.data.errors;
       const errorMessages = Object.values(errors).flat();
       return errorMessages.join(', ');
     }
-    
     if (error.message) {
-      const message = error.message;
-      
-      // Handle client-side detected constraint violations
-      if (message.includes('23505') || message.toLowerCase().includes('duplicate')) {
-        return 'A menu permission with this key already exists. Please use a different key.';
-      }
-      
-      return message;
+      return error.message;
     }
-    
     return 'An unexpected error occurred';
   }
 
-  // GET: /api/auth/v1/Names/AllModuleName
+  // CHANGED: /Names/AllModuleName → /Permission/AllModuleName
   async getAllModuleNames(): Promise<NameListItem[]> {
     try {
-      console.log('Fetching modules from:', `${this.namesBaseUrl}/AllModuleName`);
+
       const response = await api.get(`${this.namesBaseUrl}/AllModuleName`);
-      console.log('Module names response:', response.data);
+
       const modules = response.data?.data || response.data;
       return Array.isArray(modules) ? modules : [];
     } catch (error) {
@@ -71,7 +56,7 @@ class MenuPermissionService {
     }
   }
 
-  // GET: /api/auth/v1/Names/GetModuleName/{id}
+  // CHANGED: /Names/GetModuleName/{id} → /Permission/GetModuleName/{id}
   async getModuleNameById(id: string): Promise<NameListItem> {
     try {
       const response = await api.get(`${this.namesBaseUrl}/GetModuleName/${id}`);
@@ -83,12 +68,18 @@ class MenuPermissionService {
     }
   }
 
-  // GET: /api/auth/v1/PerMenu/AllPerMenu
+  // CHANGED: /PerMenu/AllPerMenu → /Permission/AllPerMenu
   async getAllMenuPermissions(): Promise<PerMenuListDto[]> {
     try {
       const response = await api.get(`${this.baseUrl}/AllPerMenu`);
-      console.log('Raw API response:', response.data);
-      console.log('Menu permissions data:', response.data.data);
+
+
+      // Optional: Log the specific permission you're looking for
+      if (response.data.data && Array.isArray(response.data.data)) {
+        const myLeave = response.data.data.find(p => p.key === 'my.leave');
+
+      }
+
       return response.data.data;
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
@@ -97,7 +88,7 @@ class MenuPermissionService {
     }
   }
 
-  // GET: /api/auth/v1/PerMenu/GetPerMenu/{id}
+  // CHANGED: /PerMenu/GetPerMenu/{id} → /Permission/GetPerMenu/{id}
   async getMenuPermissionById(id: string): Promise<PerMenuListDto> {
     try {
       const response = await api.get(`${this.baseUrl}/GetPerMenu/${id}`);
@@ -109,50 +100,113 @@ class MenuPermissionService {
     }
   }
 
-  // POST: /api/auth/v1/PerMenu/AddPerMenu
-  async createMenuPermission(menuPermission: PerMenuAddDto): Promise<PerMenuListDto> {
+  // CHANGED: /PerMenu/AddPerMenu → /Permission/AddPerMenu
+  async createMenuPermission(data: PerMenuAddDto): Promise<PerMenuListDto> {
     try {
-      const response = await api.post(`${this.baseUrl}/AddPerMenu`, menuPermission);
-      console.info('Menu permission created successfully:', response.data.data.id);
+
+      const response = await api.post('/auth/v1/Permission/AddPerMenu', data);
       return response.data.data;
-    } catch (error) {
-      const errorMessage = this.extractErrorMessage(error);
-      console.error('Error creating menu permission:', errorMessage);
-      throw new Error(errorMessage);
+    } catch (error: any) {
+      console.error("Error creating menu permission:", error);
+      throw error;
     }
   }
 
-  // PUT: /api/auth/v1/PerMenu/ModPerMenu/{id}
-  async updateMenuPermission(updateData: PerMenuModDto): Promise<PerMenuListDto> {
+  // In menu-permissionservice.ts
+
+  async updateMenuPermission(id: string, data: PerMenuModDto): Promise<any> {
     try {
-      const response = await api.put(`${this.baseUrl}/ModPerMenu/${updateData.id}`, updateData);
-      return response.data.data;
-    } catch (error) {
-      const errorMessage = this.extractErrorMessage(error);
-      console.error('Error updating menu permission:', errorMessage);
-      throw new Error(errorMessage);
+      // Use the ID from the data object (permission ID)
+      const correctId = data.id;
+
+      const payload = {
+        Id: data.id,                    // ← Use data.id (permission ID)
+        PerModuleId: data.perModuleId,  // ← Use data.perModuleId (module ID)
+        Key: data.key,
+        Label: data.label,
+        Path: data.path,
+        Icon: data.icon,
+        IsChild: data.isChild,
+        Order: data.order,
+        ParentKey: data.parentKey
+      };
+
+
+
+      const response = await api.put(`/auth/v1/Permission/ModPerMenu/${correctId}`, payload);
+      return response.data;
+    } catch (error: any) {
+      console.error("MenuPermissionService - Error:", error);
+      throw error;
     }
   }
-
-  // DELETE: /api/auth/v1/PerMenu/DelPerMenu/{id}
+  // CHANGED: /PerMenu/DelPerMenu/{id} → /Permission/DelPerMenu/{id}
   async deleteMenuPermission(id: string): Promise<void> {
     try {
+      try {
+        const menu = await this.getMenuPermissionById(id);
+
+      } catch (getError) {
+        console.error('Menu permission not found with ID:', id);
+        throw new Error(`Menu permission with ID ${id} not found. Please refresh the page and try again.`);
+      }
       const response = await api.delete(`${this.baseUrl}/DelPerMenu/${id}`);
-      console.info('Menu permission deleted successfully:', response.data.message);
+
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
       console.error('Error deleting menu permission:', errorMessage);
       throw new Error(errorMessage);
     }
   }
-
-  async getMenuPermissionsByModule(): Promise<ModPerMenuListDto[]> {
+  // In menu-permissionservice.ts
+  async deleteMenuPermissionByKey(key: string): Promise<any> {
     try {
-      const response = await api.get(`${this.baseUrl}/AllPerMenu`);
+
+      const response = await api.delete(`/auth/v1/Permission/DelPerMenuByKey/${key}`);
+      return response.data;
+    } catch (error: any) {
+      console.error("Error deleting menu permission:", error);
+      throw error;
+    }
+  }
+  async getAllModules(): Promise<ModPerMenuListDto[]> {
+    try {
+      const response = await api.get(`${this.baseUrl}/AllPerModule`);
+
+      return response.data.data || [];
+    } catch (error) {
+      const errorMessage = this.extractErrorMessage(error);
+      console.error('Error fetching all modules:', errorMessage);
+      return [];
+    }
+  }
+  // CHANGED: Use proper endpoint for module-based filtering
+  // GET: /api/auth/v1/Permission/GetPerMenuByMod/{moduleId}
+  async getMenuPermissionsByModule(moduleId: string): Promise<ModPerMenuListDto> {
+    // Guard clause to prevent undefined being passed
+    if (!moduleId || moduleId === 'undefined') {
+      console.warn('getMenuPermissionsByModule: Invalid moduleId', moduleId);
+      return { perModuleId: '', perModule: '', perMenuList: [] };
+    }
+
+    try {
+      const response = await api.get(`${this.baseUrl}/GetPerMenuByMod/${moduleId}`);
       return response.data.data;
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
       console.error('Error fetching menu permissions by module:', errorMessage);
+      throw new Error(errorMessage);
+    }
+  }
+
+  // NEW: Get menu tree
+  async getMenuTree(): Promise<any[]> {
+    try {
+      const response = await api.get(`${this.baseUrl}/GetMenuTree`);
+      return response.data.data || [];
+    } catch (error) {
+      const errorMessage = this.extractErrorMessage(error);
+      console.error('Error fetching menu tree:', errorMessage);
       throw new Error(errorMessage);
     }
   }

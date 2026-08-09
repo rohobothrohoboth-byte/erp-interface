@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 import type { HolidayListDto, UUID } from "../../../types/core/holiday";
 import { Button } from "../../ui/button";
 import toast from 'react-hot-toast';
@@ -12,94 +12,85 @@ interface DeleteHolidayModalProps {
   onConfirm: (holidayId: UUID) => Promise<any>;
 }
 
-export const DeleteHolidayModal: React.FC<DeleteHolidayModalProps> = ({ 
-  holiday, 
-  isOpen, 
-  onClose, 
-  onConfirm 
-}) => {
+export const DeleteHolidayModal: React.FC<DeleteHolidayModalProps> = ({
+                                                                        holiday,
+                                                                        isOpen,
+                                                                        onClose,
+                                                                        onConfirm
+                                                                      }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleConfirm = async () => {
     if (!holiday) return;
-
     setIsLoading(true);
 
     try {
-      const response = await onConfirm(holiday.id);
-      
-      const successMessage = 
-        response?.data?.message || 
-        response?.message || 
-        '';
-      
-      toast.success(successMessage);
-      
+      await onConfirm(holiday.id);
+      toast.success("Holiday deleted successfully");
       onClose();
-      
     } catch (error: any) {
-      const errorMessage = error.message || '';
-      toast.error(errorMessage);
-      console.error('Error deleting holiday:', error);
+      toast.error(error.message || "Failed to delete holiday");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleClose = () => {
-    if (!isLoading) {
-      onClose();
     }
   };
 
   if (!isOpen || !holiday) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-4xl w-1/3 max-h-[90vh] overflow-y-auto"
-      >
-        {/* Modal Body */}
-        <div className="p-6">
-          <div className="py-4 text-center">
-            <div className="flex items-center justify-center p-3 rounded-full gap-2 text-red-600 mx-auto">
-              <AlertTriangle size={50} />
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-md w-full overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex items-center gap-3 p-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+              <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" />
             </div>
+            <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Delete Holiday
+            </h2>
+          </div>
 
-            <p className="text-lg font-medium text-red-600 mt-4">
-              Are you sure you want to delete this holiday?
+          {/* Body */}
+          <div className="p-6 text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+                <AlertTriangle className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+              </div>
+            </div>
+            <p className="text-base font-medium text-slate-800 dark:text-slate-200 mb-2">
+              Delete "{holiday.name}"?
             </p>
-            <p className="text-sm text-red-600 mt-1">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               This action cannot be undone.
             </p>
           </div>
-        </div>
 
-        {/* Modal Footer */}
-        <div className="border-t px-6 py-2">
-          <div className="mx-auto flex justify-center items-center gap-1.5">
+          {/* Footer */}
+          <div className="flex justify-center gap-3 p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
             <Button
-              variant="destructive"
-              onClick={handleConfirm}
-              className="cursor-pointer px-6"
-              disabled={isLoading}
+                variant="destructive"
+                onClick={handleConfirm}
+                disabled={isLoading}
+                className="px-5 h-8 text-sm"
             >
-              {isLoading ? 'Deleting...' : 'Yes, Delete!'}
+              {isLoading ? "Deleting..." : "Yes, Delete"}
             </Button>
             <Button
-              onClick={handleClose}
-              variant="outline"
-              className="px-6 py-2 bg-gray-100 hover:bg-gray-200 rounded-md text-gray-700 transition-colors duration-200 font-medium"
-              disabled={isLoading}
+                variant="outline"
+                onClick={onClose}
+                disabled={isLoading}
+                className="px-5 h-8 text-sm"
             >
-              No, Keep It.
+              Cancel
             </Button>
           </div>
-        </div>
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
   );
 };

@@ -1,42 +1,66 @@
-import { Search } from 'lucide-react';
-import { BadgePlus } from 'lucide-react';
-import { motion } from 'framer-motion';
+// src/components/crm/leadManagement/leadGrouping/LeadGroupingSearchFilter.tsx
+import React from 'react';
+import { Filter, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '../../../ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../../../ui/select';
 
 interface LeadGroupingSearchFilterProps {
-  searchTerm: string;
-  onSearchChange: (value: string) => void;
-  onAddClick: () => void;
+    groupBy: string;
+    onGroupByChange: (value: string) => void;
+    onExpandAll: () => void;
+    onCollapseAll: () => void;
 }
 
-export default function LeadGroupingSearchFilter({
-  searchTerm,
-  onSearchChange,
-  onAddClick,
-}: LeadGroupingSearchFilterProps) {
-  return (
-    <motion.div
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex items-center gap-4 justify-between"
-    >
-      <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-        <input
-          type="text"
-          placeholder="Search lead groups..."
-          value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-        />
-      </div>
-      <button
-        onClick={onAddClick}
-        className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors justify-end"
-      >
-        <BadgePlus className="w-4 h-4" />
-        Add Lead Group
-      </button>
-    </motion.div>
-  );
-}
+const LeadGroupingSearchFilter: React.FC<LeadGroupingSearchFilterProps> = ({
+                                                                               groupBy,
+                                                                               onGroupByChange,
+                                                                               onExpandAll,
+                                                                               onCollapseAll,
+                                                                           }) => {
+    return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap gap-4 items-center">
+            <div className="flex items-center gap-2">
+                <Filter className="h-5 w-5 text-gray-400" />
+                <span className="text-sm font-medium text-gray-700">Group By:</span>
+            </div>
+            <Select value={groupBy} onValueChange={onGroupByChange}>
+                <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Select grouping" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="status">Status</SelectItem>
+                    <SelectItem value="priority">Priority</SelectItem>
+                    <SelectItem value="source">Source</SelectItem>
+                    <SelectItem value="industry">Industry</SelectItem>
+                    <SelectItem value="assigned">Assigned To</SelectItem>
+                </SelectContent>
+            </Select>
+            <Button
+                size="sm"
+                variant="outline"
+                onClick={onExpandAll}
+                className="flex items-center gap-1"
+            >
+                <ChevronDown size={14} />
+                Expand All
+            </Button>
+            <Button
+                size="sm"
+                variant="outline"
+                onClick={onCollapseAll}
+                className="flex items-center gap-1"
+            >
+                <ChevronRight size={14} />
+                Collapse All
+            </Button>
+        </div>
+    );
+};
+
+export default LeadGroupingSearchFilter;

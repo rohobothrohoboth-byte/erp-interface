@@ -1,239 +1,254 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Edit, MoreHorizontal, Phone, Mail, User, Building, Trash2, UserPlus } from 'lucide-react';
+// src/components/crm/leadManagement/leadGeneration/LeadGenerationTable.tsx
+
+import React from 'react';
+import { Eye, Edit, Trash2, ChevronLeft, ChevronRight, Building2, Mail, Phone } from 'lucide-react';
 import { Button } from '../../../ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../ui/table';
 import { Badge } from '../../../ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../../ui/dropdown-menu';
-import { Pagination } from '../../../ui/pagination';
-import { showToast } from '../../../../layout/layout';
-import DeleteLeadModal from './DeleteLeadModal';
-import ReassignLeadModal from './ReassignLeadModal';
-import type { Lead } from '../../../../types/crm';
+import LeadStatusBadge from '../shared/LeadStatusBadge';
+import LeadPriorityBadge from '../shared/LeadPriorityBadge';
+import LeadScoreBadge from '../shared/LeadScoreBadge';
+import type { LeadDto } from '../../../../types/crm/crm.types';
 
 interface LeadGenerationTableProps {
-  leads: Lead[];
-  onEdit: (lead: Lead) => void;
-  onDelete: (leadId: string) => void;
-  onAssignRep: (leadId: string, repName: string) => void;
+    leads: LeadDto[];
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    onViewLead: (id: string) => void;
+    onEditLead: (id: string) => void;
+    onDeleteLead: (lead: LeadDto) => void;
+    loading?: boolean;
 }
 
-export default function LeadGenerationTable({
-  leads,
-  onEdit,
-  onDelete,
-  onAssignRep
-}: LeadGenerationTableProps) {
-  const navigate = useNavigate();
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [selectedLeadForAssign, setSelectedLeadForAssign] = useState<Lead | null>(null);
-  const [selectedRep, setSelectedRep] = useState('');
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedLeadForDelete, setSelectedLeadForDelete] = useState<Lead | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  
-  const itemsPerPage = 10;
+// ✅ Correct status mapping based on backend enum
+const STATUS_MAP: Record<number, string> = {
+    1: 'New',
+    2: 'Contacted',
+    3: 'Qualified',
+    4: 'Proposal',
+    5: 'Negotiation',
+    6: 'Converted',
+    7: 'Lost',
+    8: 'Archived',
+};
 
-  // Pagination calculations
-  const totalItems = leads.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedLeads = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return leads.slice(startIndex, endIndex);
-  }, [leads, currentPage]);
-  
-  const getStatusColor = (status: string) => {
-    const statusColors: Record<string, string> = {
-      'New': 'bg-orange-100 text-orange-800',
-      'Contacted': 'bg-orange-100 text-orange-800',
-      'Qualified': 'bg-orange-100 text-orange-800',
-      'Proposal Sent': 'bg-orange-100 text-orange-800',
-      'Closed Won': 'bg-orange-100 text-orange-800',
-      'Closed Lost': 'bg-red-100 text-red-800'
-    };
-    return statusColors[status] || 'bg-gray-100 text-gray-800';
-  };
+const PRIORITY_MAP: Record<number, string> = {
+    1: 'Low',
+    2: 'Medium',
+    3: 'High',
+    4: 'Urgent',
+};
 
-  const getSourceColor = (source: string) => {
-    return 'bg-orange-100 text-orange-800';
-  };
-
-  const handleAssignRep = (lead: Lead) => {
-    setSelectedLeadForAssign(lead);
-    setSelectedRep(lead.assignedTo || '');
-    setIsAssignDialogOpen(true);
-  };
-
-  const handleAssignSubmit = () => {
-    if (selectedLeadForAssign && selectedRep) {
-      onAssignRep(selectedLeadForAssign.id, selectedRep);
-      setIsAssignDialogOpen(false);
-      setSelectedLeadForAssign(null);
-      setSelectedRep('');
-      showToast.success(`Lead assigned to ${selectedRep}`);
+// ✅ Helper: Get status as string
+const getStatusString = (status: any): string => {
+    if (!status) return 'New';
+    if (typeof status === 'string') {
+        const num = parseInt(status);
+        if (!isNaN(num) && num in STATUS_MAP) return STATUS_MAP[num];
+        return status;
     }
-  };
+    if (typeof status === 'number') {
+        return STATUS_MAP[status] || 'New';
+    }
+    return String(status);
+};
 
-  const handleDeleteWithConfirmation = (lead: Lead) => {
-    setSelectedLeadForDelete(lead);
-    setIsDeleteModalOpen(true);
-  };
+// ✅ Helper: Get priority as string
+const getPriorityString = (priority: any): string => {
+    if (!priority) return 'Medium';
+    if (typeof priority === 'string') {
+        const num = parseInt(priority);
+        if (!isNaN(num) && num in PRIORITY_MAP) return PRIORITY_MAP[num];
+        return priority;
+    }
+    if (typeof priority === 'number') {
+        return PRIORITY_MAP[priority] || 'Medium';
+    }
+    return String(priority);
+};
 
-  const handleDeleteConfirm = (lead: Lead) => {
-    onDelete(lead.id);
-    setIsDeleteModalOpen(false);
-    setSelectedLeadForDelete(null);
-  };
+// ✅ Helper: Get full name
+const getFullName = (lead: LeadDto) => {
+    if (lead.fullName) return lead.fullName;
+    return `${lead.firstName || ''} ${lead.lastName || ''}`.trim() || 'Unknown';
+};
 
-  const handleDeleteCancel = () => {
-    setIsDeleteModalOpen(false);
-    setSelectedLeadForDelete(null);
-  };
+const LeadGenerationTable: React.FC<LeadGenerationTableProps> = ({
+                                                                     leads,
+                                                                     currentPage,
+                                                                     totalPages,
+                                                                     onPageChange,
+                                                                     onViewLead,
+                                                                     onEditLead,
+                                                                     onDeleteLead,
+                                                                     loading = false,
+                                                                 }) => {
+    const formatCurrency = (amount?: number) => {
+        if (!amount) return '$0';
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+        }).format(amount);
+    };
 
-  if (leads.length === 0) {
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+        });
+    };
+
+    if (loading) {
+        return (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="flex items-center justify-center min-h-[200px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            </div>
+        );
+    }
+
+    const startIndex = (currentPage - 1) * 10;
+
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="text-center py-12"
-      >
-        <User className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No leads found</h3>
-        <p className="text-gray-500">Get started by adding your first lead or adjust your filters.</p>
-      </motion.div>
-    );
-  }
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lead</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Priority</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Value</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Score</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Created</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                    {leads.length === 0 ? (
+                        <tr>
+                            <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
+                                No leads found
+                            </td>
+                        </tr>
+                    ) : (
+                        leads.map((lead) => {
+                            // ✅ Convert status and priority to display strings
+                            const displayStatus = getStatusString(lead.status);
+                            const displayPriority = getPriorityString(lead.priority);
+                            const fullName = getFullName(lead);
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-lg border"
-    >
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Lead</TableHead>
-            <TableHead>Company</TableHead>
-            <TableHead>Contact</TableHead>
-            <TableHead>Source</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Score</TableHead>
-            <TableHead>Assigned To</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paginatedLeads.map((lead) => (
-            <TableRow key={lead.id}>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <User className="w-4 h-4 text-gray-400" />
-                  <div>
-                    <div className="font-medium">{lead.firstName} {lead.lastName}</div>
-                    <div className="text-sm text-gray-500">{lead.jobTitle}</div>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <Building className="w-4 h-4 text-gray-400" />
-                  <span>{lead.company}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-1">
-                    <Mail className="w-3 h-3 text-gray-400" />
-                    <span className="text-sm">{lead.email}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Phone className="w-3 h-3 text-gray-400" />
-                    <span className="text-sm">{lead.phone}</span>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge className={getSourceColor(lead.source)}>
-                  {lead.source}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge className={getStatusColor(lead.status)}>
-                  {lead.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium">{lead.score}</span>
-                </div>
-              </TableCell>
-              <TableCell>{lead.assignedTo || '-'}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate(`/crm/leads/${lead.id}/edit`)}>
-                      <Edit className="w-4 h-4 mr-2" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleAssignRep(lead)}>
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Reassign Lead
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem 
-                      onClick={() => handleDeleteWithConfirmation(lead)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            return (
+                                <tr
+                                    key={lead.id}
+                                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                                    onClick={() => onViewLead(lead.id)}
+                                >
+                                    <td className="px-4 py-3">
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">
+                                                {fullName}
+                                            </p>
+                                            {lead.companyName && (
+                                                <p className="text-xs text-gray-500 flex items-center gap-1">
+                                                    <Building2 size={12} />
+                                                    {lead.companyName}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <div className="text-sm text-gray-600">
+                                            <p className="flex items-center gap-1">
+                                                <Mail size={14} className="text-gray-400" />
+                                                {lead.email || 'No email'}
+                                            </p>
+                                            {lead.phone && (
+                                                <p className="text-xs text-gray-400 flex items-center gap-1">
+                                                    <Phone size={12} />
+                                                    {lead.phone}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <LeadStatusBadge status={displayStatus} />
+                                    </td>
+                                    <td className="px-4 py-3">
+                                        <LeadPriorityBadge priority={displayPriority} />
+                                    </td>
+                                    <td className="px-4 py-3 text-right font-medium text-indigo-600">
+                                        {formatCurrency(lead.estimatedValue || lead.budget || 0)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <LeadScoreBadge score={lead.score || 0} />
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-500">
+                                        {formatDate(lead.createdAt)}
+                                    </td>
+                                    <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                        <div className="flex items-center justify-center gap-1">
+                                            <button
+                                                onClick={() => onViewLead(lead.id)}
+                                                className="p-1 hover:bg-blue-100 rounded-lg transition-colors"
+                                                title="View Details"
+                                            >
+                                                <Eye size={16} className="text-blue-500" />
+                                            </button>
+                                            <button
+                                                onClick={() => onEditLead(lead.id)}
+                                                className="p-1 hover:bg-yellow-100 rounded-lg transition-colors"
+                                                title="Edit Lead"
+                                            >
+                                                <Edit size={16} className="text-yellow-600" />
+                                            </button>
+                                            <button
+                                                onClick={() => onDeleteLead(lead)}
+                                                className="p-1 hover:bg-red-100 rounded-lg transition-colors"
+                                                title="Delete Lead"
+                                            >
+                                                <Trash2 size={16} className="text-red-500" />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })
+                    )}
+                    </tbody>
+                </table>
+            </div>
+            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between bg-gray-50">
+                <p className="text-sm text-gray-500">
+                    Showing {startIndex + 1} to {Math.min(startIndex + 10, leads.length)} of {leads.length} leads
+                </p>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      
-      {/* Pagination */}
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-        itemLabel="leads"
-      />
+                        <ChevronLeft size={16} />
+                    </button>
+                    <span className="text-sm text-gray-500">
+            Page {currentPage} of {totalPages || 1}
+          </span>
+                    <button
+                        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        className="p-2 rounded-lg border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
 
-      {/* Reassign Lead Modal */}
-      <ReassignLeadModal
-        lead={selectedLeadForAssign}
-        isOpen={isAssignDialogOpen}
-        selectedRep={selectedRep}
-        onRepChange={setSelectedRep}
-        onConfirm={handleAssignSubmit}
-        onClose={() => {
-          setIsAssignDialogOpen(false);
-          setSelectedLeadForAssign(null);
-          setSelectedRep('');
-        }}
-      />
-
-      {/* Delete Lead Modal */}
-      <DeleteLeadModal
-        lead={selectedLeadForDelete}
-        isOpen={isDeleteModalOpen}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-      />
-    </motion.div>
-  );
-}
+export default LeadGenerationTable;

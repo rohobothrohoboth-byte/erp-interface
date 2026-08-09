@@ -4,9 +4,16 @@ export type { UUID };
 
 export interface RegStep1 {
   employeeId: UUID;
-  password: string;
-  roleId: string;
-  perModules: UUID[];
+  userName: string;           // ✅ Required
+  email: string;              // ✅ Required
+  password: string;           // ✅ Required
+  confirmPassword: string;    // ✅ Required
+  roleId: string;             // ✅ Required
+  perModules: UUID[];         // ✅ Required
+  // Optional fields that might be needed
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
 }
 
 export interface RegStep2 {
@@ -20,5 +27,7 @@ export interface RegStep3 {
 }
 
 export interface RegRes {
-  userId: string; 
+  userId: string;
+  message?: string;  // Add optional message property
+  success?: boolean;
 }

@@ -7,16 +7,23 @@ import type { UUID } from "../../../../types/core/Settings/policyAssignmentRule"
 const PolicyAssignmentRule: React.FC = () => {
   const { leavePolicyId } = useParams<{ leavePolicyId: string }>();
 
+  if (!leavePolicyId) {
+    return (
+        <div className="p-6 text-center text-gray-500">
+          No policy selected
+        </div>
+    );
+  }
+
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="p-6 space-y-6"
-    >
-      {/* Policy Assignment Rule Section */}
-      <PolicyAssignmentRuleSection leavePolicyId={leavePolicyId as UUID} />
-    </motion.section>
+      <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="p-6 space-y-6"
+      >
+        <PolicyAssignmentRuleSection leavePolicyId={leavePolicyId as UUID} />
+      </motion.section>
   );
 };
 

@@ -10,4 +10,5 @@ export interface EmpSearchRes {
   position: string;
   empState: String;
   hasAccount: boolean;
+  isAccountActive?: boolean;  // ADD THIS
 }

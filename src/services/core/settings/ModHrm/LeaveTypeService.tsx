@@ -1,91 +1,117 @@
+// services/core/settings/ModHrm/LeaveTypeService.tsx
 import { api } from '../../../api';
-import type {
-  LeaveTypeListDto,
-  LeaveTypeAddDto,
-  LeaveTypeModDto,
-  UUID
-} from '../../../../types/core/Settings/leavetype';
+import type { LeaveTypeListDto, LeaveTypeAddDto, LeaveTypeModDto, UUID } from '../../../../types/core/Settings/leavetype';
 
 class LeaveTypeService {
-  private baseUrl = `${import.meta.env.VITE_HRMM_LEAVE_URL || 'hrm/leave/v1'}/LeaveType`;
+  // Gateway URL - use HTTP, not HTTPS
+  private gatewayUrl = (import.meta.env.VITE_GATEWAY_URL || 'http://localhost:1212').replace(/\/$/, '');
 
-  // Helper method to extract error messages
-  private extractErrorMessage(error: any): string {
-    if (error.response?.data?.message) {
-      return error.response.data.message;
-    }
-    if (error.response?.data?.errors) {
-      // Handle validation errors (object with field names as keys)
-      const errors = error.response.data.errors;
-      const errorMessages = Object.values(errors).flat();
-      return errorMessages.join(', ');
-    }
-    if (error.message) {
-      return error.message;
-    }
-    return 'An unexpected error occurred';
-  }
+  // REMOVE the /api prefix - your backend doesn't have it!
+  private baseUrl = `${this.gatewayUrl}/hrm/leave/v1/Policy`;
 
-  // GET: /AllLeaveType
   async getAllLeaveTypes(): Promise<LeaveTypeListDto[]> {
     try {
-      const response = await api.get(`${this.baseUrl}/AllLeaveType`);
-      return response.data.data;
+      // Now this will be: http://localhost:1212/hrm/leave/v1/Policy/Type/All
+      const response = await api.get(`${this.baseUrl}/Type/All`);
+      return response.data?.data || response.data || [];
     } catch (error) {
-      const errorMessage = this.extractErrorMessage(error);
-      console.error('Error fetching leave types:', errorMessage);
-      throw new Error(errorMessage);
+      console.error('Error fetching leave types:', error);
+      throw error;
     }
   }
 
-  // GET: GetLeaveType/{id}
   async getLeaveTypeById(id: UUID): Promise<LeaveTypeListDto> {
     try {
-      const response = await api.get(`${this.baseUrl}/GetLeaveType/${id}`);
-      return response.data.data;
+      const response = await api.get(`${this.baseUrl}/Type/${id}`);
+      return response.data?.data || response.data;
     } catch (error) {
-      const errorMessage = this.extractErrorMessage(error);
-      console.error('Error fetching leave type:', errorMessage);
-      throw new Error(errorMessage);
+      console.error('Error fetching leave type:', error);
+      throw error;
     }
   }
 
-  // POST: /AddLeaveType
-  async createLeaveType(leaveType: LeaveTypeAddDto): Promise<LeaveTypeListDto> {
+  async getLeaveTypeNames(): Promise<{ id: string; name: string }[]> {
     try {
-      const response = await api.post(`${this.baseUrl}/AddLeaveType`, leaveType);
-      console.info('Leave type created successfully:', response.data.data.id);
-      return response.data.data;
+      const response = await api.get(`${this.baseUrl}/Type/Names`);
+      return response.data?.data || response.data || [];
     } catch (error) {
-      const errorMessage = this.extractErrorMessage(error);
-      console.error('Error creating leave type:', errorMessage);
-      throw new Error(errorMessage);
+      console.error('Error fetching leave type names:', error);
+      throw error;
     }
   }
 
-  // PUT: /ModLeaveType/{id}
-  async updateLeaveType(updateData: LeaveTypeModDto): Promise<LeaveTypeListDto> {
+  async createLeaveType(data: LeaveTypeAddDto): Promise<LeaveTypeListDto> {
     try {
-      const response = await api.put(`${this.baseUrl}/ModLeaveType/${updateData.id}`, updateData);
-      return response.data.data;
+      console.log('Creating leave type at URL:', `${this.baseUrl}/Type/Add`);
+      const response = await api.post(`${this.baseUrl}/Type/Add`, data);
+      return response.data?.data || response.data;
     } catch (error) {
-      const errorMessage = this.extractErrorMessage(error);
-      console.error('Error updating leave type:', errorMessage);
-      throw new Error(errorMessage);
+      console.error('Error creating leave type:', error);
+      throw error;
     }
   }
 
-  // DELETE: /DelLeaveType/{id}
+  async updateLeaveType(data: LeaveTypeModDto): Promise<LeaveTypeListDto> {
+    try {
+      const response = await api.put(`${this.baseUrl}/Type/Update/${data.id}`, data);
+      return response.data?.data || response.data;
+    } catch (error) {
+      console.error('Error updating leave type:', error);
+      throw error;
+    }
+  }
+
   async deleteLeaveType(id: UUID): Promise<void> {
     try {
-      const response = await api.delete(`${this.baseUrl}/DelLeaveType/${id}`);
-      console.info('Leave type deleted successfully:', response.data.message);
+      await api.delete(`${this.baseUrl}/Type/Delete/${id}`);
     } catch (error) {
-      const errorMessage = this.extractErrorMessage(error);
-      console.error('Error deleting leave type:', errorMessage);
-      throw new Error(errorMessage);
+      console.error('Error deleting leave type:', error);
+      throw error;
     }
   }
+
+  async changeLeaveTypeStatus(id: UUID, isActive: boolean, rowVersion: string): Promise<LeaveTypeListDto> {
+    try {
+      const response = await api.patch(`${this.baseUrl}/Type/Status`, {
+        id,
+        stat: isActive,
+        rowVersion
+      });
+      return response.data?.data || response.data;
+    } catch (error) {
+      console.error('Error changing leave type status:', error);
+      throw error;
+    }
+  }
+  async createApprovalChain(data: {
+    leaveTypeId: string;
+    effectiveFrom: string;
+    steps: Array<{
+      stepOrder: number;
+      stepName: string;
+      role: string;
+      isFinal: boolean;
+      employeeId?: string | null;
+      timeoutHours?: number | null;
+    }>;
+    isActive: boolean;
+  }): Promise<any> {
+    try {
+      const response = await api.post('/hrm/leave/v1/Policy/Chain/Add', {
+        leaveTypeId: data.leaveTypeId,
+        effectiveFrom: data.effectiveFrom,
+        effectiveTo: null,
+        isActive: data.isActive,
+        steps: data.steps
+      });
+      return response.data?.data;
+    } catch (error) {
+      console.error('Error creating approval chain:', error);
+      throw error;
+    }
+  }
+
+
 }
 
 export const leaveTypeService = new LeaveTypeService();

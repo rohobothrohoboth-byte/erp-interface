@@ -1,207 +1,196 @@
+// src/components/crm/orders/OrderFulfillment.tsx
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Package, Truck, MapPin, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import {
+  Package,
+  Truck,
+  CheckCircle,
+  Clock,
+  XCircle,
+  Loader2,
+} from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../ui/card';
 import { Badge } from '../../ui/badge';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { Textarea } from '../../ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select';
+import { showToast } from '../../../layout/layout';
 
 interface OrderFulfillmentProps {
-  order: any;
-  onUpdate: (updatedOrder: any) => void;
+  orderId: string;
+  currentStatus: string;
+  onStatusUpdate: (status: string, data: any) => Promise<void>;
+  isUpdating?: boolean;
 }
 
-const OrderFulfillment: React.FC<OrderFulfillmentProps> = ({ order, onUpdate }) => {
-  const [fulfillmentData, setFulfillmentData] = useState({
-    inventoryStatus: 'Available',
-    warehouse: 'Main Warehouse',
-    packingStatus: 'Pending',
-    shippingMethod: 'Standard Shipping',
-    trackingId: '',
-    estimatedDelivery: order.expectedDelivery
-  });
+const OrderFulfillment: React.FC<OrderFulfillmentProps> = ({
+                                                             orderId,
+                                                             currentStatus,
+                                                             onStatusUpdate,
+                                                             isUpdating = false,
+                                                           }) => {
+  const [status, setStatus] = useState(currentStatus);
+  const [trackingNumber, setTrackingNumber] = useState('');
+  const [carrier, setCarrier] = useState('');
+  const [notes, setNotes] = useState('');
 
-  const fulfillmentSteps = [
-    { id: 'pending', label: 'Order Pending', icon: Clock, status: 'completed' },
-    { id: 'processing', label: 'Processing', icon: Package, status: order.status === 'Confirmed' ? 'current' : 'completed' },
-    { id: 'ready', label: 'Ready to Ship', icon: CheckCircle, status: order.status === 'In Production' ? 'current' : order.status === 'Shipped' || order.status === 'Delivered' ? 'completed' : 'pending' },
-    { id: 'shipped', label: 'Shipped', icon: Truck, status: order.status === 'Shipped' ? 'current' : order.status === 'Delivered' ? 'completed' : 'pending' },
-    { id: 'delivered', label: 'Delivered', icon: MapPin, status: order.status === 'Delivered' ? 'completed' : 'pending' }
+  const statusOptions = [
+    { value: 'Pending', label: 'Pending', icon: <Clock className="h-4 w-4" /> },
+    { value: 'Processing', label: 'Processing', icon: <Package className="h-4 w-4" /> },
+    { value: 'Shipped', label: 'Shipped', icon: <Truck className="h-4 w-4" /> },
+    { value: 'Delivered', label: 'Delivered', icon: <CheckCircle className="h-4 w-4" /> },
+    { value: 'Cancelled', label: 'Cancelled', icon: <XCircle className="h-4 w-4" /> },
   ];
 
-  const handleStatusUpdate = (newStatus: string) => {
-    const updatedOrder = { ...order, status: newStatus };
-    onUpdate(updatedOrder);
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleTrackingUpdate = () => {
-    if (fulfillmentData.trackingId) {
-      handleStatusUpdate('Shipped');
+    const data: any = { status };
+    if (status === 'Shipped') {
+      data.trackingNumber = trackingNumber;
+      data.carrier = carrier;
+    }
+    if (notes) data.notes = notes;
+
+    try {
+      await onStatusUpdate(status, data);
+      showToast.success(`Order status updated to ${status}`);
+    } catch (error) {
+      showToast.error('Failed to update order status');
     }
   };
 
-  const getStepStatus = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-500 text-white';
-      case 'current':
-        return 'bg-blue-500 text-white';
-      default:
-        return 'bg-gray-300 text-gray-600';
-    }
+  const getStatusBadge = (status: string) => {
+    const variants: Record<string, string> = {
+      'Pending': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+      'Processing': 'bg-blue-100 text-blue-700 border-blue-200',
+      'Shipped': 'bg-cyan-100 text-cyan-700 border-cyan-200',
+      'Delivered': 'bg-green-100 text-green-700 border-green-200',
+      'Cancelled': 'bg-red-100 text-red-700 border-red-200',
+    };
+    return variants[status] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
   return (
-    <div className="space-y-6">
-      {/* Fulfillment Progress */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Package className="w-5 h-5" />
-            <span>Fulfillment Progress</span>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-indigo-600" />
+            Order Fulfillment
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            {fulfillmentSteps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <div key={step.id} className="flex flex-col items-center">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getStepStatus(step.status)}`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <span className="text-sm mt-2 text-center">{step.label}</span>
-                  {index < fulfillmentSteps.length - 1 && (
-                    <div className={`w-16 h-1 mt-4 ${step.status === 'completed' ? 'bg-green-500' : 'bg-gray-300'}`} />
-                  )}
-                </div>
-              );
-            })}
+          <div className="mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-500">Current Status:</span>
+              <Badge className={getStatusBadge(currentStatus)}>
+                {currentStatus}
+              </Badge>
+            </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Fulfillment Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Inventory & Warehouse</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Inventory Status</Label>
-              <Select value={fulfillmentData.inventoryStatus} onValueChange={(value) => setFulfillmentData({...fulfillmentData, inventoryStatus: value})}>
+              <Label htmlFor="status">Update Status</Label>
+              <Select
+                  value={status}
+                  onValueChange={setStatus}
+              >
                 <SelectTrigger className="mt-1">
-                  <SelectValue />
+                  <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Available">Available</SelectItem>
-                  <SelectItem value="Low Stock">Low Stock</SelectItem>
-                  <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                  {statusOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                                        <span className="flex items-center gap-2">
+                                            {opt.icon}
+                                          {opt.label}
+                                        </span>
+                      </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Warehouse</Label>
-              <Select value={fulfillmentData.warehouse} onValueChange={(value) => setFulfillmentData({...fulfillmentData, warehouse: value})}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Main Warehouse">Main Warehouse</SelectItem>
-                  <SelectItem value="East Coast">East Coast</SelectItem>
-                  <SelectItem value="West Coast">West Coast</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Packing Status</Label>
-              <Select value={fulfillmentData.packingStatus} onValueChange={(value) => setFulfillmentData({...fulfillmentData, packingStatus: value})}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pending">Pending</SelectItem>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Shipping & Delivery</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            {status === 'Shipped' && (
+                <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-4"
+                >
+                  <div>
+                    <Label htmlFor="trackingNumber">Tracking Number</Label>
+                    <Input
+                        id="trackingNumber"
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        placeholder="Enter tracking number..."
+                        className="mt-1"
+                        required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="carrier">Carrier</Label>
+                    <Select
+                        value={carrier}
+                        onValueChange={setCarrier}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select carrier" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="UPS">UPS</SelectItem>
+                        <SelectItem value="FedEx">FedEx</SelectItem>
+                        <SelectItem value="DHL">DHL</SelectItem>
+                        <SelectItem value="USPS">USPS</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </motion.div>
+            )}
+
             <div>
-              <Label>Shipping Method</Label>
-              <Select value={fulfillmentData.shippingMethod} onValueChange={(value) => setFulfillmentData({...fulfillmentData, shippingMethod: value})}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Standard Shipping">Standard Shipping</SelectItem>
-                  <SelectItem value="Express Shipping">Express Shipping</SelectItem>
-                  <SelectItem value="Overnight">Overnight</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Tracking ID</Label>
-              <div className="flex space-x-2 mt-1">
-                <Input
-                  value={fulfillmentData.trackingId}
-                  onChange={(e) => setFulfillmentData({...fulfillmentData, trackingId: e.target.value})}
-                  placeholder="Enter tracking number"
-                />
-                <Button onClick={handleTrackingUpdate} disabled={!fulfillmentData.trackingId}>
-                  Update
-                </Button>
-              </div>
-            </div>
-            <div>
-              <Label>Estimated Delivery</Label>
-              <Input
-                type="date"
-                value={fulfillmentData.estimatedDelivery}
-                onChange={(e) => setFulfillmentData({...fulfillmentData, estimatedDelivery: e.target.value})}
-                className="mt-1"
+              <Label htmlFor="fulfillmentNotes">Notes</Label>
+              <Textarea
+                  id="fulfillmentNotes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Add fulfillment notes..."
+                  className="mt-1"
+                  rows={3}
               />
             </div>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-4">
-            {order.status === 'Confirmed' && (
-              <Button onClick={() => handleStatusUpdate('In Production')} className="bg-blue-600 hover:bg-blue-700">
-                Start Production
+            <div className="flex justify-end">
+              <Button
+                  type="submit"
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                  disabled={isUpdating || status === currentStatus}
+              >
+                {isUpdating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                ) : (
+                    'Update Fulfillment'
+                )}
               </Button>
-            )}
-            {order.status === 'In Production' && (
-              <Button onClick={() => handleStatusUpdate('Shipped')} className="bg-green-600 hover:bg-green-700">
-                Mark as Shipped
-              </Button>
-            )}
-            {order.status === 'Shipped' && (
-              <Button onClick={() => handleStatusUpdate('Delivered')} className="bg-purple-600 hover:bg-purple-700">
-                Mark as Delivered
-              </Button>
-            )}
-          </div>
+            </div>
+          </form>
         </CardContent>
       </Card>
-    </div>
   );
 };
 

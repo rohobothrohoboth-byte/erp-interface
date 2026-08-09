@@ -1,78 +1,92 @@
-import React from "react";
-import { motion } from "framer-motion";
-import { Search, BadgePlus, X } from "lucide-react";
-import { Button } from "../../../ui/button";
+// src/components/crm/salesManagement/components/SalesFilters.tsx
 
-interface SalesFiltersProps {
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
-  onAddClick: () => void;
+import React from 'react';
+import { Search, Filter, X } from 'lucide-react';
+import { Input } from '../../../ui/input';
+import { Button } from '../../../ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../../../ui/select';
+
+export interface FilterOption {
+    value: string;
+    label: string;
 }
 
-const SalesFilters: React.FC<SalesFiltersProps> = ({
-  searchTerm,
-  setSearchTerm,
-  onAddClick,
-}) => {
-  const clearSearch = () => {
-    setSearchTerm("");
-  };
+export interface FilterConfig {
+    key: string;
+    label: string;
+    options: FilterOption[];
+    value: string;
+    onChange: (value: string) => void;
+}
 
-  const hasSearchTerm = searchTerm !== "";
+export interface SalesFiltersProps {
+    searchPlaceholder?: string;
+    searchValue: string;
+    onSearchChange: (value: string) => void;
+    filters?: FilterConfig[];
+    onClearFilters?: () => void;
+    className?: string;
+}
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-    >
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        {/* 🔍 Search Input - Takes full width on mobile, left on desktop */}
-        <div className="w-full lg:flex-1">
-          <div className="relative w-full max-w-md">
-            <label htmlFor="sales-search" className="sr-only">
-              Search Opportunities
-            </label>
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
+export const SalesFilters: React.FC<SalesFiltersProps> = ({
+                                                              searchPlaceholder = 'Search...',
+                                                              searchValue,
+                                                              onSearchChange,
+                                                              filters = [],
+                                                              onClearFilters,
+                                                              className = '',
+                                                          }) => {
+    const hasActiveFilters = filters.some(f => f.value !== 'all');
+
+    return (
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap gap-4 ${className}`}>
+            <div className="flex-1 min-w-[200px] relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                <Input
+                    placeholder={searchPlaceholder}
+                    value={searchValue}
+                    onChange={(e) => onSearchChange(e.target.value)}
+                    className="pl-10"
+                />
             </div>
-            <input
-              id="sales-search"
-              name="sales-search"
-              placeholder="Search Opportunities"
-              className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md text-sm bg-white placeholder-gray-500 focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {/* Clear search "X" button */}
-            {hasSearchTerm && (
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                >
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Clear search</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex gap-2 sm:flex-row flex-col">
-          <Button
-            onClick={onAddClick}
-            size="sm"
-            className="flex cursor-pointer items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap w-full sm:w-auto"
-          >
-            <BadgePlus className="h-4 w-4" />
-            Add New
-          </Button>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
 
-export default SalesFilters;
+            {filters.map((filter) => (
+                <Select
+                    key={filter.key}
+                    value={filter.value}
+                    onValueChange={filter.onChange}
+                >
+                    <SelectTrigger className="w-40">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder={filter.label} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All {filter.label}</SelectItem>
+                        {filter.options.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            ))}
+
+            {(hasActiveFilters || searchValue) && onClearFilters && (
+                <Button
+                    variant="outline"
+                    onClick={onClearFilters}
+                    className="flex items-center gap-2"
+                >
+                    <X size={16} />
+                    Clear Filters
+                </Button>
+            )}
+        </div>
+    );
+};

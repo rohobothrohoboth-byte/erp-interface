@@ -1,3 +1,4 @@
+// src/pages/hr/recruitment/WorkforcePlanReviewPage.tsx
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import WorkforcePlanReviewSection from '../../../components/hr/recruitment/workforcePlan/WorkforcePlanReviewSection';

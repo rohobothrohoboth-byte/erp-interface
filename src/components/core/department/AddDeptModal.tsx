@@ -1,26 +1,28 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { motion } from "framer-motion";
-import { X, BadgePlus } from "lucide-react";
+import { X, BadgePlus, Building2 } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Label } from "../../ui/label";
-import List from "../../../components/List/list";
-import type { ListItem, UUID } from "../../../types/List/list";
-import type { AddDeptDto } from "../../../types/core/dept";
+import { Input } from "../../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
+import type { AddDeptDto, UUID } from "../../../types/core/dept";
 import type { BranchCompListDto } from "../../../types/core/branch";
 import { amharicRegex } from "../../../utils/amharic-regex";
 import { useBranchCompanyList } from "../../../services/core/branch/branch.queries";
-import useToast from "../../../hooks/useToast";
+import toast from "react-hot-toast";
 
 interface AddDeptModalProps {
   onAddDepartment: (department: AddDeptDto) => Promise<any>;
 }
 
 const AddDeptModal: React.FC<AddDeptModalProps> = ({ onAddDepartment }) => {
-  const toast = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedBranch, setSelectedBranch] = useState<UUID | undefined>(
-    undefined
-  );
   const [newDepartment, setNewDepartment] = useState({
     name: "",
     nameAm: "",
@@ -28,25 +30,19 @@ const AddDeptModal: React.FC<AddDeptModalProps> = ({ onAddDepartment }) => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Use React Query to fetch branches
+
   const {
     data: branches = [],
     isLoading: loadingBranches,
-    isError: branchesError,
-    error: branchesErrorData,
-    refetch: refetchBranches,
+    error: branchError
   } = useBranchCompanyList();
 
-  const branchListItems: ListItem[] = branches.map((branch) => ({
-    id: branch.id,
-    name: branch.name,
-  }));
-
-  const handleSelectBranch = (item: ListItem) => {
-    setSelectedBranch(item.id);
-    setNewDepartment((prev) => ({ ...prev, branchId: item.id }));
-  };
-
+// Add this useEffect to see what's happening
+  useEffect(() => {
+    console.log('Branches data:', branches);
+    console.log('Branches loading:', loadingBranches);
+    console.log('Branches error:', branchError);
+  }, [branches, loadingBranches, branchError]);
   const handleAmharicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value === "" || amharicRegex.test(value)) {
@@ -55,199 +51,151 @@ const AddDeptModal: React.FC<AddDeptModalProps> = ({ onAddDepartment }) => {
   };
 
   const handleSubmit = async () => {
-    if (
-      !newDepartment.name ||
-      !newDepartment.nameAm ||
-      !newDepartment.branchId
-    ) {
+    if (!newDepartment.name || !newDepartment.nameAm || !newDepartment.branchId) {
       toast.error("Please fill all required fields");
       return;
     }
 
     setIsSubmitting(true);
-    const loadingToastId = toast.loading("Adding department...");
 
     try {
-      const response = await onAddDepartment({
+      await onAddDepartment({
         name: newDepartment.name.trim(),
         nameAm: newDepartment.nameAm.trim(),
         branchId: newDepartment.branchId,
       });
 
-      toast.dismiss(loadingToastId);
-
-      const successMessage =
-        response?.data?.message ||
-        response?.message ||
-        "Department added successfully!";
-
-      toast.success(successMessage);
-
-      // Reset form
-      setNewDepartment({
-        name: "",
-        nameAm: "",
-        branchId: "" as UUID,
-      });
-      setSelectedBranch(undefined);
+      toast.success("Department added successfully");
+      setNewDepartment({ name: "", nameAm: "", branchId: "" as UUID });
       setIsOpen(false);
     } catch (error: any) {
-      toast.dismiss(loadingToastId);
-
-      const errorMessage =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to add department. Please try again.";
-
-      toast.error(errorMessage);
-      console.error("Error adding department:", error);
+      toast.error(error.message || "Failed to add department");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    if (!isSubmitting) {
-      setIsOpen(false);
-    }
+  const modalVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.2 } },
+    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.15 } }
   };
 
-  const isFormValid =
-    newDepartment.name && newDepartment.nameAm && newDepartment.branchId;
-
-  // Show error if branches fail to load
-  if (branchesError && isOpen) {
-    const errorMessage =
-      (branchesErrorData as any)?.response?.data?.message ||
-      "Failed to load branches. Please try again.";
-    toast.error(errorMessage);
-  }
-
   return (
-    <>
-      {/* Trigger Button */}
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:bg-emerald-700 rounded-md text-white flex items-center gap-2 cursor-pointer"
-      >
-        <BadgePlus size={18} />
-        Add Department
-      </Button>
+      <>
+        <Button
+            onClick={() => setIsOpen(true)}
+            className="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white rounded-lg text-sm flex items-center gap-2"
+        >
+          <BadgePlus size={16} />
+          Add Department
+        </Button>
 
-      {/* Modal */}
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-          >
-            {/* Header */}
-            <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">
-              <div className="flex items-center gap-2">
-                <BadgePlus size={20} />
-                <h2 className="text-lg font-bold text-gray-800">Add New</h2>
-              </div>
-              <button
-                onClick={handleClose}
-                className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-                disabled={isSubmitting}
+        {isOpen && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <motion.div
+                  variants={modalVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-md w-full overflow-hidden"
               >
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="px-6">
-              <div className="py-4 space-y-4">
-                {/* Branch Selection using List Component */}
-                <div className="space-y-2">
-                  <List
-                    items={branchListItems}
-                    selectedValue={selectedBranch}
-                    onSelect={handleSelectBranch}
-                    label="Select Branch"
-                    placeholder="Select a branch"
-                    required
-                    disabled={loadingBranches || isSubmitting}
-                  />
-                  {loadingBranches && (
-                    <p className="text-sm text-gray-500">Loading branches...</p>
-                  )}
-                  {branchesError && (
-                    <div className="text-sm text-red-600">
-                      Failed to load branches.{" "}
-                      <button
-                        onClick={() => refetchBranches()}
-                        className="text-emerald-600 hover:text-emerald-700 underline"
-                      >
-                        Retry
-                      </button>
+                {/* Header */}
+                <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                      <Building2 className="h-4 w-4 text-slate-600 dark:text-slate-400" />
                     </div>
-                  )}
+                    <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                      Add Department
+                    </h2>
+                  </div>
+                  <button
+                      onClick={() => setIsOpen(false)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
                 </div>
 
-                {/* Department Names */}
-                <div className="space-y-2">
-                  <Label htmlFor="nameAm" className="text-sm text-gray-500">
-                    የዲፓርትመንት ስም <span className="text-red-500">*</span>
-                  </Label>
-                  <input
-                    id="nameAm"
-                    value={newDepartment.nameAm}
-                    onChange={handleAmharicChange}
-                    placeholder="ፋይናንስ"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent"
-                    disabled={isSubmitting}
-                  />
+                {/* Body */}
+                <div className="p-5 space-y-4">
+                  {/* Branch Selection */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Branch <span className="text-red-500">*</span>
+                    </Label>
+                    <Select
+                        value={newDepartment.branchId}
+                        onValueChange={(value) => setNewDepartment(prev => ({ ...prev, branchId: value as UUID }))}
+                        disabled={loadingBranches || isSubmitting}
+                    >
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Select a branch" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {branches.map((branch) => (
+                            <SelectItem key={branch.id} value={branch.id}>
+                              {branch.name}
+                            </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Department Name (Amharic) */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      የዲፓርትመንት ስም <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                        value={newDepartment.nameAm}
+                        onChange={handleAmharicChange}
+                        placeholder="ፋይናንስ"
+                        className="h-9 text-sm"
+                        disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {/* Department Name (English) */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Department Name <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                        value={newDepartment.name}
+                        onChange={(e) => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Finance"
+                        className="h-9 text-sm"
+                        disabled={isSubmitting}
+                    />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm text-gray-500">
-                    Department Name <span className="text-red-500">*</span>
-                  </Label>
-                  <input
-                    id="name"
-                    value={newDepartment.name}
-                    onChange={(e) =>
-                      setNewDepartment((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    placeholder="Finance"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent"
-                    disabled={isSubmitting}
-                  />
+                {/* Footer */}
+                <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                  <div className="flex justify-center gap-2">
+                    <Button
+                        className="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white px-5 h-8 text-sm"
+                        onClick={handleSubmit}
+                        disabled={!newDepartment.name || !newDepartment.nameAm || !newDepartment.branchId || isSubmitting}
+                    >
+                      {isSubmitting ? "Saving..." : "Save"}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        className="px-5 h-8 text-sm"
+                        onClick={() => setIsOpen(false)}
+                        disabled={isSubmitting}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
-
-            {/* Footer */}
-            <div className="border-t px-6 py-2">
-              <div className="mx-auto flex justify-center items-center gap-1.5">
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer px-6"
-                  onClick={handleSubmit}
-                  disabled={!isFormValid || isSubmitting}
-                >
-                  {isSubmitting ? "Saving..." : "Save"}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="cursor-pointer px-6"
-                  onClick={handleClose}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </>
+        )}
+      </>
   );
 };
 

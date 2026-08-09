@@ -1,136 +1,77 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { X, DollarSign, Calendar, User, Building, Target, Tag, FileText, TrendingUp, Clock, MessageSquare } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../../ui/dialog';
+// src/components/crm/salesManagement/components/opportunities/OpportunityDetails.tsx
+
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  X,
+  Target,
+  DollarSign,
+  Calendar,
+  Users,
+  Building2,
+  TrendingUp,
+  TrendingDown,
+  Clock,
+  User,
+  FileText,
+  Edit,
+  Trash2,
+  Send,
+  AlertCircle,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
 import { Button } from '../../../../ui/button';
-import { Badge } from '../../../../ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../../ui/card';
-import { Progress } from '../../../../ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../ui/tabs';
-import OpportunityDocuments from './OpportunityDocuments';
-import OpportunityCommunications from './OpportunityCommunications';
-import type { Opportunity } from '../../../../../types/crm';
+import { Badge } from '../../../../ui/badge';
+import type { OpportunityDto } from '../../../../../types/crm/crm.types';
 
 interface OpportunityDetailsProps {
-  opportunity: Opportunity | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: (opportunity: Opportunity) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  onCreateQuote?: () => void;
+  onSendQuote?: () => void;
+  opportunity: OpportunityDto | null;
+  isSending?: boolean;
 }
 
-const stageColors = {
-  'Qualification': 'bg-blue-100 text-blue-800',
-  'Needs Analysis': 'bg-yellow-100 text-yellow-800',
-  'Proposal': 'bg-orange-100 text-orange-800',
-  'Negotiation': 'bg-purple-100 text-purple-800',
-  'Closed Won': 'bg-green-100 text-green-800',
-  'Closed Lost': 'bg-red-100 text-red-800'
-};
+const OpportunityDetails: React.FC<OpportunityDetailsProps> = ({
+                                                                 isOpen,
+                                                                 onClose,
+                                                                 onEdit,
+                                                                 onDelete,
+                                                                 onCreateQuote,
+                                                                 onSendQuote,
+                                                                 opportunity,
+                                                                 isSending = false,
+                                                               }) => {
+  if (!isOpen || !opportunity) return null;
 
-export default function OpportunityDetails({
-  opportunity,
-  isOpen,
-  onClose,
-  onEdit
-}: OpportunityDetailsProps) {
-  // Mock data for documents and communications
-  const [documents] = useState([
-    {
-      id: '1',
-      name: 'Proposal_TechCorp_v2.pdf',
-      type: 'application/pdf',
-      size: 2048576,
-      category: 'proposal' as const,
-      uploadedBy: 'Sarah Johnson',
-      uploadedAt: '2024-01-15T10:30:00Z',
-      description: 'Updated proposal with revised pricing',
-      url: '/documents/proposal_techcorp_v2.pdf',
-      version: 2
-    },
-    {
-      id: '2',
-      name: 'Technical_Specifications.docx',
-      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      size: 1024000,
-      category: 'technical' as const,
-      uploadedBy: 'Mike Wilson',
-      uploadedAt: '2024-01-20T14:15:00Z',
-      description: 'Detailed technical requirements and specifications',
-      url: '/documents/technical_specs.docx',
-      version: 1
-    }
-  ]);
-
-  const [communications] = useState([
-    {
-      id: '1',
-      type: 'call' as const,
-      subject: 'Initial Discovery Call',
-      content: 'Discussed client requirements and current pain points. They are looking for a comprehensive solution that can scale with their business.',
-      direction: 'outbound' as const,
-      contactPerson: 'Alice Johnson',
-      contactEmail: 'alice@techcorp.com',
-      contactPhone: '+1 (555) 123-4567',
-      duration: 45,
-      completedAt: '2024-01-10T15:30:00Z',
-      createdBy: 'Sarah Johnson',
-      outcome: 'Positive response, agreed to send proposal',
-      followUpRequired: true,
-      followUpDate: '2024-01-17T10:00:00Z'
-    },
-    {
-      id: '2',
-      type: 'email' as const,
-      subject: 'Proposal Follow-up',
-      content: 'Sent the updated proposal with revised pricing. Highlighted key benefits and ROI calculations.',
-      direction: 'outbound' as const,
-      contactPerson: 'Alice Johnson',
-      contactEmail: 'alice@techcorp.com',
-      completedAt: '2024-01-15T11:00:00Z',
-      createdBy: 'Sarah Johnson',
-      outcome: 'Proposal delivered successfully',
-      followUpRequired: true,
-      followUpDate: '2024-01-22T14:00:00Z'
-    }
-  ]);
-
-  // Mock handlers for documents and communications
-  const handleDocumentUpload = (file: File, category: string, description: string) => {
-    console.log('Upload document:', file.name, category, description);
-    // In real app, this would upload to backend
+  const getStageBadge = (stage: string) => {
+    const variants: Record<string, string> = {
+      'Discovery': 'bg-blue-100 text-blue-700 border-blue-200',
+      'Qualification': 'bg-cyan-100 text-cyan-700 border-cyan-200',
+      'Proposal': 'bg-purple-100 text-purple-700 border-purple-200',
+      'Negotiation': 'bg-orange-100 text-orange-700 border-orange-200',
+      'ClosedWon': 'bg-green-100 text-green-700 border-green-200',
+      'ClosedLost': 'bg-red-100 text-red-700 border-red-200',
+    };
+    return variants[stage] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
-  const handleDocumentDelete = (documentId: string) => {
-    console.log('Delete document:', documentId);
-    // In real app, this would delete from backend
+  const getStageIcon = (stage: string) => {
+    const icons: Record<string, React.ReactNode> = {
+      'Discovery': <Target className="h-4 w-4" />,
+      'Qualification': <Users className="h-4 w-4" />,
+      'Proposal': <FileText className="h-4 w-4" />,
+      'Negotiation': <TrendingUp className="h-4 w-4" />,
+      'ClosedWon': <CheckCircle className="h-4 w-4" />,
+      'ClosedLost': <XCircle className="h-4 w-4" />,
+    };
+    return icons[stage] || <Target className="h-4 w-4" />;
   };
-
-  const handleDocumentDownload = (document: any) => {
-    console.log('Download document:', document.name);
-    // In real app, this would trigger download
-  };
-
-  const handleDocumentView = (document: any) => {
-    console.log('View document:', document.name);
-    // In real app, this would open document viewer
-  };
-
-  const handleCommunicationAdd = (communication: any) => {
-    console.log('Add communication:', communication);
-    // In real app, this would save to backend
-  };
-
-  const handleCommunicationEdit = (communication: any) => {
-    console.log('Edit communication:', communication);
-    // In real app, this would update in backend
-  };
-
-  const handleCommunicationDelete = (communicationId: string) => {
-    console.log('Delete communication:', communicationId);
-    // In real app, this would delete from backend
-  };
-
-  if (!opportunity) return null;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -141,348 +82,325 @@ export default function OpportunityDetails({
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      year: 'numeric',
     });
   };
 
-  const getDaysUntilClose = (dateString: string) => {
-    const closeDate = new Date(dateString);
-    const today = new Date();
-    const diffTime = closeDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
-  const daysUntilClose = getDaysUntilClose(opportunity.expectedCloseDate);
-  const weightedValue = (opportunity.amount * opportunity.probability) / 100;
+  const isClosed = opportunity.stage === 'ClosedWon' || opportunity.stage === 'ClosedLost';
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Target className="w-5 h-5 text-orange-600" />
-              <span>{opportunity.name}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit(opportunity)}
+      <AnimatePresence>
+        {isOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center">
+              {/* Backdrop */}
+              <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                  onClick={onClose}
+              />
+
+              {/* Modal */}
+              <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                  className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden"
               >
-                Edit
-              </Button>
-              <Button variant="ghost" size="sm" onClick={onClose}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-6"
-          >
-            {/* Key Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Card>
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-gray-600">Amount</p>
-                      <p className="text-lg font-bold text-gray-900">{formatCurrency(opportunity.amount)}</p>
-                    </div>
-                    <DollarSign className="w-6 h-6 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-gray-600">Weighted Value</p>
-                      <p className="text-lg font-bold text-orange-600">{formatCurrency(weightedValue)}</p>
-                    </div>
-                    <TrendingUp className="w-6 h-6 text-orange-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-gray-600">Probability</p>
-                      <p className="text-lg font-bold text-purple-600">{opportunity.probability}%</p>
-                    </div>
-                    <Target className="w-6 h-6 text-purple-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-medium text-gray-600">Days to Close</p>
-                      <p className={`text-lg font-bold ${
-                        daysUntilClose < 0 ? 'text-red-600' : 
-                        daysUntilClose < 7 ? 'text-orange-600' : 'text-gray-900'
-                      }`}>
-                        {daysUntilClose < 0 ? `${Math.abs(daysUntilClose)} overdue` : daysUntilClose}
-                      </p>
-                    </div>
-                    <Clock className="w-6 h-6 text-blue-600" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Tabs */}
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="products">Products</TabsTrigger>
-                <TabsTrigger value="competition">Competition</TabsTrigger>
-                <TabsTrigger value="communications">Communications</TabsTrigger>
-                <TabsTrigger value="documents">Documents</TabsTrigger>
-                <TabsTrigger value="timeline">Timeline</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="overview" className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Basic Information */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center space-x-2">
-                        <FileText className="w-4 h-4" />
-                        <span>Basic Information</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
+                {/* Header */}
+                <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      <div className="bg-white/20 rounded-lg p-2">
+                        <Target className="h-6 w-6 text-white" />
+                      </div>
                       <div>
-                        <label className="text-xs font-medium text-gray-500">Stage</label>
-                        <div className="mt-1">
-                          <Badge className={stageColors[opportunity.stage]}>
-                            {opportunity.stage}
+                        <h2 className="text-xl font-semibold text-white">
+                          {opportunity.name}
+                        </h2>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={getStageBadge(opportunity.stage)}>
+                            {getStageIcon(opportunity.stage)}
+                            <span className="ml-1">{opportunity.stage}</span>
                           </Badge>
+                          {opportunity.customerName && (
+                              <span className="text-sm text-blue-200 flex items-center gap-1">
+                                                    <Building2 className="h-3 w-3" />
+                                {opportunity.customerName}
+                                                </span>
+                          )}
                         </div>
                       </div>
-                      
-                      <div>
-                        <label className="text-xs font-medium text-gray-500">Source</label>
-                        <p className="text-sm text-gray-900">{opportunity.source}</p>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-medium text-gray-500">Assigned To</label>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <User className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">{opportunity.assignedTo}</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-medium text-gray-500">Account</label>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Building className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">{opportunity.accountId || 'No Account'}</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-medium text-gray-500">Primary Contact</label>
-                        <p className="text-sm text-gray-900">{opportunity.contactId || 'No Contact'}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Financial Details */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center space-x-2">
-                        <DollarSign className="w-4 h-4" />
-                        <span>Financial Details</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <label className="text-xs font-medium text-gray-500">Expected Close Date</label>
-                        <div className="flex items-center space-x-1 mt-1">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">{formatDate(opportunity.expectedCloseDate)}</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-medium text-gray-500">Probability Progress</label>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <Progress value={opportunity.probability} className="flex-1" />
-                          <span className="text-sm font-medium">{opportunity.probability}%</span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-medium text-gray-500">Status</label>
-                        <div className="mt-1">
-                          <Badge variant={opportunity.isActive ? "default" : "secondary"}>
-                            {opportunity.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                    >
+                      <X className="h-5 w-5 text-white" />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Description */}
-                {opportunity.description && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Description</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{opportunity.description}</p>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Next Step */}
-                {opportunity.nextStep && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">Next Step</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-gray-700">{opportunity.nextStep}</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              <TabsContent value="products" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center space-x-2">
-                      <Tag className="w-4 h-4" />
-                      <span>Products & Services</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {opportunity.products && opportunity.products.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {opportunity.products.map((product, index) => (
-                          <Badge key={index} variant="secondary">
-                            {product}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">No products specified</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="competition" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center space-x-2">
-                      <Target className="w-4 h-4" />
-                      <span>Competitors</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {opportunity.competitors && opportunity.competitors.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {opportunity.competitors.map((competitor, index) => (
-                          <Badge key={index} variant="outline">
-                            {competitor}
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-gray-500">No competitors identified</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="communications" className="space-y-4">
-                <OpportunityCommunications
-                  opportunityId={opportunity.id}
-                  communications={communications}
-                  onAdd={handleCommunicationAdd}
-                  onEdit={handleCommunicationEdit}
-                  onDelete={handleCommunicationDelete}
-                />
-              </TabsContent>
-
-              <TabsContent value="documents" className="space-y-4">
-                <OpportunityDocuments
-                  opportunityId={opportunity.id}
-                  documents={documents}
-                  onUpload={handleDocumentUpload}
-                  onDelete={handleDocumentDelete}
-                  onDownload={handleDocumentDownload}
-                  onView={handleDocumentView}
-                />
-              </TabsContent>
-
-              <TabsContent value="timeline" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center space-x-2">
-                      <Clock className="w-4 h-4" />
-                      <span>Timeline</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <div>
-                        <p className="text-sm font-medium">Created</p>
-                        <p className="text-xs text-gray-500">{formatDate(opportunity.createdAt)}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-4">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <div>
-                        <p className="text-sm font-medium">Last Updated</p>
-                        <p className="text-xs text-gray-500">{formatDate(opportunity.updatedAt)}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-2 h-2 rounded-full ${
-                        daysUntilClose < 0 ? 'bg-red-500' : 
-                        daysUntilClose < 7 ? 'bg-orange-500' : 'bg-gray-400'
-                      }`}></div>
-                      <div>
-                        <p className="text-sm font-medium">Expected Close</p>
-                        <p className="text-xs text-gray-500">
-                          {formatDate(opportunity.expectedCloseDate)}
-                          {daysUntilClose < 0 && (
-                            <span className="text-red-600 ml-1">(Overdue)</span>
+                {/* Body */}
+                <div className="overflow-y-auto p-6 max-h-[calc(90vh-180px)]">
+                  {/* Quick Actions */}
+                  <div className="flex flex-wrap gap-2 mb-6 pb-4 border-b border-gray-200">
+                    {!isClosed && onSendQuote && (
+                        <Button
+                            size="sm"
+                            onClick={onSendQuote}
+                            disabled={isSending}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {isSending ? (
+                              <>
+                                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                Sending...
+                              </>
+                          ) : (
+                              <>
+                                <Send className="h-4 w-4 mr-2" />
+                                Send Quote
+                              </>
                           )}
-                        </p>
-                      </div>
+                        </Button>
+                    )}
+                    {!isClosed && onCreateQuote && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onCreateQuote}
+                            className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Create Quote
+                        </Button>
+                    )}
+                    {!isClosed && onEdit && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onEdit}
+                            className="border-indigo-300 text-indigo-600 hover:bg-indigo-50"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                    )}
+                    {onDelete && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onDelete}
+                            className="border-red-300 text-red-600 hover:bg-red-50 ml-auto"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </Button>
+                    )}
+                  </div>
+
+                  {/* Stats Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-blue-700 font-medium">Amount</p>
+                            <p className="text-2xl font-bold text-blue-900">
+                              {formatCurrency(opportunity.amount || 0)}
+                            </p>
+                          </div>
+                          <div className="p-2 bg-blue-200 rounded-lg">
+                            <DollarSign className="h-5 w-5 text-blue-700" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-green-700 font-medium">Win Probability</p>
+                            <p className="text-2xl font-bold text-green-900">
+                              {opportunity.winProbability || 0}%
+                            </p>
+                          </div>
+                          <div className="p-2 bg-green-200 rounded-lg">
+                            <TrendingUp className="h-5 w-5 text-green-700" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-purple-700 font-medium">Expected Close</p>
+                            <p className="text-lg font-bold text-purple-900">
+                              {formatDate(opportunity.expectedCloseDate)}
+                            </p>
+                          </div>
+                          <div className="p-2 bg-purple-200 rounded-lg">
+                            <Calendar className="h-5 w-5 text-purple-700" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-4">
+                      {/* Description */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Description</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-gray-700">
+                            {opportunity.description || 'No description provided.'}
+                          </p>
+                        </CardContent>
+                      </Card>
+
+                      {/* Timeline */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Activity Timeline</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div className="flex items-start gap-4">
+                              <div className="p-2 bg-blue-100 rounded-lg">
+                                <Calendar className="h-4 w-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900">Created</p>
+                                <p className="text-sm text-gray-500">
+                                  {formatDate(opportunity.createdAt)}
+                                </p>
+                              </div>
+                            </div>
+                            {opportunity.updatedAt && (
+                                <div className="flex items-start gap-4">
+                                  <div className="p-2 bg-green-100 rounded-lg">
+                                    <Clock className="h-4 w-4 text-green-600" />
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-900">Last Updated</p>
+                                    <p className="text-sm text-gray-500">
+                                      {formatDate(opportunity.updatedAt)}
+                                    </p>
+                                  </div>
+                                </div>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </motion.div>
-        </div>
-      </DialogContent>
-    </Dialog>
+
+                    <div className="space-y-4">
+                      {/* Assigned To */}
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Assigned To</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-indigo-100 rounded-full">
+                              <User className="h-5 w-5 text-indigo-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {opportunity.assignedToUserName || 'Unassigned'}
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Related Records */}
+                      {(opportunity.customerName || opportunity.leadName) && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle>Related Records</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                              {opportunity.customerName && (
+                                  <div className="flex items-center gap-3">
+                                    <Building2 className="h-4 w-4 text-gray-400" />
+                                    <span className="text-sm text-gray-700">
+                                                            Customer: {opportunity.customerName}
+                                                        </span>
+                                  </div>
+                              )}
+                              {opportunity.leadName && (
+                                  <div className="flex items-center gap-3">
+                                    <Users className="h-4 w-4 text-gray-400" />
+                                    <span className="text-sm text-gray-700">
+                                                            Lead: {opportunity.leadName}
+                                                        </span>
+                                  </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                      )}
+
+                      {/* Status Info */}
+                      {isClosed && (
+                          <Card className="border-yellow-200 bg-yellow-50">
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-2 text-yellow-700">
+                                <AlertCircle className="h-5 w-5" />
+                                <span className="text-sm font-medium">
+                                                                        This opportunity is {opportunity.stage === 'ClosedWon' ? 'won' : 'lost'} and closed.
+                                                                    </span>
+                              </div>
+                            </CardContent>
+                          </Card>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">Status:</span>
+                    <Badge className={getStageBadge(opportunity.stage)}>
+                      {getStageIcon(opportunity.stage)}
+                      <span className="ml-1">{opportunity.stage}</span>
+                    </Badge>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" onClick={onClose}>
+                      Close
+                    </Button>
+                    {!isClosed && onEdit && (
+                        <Button
+                            onClick={onEdit}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Opportunity
+                        </Button>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
   );
-}
+};
+
+export default OpportunityDetails;

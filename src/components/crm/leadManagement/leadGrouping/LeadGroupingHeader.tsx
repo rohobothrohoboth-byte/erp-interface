@@ -1,15 +1,41 @@
-import { motion } from 'framer-motion';
+// src/components/crm/leadManagement/leadGrouping/LeadGroupingHeader.tsx
+import React from 'react';
+import { Layers, RefreshCw } from 'lucide-react';
+import { Button } from '../../../ui/button';
 
-export default function LeadGroupingHeader() {
-  return (
-    <motion.div
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4 }}
-    >
-      <h1 className="bg-gradient-to-r from-orange-500 to-orange-700 bg-clip-text text-transparent text-2xl font-bold">
-        Lead Grouping
-      </h1>
-    </motion.div>
-  );
+interface LeadGroupingHeaderProps {
+  onRefresh: () => void;
+  loading?: boolean;
 }
+
+const LeadGroupingHeader: React.FC<LeadGroupingHeaderProps> = ({
+                                                                 onRefresh,
+                                                                 loading = false,
+                                                               }) => {
+  return (
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-100 rounded-lg">
+            <Layers className="w-6 h-6 text-indigo-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Lead Grouping</h1>
+            <p className="text-sm text-gray-500">
+              View and manage leads organized by different criteria
+            </p>
+          </div>
+        </div>
+        <Button
+            onClick={onRefresh}
+            variant="outline"
+            className="flex items-center gap-2"
+            disabled={loading}
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          Refresh
+        </Button>
+      </div>
+  );
+};
+
+export default LeadGroupingHeader;

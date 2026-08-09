@@ -1,3 +1,5 @@
+// src/services/hr/recruitment/jpEvalFlow/jpEvalFlow.api.ts
+
 import { api } from '../../../api';
 import type { JpEvalFlowListDto, JpEvalFlowAddDto, JpEvalFlowModDto } from '../../../../types/hr/recruit/jpEvalFlow';
 
@@ -11,6 +13,8 @@ const extractError = (error: any): string => {
 };
 
 const normalizeArray = (raw: any): any[] => {
+  // ✅ Handle null/undefined/empty responses
+  if (!raw) return [];
   if (Array.isArray(raw)) return raw;
   if (raw && typeof raw === 'object' && raw.id) return [raw];
   return [];
@@ -21,8 +25,18 @@ export const jpEvalFlowApi = {
   getByPost: async (postId: string): Promise<JpEvalFlowListDto[]> => {
     try {
       const res = await api.post(`${BASE}/AllJpEvalFlow/${postId}`);
-      return normalizeArray(res.data?.data ?? res.data ?? []);
-    } catch (e) { throw new Error(extractError(e)); }
+      // ✅ Check if response has data
+      const data = res.data?.data ?? res.data ?? [];
+      console.log(`📥 JpEvalFlow response for post ${postId}:`, data);
+      return normalizeArray(data);
+    } catch (e: any) {
+      // ✅ Handle 400/500 errors gracefully
+      if (e.response?.status === 400 || e.response?.status === 500 || e.response?.status === 404) {
+        console.warn(`⚠️ No evaluation flow found for post ${postId}. Returning empty array.`);
+        return [];
+      }
+      throw new Error(extractError(e));
+    }
   },
 
   // GET /GetJpEvalFlow/{id}
@@ -30,7 +44,12 @@ export const jpEvalFlowApi = {
     try {
       const res = await api.get(`${BASE}/GetJpEvalFlow/${id}`);
       return res.data?.data ?? res.data;
-    } catch (e) { throw new Error(extractError(e)); }
+    } catch (e: any) {
+      if (e.response?.status === 404) {
+        return null as any;
+      }
+      throw new Error(extractError(e));
+    }
   },
 
   // POST /AddJpEvalFlow

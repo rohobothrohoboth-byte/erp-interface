@@ -1,161 +1,293 @@
-import { motion } from "framer-motion";
-import { useState } from "react";
-import { Plus } from "lucide-react";
-import { Button } from "../../../ui/button";
-import { mockOpportunities } from '../../../../data/crmMockData';
-import type { Opportunity } from '../../../../types/crm';
-import SalesHeader from '../components/SalesHeader';
-import SalesFilters from '../components/SalesFilters';
-import SalesTable from '../components/SalesTable';
-import OpportunityForm from '../components/opportunities/OpportunityForm';
+// src/components/crm/salesManagement/opportunitiesSection/OpportunitiesSection.tsx
+
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { Target, TrendingUp, DollarSign, Users, AlertCircle } from 'lucide-react';
+import { SalesHeader } from '../components/SalesHeader';
+import { SalesStats, SalesStatItem } from '../components/SalesStats';
+import { SalesFilters } from '../components/SalesFilters';
+import { SalesTable, TableColumn, TableAction } from '../components/SalesTable';
+import { SalesPipeline, PipelineStage } from '../components/SalesPipeline';
+import { SalesForecasting, ForecastData } from '../components/SalesForecasting';
 import DeleteOpportunityModal from '../DeleteOpportunityModal';
+import OpportunityDetailPage from '../../../pages/crm/salesManagement/OpportunityDetailPage';
+import { getOpportunities, deleteOpportunity } from '../../../services/crm/crm.api';
+import { showToast } from '../../../layout/layout';
+import type { OpportunityDto } from '../../../types/crm/crm.types';
 
-const OpportunitiesSection = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [opportunities, setOpportunities] = useState<Opportunity[]>(mockOpportunities);
-  const [isAddOpportunityModalOpen, setIsAddOpportunityModalOpen] = useState(false);
-  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
-  const [formMode, setFormMode] = useState<'add' | 'edit'>('add');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [deletingOpportunity, setDeletingOpportunity] = useState<Opportunity | null>(null);
+const OpportunitiesSection: React.FC = () => {
+  const [opportunities, setOpportunities] = useState<OpportunityDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStage, setFilterStage] = useState('all');
+  const [selectedOpportunity, setSelectedOpportunity] = useState<OpportunityDto | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const itemsPerPage = 10;
+  useEffect(() => {
+    fetchOpportunities();
+  }, []);
 
-  // Filter opportunities based on search term
-  const filteredOpportunities = opportunities.filter(
-    (opportunity) =>
-      opportunity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.assignedTo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.source.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      opportunity.stage.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const fetchOpportunities = async () => {
+    try {
+      setLoading(true);
+      const params: any = {};
+      if (searchTerm) params.searchTerm = searchTerm;
+      if (filterStage !== 'all') params.stage = filterStage;
 
-  // Pagination calculations
-  const totalItems = filteredOpportunities.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedOpportunities = filteredOpportunities.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  // Add new opportunity
-  const handleAddOpportunity = (opportunityData: Partial<Opportunity>) => {
-    const newOpportunity: Opportunity = {
-      ...opportunityData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    } as Opportunity;
-    setOpportunities([...opportunities, newOpportunity]);
-    setIsAddOpportunityModalOpen(false);
-  };
-
-  // Edit opportunity
-  const handleOpportunityEdit = (opportunityData: Partial<Opportunity>) => {
-    if (selectedOpportunity) {
-      const updatedOpportunities = opportunities.map(opp => 
-        opp.id === selectedOpportunity.id 
-          ? { ...opp, ...opportunityData, updatedAt: new Date().toISOString() }
-          : opp
-      );
-      setOpportunities(updatedOpportunities);
+      const response = await getOpportunities(params);
+      const data = response.data?.data || response.data || [];
+      setOpportunities(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching opportunities:', error);
+      showToast.error('Failed to load opportunities');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Delete opportunity
-  const handleOpportunityDelete = (opportunity: Opportunity) => {
-    setOpportunities(opportunities.filter(opp => opp.id !== opportunity.id));
-  };
-
-  // Modal control
-  const handleOpenAddOpportunityModal = () => {
-    setFormMode('add');
-    setSelectedOpportunity(null);
-    setIsAddOpportunityModalOpen(true);
-  };
-
-  const handleCloseAddOpportunityModal = () => setIsAddOpportunityModalOpen(false);
-
-  const handleEditOpportunity = (opportunity: Opportunity) => {
-    setFormMode('edit');
-    setSelectedOpportunity(opportunity);
-    setIsAddOpportunityModalOpen(true);
-  };
-
-  const handleViewOpportunity = (opportunity: Opportunity) => {
-    window.location.href = `/crm/opportunity/${opportunity.id}`;
-  };
-
-  const handleDeleteOpportunity = (opportunity: Opportunity) => {
-    setDeletingOpportunity(opportunity);
-  };
-
-  const handleConfirmDelete = () => {
-    if (deletingOpportunity) {
-      handleOpportunityDelete(deletingOpportunity);
-      setDeletingOpportunity(null);
+  const handleDelete = async () => {
+    if (!selectedOpportunity) return;
+    try {
+      setIsDeleting(true);
+      await deleteOpportunity(selectedOpportunity.id);
+      showToast.success('Opportunity deleted successfully');
+      setIsDeleteModalOpen(false);
+      fetchOpportunities();
+    } catch (error) {
+      showToast.error('Failed to delete opportunity');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const handleSearchChange = (term: string) => {
-    setSearchTerm(term);
-    setCurrentPage(1);
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
   };
+
+  // Stats
+  const stats: SalesStatItem[] = [
+    {
+      label: 'Total Opportunities',
+      value: opportunities.length,
+      icon: <Target className="h-5 w-5 text-blue-600" />,
+      color: 'blue',
+      gradient: 'from-blue-50 to-blue-100',
+    },
+    {
+      label: 'Closed Won',
+      value: opportunities.filter(o => o.stage === 'ClosedWon').length,
+      icon: <TrendingUp className="h-5 w-5 text-green-600" />,
+      color: 'green',
+      gradient: 'from-green-50 to-green-100',
+    },
+    {
+      label: 'Active Pipeline',
+      value: opportunities.filter(o => ['Discovery', 'Qualification', 'Proposal', 'Negotiation'].includes(o.stage)).length,
+      icon: <AlertCircle className="h-5 w-5 text-yellow-600" />,
+      color: 'yellow',
+      gradient: 'from-yellow-50 to-yellow-100',
+    },
+    {
+      label: 'Total Value',
+      value: formatCurrency(opportunities.reduce((sum, o) => sum + (o.amount || 0), 0)),
+      icon: <DollarSign className="h-5 w-5 text-purple-600" />,
+      color: 'purple',
+      gradient: 'from-purple-50 to-purple-100',
+    },
+  ];
+
+  // Pipeline Data
+  const pipelineStages: PipelineStage[] = [
+    { name: 'Discovery', count: opportunities.filter(o => o.stage === 'Discovery').length, value: opportunities.filter(o => o.stage === 'Discovery').reduce((sum, o) => sum + (o.amount || 0), 0), probability: 20 },
+    { name: 'Qualification', count: opportunities.filter(o => o.stage === 'Qualification').length, value: opportunities.filter(o => o.stage === 'Qualification').reduce((sum, o) => sum + (o.amount || 0), 0), probability: 40 },
+    { name: 'Proposal', count: opportunities.filter(o => o.stage === 'Proposal').length, value: opportunities.filter(o => o.stage === 'Proposal').reduce((sum, o) => sum + (o.amount || 0), 0), probability: 60 },
+    { name: 'Negotiation', count: opportunities.filter(o => o.stage === 'Negotiation').length, value: opportunities.filter(o => o.stage === 'Negotiation').reduce((sum, o) => sum + (o.amount || 0), 0), probability: 80 },
+  ];
+
+  // Table Columns
+  const columns: TableColumn<OpportunityDto>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      accessor: (item) => (
+          <div>
+            <p className="font-medium text-gray-900">{item.name}</p>
+            {item.customerName && (
+                <p className="text-xs text-gray-500">{item.customerName}</p>
+            )}
+          </div>
+      ),
+    },
+    {
+      key: 'stage',
+      header: 'Stage',
+      accessor: (item) => {
+        const stageColors: Record<string, string> = {
+          'Discovery': 'bg-blue-100 text-blue-700',
+          'Qualification': 'bg-cyan-100 text-cyan-700',
+          'Proposal': 'bg-purple-100 text-purple-700',
+          'Negotiation': 'bg-orange-100 text-orange-700',
+          'ClosedWon': 'bg-green-100 text-green-700',
+          'ClosedLost': 'bg-red-100 text-red-700',
+        };
+        return (
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${stageColors[item.stage] || 'bg-gray-100 text-gray-700'}`}>
+                        {item.stage}
+                    </span>
+        );
+      },
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      accessor: (item) => (
+          <span className="font-medium">{formatCurrency(item.amount || 0)}</span>
+      ),
+    },
+    {
+      key: 'winProbability',
+      header: 'Probability',
+      accessor: (item) => {
+        const prob = item.winProbability || 0;
+        const color = prob >= 70 ? 'text-green-600' : prob >= 40 ? 'text-yellow-600' : 'text-red-600';
+        return <span className={`font-medium ${color}`}>{prob}%</span>;
+      },
+    },
+    {
+      key: 'expectedCloseDate',
+      header: 'Expected Close',
+      accessor: (item) => {
+        if (!item.expectedCloseDate) return 'N/A';
+        return new Date(item.expectedCloseDate).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+      },
+    },
+    {
+      key: 'assignedToUserName',
+      header: 'Assigned To',
+      accessor: (item) => item.assignedToUserName || 'Unassigned',
+    },
+  ];
+
+  const actions: TableAction<OpportunityDto>[] = [
+    {
+      label: 'View Details',
+      icon: <Eye className="h-4 w-4 mr-2" />,
+      onClick: (item) => window.location.href = `/crm/sales/opportunities/${item.id}`,
+    },
+    {
+      label: 'Edit',
+      icon: <Edit className="h-4 w-4 mr-2" />,
+      onClick: (item) => window.location.href = `/crm/sales/opportunities/edit/${item.id}`,
+    },
+    {
+      separator: true,
+      label: 'Delete',
+      icon: <Trash2 className="h-4 w-4 mr-2" />,
+      onClick: (item) => {
+        setSelectedOpportunity(item);
+        setIsDeleteModalOpen(true);
+      },
+      className: 'text-red-600',
+    },
+  ];
+
+  const stageOptions = [
+    { value: 'Discovery', label: 'Discovery' },
+    { value: 'Qualification', label: 'Qualification' },
+    { value: 'Proposal', label: 'Proposal' },
+    { value: 'Negotiation', label: 'Negotiation' },
+    { value: 'ClosedWon', label: 'Closed Won' },
+    { value: 'ClosedLost', label: 'Closed Lost' },
+  ];
+
+  const filters = [
+    {
+      key: 'stage',
+      label: 'Stage',
+      options: stageOptions,
+      value: filterStage,
+      onChange: setFilterStage,
+    },
+  ];
 
   return (
-    <motion.section
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-6"
-    >
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Opportunities</h1>
-        
+      <div className="space-y-6 p-6">
+        <SalesHeader
+            title="Opportunities"
+            subtitle="Track and manage sales opportunities"
+            icon={<Target className="w-5 h-5 text-indigo-600" />}
+            onRefresh={fetchOpportunities}
+            onAdd={() => window.location.href = '/crm/sales/opportunities/add'}
+            addButtonText="Add Opportunity"
+        />
+
+        <SalesStats stats={stats} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <SalesFilters
+                searchPlaceholder="Search opportunities..."
+                searchValue={searchTerm}
+                onSearchChange={setSearchTerm}
+                filters={filters}
+                onClearFilters={() => {
+                  setSearchTerm('');
+                  setFilterStage('all');
+                  fetchOpportunities();
+                }}
+            />
+
+            <SalesTable
+                data={opportunities}
+                columns={columns}
+                actions={actions}
+                isLoading={loading}
+                emptyState={
+                  <div className="text-center py-12">
+                    <Target className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700">No opportunities found</h3>
+                    <p className="text-gray-500">Create your first sales opportunity.</p>
+                    <Button
+                        className="mt-4 bg-indigo-600 hover:bg-indigo-700"
+                        onClick={() => window.location.href = '/crm/sales/opportunities/add'}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Opportunity
+                    </Button>
+                  </div>
+                }
+            />
+          </div>
+
+          <div className="space-y-6">
+            <SalesPipeline stages={pipelineStages} />
+          </div>
         </div>
+
+        <DeleteOpportunityModal
+            isOpen={isDeleteModalOpen}
+            onClose={() => setIsDeleteModalOpen(false)}
+            onConfirm={handleDelete}
+            itemName={selectedOpportunity?.name || ''}
+            itemType="opportunity"
+            isDeleting={isDeleting}
+        />
+
+        <Routes>
+          <Route path="/" element={null} />
+          <Route path=":id" element={<OpportunityDetailPage />} />
+        </Routes>
       </div>
-
-      {/* Filters */}
-      <SalesFilters
-        searchTerm={searchTerm}
-        onSearchChange={handleSearchChange}
-        onAddClick={handleOpenAddOpportunityModal}
-      />
-
-      {/* Table */}
-      <SalesTable
-        opportunities={paginatedOpportunities}
-        onEdit={handleEditOpportunity}
-        onDelete={handleDeleteOpportunity}
-        onView={handleViewOpportunity}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-      />
-
-      {/* Add/Edit Opportunity Form */}
-      <OpportunityForm
-        isOpen={isAddOpportunityModalOpen}
-        onClose={handleCloseAddOpportunityModal}
-        onSubmit={
-          formMode === "add" ? handleAddOpportunity : handleOpportunityEdit
-        }
-        opportunity={selectedOpportunity}
-        mode={formMode}
-      />
-
-      {/* Delete Confirmation Modal */}
-      <DeleteOpportunityModal
-        isOpen={!!deletingOpportunity}
-        onClose={() => setDeletingOpportunity(null)}
-        onConfirm={handleConfirmDelete}
-        opportunityName={deletingOpportunity?.name || ""}
-      />
-    </motion.section>
   );
 };
 

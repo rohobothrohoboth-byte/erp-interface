@@ -16,7 +16,6 @@ class JgStepService {
       return error.response.data.message;
     }
     if (error.response?.data?.errors) {
-      // Handle validation errors (object with field names as keys)
       const errors = error.response.data.errors;
       const errorMessages = Object.values(errors).flat();
       return errorMessages.join(', ');
@@ -27,10 +26,11 @@ class JgStepService {
     return 'An unexpected error occurred';
   }
 
-  // GET: /api/core/hrmm/v1/JgStep/AllJgSteps/{id} - Get list of Job Grade Steps by JobGradeId
+  // ✅ FIXED: GET /api/core/hrmm/v1/JgStep/AllJgStepsByJobGrade/{id}
   async getJgStepsByJobGrade(jobGradeId: UUID): Promise<JgStepListDto[]> {
     try {
-      const response = await api.get(`${this.baseUrl}/AllJgSteps/${jobGradeId}`);
+      // ✅ Changed from AllJgSteps to AllJgStepsByJobGrade
+      const response = await api.get(`${this.baseUrl}/AllJgStepsByJobGrade/${jobGradeId}`);
       return response.data.data;
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
@@ -39,7 +39,7 @@ class JgStepService {
     }
   }
 
-  // GET: /api/core/hrmm/v1/JgStep/GetJgStep/{id} - Get single job grade step
+  // GET: /api/core/hrmm/v1/JgStep/GetJgStep/{id}
   async getJgStepById(id: UUID): Promise<JgStepListDto> {
     try {
       const response = await api.get(`${this.baseUrl}/GetJgStep/${id}`);

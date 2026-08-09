@@ -1,554 +1,575 @@
-import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
-import { ArrowLeft, FileText, Plus, Search, X, MoreVertical, Eye, Edit, Trash2, RefreshCw, ShoppingCart, Download } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "../../../components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../../components/ui/dropdown-menu";
-import AddQuotationModal from "../../../components/crm/quotations/AddQuotationModal";
-import ChangeStatusModal from "../../../components/crm/quotations/ChangeStatusModal";
-import DeleteQuotationModal from "../../../components/crm/salesManagement/DeleteQuotationModal";
-import { mockOpportunities, mockContacts } from "../../../data/crmMockData";
+// src/pages/crm/salesManagement/QuotationsPage.tsx
 
-// Mock quotations data
-const mockQuotations = [
-  {
-    id: '1',
-    quotationNumber: 'QUO-2024-001',
-    opportunityId: '1',
-    opportunityName: 'Enterprise Software License',
-    accountName: 'TechCorp Solutions',
-    contactName: 'Alice Johnson',
-    amount: 125000,
-    status: 'Approved' as const,
-    validUntil: '2024-03-15',
-    createdBy: 'Sarah Johnson',
-    createdAt: '2024-01-15',
-    version: 1
-  },
-  {
-    id: '2',
-    quotationNumber: 'QUO-2024-002',
-    opportunityId: '2',
-    opportunityName: 'Professional Services Package',
-    accountName: 'Global Industries',
-    contactName: 'Bob Smith',
-    amount: 45000,
-    status: 'Pending Approval' as const,
-    validUntil: '2024-02-28',
-    createdBy: 'Mike Wilson',
-    createdAt: '2024-01-20',
-    version: 2
-  },
-  {
-    id: '3',
-    quotationNumber: 'QUO-2024-003',
-    opportunityId: '3',
-    opportunityName: 'Training Package',
-    accountName: 'StartupCorp',
-    contactName: 'John Doe',
-    amount: 15000,
-    status: 'Draft' as const,
-    validUntil: '2024-04-01',
-    createdBy: 'Emily Davis',
-    createdAt: '2024-01-25',
-    version: 1
-  }
-];
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+    FileText,
+    Eye,
+    Edit,
+    Trash2,
+    Plus,
+    Send,
+    Download,
+    Printer,
+    DollarSign,
+    CheckCircle,
+    Clock,
+    XCircle,
+} from 'lucide-react';
+import { getQuotes, deleteQuote, sendQuote, downloadQuotePDF, getQuoteById } from '../../../services/crm/crm.api';
+import { showToast } from '../../../layout/layout';
+import { Button } from '../../../components/ui/button';
+import { SalesHeader } from '../../../components/crm/salesManagement/components/SalesHeader';
+import { SalesStats, type SalesStatItem } from '../../../components/crm/salesManagement/components/SalesStats';
+import { SalesFilters } from '../../../components/crm/salesManagement/components/SalesFilters';
+import { SalesTable, type TableColumn, type TableAction } from '../../../components/crm/salesManagement/components/SalesTable';
+import DeleteQuotationModal from '../../../components/crm/salesManagement/DeleteQuotationModal';
+import AddQuotationModal from '../../../components/crm/salesManagement/components/quotations/AddQuotationModal';
+import EditQuotationModal from '../../../components/crm/salesManagement/components/quotations/EditQuotationModal';
+import ViewQuotationModal from '../../../components/crm/salesManagement/components/quotations/ViewQuotationModal';
+import type { QuoteDto } from '../../../types/crm/crm.types';
 
-const QuotationsPage = () => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [quotations, setQuotations] = useState(mockQuotations);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isChangeStatusModalOpen, setIsChangeStatusModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [editingQuotation, setEditingQuotation] = useState<any>(null);
-  const [changingStatusQuotation, setChangingStatusQuotation] = useState<any>(null);
-  const [deletingQuotation, setDeletingQuotation] = useState<any>(null);
-  const [prefilledOpportunity, setPrefilledOpportunity] = useState<any>(null);
+const ITEMS_PER_PAGE = 10;
 
-  // No auto-modal opening - modals only open when user clicks "Add" buttons
-  useEffect(() => {
-    // This useEffect can be removed or used for other initialization if needed
-  }, [searchParams]);
+const QuotationsPage: React.FC = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [quotes, setQuotes] = useState<QuoteDto[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedQuote, setSelectedQuote] = useState<QuoteDto | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isViewLoading, setIsViewLoading] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
-  const handleBack = () => {
-    navigate(-1);
-  };
+    // Check if we're on the add route
+    useEffect(() => {
+        if (location.pathname === '/crm/sales/quotes/add') {
+            setIsAddModalOpen(true);
+        }
+    }, [location.pathname]);
 
-  const clearSearch = () => {
-    setSearchTerm("");
-  };
-
-  const handleAddQuotation = (quotationData: any) => {
-    const newQuotation = {
-      ...quotationData,
-      id: Date.now().toString(),
-      quotationNumber: `QUO-2024-${String(quotations.length + 1).padStart(3, '0')}`,
-      createdAt: new Date().toISOString(),
-      version: 1
+    const handleAddModalClose = () => {
+        setIsAddModalOpen(false);
+        navigate('/crm/sales/quotes');
     };
-    setQuotations([...quotations, newQuotation]);
-    setIsAddModalOpen(false);
-  };
 
-  const handleEditQuotation = (quotationData: any) => {
-    setQuotations(quotations.map(q => 
-      q.id === editingQuotation.id ? { ...q, ...quotationData } : q
-    ));
-    setIsEditModalOpen(false);
-    setEditingQuotation(null);
-  };
-
-  const handleView = (quotation: any) => {
-    console.log('View quotation:', quotation.id);
-  };
-
-  const handleEdit = (quotation: any) => {
-    setEditingQuotation(quotation);
-    setIsEditModalOpen(true);
-  };
-
-  const handleDelete = (quotation: any) => {
-    setDeletingQuotation(quotation);
-    setIsDeleteModalOpen(true);
-  };
-
-  const handleConfirmDelete = () => {
-    if (deletingQuotation) {
-      setQuotations(quotations.filter(q => q.id !== deletingQuotation.id));
-      setIsDeleteModalOpen(false);
-      setDeletingQuotation(null);
-    }
-  };
-
-  const handleChangeStatus = (quotation: any) => {
-    setChangingStatusQuotation(quotation);
-    setIsChangeStatusModalOpen(true);
-  };
-
-  const handleStatusUpdate = (newStatus: string) => {
-    if (changingStatusQuotation) {
-      setQuotations(quotations.map(q => 
-        q.id === changingStatusQuotation.id ? { ...q, status: newStatus as const } : q
-      ));
-      console.log(`Status changed for quotation ${changingStatusQuotation.quotationNumber} to ${newStatus}`);
-    }
-    setIsChangeStatusModalOpen(false);
-    setChangingStatusQuotation(null);
-  };
-
-  const handleConvertToOrder = (quotation: any) => {
-    // Navigate to orders page without opening modal
-    navigate(`/crm/orders`);
-  };
-
-  const handleDownload = (quotation: any) => {
-    console.log('Download quotation PDF:', quotation.id);
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      'Approved': 'bg-orange-100 text-orange-800 border border-orange-200',
-      'Pending Approval': 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-      'Draft': 'bg-gray-100 text-gray-800 border border-gray-200',
-      'Sent': 'bg-orange-100 text-orange-800 border border-orange-200',
-      'Accepted': 'bg-purple-100 text-purple-800 border border-purple-200',
-      'Rejected': 'bg-red-100 text-red-800 border border-red-200',
+    const handleAddSuccess = () => {
+        setIsAddModalOpen(false);
+        navigate('/crm/sales/quotes');
+        fetchQuotes();
     };
-    return colors[status] || 'bg-gray-100 text-gray-800 border border-gray-200';
-  };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+    const handleEditModalClose = () => {
+        setIsEditModalOpen(false);
+        setSelectedQuote(null);
+        navigate('/crm/sales/quotes');
+    };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
+    const handleEditSuccess = () => {
+        setIsEditModalOpen(false);
+        setSelectedQuote(null);
+        navigate('/crm/sales/quotes');
+        fetchQuotes();
+    };
 
-  const filteredQuotations = quotations.filter(
-    (quotation) =>
-      quotation.quotationNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quotation.opportunityName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quotation.accountName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quotation.contactName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      quotation.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    const handleViewModalClose = () => {
+        setIsViewModalOpen(false);
+        setSelectedQuote(null);
+        setIsViewLoading(false);
+    };
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const totalItems = filteredQuotations.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedQuotations = filteredQuotations.slice(startIndex, endIndex);
+    useEffect(() => {
+        fetchQuotes();
+    }, [currentPage, searchTerm, filterStatus]);
 
-  return (
-    <motion.section
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="bg-gray-50 space-y-6 min-h-screen"
-    >
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="mb-4 flex flex-col sm:flex-row sm:justify-between items-start sm:items-end"
-      >
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            className="flex items-center gap-2 px-3 py-2 cursor-pointer"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-medium">Back</span>
-          </Button>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center gap-2"
-          >
-            <FileText className="w-6 h-6 text-orange-600" />
-            <h1 className="text-2xl font-bold text-black">
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="inline-block"
-              >
-                <span className="bg-linear-to-r from-orange-600 to-orange-600 bg-clip-text text-transparent">
-                  Quotations 
-                </span>{" "}Management
-              </motion.span>
-            </h1>
-          </motion.div>
-        </div>
-      </motion.div>
+    const fetchQuotes = async () => {
+        try {
+            setLoading(true);
+            const params: any = {
+                page: currentPage,
+                pageSize: ITEMS_PER_PAGE,
+            };
+            if (searchTerm) params.searchTerm = searchTerm;
+            if (filterStatus !== 'all') params.status = filterStatus;
 
-      {/* Search and Actions */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.4 }}
-        className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-      >
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="w-full lg:flex-1">
-            <div className="relative w-full max-w-md">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
-              </div>
-              <input
-                placeholder="Search Quotations"
-                className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md text-sm bg-white placeholder-gray-500 focus:outline-none focus:ring-orange-500 focus:border-orange-500"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                  <button
-                    type="button"
-                    onClick={clearSearch}
-                    className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-          <Button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex cursor-pointer items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap w-full sm:w-auto"
-          >
-            <Plus className="h-4 w-4" />
-            Add Quotation
-          </Button>
-        </div>
-      </motion.div>
+            const response = await getQuotes(params);
+            console.log('API Response - Quotes:', response);
 
-      {/* Quotations Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="rounded-xl shadow-sm overflow-hidden bg-white"
-      >
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 align-middle">
-            <thead className="bg-white">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quotation
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Opportunity
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Valid Until
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created By
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
+            const data = response.data?.data || response.data || [];
+            setQuotes(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Error fetching quotes:', error);
+            showToast.error('Failed to load quotes');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-            <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedQuotations.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-8 text-center text-sm text-gray-500"
-                  >
-                    No quotations found.
-                  </td>
-                </tr>
-              ) : (
-                paginatedQuotations.map((quotation, index) => (
-                  <motion.tr
-                    key={quotation.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="transition-colors hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-3 align-middle">
-                      <div className="flex items-center">
-                        <div className="shrink-0 h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-orange-600" />
+    const handleDelete = async () => {
+        if (!selectedQuote) {
+            console.warn('No quote selected for deletion');
+            return;
+        }
+
+        console.log('Attempting to delete quote:', {
+            id: selectedQuote.id,
+            number: selectedQuote.quoteNumber,
+            status: selectedQuote.status
+        });
+
+        try {
+            setIsDeleting(true);
+            await deleteQuote(selectedQuote.id);
+            showToast.success(`Quote ${selectedQuote.quoteNumber} deleted successfully`);
+            setIsDeleteModalOpen(false);
+            setSelectedQuote(null);
+            await fetchQuotes();
+        } catch (error: any) {
+            console.error('Error deleting quote:', {
+                error,
+                status: error?.response?.status,
+                data: error?.response?.data
+            });
+
+            const errorMessage = error?.response?.data?.message ||
+                error?.message ||
+                'Failed to delete quote';
+            showToast.error(errorMessage);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleSend = async (item: QuoteDto) => {
+        try {
+            setIsSending(true);
+            await sendQuote(item.id);
+            showToast.success(`Quote ${item.quoteNumber} sent successfully`);
+            fetchQuotes();
+        } catch (error: any) {
+            console.error('Error sending quote:', error);
+            const errorMessage = error?.response?.data?.message || 'Failed to send quote';
+            showToast.error(errorMessage);
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    const handleDownloadPDF = async (item: QuoteDto) => {
+        try {
+            setIsDownloading(true);
+            const response = await downloadQuotePDF(item.id);
+
+            // Create a blob from the response
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${item.quoteNumber}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            showToast.success('PDF downloaded successfully');
+        } catch (error: any) {
+            console.error('Error downloading PDF:', error);
+            const errorMessage = error?.response?.data?.message || 'Failed to download PDF';
+            showToast.error(errorMessage);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    const handlePrint = (item: QuoteDto) => {
+        // Store the quote data in sessionStorage for the print view
+        sessionStorage.setItem('printQuote', JSON.stringify(item));
+        window.open(`/crm/sales/quotes/${item.id}/print`, '_blank');
+    };
+
+    const handleAdd = () => {
+        navigate('/crm/sales/quotes/add');
+    };
+
+    const handleView = async (item: QuoteDto) => {
+        try {
+            setIsViewLoading(true);
+            // First, set the selected quote with what we have
+            setSelectedQuote(item);
+            setIsViewModalOpen(true);
+
+            // Then fetch the full quote details with line items
+            const response = await getQuoteById(item.id);
+            console.log('Full API response:', response);
+
+            // The data is nested inside response.data
+            const fullQuote = response.data || response;
+            console.log('Full quote data:', fullQuote);
+            console.log('Full quote lines:', fullQuote.quoteLines);
+
+            // Update the selected quote with the full data
+            const updatedQuote = {
+                ...item,
+                quoteLines: fullQuote.quoteLines || [],
+                customerName: fullQuote.customerName || item.customerName,
+                customerEmail: fullQuote.customerEmail || item.customerEmail,
+                customerPhone: fullQuote.customerPhone || item.customerPhone,
+                validUntil: fullQuote.validUntil || item.validUntil,
+                notes: fullQuote.notes || item.notes,
+                termsAndConditions: fullQuote.termsAndConditions || item.termsAndConditions,
+            };
+
+            console.log('Updated quote with lines:', updatedQuote);
+            setSelectedQuote(updatedQuote);
+            setIsViewLoading(false);
+        } catch (error) {
+            console.error('Error fetching full quote details:', error);
+            showToast.error('Failed to load quote details');
+            setIsViewLoading(false);
+            // Still show the modal with the basic data
+            setIsViewModalOpen(true);
+        }
+    };
+
+    // In QuotationsPage.tsx - Update handleEdit
+
+    const handleEdit = (item: QuoteDto) => {
+        // Check if quote can be edited (only Draft)
+        if (!canEditQuote(item)) {
+            showToast.warning(`Cannot edit quote with status "${getStatusLabel(item.status)}". Only Draft quotes can be edited.`);
+            return;
+        }
+        setSelectedQuote(item);
+        setIsEditModalOpen(true);
+    };
+
+    const canEditQuote = (item: QuoteDto): boolean => {
+        // Convert status to number if it's a string
+        const status = typeof item.status === 'string' ? parseInt(item.status) : item.status;
+        // Only Draft quotes (status = 1) can be edited
+        return status === 1;
+    };
+
+    const canSendQuote = (item: QuoteDto): boolean => {
+        const status = typeof item.status === 'string' ? parseInt(item.status) : item.status;
+        // Can only send Draft or Sent quotes
+        return status === 1 || status === 2;
+    };
+
+    const getStatusLabel = (status: number | string): string => {
+        // Convert to number if string
+        const statusNum = typeof status === 'string' ? parseInt(status) : status;
+        const labels: Record<number, string> = {
+            1: 'Draft',
+            2: 'Sent',
+            3: 'Viewed',
+            4: 'Accepted',
+            5: 'Rejected',
+            6: 'Expired',
+        };
+        return labels[statusNum] || 'Unknown';
+    };
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
+    };
+
+
+
+    const getStatusColor = (status: number): string => {
+        const colors: Record<number, string> = {
+            1: 'bg-gray-100 text-gray-700',
+            2: 'bg-blue-100 text-blue-700',
+            3: 'bg-cyan-100 text-cyan-700',
+            4: 'bg-green-100 text-green-700',
+            5: 'bg-red-100 text-red-700',
+            6: 'bg-orange-100 text-orange-700',
+        };
+        return colors[status] || 'bg-gray-100 text-gray-700';
+    };
+
+    // Stats
+    const stats: SalesStatItem[] = [
+        {
+            label: 'Total Quotes',
+            value: quotes.length,
+            icon: <FileText className="h-5 w-5 text-blue-600" />,
+            color: 'blue',
+            gradient: 'from-blue-50 to-blue-100',
+        },
+        {
+            label: 'Accepted',
+            value: quotes.filter(q => q.status === 4).length,
+            icon: <CheckCircle className="h-5 w-5 text-green-600" />,
+            color: 'green',
+            gradient: 'from-green-50 to-green-100',
+        },
+        {
+            label: 'Pending',
+            value: quotes.filter(q => [1, 2, 3].includes(q.status)).length,
+            icon: <Clock className="h-5 w-5 text-yellow-600" />,
+            color: 'yellow',
+            gradient: 'from-yellow-50 to-yellow-100',
+        },
+        {
+            label: 'Total Value',
+            value: formatCurrency(quotes.reduce((sum, q) => sum + (q.totalAmount || 0), 0)),
+            icon: <DollarSign className="h-5 w-5 text-purple-600" />,
+            color: 'purple',
+            gradient: 'from-purple-50 to-purple-100',
+        },
+    ];
+
+    // Table Columns
+    const columns: TableColumn<QuoteDto>[] = [
+        {
+            key: 'quoteNumber',
+            header: 'Quote #',
+            accessor: (item) => (
+                <p className="font-medium text-gray-900">{item.quoteNumber}</p>
+            ),
+        },
+        {
+            key: 'customerName',
+            header: 'Customer',
+            accessor: (item) => item.customerName || 'N/A',
+        },
+        {
+            key: 'totalAmount',
+            header: 'Total',
+            accessor: (item) => (
+                <span className="font-medium">{formatCurrency(item.totalAmount || 0)}</span>
+            ),
+        },
+        {
+            key: 'status',
+            header: 'Status',
+            accessor: (item) => (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
+                    {getStatusLabel(item.status)}
+                </span>
+            ),
+        },
+        {
+            key: 'validUntil',
+            header: 'Valid Until',
+            accessor: (item) => {
+                if (!item.validUntil) return 'N/A';
+                try {
+                    const date = new Date(item.validUntil);
+                    if (isNaN(date.getTime())) return 'N/A';
+                    return date.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                    });
+                } catch {
+                    return 'N/A';
+                }
+            },
+        },
+    ];
+
+    const actions: TableAction<QuoteDto>[] = [
+        {
+            label: 'View Details',
+            icon: <Eye className="h-4 w-4 mr-2" />,
+            onClick: (item) => handleView(item),
+        },
+        {
+            label: 'Edit',
+            icon: <Edit className="h-4 w-4 mr-2" />,
+            onClick: (item) => handleEdit(item),
+            disabled: (item) => item.status !== 1, // Only Draft can be edited
+            className: (item) => item.status !== 1 ? 'opacity-50 cursor-not-allowed' : '',
+        },
+        {
+            label: 'Send',
+            icon: <Send className="h-4 w-4 mr-2" />,
+            onClick: (item) => handleSend(item),
+            disabled: (item) => !(item.status === 1 || item.status === 2), // Draft or Sent
+            className: (item) => !(item.status === 1 || item.status === 2) ? 'opacity-50 cursor-not-allowed' : '',
+        },
+        {
+            label: 'Download PDF',
+            icon: <Download className="h-4 w-4 mr-2" />,
+            onClick: (item) => handleDownloadPDF(item),
+        },
+        {
+            label: 'Print',
+            icon: <Printer className="h-4 w-4 mr-2" />,
+            onClick: (item) => handlePrint(item),
+        },
+        {
+            separator: true,
+            label: 'Delete',
+            icon: <Trash2 className="h-4 w-4 mr-2" />,
+            onClick: (item) => {
+                setSelectedQuote(item);
+                setIsDeleteModalOpen(true);
+            },
+            className: 'text-red-600',
+            disabled: (item) => item.status !== 1, // Only Draft can be deleted
+        },
+    ];
+
+    const statusOptions = [
+        { value: 'all', label: 'All Statuses' },
+        { value: '1', label: 'Draft' },
+        { value: '2', label: 'Sent' },
+        { value: '3', label: 'Viewed' },
+        { value: '4', label: 'Accepted' },
+        { value: '5', label: 'Rejected' },
+        { value: '6', label: 'Expired' },
+    ];
+
+    const filters = [
+        {
+            key: 'status',
+            label: 'Status',
+            options: statusOptions,
+            value: filterStatus,
+            onChange: setFilterStatus,
+        },
+    ];
+
+    return (
+        <>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6 p-6"
+            >
+                <SalesHeader
+                    title="Quotations"
+                    subtitle="Manage sales quotes and proposals"
+                    icon={<FileText className="w-5 h-5 text-indigo-600" />}
+                    onRefresh={fetchQuotes}
+                    onAdd={handleAdd}
+                    addButtonText="Create Quote"
+                />
+
+                <SalesStats stats={stats} />
+
+                <SalesFilters
+                    searchPlaceholder="Search quotes..."
+                    searchValue={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    filters={filters}
+                    onClearFilters={() => {
+                        setSearchTerm('');
+                        setFilterStatus('all');
+                        fetchQuotes();
+                    }}
+                />
+
+                <SalesTable
+                    data={quotes}
+                    columns={columns}
+                    actions={actions}
+                    isLoading={loading}
+                    onRowClick={(item) => handleView(item)}
+                    emptyState={
+                        <div className="text-center py-12">
+                            <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold text-gray-700">No quotes found</h3>
+                            <p className="text-gray-500">Create your first quote.</p>
+                            <Button
+                                className="mt-4 bg-indigo-600 hover:bg-indigo-700"
+                                onClick={handleAdd}
+                            >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Create Quote
+                            </Button>
                         </div>
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">
-                            {quotation.quotationNumber}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Version {quotation.version}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
+                    }
+                />
 
-                    <td className="px-4 py-3 align-middle text-center">
-                      <div className="text-sm font-medium text-gray-900">
-                        {quotation.opportunityName}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {quotation.accountName}
-                      </div>
-                    </td>
+                <DeleteQuotationModal
+                    isOpen={isDeleteModalOpen}
+                    onClose={() => {
+                        setIsDeleteModalOpen(false);
+                        setSelectedQuote(null);
+                    }}
+                    onConfirm={handleDelete}
+                    quoteNumber={selectedQuote?.quoteNumber || ''}
+                    customerName={selectedQuote?.customerName}
+                    isDeleting={isDeleting}
+                    status={selectedQuote?.status}
+                />
+            </motion.div>
 
-                    <td className="px-4 py-3 align-middle text-center">
-                      <span className="text-sm font-medium text-gray-900">
-                        {formatCurrency(quotation.amount)}
-                      </span>
-                    </td>
+            <AddQuotationModal
+                isOpen={isAddModalOpen}
+                onClose={handleAddModalClose}
+                onSuccess={handleAddSuccess}
+            />
 
-                    <td className="px-4 py-3 align-middle text-center">
-                      <span
-                        className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${getStatusColor(
-                          quotation.status
-                        )}`}
-                      >
-                        {quotation.status}
-                      </span>
-                    </td>
+            <EditQuotationModal
+                isOpen={isEditModalOpen}
+                onClose={handleEditModalClose}
+                onSuccess={handleEditSuccess}
+                quote={selectedQuote}
+            />
 
-                    <td className="px-4 py-3 align-middle text-center">
-                      <span className="text-sm text-gray-900">
-                        {formatDate(quotation.validUntil)}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3 align-middle text-center">
-                      <span className="text-sm text-gray-900">
-                        {quotation.createdBy}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3 align-middle text-right text-sm font-medium">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100">
-                            <MoreVertical className="h-5 w-5" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleView(quotation)}>
-                            <Eye className="w-4 h-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleEdit(quotation)}>
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleChangeStatus(quotation)}>
-                            <RefreshCw className="w-4 h-4 mr-2" />
-                            Change Status
-                          </DropdownMenuItem>
-                          {/* Convert to Order - Available for all except Draft and Rejected */}
-                          {!['Draft', 'Rejected'].includes(quotation.status) && (
-                            <DropdownMenuItem onClick={() => handleConvertToOrder(quotation)}>
-                              <ShoppingCart className="w-4 h-4 mr-2" />
-                              Convert to Order
-                            </DropdownMenuItem>
-                          )}
-                          {/* Download PDF - Available for all except Draft */}
-                          {quotation.status !== 'Draft' && (
-                            <DropdownMenuItem onClick={() => handleDownload(quotation)}>
-                              <Download className="w-4 h-4 mr-2" />
-                              Download PDF
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem 
-                            onClick={() => handleDelete(quotation)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </motion.tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {filteredQuotations.length > 0 && (
-          <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Next
-              </button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
-                  <span className="font-medium">{Math.min(endIndex, totalItems)}</span> of{' '}
-                  <span className="font-medium">{totalItems}</span> quotations
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                  <button
-                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        currentPage === page
-                          ? 'z-10 bg-orange-50 border-orange-500 text-orange-600'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </nav>
-              </div>
-            </div>
-          </div>
-        )}
-      </motion.div>
-
-      {/* Add Quotation Modal */}
-      <AddQuotationModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddQuotation}
-        prefilledOpportunity={prefilledOpportunity}
-      />
-
-      {/* Edit Quotation Modal */}
-      {editingQuotation && (
-        <AddQuotationModal
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingQuotation(null);
-          }}
-          onSubmit={handleEditQuotation}
-          prefilledOpportunity={prefilledOpportunity}
-          editingQuotation={editingQuotation}
-        />
-      )}
-
-      {/* Change Status Modal */}
-      <ChangeStatusModal
-        isOpen={isChangeStatusModalOpen}
-        onClose={() => {
-          setIsChangeStatusModalOpen(false);
-          setChangingStatusQuotation(null);
-        }}
-        onSubmit={handleStatusUpdate}
-        quotation={changingStatusQuotation}
-      />
-
-      {/* Delete Quotation Modal */}
-      <DeleteQuotationModal
-        quotationName={deletingQuotation?.quotationNumber || null}
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setDeletingQuotation(null);
-        }}
-        onConfirm={handleConfirmDelete}
-      />
-    </motion.section>
-  );
+            <ViewQuotationModal
+                isOpen={isViewModalOpen}
+                onClose={handleViewModalClose}
+                onEdit={() => {
+                    if (selectedQuote && canEditQuote(selectedQuote)) {
+                        setIsViewModalOpen(false);
+                        handleEdit(selectedQuote);
+                    } else if (selectedQuote) {
+                        showToast.warning(`Cannot edit quote with status "${getStatusLabel(selectedQuote.status)}"`);
+                    }
+                }}
+                onSend={() => {
+                    if (selectedQuote && canSendQuote(selectedQuote)) {
+                        handleSend(selectedQuote);
+                    } else if (selectedQuote) {
+                        showToast.warning(`Cannot send quote with status "${getStatusLabel(selectedQuote.status)}"`);
+                    }
+                }}
+                onDownload={() => {
+                    if (selectedQuote) {
+                        handleDownloadPDF(selectedQuote);
+                    }
+                }}
+                onPrint={() => {
+                    if (selectedQuote) {
+                        handlePrint(selectedQuote);
+                    }
+                }}
+                onDelete={() => {
+                    if (selectedQuote) {
+                        setIsViewModalOpen(false);
+                        setSelectedQuote(selectedQuote);
+                        setIsDeleteModalOpen(true);
+                    }
+                }}
+                quote={selectedQuote}
+                isLoading={isViewLoading}
+                isSending={isSending}
+                isDownloading={isDownloading}
+                canEdit={selectedQuote ? canEditQuote(selectedQuote) : false}
+                canSend={selectedQuote ? canSendQuote(selectedQuote) : false}
+            />
+        </>
+    );
 };
 
 export default QuotationsPage;

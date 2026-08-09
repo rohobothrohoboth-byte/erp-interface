@@ -11,12 +11,17 @@ export interface EmpDbReport {
 }
 
 export interface EmpDbPendList {
-  empFullName: string;
-  empFullNameAm: string;
+  id: string;  // This must exist
+  employeeId?: string;  // Alternative field name
   code: string;
-  gender: string;
-  branch: string;
-  department: string;
-  position: string;
-  jobGrade: string;
+  empFullName: string;
+  empFullNameAm?: string;
+  gender?: string;
+  department?: string;
+  position?: string;
+  branch?: string;
+  jobGrade?: string;
+  employmentDate?: string;
+  email?: string;
+  phone?: string;
 }

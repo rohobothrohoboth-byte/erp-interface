@@ -1,237 +1,275 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  CheckCircle,
-  XCircle,
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  X,
+    CheckCircle,
+    XCircle,
+    ChevronLeft,
+    ChevronRight,
+    MoreVertical,
+    PenBox,
+    Trash2,
+    Calendar,
+    TrendingUp,
+    Clock,
+    Users,
 } from "lucide-react";
-
-import { useNavigate } from "react-router-dom";
+import {
+    Popover,
+    PopoverTrigger,
+    PopoverContent,
+} from "../../../../../ui/popover";
 import type { LeavePolicyConfigListDto } from "../../../../../../types/core/Settings/leavePolicyConfig";
 
 interface LeavePolicyConfigTableProps {
-  leavePolicyConfig: LeavePolicyConfigListDto[];
-  currentPage: number;
-  totalPages: number;
-  totalItems: number;
-  isLoading?: boolean;
-  onPageChange: (page: number) => void;
-  onEdit: (leaveType: LeavePolicyConfigListDto) => void;
-  onDelete: (leaveType: LeavePolicyConfigListDto) => void;
-  onToggleStatus?: (leaveType: LeavePolicyConfigListDto) => void;
+    leavePolicyConfig: LeavePolicyConfigListDto[];
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    isLoading?: boolean;
+    onPageChange: (page: number) => void;
+    onEdit: (config: LeavePolicyConfigListDto) => void;
+    onDelete: (config: LeavePolicyConfigListDto) => void;
+    onToggleStatus?: (config: LeavePolicyConfigListDto) => void;
 }
 
-
 const LeavePolicyConfigTable: React.FC<LeavePolicyConfigTableProps> = ({
-  leavePolicyConfig,
-  currentPage,
-  totalPages,
-  totalItems,
-  isLoading = false,
-  onPageChange,
-}) => {
- 
+                                                                           leavePolicyConfig,
+                                                                           currentPage,
+                                                                           totalPages,
+                                                                           totalItems,
+                                                                           isLoading = false,
+                                                                           onPageChange,
+                                                                           onEdit,
+                                                                           onDelete,
+                                                                           onToggleStatus,
+                                                                       }) => {
+    const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
-const getBooleanColor = (value: boolean) =>
-  value
-    ? "bg-green-100 text-green-800 border border-green-300"
-    : "bg-red-100 text-red-700 border border-red-300";
+    const getStatusBadge = (isActive: boolean) => {
+        if (isActive) {
+            return (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+          <CheckCircle size={12} />
+          Active
+        </span>
+            );
+        }
+        return (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+        <XCircle size={12} />
+        Inactive
+      </span>
+        );
+    };
 
-const getBooleanIcon = (value: boolean) =>
-  value ? (
-    <CheckCircle className="h-3 w-3 text-green-700" />
-  ) : (
-    <XCircle className="h-3 w-3 text-red-600" />
-  );
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-b-xl shadow-sm overflow-hidden bg-white"
-    >
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+    const MetricCard = ({ label, value, icon: Icon }: any) => (
+        <div className="flex flex-col items-center p-2 rounded-lg bg-gray-50 min-w-[80px]">
+            <Icon size={14} className="text-gray-500 mb-1" />
+            <span className="text-lg font-semibold text-gray-800">{value}</span>
+            <span className="text-xs text-gray-500">{label}</span>
         </div>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 align-middle">
-              <thead className="bg-white">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 tracking-wider ">
-                    Annual Entitlement
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
-                    Accrual Frequency
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
-                    Accrual Rate
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
-                    Max Days PerReq
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
-                    Max Carry Over Days
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
-                    Min Service Months
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 tracking-wider">
-                    Fiscal Year
-                  </th>
-                </tr>
-              </thead>
+    );
 
-              <tbody className="bg-white divide-y divide-gray-200">
-                {leavePolicyConfig.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={8}
-                      className="px-6 py-8 text-center text-sm text-gray-500"
-                    >
-                      No leave policy configurations found.
-                    </td>
-                  </tr>
-                ) : (
-                  leavePolicyConfig.map((leavePolicyConfig, index) => (
-                    <motion.tr
-                      key={leavePolicyConfig.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="transition-colors hover:bg-gray-50"
-                    >
-                      {/* Name */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        <div className="flex items-center">
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
-                              {leavePolicyConfig.annualEntitlement}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-gray-200 overflow-hidden bg-white"
+        >
+            {isLoading ? (
+                <div className="flex justify-center items-center py-16">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
+                </div>
+            ) : (
+                <>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full">
+                            <thead>
+                            <tr className="border-b border-gray-200 bg-gray-50">
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Annual Entitlement
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Accrual Frequency
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Accrual Rate
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Max Days/Request
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Max Carryover
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Min Service
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Fiscal Year
+                                </th>
+                                <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                            </thead>
 
-                      {/* accrualFrequency */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        {leavePolicyConfig.accrualFrequencyStr}
-                      </td>
-                      {/* accrualRate */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        {leavePolicyConfig.accrualRate}
-                      </td>
-                      {/* accrualRate */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        {leavePolicyConfig.accrualRate}
-                      </td>
-
-                      {/* maxDaysPerReq */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        {leavePolicyConfig.maxDaysPerReq}
-                      </td>
-
-                      {/* minServiceMonths */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        {leavePolicyConfig.minServiceMonths}
-                      </td>
-                      {/* isActive */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        <span
-                          className={`px-3 py-1 inline-flex text-xs leading-3 font-semibold gap-1 rounded-full ${getBooleanColor(
-                            leavePolicyConfig.isActive,
-                          )}`}
-                        >
-                          {getBooleanIcon(leavePolicyConfig.isActive)}
-                          {leavePolicyConfig.isActiveStr}
+                            <tbody className="divide-y divide-gray-100">
+                            {leavePolicyConfig.length === 0 ? (
+                                <tr>
+                                    <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <Calendar size={32} className="text-gray-300" />
+                                            <p>No policy configurations found</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : (
+                                leavePolicyConfig.map((config, index) => (
+                                    <motion.tr
+                                        key={config.id}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.03 }}
+                                        className="hover:bg-gray-50 transition-colors"
+                                    >
+                                        <td className="px-4 py-3 text-center">
+                        <span className="text-lg font-semibold text-emerald-600">
+                          {config.annualEntitlement}
                         </span>
-                      </td>
-                      {/* fiscalYear */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        {leavePolicyConfig.fiscalYear}
-                      </td>
-                    </motion.tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                                            <span className="text-xs text-gray-500 ml-0.5">days</span>
+                                        </td>
 
-          {/* Pagination */}
-          {totalItems > 0 && (
-            <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button
-                  onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{' '}
-                    <span className="font-medium">{Math.min(currentPage * 10, totalItems)}</span> of{' '}
-                    <span className="font-medium">{totalItems}</span> configurations
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                    <button
-                      onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      <span className="sr-only">Previous</span>
-                      <ChevronLeft size={16} />
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => onPageChange(page)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          currentPage === page
-                            ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      <span className="sr-only">Next</span>
-                      <ChevronRight size={16} />
-                    </button>
-                  </nav>
-                </div>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-    </motion.div>
-  );
+                                        <td className="px-4 py-3 text-center">
+                                            <div className="flex items-center justify-center gap-1">
+                                                <Clock size={12} className="text-gray-400" />
+                                                <span className="text-sm text-gray-700">{config.accrualFrequencyStr || config.accrualFrequency}</span>
+                                            </div>
+                                        </td>
+
+                                        <td className="px-4 py-3 text-center">
+                        <span className="text-sm font-medium text-gray-700">
+                          {config.accrualRate}/period
+                        </span>
+                                        </td>
+
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="text-sm text-gray-700">{config.maxDaysPerReq}</span>
+                                        </td>
+
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="text-sm text-gray-700">{config.maxCarryOverDays || "—"}</span>
+                                        </td>
+
+                                        <td className="px-4 py-3 text-center">
+                                            <div className="flex items-center justify-center gap-1">
+                                                <Users size={12} className="text-gray-400" />
+                                                <span className="text-sm text-gray-700">{config.minServiceMonths}m</span>
+                                            </div>
+                                        </td>
+
+                                        <td className="px-4 py-3 text-center">
+                                            {getStatusBadge(config.isActive)}
+                                        </td>
+
+                                        <td className="px-4 py-3 text-center">
+                                            <span className="text-sm text-gray-600">{config.fiscalYear || "—"}</span>
+                                        </td>
+
+                                        <td className="px-4 py-3 text-center">
+                                            <Popover
+                                                open={popoverOpen === config.id}
+                                                onOpenChange={(open) => setPopoverOpen(open ? config.id : null)}
+                                            >
+                                                <PopoverTrigger asChild>
+                                                    <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                                                        <MoreVertical size={16} className="text-gray-500" />
+                                                    </button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-44 p-1" align="end">
+                                                    <button
+                                                        onClick={() => {
+                                                            onEdit(config);
+                                                            setPopoverOpen(null);
+                                                        }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                                                    >
+                                                        <PenBox size={14} /> Edit
+                                                    </button>
+                                                    {onToggleStatus && (
+                                                        <button
+                                                            onClick={() => {
+                                                                onToggleStatus(config);
+                                                                setPopoverOpen(null);
+                                                            }}
+                                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md"
+                                                        >
+                                                            {config.isActive ? (
+                                                                <>
+                                                                    <XCircle size={14} /> Deactivate
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <CheckCircle size={14} /> Activate
+                                                                </>
+                                                            )}
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => {
+                                                            onDelete(config);
+                                                            setPopoverOpen(null);
+                                                        }}
+                                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+                                                    >
+                                                        <Trash2 size={14} /> Delete
+                                                    </button>
+                                                </PopoverContent>
+                                            </Popover>
+                                        </td>
+                                    </motion.tr>
+                                ))
+                            )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination */}
+                    {totalItems > 0 && totalPages > 1 && (
+                        <div className="border-t border-gray-200 px-4 py-3 bg-gray-50">
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-gray-600">
+                                    Showing <span className="font-medium">{Math.min(currentPage * 10, totalItems)}</span> of{" "}
+                                    <span className="font-medium">{totalItems}</span> configurations
+                                </p>
+                                <div className="flex gap-1">
+                                    <button
+                                        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                                        disabled={currentPage === 1}
+                                        className="p-2 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-50 transition-colors"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <span className="px-3 py-2 text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                                    <button
+                                        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="p-2 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-50 transition-colors"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
+        </motion.div>
+    );
 };
 
 export default LeavePolicyConfigTable;

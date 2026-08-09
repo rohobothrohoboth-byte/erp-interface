@@ -6,8 +6,20 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  MoreVertical,
+  PenBox,
+  Trash2,
+  Calendar,
+  Hash,
+  Tag,
+  Activity,
 } from "lucide-react";
 import { Button } from "../../../../ui/button";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "../../../../ui/popover";
 import type { PolicyAssignmentRuleListDto } from "../../../../../types/core/Settings/policyAssignmentRule";
 import PolicyRuleConditionModal from "./PolicyRuleConditionModal";
 
@@ -20,262 +32,241 @@ interface PolicyAssignmentRuleProps {
   onPageChange: (page: number) => void;
 }
 
-
 const PolicyAssignmentRule: React.FC<PolicyAssignmentRuleProps> = ({
-  policyAssignmentRule,
-  currentPage,
-  totalPages,
-  totalItems,
-  isLoading = false,
-  onPageChange,
-}) => {
+                                                                     policyAssignmentRule,
+                                                                     currentPage,
+                                                                     totalPages,
+                                                                     totalItems,
+                                                                     isLoading = false,
+                                                                     onPageChange,
+                                                                   }) => {
   const [conditionModalOpen, setConditionModalOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<PolicyAssignmentRuleListDto | null>(null);
+  const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
 
   const handleConditionClick = (rule: PolicyAssignmentRuleListDto) => {
     setSelectedRule(rule);
     setConditionModalOpen(true);
+    setPopoverOpen(null);
   };
-
-  const handleCloseConditionModal = () => {
-    setConditionModalOpen(false);
-    setSelectedRule(null);
-  };
-
-  const getBooleanColor = (value: boolean) =>
-    value
-      ? "bg-green-100 text-green-800 border border-green-300"
-      : "bg-red-100 text-red-700 border border-red-300";
-
-  const getBooleanIcon = (value: boolean) =>
-    value ? (
-      <CheckCircle className="h-3 w-3 text-green-700" />
-    ) : (
-      <XCircle className="h-3 w-3 text-red-600" />
-    );
-
 
   const getPriorityColor = (priority: string): string => {
     const colors: Record<string, string> = {
-      "High": "bg-red-100 text-red-800 border border-red-200",
-      "Medium": "bg-yellow-100 text-yellow-800 border border-yellow-200", 
-      "Low": "bg-green-100 text-green-800 border border-green-200",
+      High: "bg-red-100 text-red-700 border-red-200",
+      Medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      Low: "bg-green-100 text-green-700 border-green-200",
     };
-    return colors[priority] || "bg-gray-100 text-gray-800 border border-gray-200";
+    return colors[priority] || "bg-gray-100 text-gray-700 border-gray-200";
+  };
+
+  const getStatusBadge = (isActive: boolean) => {
+    if (isActive) {
+      return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+          <CheckCircle size={12} />
+          Active
+        </span>
+      );
+    }
+    return (
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+        <XCircle size={12} />
+        Inactive
+      </span>
+    );
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-b-xl shadow-sm overflow-hidden bg-white"
-    >
-      {/* Loading State */}
-      {isLoading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-        </div>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 align-middle">
-              <thead className="bg-white">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Code
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Priority
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Effective From
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Effective To
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                   Condition
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="bg-white divide-y divide-gray-200">
-                {policyAssignmentRule.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-6 py-8 text-center text-sm text-gray-500"
-                    >
-                      No policy assignment rules found.
-                    </td>
-                  </tr>
-                ) : (
-                  policyAssignmentRule.map((policyAssignmentRule, index) => (
-                    <motion.tr
-                      key={policyAssignmentRule.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="transition-colors hover:bg-gray-50"
-                    >
-                      {/* code */}
-                      <td className="px-3 py-3 text-left">
-                        <div className="flex items-center">
-                          <div className="shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                            <span className="text-emerald-600 font-medium">
-                              {policyAssignmentRule.code.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
-                              {policyAssignmentRule.code}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* name */}
-                      <td className="px-4 py-3 text-left">
-                        {policyAssignmentRule.name}
-                      </td>
-
-                      {/* Priority */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        <span
-                          className={`px-3 py-1 inline-flex text-xs leading-3 font-semibold rounded-full ${getPriorityColor(
-                            policyAssignmentRule.priorityStr
-                          )}`}
-                        >
-                          {policyAssignmentRule.priorityStr}
-                        </span>
-                      </td>
-
-                      {/* status */}
-                      <td className="px-4 py-3 align-middle text-center">
-                        <span
-                          className={`px-3 py-1 inline-flex text-xs leading-3 font-semibold gap-1 rounded-full ${getBooleanColor(
-                            policyAssignmentRule.isActive
-                          )}`}
-                        >
-                          {getBooleanIcon(policyAssignmentRule.isActive)}
-                          {policyAssignmentRule.isActiveStr}
-                        </span>
-                      </td>
-
-                      {/* Effective From */}
-                      <td className="px-4 py-3 text-left">
-                        <span className="text-sm text-gray-700">
-                          {policyAssignmentRule.effectiveFromStr || policyAssignmentRule.effectiveFrom}
-                        </span>
-                      </td>
-                      
-                      {/* Effective To */}
-                      <td className="px-4 py-3 text-left">
-                        <span className="text-sm text-gray-700">
-                          {policyAssignmentRule.effectiveToStr || policyAssignmentRule.effectiveTo || "N/A"}
-                        </span>
-                      </td>
-
-                      {/* condition */}
-                      <td className="px-4 py-3 text-center">
-                        <Button
-                          onClick={() => handleConditionClick(policyAssignmentRule)}
-                          variant="outline"
-                          size="sm"
-                          className="gap-2 hover:bg-green-50 hover:text-green-600"
-                        >
-                          <Settings size={16} />
-                        </Button>
-                      </td>
-                    </motion.tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination */}
-          {totalItems > 0 && (
-            <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button
-                  onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{' '}
-                    <span className="font-medium">{Math.min(currentPage * 10, totalItems)}</span> of{' '}
-                    <span className="font-medium">{totalItems}</span> rules
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                    <button
-                      onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      <span className="sr-only">Previous</span>
-                      <ChevronLeft size={16} />
-                    </button>
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => onPageChange(page)}
-                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                          currentPage === page
-                            ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
-                    <button
-                      onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      <span className="sr-only">Next</span>
-                      <ChevronRight size={16} />
-                    </button>
-                  </nav>
-                </div>
-              </div>
+      <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-xl border border-gray-200 overflow-hidden bg-white"
+      >
+        {isLoading ? (
+            <div className="flex justify-center items-center py-16">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
             </div>
-          )}
-        </>
-      )}
+        ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        <Hash size={12} /> Code
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        <Tag size={12} /> Name
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Priority
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        <Calendar size={12} /> Effective From
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        <Calendar size={12} /> Effective To
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <div className="flex items-center gap-1">
+                        <Activity size={12} /> Conditions
+                      </div>
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                  </thead>
 
-      {/* Condition Modal */}
-      {selectedRule && (
+                  <tbody className="divide-y divide-gray-100">
+                  {policyAssignmentRule.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                          <div className="flex flex-col items-center gap-2">
+                            <Settings size={32} className="text-gray-300" />
+                            <p>No policy assignment rules found</p>
+                          </div>
+                        </td>
+                      </tr>
+                  ) : (
+                      policyAssignmentRule.map((rule, index) => (
+                          <motion.tr
+                              key={rule.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.03 }}
+                              className="hover:bg-gray-50 transition-colors"
+                          >
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                            <span className="text-emerald-600 font-semibold text-sm">
+                              {rule.code.charAt(0).toUpperCase()}
+                            </span>
+                                </div>
+                                <span className="font-mono text-sm text-gray-700">{rule.code}</span>
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-3">
+                              <span className="text-sm font-medium text-gray-900">{rule.name}</span>
+                            </td>
+
+                            <td className="px-4 py-3 text-center">
+                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getPriorityColor(rule.priorityStr)}`}>
+                          {rule.priorityStr}
+                        </span>
+                            </td>
+
+                            <td className="px-4 py-3 text-center">
+                              {getStatusBadge(rule.isActive)}
+                            </td>
+
+                            <td className="px-4 py-3">
+                        <span className="text-sm text-gray-600">
+                          {rule.effectiveFromStr || rule.effectiveFrom}
+                        </span>
+                            </td>
+
+                            <td className="px-4 py-3">
+                        <span className="text-sm text-gray-600">
+                          {rule.effectiveToStr || rule.effectiveTo || "—"}
+                        </span>
+                            </td>
+
+                            <td className="px-4 py-3 text-center">
+                              <Button
+                                  onClick={() => handleConditionClick(rule)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1.5 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-600"
+                              >
+                                <Settings size={14} />
+                                <span className="text-xs">Configure</span>
+                              </Button>
+                            </td>
+
+                            <td className="px-4 py-3 text-center">
+                              <Popover
+                                  open={popoverOpen === rule.id}
+                                  onOpenChange={(open) => setPopoverOpen(open ? rule.id : null)}
+                              >
+                                <PopoverTrigger asChild>
+                                  <button className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                                    <MoreVertical size={16} className="text-gray-500" />
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-44 p-1" align="end">
+                                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-md">
+                                    <PenBox size={14} /> Edit
+                                  </button>
+                                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md">
+                                    <Trash2 size={14} /> Delete
+                                  </button>
+                                </PopoverContent>
+                              </Popover>
+                            </td>
+                          </motion.tr>
+                      ))
+                  )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {totalItems > 0 && totalPages > 1 && (
+                  <div className="border-t border-gray-200 px-4 py-3 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-600">
+                        Showing <span className="font-medium">{Math.min(currentPage * 10, totalItems)}</span> of{" "}
+                        <span className="font-medium">{totalItems}</span> rules
+                      </p>
+                      <div className="flex gap-1">
+                        <button
+                            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-50 transition-colors"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <span className="px-3 py-2 text-sm text-gray-600">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                        <button
+                            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded-lg border border-gray-200 hover:bg-white disabled:opacity-50 transition-colors"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+              )}
+            </>
+        )}
+
         <PolicyRuleConditionModal
-          isOpen={conditionModalOpen}
-          onClose={handleCloseConditionModal}
-          ruleId={selectedRule.id}
-          ruleName={selectedRule.name}
+            isOpen={conditionModalOpen}
+            onClose={() => {
+              setConditionModalOpen(false);
+              setSelectedRule(null);
+            }}
+            ruleId={selectedRule?.id || ""}
+            ruleName={selectedRule?.name || ""}
         />
-      )}
-    </motion.div>
+      </motion.div>
   );
 };
 

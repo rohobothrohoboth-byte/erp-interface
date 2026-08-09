@@ -25,6 +25,8 @@ export interface LeaveRequestListDto extends BaseDto {
   approvedBy: string;
   employee: string;
   leaveType: string;
+  rowVersion?: string;  // Add this field
+  xmin?: string;        // Alternative field name from backend
 }
 
 export interface LeaveTypeDto {
@@ -33,10 +35,14 @@ export interface LeaveTypeDto {
 }
 export interface LeaveRequestAddDto {
   leaveTypeId: UUID;
-  startDate: string | Date; 
-  endDate: string | Date; 
+  startDate: string;
+  endDate: string;
   isHalfDay: boolean;
   comments: string;
+  status?: string;
+  approvalChainId?: UUID;
+  currentStepId?: UUID;
+  currentStepOrder?: number;
 }
 
 export interface LeaveRequestModDto {

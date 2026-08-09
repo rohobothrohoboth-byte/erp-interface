@@ -1,80 +1,117 @@
+// src/components/crm/ActivityOverview.tsx
+
+import React from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight, Calendar, User } from 'lucide-react';
-import { Button } from '../ui/button';
-import { useNavigate } from 'react-router-dom';
-
-type ActivityType = 'Meeting' | 'Call' | 'Email' | 'Task';
-type ActivityStatus = 'upcoming' | 'completed' | 'pending' | 'overdue';
-
-interface Activity {
-  type: ActivityType;
-  title: string;
-  date: string;
-  participants: string;
-  status: ActivityStatus;
-}
-
-interface StatusColors {
-  upcoming: string;
-  completed: string;
-  pending: string;
-  overdue: string;
-}
-
-const activities: Activity[] = [
-  { type: 'Meeting', title: 'Product demo with Acme Inc', date: 'Today, 2:00 PM', participants: 'Alex Johnson, Sarah Lee', status: 'upcoming' },
-  { type: 'Call', title: 'Follow-up on proposal', date: 'Today, 11:30 AM', participants: 'Michael Chen', status: 'completed' },
-  { type: 'Email', title: 'Send contract details', date: 'Tomorrow, 9:00 AM', participants: 'Emily Davis', status: 'pending' },
-  { type: 'Task', title: 'Prepare Q2 sales report', date: 'Jun 30', participants: 'Yourself', status: 'overdue' },
-];
-
-
-const statusColors: StatusColors = {
-  upcoming: 'bg-blue-100 text-blue-800',
-  completed: 'bg-green-100 text-green-800',
-  pending: 'bg-gray-100 text-gray-800',
-  overdue: 'bg-red-100 text-red-800'
-};
+import {
+  Activity,
+  Clock,
+  CheckCircle,
+  MessageSquare,
+  Phone,
+  Mail,
+  Users,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { useCrmData } from '../../hooks/useCrmData';
 
 export default function ActivityOverview() {
-  const navigate = useNavigate();
+  const { activities, loading } = useCrmData();
+
+  if (loading) {
+    return (
+        <Card className="border-cyan-200 dark:border-cyan-800">
+          <CardContent className="pt-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            </div>
+          </CardContent>
+        </Card>
+    );
+  }
+
+  const getActivityIcon = (type: string) => {
+    switch (type?.toLowerCase()) {
+      case 'call': return <Phone className="h-4 w-4 text-blue-500" />;
+      case 'email': return <Mail className="h-4 w-4 text-purple-500" />;
+      case 'meeting': return <Users className="h-4 w-4 text-green-500" />;
+      case 'note': return <MessageSquare className="h-4 w-4 text-yellow-500" />;
+      default: return <Activity className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const getActivityColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed': return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300';
+      case 'scheduled': return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300';
+      case 'inprogress':
+      case 'in-progress': return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-300';
+      default: return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+    }
+  };
+
+  const recentActivities = activities?.slice(0, 5) || [];
 
   return (
-    <motion.div 
-      className="bg-white rounded-lg border p-6 shadow-sm"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.2 }}
-    >
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-semibold flex items-center">
-          <Calendar className="mr-2 text-amber-600" size={20} />
-          Activity Management
-        </h2>
-        <Button variant="ghost" size="sm" className="text-amber-600" onClick={() => navigate('/crm/activities')}>
-          View All <ChevronRight size={16} />
-        </Button>
-      </div>
-      
-      <div className="space-y-4">
-        {activities.map((activity, index) => (
-          <div key={index} className="flex items-start p-3 hover:bg-gray-50 rounded-lg border">
-
-            <div className="flex-1">
-              <p className="font-medium">{activity.title}</p>
-              <p className="text-xs text-gray-500 flex items-center mt-1">
-                <Calendar size={12} className="mr-1" /> {activity.date}
-              </p>
-              <p className="text-xs text-gray-500 flex items-center mt-1">
-                <User size={12} className="mr-1" /> {activity.participants}
-              </p>
-            </div>
-            <span className={`text-xs px-2 py-1 rounded-full ${statusColors[activity.status]}`}>
-              {activity.status.charAt(0).toUpperCase() + activity.status.slice(1)}
-            </span>
+      <Card className="border-cyan-200 dark:border-cyan-800 shadow-sm hover:shadow-md transition-all duration-300">
+        <CardHeader className="border-b border-cyan-100 dark:border-cyan-800 bg-gradient-to-r from-cyan-50 to-sky-50 dark:from-cyan-950/30 dark:to-sky-950/30">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-cyan-900 dark:text-cyan-100 flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              Recent Activity
+            </CardTitle>
+            <Badge className="bg-cyan-100 dark:bg-cyan-900 text-cyan-800 dark:text-cyan-300">
+              {activities?.length || 0} Activities
+            </Badge>
           </div>
-        ))}
-      </div>
-    </motion.div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="space-y-3">
+            {recentActivities.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No recent activities</p>
+            ) : (
+                recentActivities.map((activity: any, index: number) => (
+                    <motion.div
+                        key={activity.id || index}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border border-gray-100 dark:border-gray-800"
+                    >
+                      <div className="mt-1">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                            {activity.title || activity.subject || 'Untitled Activity'}
+                          </p>
+                          <Badge className={`text-xs ${getActivityColor(activity.status)}`}>
+                            {activity.status || 'Pending'}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {activity.assignedToUserName || activity.assignedTo || 'Unassigned'} •
+                          {activity.scheduledDate || activity.createdAt ? new Date(activity.scheduledDate || activity.createdAt).toLocaleDateString() : 'No date'}
+                        </p>
+                        {activity.description && (
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-1">
+                              {activity.description}
+                            </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
+                        <Clock className="h-3 w-3" />
+                        <span>
+                                        {activity.scheduledDate || activity.createdAt ? new Date(activity.scheduledDate || activity.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}
+                                    </span>
+                      </div>
+                    </motion.div>
+                ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
   );
 }

@@ -17,3 +17,6 @@ export { default as LeadGroupingHeader } from './leadGrouping/LeadGroupingHeader
 export { default as LeadGroupingTable } from './leadGrouping/LeadGroupingTable';
 export { default as AddLeadGroupModal } from './leadGrouping/AddLeadGroupModal';
 export { default as LeadGroupConditionModal } from './leadGrouping/LeadGroupConditionModal';
+// src/components/crm/leadManagement/leadGeneration/addLead/steps/index.ts
+export { default as LeadDetailsStep } from './LeadDetailsStep';
+export { default as ContactCompanyStep } from './ContactCompanyStep';

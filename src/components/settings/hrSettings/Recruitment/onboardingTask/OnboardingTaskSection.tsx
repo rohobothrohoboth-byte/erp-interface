@@ -1,121 +1,143 @@
+// src/components/hr/recruit/onboardingTask/OnboardingTaskSection.tsx
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { showToast } from '../../../../../layout/layout';
 import OnboardingTaskHeader from './OnboardingTaskHeader';
 import OnboardingTaskSearchFilter from './OnboardingTaskSearchFilter';
 import OnboardingTaskTable from './OnboardingTaskTable';
 import AddOnboardingTaskModal from './AddOnboardingTaskModal';
 import EditOnboardingTaskModal from './EditOnboardingTaskModal';
 import DeleteOnboardingTaskModal from './DeleteOnboardingTaskModal';
-import type { OnboardingTaskListDto, OnboardingTaskAddDto } from '../../../../../types/hr/recruit/onboardingTask';
-
-const mockData: OnboardingTaskListDto[] = [
-  {
-    id: crypto.randomUUID(),
-    taskName: 'Complete IT Setup',
-    description: 'Set up laptop, email, and required software tools.',
-    sequenceOrder: 1,
-    isDeleted: false,
-    rowVersion: '',
-    createdAt: new Date().toISOString(),
-    createdAtAm: '',
-    modifiedAt: new Date().toISOString(),
-    modifiedAtAm: '',
-  },
-  {
-    id: crypto.randomUUID(),
-    taskName: 'HR Orientation',
-    description: 'Attend HR orientation session covering company policies and benefits.',
-    sequenceOrder: 2,
-    isDeleted: false,
-    rowVersion: '',
-    createdAt: new Date().toISOString(),
-    createdAtAm: '',
-    modifiedAt: new Date().toISOString(),
-    modifiedAtAm: '',
-  },
-];
+import {
+  useOnboardingTasks,
+  useCreateOnboardingTask,
+  useUpdateOnboardingTask,
+  useDeleteOnboardingTask
+} from '../../../../../services/hr/recruitment/onboardingTask/onboardingTask.queries';
+import type {
+  OnboardingTaskListDto,
+  OnboardingTaskAddDto,
+  OnboardingTaskModDto
+} from '../../../../../types/hr/recruit/onboardingTask';
+import { showToast } from '../../../../../layout/layout';
 
 const OnboardingTaskSection: React.FC = () => {
-  const [items, setItems] = useState<OnboardingTaskListDto[]>(mockData);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<OnboardingTaskListDto | null>(null);
   const [deletingItem, setDeletingItem] = useState<OnboardingTaskListDto | null>(null);
 
-  const filtered = items.filter(i =>
-    i.taskName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    i.description.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch real data
+  const { data: items = [], isLoading, error, refetch } = useOnboardingTasks();
+
+  // Mutations
+  const createMutation = useCreateOnboardingTask({
+    onSuccess: () => {
+      showToast.success('Task added successfully');
+      setIsAddOpen(false);
+      refetch();
+    },
+    onError: (error) => showToast.error(error.message)
+  });
+
+  const updateMutation = useUpdateOnboardingTask({
+    onSuccess: () => {
+      showToast.success('Task updated successfully');
+      setEditingItem(null);
+      refetch();
+    },
+    onError: (error) => showToast.error(error.message)
+  });
+
+  const deleteMutation = useDeleteOnboardingTask({
+    onSuccess: () => {
+      showToast.success('Task deleted successfully');
+      setDeletingItem(null);
+      refetch();
+    },
+    onError: (error) => showToast.error(error.message)
+  });
+
+  // Filter items
+  const filteredItems = items.filter(item =>
+      item.taskName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Handlers
   const handleAdd = (data: OnboardingTaskAddDto) => {
-    const newItem: OnboardingTaskListDto = {
-      ...data,
-      id: crypto.randomUUID(),
-      isDeleted: false,
-      rowVersion: '',
-      createdAt: new Date().toISOString(),
-      createdAtAm: '',
-      modifiedAt: new Date().toISOString(),
-      modifiedAtAm: '',
-    };
-    setItems(prev => [...prev, newItem]);
-    showToast.success('Onboarding task added successfully');
-    setIsAddOpen(false);
+    createMutation.mutate(data);
   };
 
-  const handleEdit = (data: OnboardingTaskAddDto) => {
-    if (!editingItem) return;
-    setItems(prev => prev.map(i =>
-      i.id === editingItem.id ? { ...i, ...data, modifiedAt: new Date().toISOString() } : i
-    ));
-    showToast.success('Onboarding task updated successfully');
-    setEditingItem(null);
+  const handleEdit = (data: OnboardingTaskModDto) => {
+    console.log('✏️ Editing task with data:', data); // Debug log
+    updateMutation.mutate(data);
   };
 
   const handleDelete = () => {
     if (!deletingItem) return;
-    setItems(prev => prev.filter(i => i.id !== deletingItem.id));
-    showToast.success('Onboarding task deleted successfully');
-    setDeletingItem(null);
+    deleteMutation.mutate(deletingItem.id);
   };
 
-  return (
-    <motion.section
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="bg-gray-50 space-y-6 min-h-screen"
-    >
-      <OnboardingTaskHeader />
-      <OnboardingTaskSearchFilter
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        onAddClick={() => setIsAddOpen(true)}
-      />
-      <OnboardingTaskTable
-        items={filtered}
-        onEdit={setEditingItem}
-        onDelete={setDeletingItem}
-      />
+  if (error) {
+    return (
+        <div className="p-6 text-center">
+          <p className="text-red-600">Error: {error.message}</p>
+          <button
+              onClick={() => refetch()}
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+    );
+  }
 
-      <AddOnboardingTaskModal
-        isOpen={isAddOpen}
-        onClose={() => setIsAddOpen(false)}
-        onSubmit={handleAdd}
-      />
-      <EditOnboardingTaskModal
-        isOpen={!!editingItem}
-        item={editingItem}
-        onClose={() => setEditingItem(null)}
-        onSubmit={handleEdit}
-      />
-      <DeleteOnboardingTaskModal
-        isOpen={!!deletingItem}
-        taskName={deletingItem?.taskName ?? ''}
-        onClose={() => setDeletingItem(null)}
-        onConfirm={handleDelete}
-      />
-    </motion.section>
+  return (
+      <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="bg-gray-50 space-y-6 min-h-screen p-6"
+      >
+        <OnboardingTaskHeader />
+
+        <OnboardingTaskSearchFilter
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            onAddClick={() => setIsAddOpen(true)}
+        />
+
+        <OnboardingTaskTable
+            items={filteredItems}
+            onEdit={setEditingItem}
+            onDelete={setDeletingItem}
+            isLoading={isLoading}
+        />
+
+        <AddOnboardingTaskModal
+            isOpen={isAddOpen}
+            onClose={() => setIsAddOpen(false)}
+            onSubmit={handleAdd}
+            isLoading={createMutation.isPending}
+            existingTasks={items}
+        />
+
+        <EditOnboardingTaskModal
+            isOpen={!!editingItem}
+            item={editingItem}
+            onClose={() => setEditingItem(null)}
+            onSubmit={handleEdit}
+            isLoading={updateMutation.isPending}
+        />
+
+        <DeleteOnboardingTaskModal
+            isOpen={!!deletingItem}
+            taskName={deletingItem?.taskName ?? ''}
+            onClose={() => setDeletingItem(null)}
+            onConfirm={handleDelete}
+            isLoading={deleteMutation.isPending}
+        />
+      </motion.section>
   );
 };
 

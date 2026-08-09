@@ -95,16 +95,18 @@ export interface ApplicantJoinRow {
 /* =======================
    JobAppInfoDto
 ======================= */
+
+
 export interface JobAppInfoDto {
-  id: UUID;
+  id: string;
   postType: string;
-  applicantId?: UUID | null;
-  employeeId?: UUID | null;
-  positionId: UUID;
-  jgStepId: UUID;
-  departmentId: UUID;
-  periodId: UUID;
-  jobApplicationId: UUID;
+  applicantId?: string | null;
+  employeeId?: string | null;
+  positionId: string;
+  jgStepId: string;
+  departmentId: string;
+  periodId: string;
+  jobApplicationId: string;
   applicant: string;
   postNumber: string;
   reqNumber: string;
@@ -120,4 +122,34 @@ export interface JobAppInfoDto {
   jgStep: string;
   department: string;
   period: string;
+}
+
+export interface ApplicantDetailDto {
+  id: string;
+  applicant: string;
+  email: string;
+  phone?: string;
+  coverLetter?: string;
+  statusStr: string;
+  position: string;
+  department: string;
+  jobPostingNum?: string;
+  jobPostingId?: string;
+  appliedDate: string;
+  dateAdd?: string;
+  dateMod?: string;
+  isDeleted: boolean;
+  rowVersion: string;
+}
+
+export interface ApplicantListDto {
+  id: string;
+  applicant: string;
+  email: string;
+  phone?: string;
+  position: string;
+  department: string;
+  statusStr: string;
+  appliedDate: string;
+  jobPostingNum?: string;
 }

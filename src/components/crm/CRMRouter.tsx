@@ -1,13 +1,14 @@
 
 import { Routes, Route } from 'react-router-dom';
 import CRMDashboard from './CRMDashboard';
-import ContactManagement from "./contactManagement/ContactManagement";
+import ContactManagement from "../../pages/crm/contactManagement/ContactManagementPage";
 import SalesManagement from "./salesManagement/SalesManagement";
 import MarketingAutomation from "./marketingAutomation/MarketingAutomation";
 import CustomerSupport from "./customerSupport/CustomerSupport";
 import ActivityManagement from "./activityManagement/ActivityManagement";
 import AnalyticsReporting from "./analytics/AnalyticsReporting";
-import LeadRoutingPage from '../../pages/crm/LeadRoutingPage';
+import LeadRoutingPage from '../../pages/crm/leadManagement/LeadRoutingPage';
+import PrintQuotePage from '../../pages/crm/salesManagement/PrintQuotePage';
 
 export default function CRMRouter() {
   return (
@@ -21,6 +22,7 @@ export default function CRMRouter() {
       <Route path="/support" element={<CustomerSupport />} />
       <Route path="/activities" element={<ActivityManagement />} />
       <Route path="/analytics" element={<AnalyticsReporting />} />
+      <Route path="/crm/sales/quotes/:id/print" element={<PrintQuotePage />} />
     </Routes>
   );
 }

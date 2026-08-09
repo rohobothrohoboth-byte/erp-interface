@@ -1,164 +1,204 @@
-import React from 'react';
+// src/pages/crm/CRMDashboard.tsx
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Users, TrendingUp, MessageSquare, Calendar, Target, BarChart3 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import LeadOverview from './LeadOverview';
-import SalesOverview from './SalesOverview';
-import ActivityOverview from './ActivityOverview';
-import ContactOverview from './ContactOverview';
-import MarketingOverview from './MarketingOverview';
-import SupportOverview from './SupportOverview';
-import AnalyticsOverview from './AnalyticsOverview';
-import { mockLeads, mockOpportunities, mockContacts, mockSupportTickets, mockActivities, mockCampaigns } from '../../data/crmMockData';
+import {
+  RefreshCw, Plus, Activity, Sparkles, Shield,
+  Sun, Moon
+} from 'lucide-react';
+import { Button } from '../../components/ui/button';
+import { useCrmData } from '../../hooks/useCrmData';
+import LeadOverview from '../../components/crm/LeadOverview';
+import ContactOverview from '../../components/crm/ContactOverview';
+import SalesOverview from '../../components/crm/SalesOverview';
+import MarketingOverview from '../../components/crm/MarketingOverview';
+import SupportOverview from '../../components/crm/SupportOverview';
+import ActivityOverview from '../../components/crm/ActivityOverview';
+import AnalyticsOverview from '../../components/crm/AnalyticsOverview';
+
+// Dark mode hook
+const useDarkMode = () => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark';
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+  return { isDarkMode, toggleDarkMode };
+};
 
 export default function CRMDashboard() {
-  // Calculate key metrics
-  const totalLeads = mockLeads.length;
-  const qualifiedLeads = mockLeads.filter(lead => lead.status === 'Qualified').length;
-  const totalOpportunities = mockOpportunities.length;
-  const pipelineValue = mockOpportunities.reduce((sum, opp) => sum + opp.amount, 0);
-  const totalContacts = mockContacts.length;
-  const activeContacts = mockContacts.filter(contact => contact.isActive).length;
-  const openTickets = mockSupportTickets.filter(ticket => ['Open', 'In Progress', 'Pending'].includes(ticket.status)).length;
-  const pendingActivities = mockActivities.filter(activity => activity.status === 'Pending').length;
-  const activeCampaigns = mockCampaigns.filter(campaign => campaign.status === 'Active').length;
+  const { isDarkMode, toggleDarkMode } = useDarkMode();
+  const { loading, refreshing, refresh, stats, dashboardData } = useCrmData();
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update current time
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">CRM Dashboard</h1>
-          <p className="text-gray-600">Comprehensive view of your customer relationship management</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 transition-colors duration-200">
+        {/* Background Pattern */}
+        <div className="fixed inset-0 bg-grid-slate-100 dark:bg-grid-slate-800 [mask-image:radial-gradient(ellipse_at_center,white,transparent)] pointer-events-none" />
+
+        {/* Decorative Elements */}
+        <div className="fixed top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-400/10 to-amber-400/10 dark:from-orange-400/5 dark:to-amber-400/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="fixed bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-red-400/10 to-pink-400/10 dark:from-red-400/5 dark:to-pink-400/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative p-6">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                            <span className="bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+                                CRM
+                            </span>{" "}
+                Dashboard
+              </h1>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                Manage leads, contacts, sales, marketing, support, and customer interactions
+                {stats && (
+                    <span className="ml-2 font-medium">
+                                    • {stats.totalLeads} leads • {dashboardData?.activeOpportunities || 0} active opportunities
+                                </span>
+                )}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {/* Current Time */}
+              <div className="hidden lg:flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm">
+                <Activity size={14} />
+                <span className="font-mono">
+                                {formatDate(currentTime)} • {formatTime(currentTime)}
+                            </span>
+              </div>
+
+              {/* Dark Mode Toggle */}
+              <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleDarkMode}
+                  className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </Button>
+
+              {/* Refresh Button */}
+              <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={refresh}
+                  disabled={refreshing}
+                  className="gap-2 border-orange-300 dark:border-orange-700 text-orange-700 dark:text-orange-400 hover:bg-orange-100 dark:hover:bg-orange-950/50 transition-colors"
+              >
+                <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+                <span>Refresh</span>
+              </Button>
+
+              {/* New Entry Button */}
+              <Button
+                  size="sm"
+                  className="flex items-center bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 shadow-md transition-all"
+                  onClick={() => window.location.href = '/crm/leads/add'}
+              >
+                <Plus size={16} className="mr-2" />
+                <span>New Lead</span>
+              </Button>
+            </div>
+          </div>
+
+          {/* Loading State */}
+          {loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-gray-600 dark:text-gray-400">Loading dashboard data...</p>
+                </div>
+              </div>
+          )}
+
+          {/* Dashboard Content */}
+          {!loading && (
+              <>
+                {/* Main Dashboard Sections */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <LeadOverview />
+                  <ContactOverview />
+                  <SalesOverview />
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                  <MarketingOverview />
+                  <SupportOverview />
+                  <ActivityOverview />
+                </div>
+
+                <div className="mt-6">
+                  <AnalyticsOverview />
+                </div>
+              </>
+          )}
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <div className="inline-flex items-center gap-4 px-4 py-2 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-full shadow-sm border border-slate-200/50 dark:border-slate-700/50">
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                <span>Live Data</span>
+              </div>
+              <div className="w-px h-3 bg-slate-300 dark:bg-slate-600" />
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <Shield className="w-3 h-3" />
+                <span>Secure Connection</span>
+              </div>
+              <div className="w-px h-3 bg-slate-300 dark:bg-slate-600" />
+              <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <Sparkles className="w-3 h-3" />
+                <span>Real-time Sync</span>
+              </div>
+            </div>
+          </div>
         </div>
+
+        <style>{`
+                .bg-grid-slate-100 {
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23e2e8f0'%3E%3Cpath d='M0 .5H31.5V32'/%3E%3C/svg%3E");
+                    background-repeat: repeat;
+                    background-size: 32px 32px;
+                }
+                .dark .bg-grid-slate-100 {
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='%23334155'%3E%3Cpath d='M0 .5H31.5V32'/%3E%3C/svg%3E");
+                }
+            `}</style>
       </div>
-
-      {/* Key Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Leads</p>
-                <p className="text-2xl font-bold text-orange-600">{totalLeads}</p>
-                <p className="text-xs text-gray-500 mt-1">{qualifiedLeads} qualified</p>
-              </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 text-orange-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pipeline Value</p>
-                <p className="text-2xl font-bold text-green-600">${pipelineValue.toLocaleString()}</p>
-                <p className="text-xs text-gray-500 mt-1">{totalOpportunities} opportunities</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Contacts</p>
-                <p className="text-2xl font-bold text-blue-600">{activeContacts}</p>
-                <p className="text-xs text-gray-500 mt-1">of {totalContacts} total</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <Users className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Open Tickets</p>
-                <p className="text-2xl font-bold text-red-600">{openTickets}</p>
-                <p className="text-xs text-gray-500 mt-1">{pendingActivities} pending tasks</p>
-              </div>
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <MessageSquare className="w-6 h-6 text-red-600" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Active Campaigns</p>
-                <p className="text-xl font-bold text-purple-600">{activeCampaigns}</p>
-              </div>
-              <Target className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Pending Activities</p>
-                <p className="text-xl font-bold text-yellow-600">{pendingActivities}</p>
-              </div>
-              <Calendar className="w-8 h-8 text-yellow-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
-                <p className="text-xl font-bold text-indigo-600">24.5%</p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-indigo-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Overview Components Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LeadOverview />
-        <SalesOverview />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ContactOverview />
-        <MarketingOverview />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ActivityOverview />
-        <SupportOverview />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6">
-        <AnalyticsOverview />
-      </div>
-    </motion.div>
   );
 }

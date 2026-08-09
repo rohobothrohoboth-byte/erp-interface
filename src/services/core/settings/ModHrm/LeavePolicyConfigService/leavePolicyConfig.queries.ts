@@ -1,3 +1,4 @@
+// services/core/settings/ModHrm/LeavePolicyConfigService/leavePolicyConfig.queries.ts
 import {
   useQuery,
   useMutation,
@@ -16,64 +17,68 @@ import type {
 import type { StatChangeDto } from "../../../../../types/core/Settings/statChangeDto";
 
 export const useLeavePolicyConfig = (
-  id: UUID | undefined,
-  options?: Omit<
-    UseQueryOptions<LeavePolicyConfigListDto, Error>,
-    "queryKey" | "queryFn"
-  >,
+    id: UUID | undefined,
+    options?: Omit<
+        UseQueryOptions<LeavePolicyConfigListDto | null, Error>,
+        "queryKey" | "queryFn"
+    >,
 ) =>
-  useQuery({
-    queryKey: leavePolicyConfigKeys.detail(id!),
-    queryFn: () => leavePolicyConfigFetcher.getById(id!),
-    enabled: !!id,
-    ...options,
-  });
+    useQuery({
+      queryKey: leavePolicyConfigKeys.detail(id!),
+      queryFn: () => leavePolicyConfigFetcher.getById(id!),
+      enabled: !!id,
+      ...options,
+    });
 
 export const useActiveLeavePolicyConfig = (
-  id: UUID | undefined,
-  options?: Omit<
-    UseQueryOptions<LeavePolicyConfigListDto, Error>,
-    "queryKey" | "queryFn"
-  >,
+    id: UUID | undefined,
+    options?: Omit<
+        UseQueryOptions<LeavePolicyConfigListDto | null, Error>,
+        "queryKey" | "queryFn"
+    >,
 ) =>
-  useQuery({
-    queryKey: leavePolicyConfigKeys.active(id!),
-    queryFn: () => leavePolicyConfigFetcher.getActiveById(id!),
-    enabled: !!id,
-    ...options,
-  });
+    useQuery({
+      queryKey: leavePolicyConfigKeys.active(id!),
+      queryFn: () => leavePolicyConfigFetcher.getActiveById(id!),
+      enabled: !!id,
+      ...options,
+    });
 
 export const useAllLeavePolicyConfigs = (
-  id: UUID | undefined,
-  options?: Omit<
-    UseQueryOptions<LeavePolicyConfigListDto[], Error>,
-    "queryKey" | "queryFn"
-  >,
-) =>
-  useQuery({
-    queryKey: leavePolicyConfigKeys.list(id!),
-    queryFn: () => leavePolicyConfigFetcher.getAllById(id!),
-    enabled: !!id,
-    ...options,
-  });
-
-export const useCreateLeavePolicyConfig = (
-  options?: Omit<
-    UseMutationOptions<
-      LeavePolicyConfigListDto,
-      Error,
-      LeavePolicyConfigAddDto
+    id: UUID | undefined,
+    options?: Omit<
+        UseQueryOptions<LeavePolicyConfigListDto[], Error>,
+        "queryKey" | "queryFn"
     >,
-    "mutationFn"
-  >,
+) =>
+    useQuery({
+      queryKey: leavePolicyConfigKeys.list(id!),
+      queryFn: () => leavePolicyConfigFetcher.getAllById(id!),
+      enabled: !!id,
+      ...options,
+    });
+
+// FIXED: Create mutation
+export const useCreateLeavePolicyConfig = (
+    options?: Omit<
+        UseMutationOptions<LeavePolicyConfigListDto, Error, LeavePolicyConfigAddDto>,
+        "mutationFn"
+    >,
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: leavePolicyConfigFetcher.create,
-    onSuccess: () => {
+    mutationFn: (data: LeavePolicyConfigAddDto) => leavePolicyConfigFetcher.create(data),
+    onSuccess: (data, variables) => {
+      // Invalidate queries to refresh the list
       queryClient.invalidateQueries({
         queryKey: leavePolicyConfigKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: leavePolicyConfigKeys.list(variables.leavePolicyId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: leavePolicyConfigKeys.active(variables.leavePolicyId),
       });
     },
     ...options,
@@ -81,19 +86,15 @@ export const useCreateLeavePolicyConfig = (
 };
 
 export const useUpdateLeavePolicyConfig = (
-  options?: Omit<
-    UseMutationOptions<
-      LeavePolicyConfigListDto,
-      Error,
-      LeavePolicyConfigModDto
+    options?: Omit<
+        UseMutationOptions<LeavePolicyConfigListDto, Error, LeavePolicyConfigModDto>,
+        "mutationFn"
     >,
-    "mutationFn"
-  >,
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: leavePolicyConfigFetcher.update,
+    mutationFn: (data: LeavePolicyConfigModDto) => leavePolicyConfigFetcher.update(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({
         queryKey: leavePolicyConfigKeys.detail(data.id as UUID),
@@ -106,31 +107,27 @@ export const useUpdateLeavePolicyConfig = (
   });
 };
 
-export const useDeleteLeavePolicyConfig = () => {
+export const useDeleteLeavePolicyConfig = (
+    options?: Omit<UseMutationOptions<void, Error, UUID>, "mutationFn">,
+) => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (id: UUID) => leavePolicyConfigFetcher.delete(id),
     onSuccess: (_, id) => {
-      // Invalidate the leave policy config list so table updates automatically
       queryClient.invalidateQueries({ queryKey: leavePolicyConfigKeys.all });
-      queryClient.invalidateQueries({
-        queryKey: leavePolicyConfigKeys.list(id),
-      });
     },
+    ...options,
   });
 };
 
 export const useChangeStatusLeavePolicyConfig = (
-  options?: Omit<
-    UseMutationOptions<void, Error, StatChangeDto>,
-    "mutationFn"
-  >,
+    options?: Omit<UseMutationOptions<void, Error, StatChangeDto>, "mutationFn">,
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: leavePolicyConfigFetcher.changeStatus,
+    mutationFn: (statDto: StatChangeDto) => leavePolicyConfigFetcher.changeStatus(statDto),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: leavePolicyConfigKeys.all,

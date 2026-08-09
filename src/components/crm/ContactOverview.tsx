@@ -1,137 +1,101 @@
+// src/components/crm/ContactOverview.tsx
+
+import React from 'react';
 import { motion } from 'framer-motion';
-import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Doughnut } from 'react-chartjs-2';
-import { ChevronRight, Users, Briefcase, MapPin } from 'lucide-react';
-import { Button } from '../ui/button';
-import { useNavigate } from 'react-router-dom';
-
-Chart.register(ArcElement, Tooltip, Legend);
-
-interface ContactData {
-  name: string;
-  value: number;
-}
-
-interface RecentContact {
-  name: string;
-  company: string;
-  location: string;
-  type: 'Customer' | 'Prospect' | 'Partner';
-}
-
-const contactData: ContactData[] = [
-  { name: 'Customers', value: 45 },
-  { name: 'Prospects', value: 30 },
-  { name: 'Partners', value: 15 },
-  { name: 'Suppliers', value: 10 },
-];
-
-const recentContacts: RecentContact[] = [
-  { name: 'Alex Johnson', company: 'Acme Inc', location: 'New York', type: 'Customer' },
-  { name: 'Sarah Williams', company: 'Globex Corp', location: 'Chicago', type: 'Prospect' },
-  { name: 'Michael Chen', company: 'Stark Industries', location: 'San Francisco', type: 'Partner' },
-  { name: 'Emily Davis', company: 'Wayne Enterprises', location: 'Boston', type: 'Customer' },
-];
+import {
+  Users,
+  Building2,
+  Mail,
+  Phone,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { useCrmData } from '../../hooks/useCrmData';
 
 export default function ContactOverview() {
-  const navigate = useNavigate();
+  const { customers, loading } = useCrmData();
 
-  const data = {
-    labels: contactData.map(d => d.name),
-    datasets: [
-      {
-        data: contactData.map(d => d.value),
-        backgroundColor: ['#F97316', '#FB923C', '#FDBA74', '#FED7AA'],
-        hoverBackgroundColor: ['#EA580C', '#F97316', '#FB923C', '#FBBF24'],
-        borderWidth: 1,
-      },
-    ],
-  };
+  if (loading) {
+    return (
+        <Card className="border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            </div>
+          </CardContent>
+        </Card>
+    );
+  }
 
-  const options = {
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: {
-          color: '#9A3412',
-          font: { size: 12 },
-        },
-      },
-      tooltip: {
-        callbacks: {
-          label: (ctx: any) => {
-            const label = ctx.label ?? '';
-            const value = ctx.parsed;
-            const total = ctx.dataset.data.reduce((a: number, b: number) => a + b, 0);
-            const percent = ((value / total) * 100).toFixed(0);
-            return `${label}: ${percent}% (${value})`;
-          },
-        },
-      },
-    },
-    maintainAspectRatio: false,
-  };
+  const recentContacts = customers?.slice(0, 5) || [];
 
   return (
-    <motion.div
-      className="bg-white rounded-xl border border-orange-100 p-6 shadow-sm hover:shadow-orange-100 transition-shadow"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.1 }}
-    >
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-semibold flex items-center text-black">
-          <Users className="mr-2 text-orange-600" size={20} />
-          Contact Management
-        </h2>
-        <Button variant="ghost" size="sm" className="hover:text-orange-600 hover:bg-orange-50 text-black" onClick={() => navigate('/crm/contacts')}>
-          View All <ChevronRight size={16} />
-        </Button>
-      </div>
-
-      {/* Chart */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-orange-700 mb-2">Contact Distribution</h3>
-        <div className="h-48">
-          <Doughnut data={data} options={options} />
-        </div>
-      </div>
-
-      {/* Recent Contacts */}
-      <div>
-        <h3 className="text-sm font-medium text-orange-700 mb-3">Recent Contacts</h3>
-        <div className="space-y-3">
-          {recentContacts.map((contact, idx) => (
-            <div
-              key={idx}
-              className="flex items-center p-2 hover:bg-orange-50 rounded-lg transition-colors"
-            >
-              <div className="bg-orange-100 text-orange-600 p-2 rounded-full mr-3">
-                <Briefcase size={16} />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-orange-900">{contact.name}</p>
-                <p className="text-xs text-orange-700 flex items-center">
-                  <MapPin size={12} className="mr-1" />
-                  {contact.company} • {contact.location}
-                </p>
-              </div>
-              <span
-                className={`text-xs px-2 py-1 rounded-full ${
-                  contact.type === 'Customer'
-                    ? 'bg-orange-100 text-orange-800'
-                    : contact.type === 'Prospect'
-                    ? 'bg-amber-100 text-amber-800'
-                    : 'bg-orange-200 text-orange-900'
-                }`}
-              >
-                {contact.type}
-              </span>
+      <Card className="border-blue-200 dark:border-blue-800 shadow-sm hover:shadow-md transition-all duration-300">
+        <CardHeader className="border-b border-blue-100 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Contact Overview
+            </CardTitle>
+            <Badge className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
+              {customers?.length || 0} Total
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          {/* Stats */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-800">
+              <p className="text-xs text-blue-700 dark:text-blue-300">Companies</p>
+              <p className="text-xl font-bold text-blue-900 dark:text-blue-100">
+                {customers?.filter((c: any) => c.type === 'Company' || c.isCompany).length || 0}
+              </p>
             </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
+            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-800">
+              <p className="text-xs text-green-700 dark:text-green-300">Individuals</p>
+              <p className="text-xl font-bold text-green-900 dark:text-green-100">
+                {customers?.filter((c: any) => c.type === 'Individual' || !c.isCompany).length || 0}
+              </p>
+            </div>
+          </div>
+
+          {/* Recent Contacts */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Recent Contacts</p>
+            {recentContacts.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">No contacts yet</p>
+            ) : (
+                recentContacts.map((contact: any, index: number) => (
+                    <motion.div
+                        key={contact.id || index}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400 text-xs font-bold">
+                          {contact.name?.charAt(0) || contact.firstName?.charAt(0) || 'C'}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {contact.name || contact.fullName || 'Unknown'}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {contact.companyName || contact.company || 'No company'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {contact.email && <Mail className="h-3 w-3 text-gray-400" />}
+                        {contact.phone && <Phone className="h-3 w-3 text-gray-400" />}
+                      </div>
+                    </motion.div>
+                ))
+            )}
+          </div>
+        </CardContent>
+      </Card>
   );
 }

@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { Building2 } from 'lucide-react';
 
 interface BranchHeaderProps {
   companyName: string;
@@ -6,35 +6,20 @@ interface BranchHeaderProps {
 
 const BranchHeader = ({ companyName }: BranchHeaderProps) => {
   return (
-    <motion.div 
-      variants={itemVariants}
-      className="flex flex-col"
-    >
-      <motion.h1 
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white"
-      >
-        <span className="bg-gradient-to-r from-emerald-500 to-emerald-700 bg-clip-text text-transparent">
-          {companyName}
-        </span> Branches
-      </motion.h1>
-    </motion.div>
+      <div className="flex items-center gap-3">
+        <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+          <Building2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+        </div>
+        <div>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+            {companyName} Branches
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Manage branch locations and details
+          </p>
+        </div>
+      </div>
   );
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0, 
-    opacity: 1,
-    transition: { 
-      type: 'spring', 
-      stiffness: 100, 
-      damping: 15,
-      duration: 0.5
-    }
-  }
 };
 
 export default BranchHeader;

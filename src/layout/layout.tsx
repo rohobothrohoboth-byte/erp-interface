@@ -1,150 +1,133 @@
-import React, { useState, useEffect } from "react";
-import { Outlet } from "react-router";
+// layout/layout.tsx
+import React, { useState, useEffect, useCallback } from "react";
+import { Outlet, useLocation } from "react-router";
+import { motion } from "framer-motion";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { Toaster, toast } from "react-hot-toast";
+import { Menu } from "lucide-react";
+import { useLanguage } from "../i18n/LanguageContext";
+import NotificationCenter from "../components/Notification/NotificationCenter";
+import { useNotification } from "../contexts/NotificationContext";
+import toast from 'react-hot-toast';
 
-// Create custom toast functions for easier use
-export const showToast = {
-  success: (message: string, options = {}) => {
-    toast.success(message, {
-      id: `success-${Date.now()}`,
-      ...options,
-    });
-  },
+// ✅ Helper function to safely extract error message
+const getErrorMessage = (error: any): string => {
+  if (!error) return 'An unexpected error occurred';
+  if (typeof error === 'string') return error;
+  if (error instanceof Error) return error.message;
 
-  error: (message: string, options = {}) => {
-    toast.error(message, {
-      id: `error-${Date.now()}`,
-      ...options,
-    });
-  },
+  // API error response
+  if (error?.response?.data?.message) return error.response.data.message;
+  if (error?.data?.message) return error.data.message;
+  if (error?.message) return error.message;
 
-  loading: (message: string, options = {}) => {
-    return toast.loading(message, options);
-  },
-
-  dismiss: (toastId?: string) => {
-    if (toastId) {
-      toast.dismiss(toastId);
-    } else {
-      toast.dismiss();
+  // If it's an object with errors array
+  if (error?.response?.data?.errors) {
+    const errors = error.response.data.errors;
+    if (Array.isArray(errors)) return errors.join(', ');
+    if (typeof errors === 'object') {
+      return Object.values(errors).flat().join(', ');
     }
-  },
+    return String(errors);
+  }
 
-  promise: <T,>(
-    promise: Promise<T>,
-    messages: { loading: string; success: string; error: string },
-    options = {},
-  ) => {
-    return toast.promise(promise, messages, options);
-  },
+  // Try to stringify if it's an object
+  try {
+    if (typeof error === 'object') return JSON.stringify(error);
+  } catch {
+    // Ignore
+  }
 
-  custom: (message: string, options = {}) => {
-    toast(message, options);
-  },
+  return 'An unexpected error occurred';
 };
 
+// ✅ Updated showToast with safe error handling
+export const showToast = {
+  success: (message: string) => toast.success(message),
+  error: (error: any) => {
+    const message = getErrorMessage(error);
+    toast.error(message);
+  },
+  info: (message: string) => toast(message, { icon: "ℹ️" }),
+  warning: (message: string) => toast(message, { icon: "⚠️" }),
+  loading: (message: string) => toast.loading(message),
+  dismiss: (toastId?: string) => toastId ? toast.dismiss(toastId) : toast.dismiss(),
+  custom: (message: string, options?: any) => toast(message, options),
+};
+
+/* ==================== LAYOUT ==================== */
 const Layout: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const location = useLocation();
+  const { t } = useLanguage();
+  const { unreadCount } = useNotification();
 
   useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 1024); 
+    const check = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) setMobileSidebarOpen(false);
     };
-
-    checkIfMobile();
-    window.addEventListener("resize", checkIfMobile);
-
-    return () => {
-      window.removeEventListener("resize", checkIfMobile);
-    };
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
   }, []);
 
-  const toggleSidebar = () => {
-    setMobileSidebarOpen(!mobileSidebarOpen);
-  };
-
+  useEffect(() => {
+    if (isMobile) setMobileSidebarOpen(false);
+  }, [location.pathname, isMobile]);
 
   useEffect(() => {
-    if (!isMobile) {
-      setMobileSidebarOpen(false);
-    }
-  }, [isMobile]);
+    document.body.style.overflow = (mobileSidebarOpen && isMobile) ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileSidebarOpen, isMobile]);
+
+  const toggleSidebar = useCallback(() => setMobileSidebarOpen(prev => !prev), []);
+  const closeSidebar = useCallback(() => setMobileSidebarOpen(false), []);
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Mobile overlay */}
-      {isMobile && (
-        <div
-          className={`fixed inset-0 z-20 transition-opacity bg-black/50 lg:hidden ${
-            mobileSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-          onClick={() => setMobileSidebarOpen(false)}
-        />
-      )}
+      <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
+        {isMobile && mobileSidebarOpen && (
+            <div className="fixed inset-0 z-20 bg-black/50 lg:hidden" onClick={closeSidebar} />
+        )}
 
-  
-      {isMobile ? (
-        // Mobile sidebar - slides in from left
-        <div
-          className={`fixed inset-y-0 left-0 z-30 transition-all duration-300 transform lg:hidden ${
-            mobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
+        {isMobile && (
+            <motion.div
+                animate={{ x: mobileSidebarOpen ? 0 : "-100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed inset-y-0 left-0 z-30 lg:hidden"
+            >
+              <Sidebar onClose={closeSidebar} />
+            </motion.div>
+        )}
+
+        <div className="hidden lg:block shrink-0">
           <Sidebar />
         </div>
-      ) : (
-        // Desktop sidebar - always visible
-        <div className="flex h-screen">
-          <Sidebar />
+
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <Header
+              toggleSidebar={toggleSidebar}
+              isMobile={isMobile}
+              isSidebarOpen={mobileSidebarOpen}
+          />
+
+          {isMobile && !mobileSidebarOpen && (
+              <button
+                  onClick={toggleSidebar}
+                  className="fixed bottom-6 left-6 z-20 lg:hidden bg-emerald-600 text-white p-3 rounded-full shadow-lg hover:bg-emerald-700 transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+          )}
+
+          <main className="flex-1 overflow-y-auto">
+            <div className="py-6 px-4 lg:px-8">
+              <Outlet />
+            </div>
+          </main>
         </div>
-      )}
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out">
-        <Header toggleSidebar={toggleSidebar} isMobile={isMobile} />
-
-        <main className="flex-1 overflow-y-auto bg-gray-50">
-          <div className="py-6 px-4 lg:px-6">
-            <Toaster
-              position="top-right"
-              gutter={12}
-              toastOptions={{
-                duration: 4000,
-                success: {
-                  duration: 3000,
-                  style: {
-                    background: "#10b981",
-                    color: "#fff",
-                  },
-                  iconTheme: {
-                    primary: "#fff",
-                    secondary: "#10b981",
-                  },
-                },
-                error: {
-                  duration: 5000,
-                  iconTheme: {
-                    primary: "#ef4444",
-                    secondary: "#fff",
-                  },
-                },
-                loading: {
-                  duration: Infinity,
-                  style: {
-                    color: "#000",
-                  },
-                },
-              }}
-            />
-
-            <Outlet />
-          </div>
-        </main>
       </div>
-    </div>
   );
 };
 

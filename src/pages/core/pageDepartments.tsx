@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { Building2 } from "lucide-react";
 import DepartmentManagementHeader from "../../components/core/department/DeptHeader";
 import DepartmentSearchFilters from "../../components/core/department/DeptSearchFilters";
 import DepartmentTable from "../../components/core/department/DeptTable";
@@ -40,7 +40,7 @@ const DepartmentOverview = () => {
       setCurrentPage(1);
     },
     onError: (error) => {
-      setFormError(error.message || 'Failed to create department. Please try again.');
+      setFormError(error.message || 'Failed to create department');
     },
   });
 
@@ -51,7 +51,7 @@ const DepartmentOverview = () => {
       setEditingDepartment(null);
     },
     onError: (error) => {
-      setFormError(error.message || 'Failed to update department. Please try again.');
+      setFormError(error.message || 'Failed to update department');
     },
   });
 
@@ -60,7 +60,7 @@ const DepartmentOverview = () => {
       setFormError(null);
     },
     onError: (error) => {
-      setFormError(error.message || 'Failed to delete department. Please try again.');
+      setFormError(error.message || 'Failed to delete department');
     },
   });
 
@@ -68,13 +68,12 @@ const DepartmentOverview = () => {
 
   const handleAddDepartment = async (newDepartment: AddDeptDto) => {
     setFormError(null);
-    // No try/catch needed - error is handled by mutation's onError
     await createDepartmentMutation.mutateAsync(newDepartment);
   };
 
   const handleEditClick = (department: EditDeptDto) => {
     const departmentToEdit = departments.find(
-      (dept) => dept.id === department.id
+        (dept) => dept.id === department.id
     );
     if (departmentToEdit) {
       setEditingDepartment(departmentToEdit);
@@ -84,18 +83,16 @@ const DepartmentOverview = () => {
 
   const handleUpdateDepartment = async (updatedDepartment: EditDeptDto) => {
     setFormError(null);
-    // No try/catch needed - error is handled by mutation's onError
     await updateDepartmentMutation.mutateAsync(updatedDepartment);
   };
 
   const handleDepartmentStatusChange = async (
-    departmentId: UUID,
-    newStatus: "active" | "inactive"
+      departmentId: UUID,
+      newStatus: "active" | "inactive"
   ) => {
     setFormError(null);
     const department = departments.find((dept) => dept.id === departmentId);
     if (department) {
-      // Create properly typed update object
       const updateData: EditDeptDto = {
         id: department.id,
         name: department.name,
@@ -104,63 +101,53 @@ const DepartmentOverview = () => {
         branchId: department.branchId,
         rowVersion: department.rowVersion,
       };
-      
-      // No try/catch needed - error is handled by mutation's onError
       await updateDepartmentMutation.mutateAsync(updateData);
     }
   };
 
   const handleDepartmentDelete = async (departmentId: UUID) => {
     setFormError(null);
-    // No try/catch needed - error is handled by mutation's onError
     await deleteDepartmentMutation.mutateAsync(departmentId);
   };
 
-  // Enhanced filter function to include status search
+  // Filter departments
   const filteredDepartments = useMemo(() => {
     if (!searchTerm.trim()) {
       return departments;
     }
-    
+
     const searchLower = searchTerm.toLowerCase();
-    
+
     return departments.filter((department) => {
-      // Basic text search
-      const basicMatch = 
-        department.name.toLowerCase().includes(searchLower) ||
-        department.nameAm.toLowerCase().includes(searchLower) ||
-        (department.branch && department.branch.toLowerCase().includes(searchLower));
-      
-      // Status search
+      const basicMatch =
+          department.name.toLowerCase().includes(searchLower) ||
+          department.nameAm.toLowerCase().includes(searchLower) ||
+          (department.branch && department.branch.toLowerCase().includes(searchLower));
+
       const statusText = getStatusText(department.deptStat).toLowerCase();
       const statusMatch = statusText.includes(searchLower);
-      
-      // Numeric status search
-      const numericStatusMatch = 
-        (searchLower.includes('0') && department.deptStat === "0") ||
-        (searchLower.includes('1') && department.deptStat === "1");
-      
-      // deptStatStr search (if available)
-      const statStrMatch = department.deptStatStr 
-        ? department.deptStatStr.toLowerCase().includes(searchLower)
-        : false;
-      
+
+      const numericStatusMatch =
+          (searchLower.includes('0') && department.deptStat === "0") ||
+          (searchLower.includes('1') && department.deptStat === "1");
+
+      const statStrMatch = department.deptStatStr
+          ? department.deptStatStr.toLowerCase().includes(searchLower)
+          : false;
+
       return basicMatch || statusMatch || numericStatusMatch || statStrMatch;
     });
   }, [departments, searchTerm, getStatusText]);
 
-  // Pagination logic
+  // Pagination
   const totalPages = Math.ceil(filteredDepartments.length / itemsPerPage);
   const paginatedDepartments = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredDepartments.slice(startIndex, endIndex);
+    return filteredDepartments.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredDepartments, currentPage, itemsPerPage]);
 
-  // Combine query error and form error
   const displayError = queryError?.message || formError;
 
-  // Clear errors
   const clearErrors = () => {
     setFormError(null);
     if (queryError) {
@@ -168,89 +155,92 @@ const DepartmentOverview = () => {
     }
   };
 
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  if (isLoading) {
+    return (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 dark:border-slate-700 border-t-slate-600 dark:border-t-slate-400" />
+        </div>
+    );
+  }
+
   return (
-    <>
-      <motion.section
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className={`w-full h-full flex flex-col space-y-6 ${
-          isEditModalOpen ? "blur-sm" : ""
-        }`}
-      >
-        {/* Header with border and padding */}
-        <div className="flex justify-between items-center">
-          <DepartmentManagementHeader />
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+              <Building2 className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                Department Management
+              </h1>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Manage organizational departments and their structures
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Main content area with consistent padding */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Loading State */}
-          {isLoading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="flex justify-center items-center py-12"
-            >
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-              </div>
-            </motion.div>
-          )}
-
-          {!isLoading && (
-            <div className="space-y-6">
-              {/* Error Message */}
-              {displayError && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg"
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">
-                      {displayError.includes("load") ? (
-                        <>
-                          Failed to load departments.{" "}
-                          <button
-                            onClick={() => refetch()}
-                            className="underline hover:text-red-800 font-semibold focus:outline-none"
-                            disabled={isLoading}
-                          >
-                            Try again
-                          </button>
-                        </>
-                      ) : displayError.includes("create") ? (
-                        "Failed to create department. Please try again."
-                      ) : displayError.includes("update") ? (
-                        "Failed to update department. Please try again."
-                      ) : displayError.includes("delete") ? (
-                        "Failed to delete department. Please try again."
-                      ) : (
-                        displayError
-                      )}
-                    </span>
+        {/* Error Message */}
+        {displayError && (
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <div className="flex justify-between items-center">
+            <span className="text-sm text-red-700 dark:text-red-400">
+              {displayError.includes("load") ? (
+                  <>
+                    Failed to load departments.{' '}
                     <button
-                      onClick={clearErrors}
-                      className="text-red-700 hover:text-red-900 font-bold text-lg ml-4"
+                        onClick={handleRefresh}
+                        className="underline hover:text-red-800 font-medium"
                     >
-                      ×
+                      Try again
                     </button>
-                  </div>
-                </motion.div>
+                  </>
+              ) : (
+                  displayError
               )}
+            </span>
+                <button
+                    onClick={clearErrors}
+                    className="text-red-700 dark:text-red-400 hover:text-red-900 font-bold text-lg ml-4"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+        )}
 
-              {/* Search Filters */}
-              <DepartmentSearchFilters
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                onAddDepartment={handleAddDepartment}
-                selectedBranchId=""
-              />
+        {/* Search Filters */}
+        <DepartmentSearchFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            onAddDepartment={handleAddDepartment}
+            selectedBranchId=""
+            onRefresh={handleRefresh}
+            isLoading={isLoading}
+        />
 
-              {/* Department Table */}
-              <DepartmentTable
+        {/* Empty State */}
+        {!isLoading && filteredDepartments.length === 0 && !displayError && (
+            <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+              <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-3">
+                <Building2 className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+              </div>
+              <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">No departments found</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {searchTerm ? "Try adjusting your search" : "Click 'Add Department' to create one"}
+              </p>
+            </div>
+        )}
+
+        {/* Department Table */}
+        {!isLoading && filteredDepartments.length > 0 && (
+            <DepartmentTable
                 departments={paginatedDepartments}
                 currentPage={currentPage}
                 totalPages={totalPages}
@@ -259,38 +249,23 @@ const DepartmentOverview = () => {
                 onEditDepartment={handleEditClick}
                 onDepartmentStatusChange={handleDepartmentStatusChange}
                 onDepartmentDelete={handleDepartmentDelete}
-              />
-            </div>
-          )}
-        </div>
-      </motion.section>
+            />
+        )}
 
-      {/* Edit Department Modal */}
-      {isEditModalOpen && editingDepartment && (
-        <EditDeptModal
-          department={editingDepartment}
-          onEditDepartment={handleUpdateDepartment}
-          isOpen={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingDepartment(null);
-          }}
-        />
-      )}
-    </>
+        {/* Edit Department Modal */}
+        {isEditModalOpen && editingDepartment && (
+            <EditDeptModal
+                department={editingDepartment}
+                onEditDepartment={handleUpdateDepartment}
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                  setIsEditModalOpen(false);
+                  setEditingDepartment(null);
+                }}
+            />
+        )}
+      </div>
   );
-};
-
-// Animation variants
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      when: "beforeChildren",
-    },
-  },
 };
 
 export default DepartmentOverview;

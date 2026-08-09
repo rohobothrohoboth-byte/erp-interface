@@ -1,15 +1,9 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogClose
-} from '../../../components/ui/dialog';
-import { Button } from '../../../components/ui/button';
-import { Repeat, Building, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Repeat, Building2, AlertCircle } from 'lucide-react';
+import { Button } from '../../ui/button';
 import type { BranchListDto, UUID } from '../../../types/core/branch';
 import { BranchStat } from '../../../types/core/enum';
-import React from 'react';
 
 interface StatBranchModalProps {
   branch: BranchListDto | null;
@@ -18,28 +12,19 @@ interface StatBranchModalProps {
   onConfirm: (branchId: UUID, newStatus: string) => void;
 }
 
-const StatBranchModal: React.FC<StatBranchModalProps> = ({ 
-  branch, 
-  isOpen, 
-  onClose, 
-  onConfirm 
-}) => {
-  const [selectedStatus, setSelectedStatus] = React.useState<string>('');
+const StatBranchModal: React.FC<StatBranchModalProps> = ({
+                                                           branch,
+                                                           isOpen,
+                                                           onClose,
+                                                           onConfirm
+                                                         }) => {
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (branch) {
       setSelectedStatus(branch.branchStat);
     }
   }, [branch]);
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case BranchStat.Active: return 'text-emerald-600 bg-emerald-100';
-      case BranchStat.InAct: return 'text-red-600 bg-red-100';
-      case BranchStat.UndCon: return 'text-yellow-600 bg-yellow-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
 
   const getStatusText = (status: string): string => {
     switch (status) {
@@ -51,81 +36,98 @@ const StatBranchModal: React.FC<StatBranchModalProps> = ({
   };
 
   const handleConfirm = () => {
-    if (branch && selectedStatus) {
+    if (branch && selectedStatus && selectedStatus !== branch.branchStat) {
       onConfirm(branch.id, selectedStatus);
+      onClose();
     }
   };
 
-  if (!branch) return null;
+  if (!isOpen || !branch) return null;
 
-  const currentStatus = branch.branchStat;
+  const currentStatusText = getStatusText(branch.branchStat);
+  const newStatusText = getStatusText(selectedStatus);
+  const isChanged = selectedStatus !== branch.branchStat;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader className='flex items-center gap-2'>
-            <Repeat size={24} /> Change Status
-        </DialogHeader>
-        
-        <div className="py-4 text-center">
-          <div className="flex items-center justify-center mb-3">
-            <Building className="text-gray-600 mr-2" size={20} />
-            <p className="font-medium text-lg">{branch.name}</p>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-md w-full overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex items-center gap-3 p-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Repeat className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+              Change Branch Status
+            </h2>
           </div>
-          <p className="text-sm text-gray-600 mb-2">{branch.nameAm}</p>
-          <p className="text-sm text-gray-500 mb-6">Code: {branch.code} • {branch.location}</p>
-          
-          <div className="bg-gray-50 rounded-lg p-4 mb-4">
-            <p className="text-sm text-gray-600 mb-3">Status Change</p>
-            
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="text-center">
-                <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${getStatusColor(currentStatus)}`}>
-                  {getStatusText(currentStatus)}
-                </span>
-                <p className="text-xs text-gray-500 mt-1">Current Status</p>
+
+          {/* Body */}
+          <div className="p-5">
+            <div className="text-center mb-4">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Building2 className="h-4 w-4 text-slate-400" />
+                <p className="font-medium text-slate-800 dark:text-slate-200">{branch.name}</p>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400">{branch.code} • {branch.location}</p>
+            </div>
+
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Current Status</span>
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                {currentStatusText}
+              </span>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  New Status
+                </label>
+                <select
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                    className="w-full p-2 text-sm border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400"
+                >
+                  <option value={BranchStat.Active}>Active</option>
+                  <option value={BranchStat.InAct}>Inactive</option>
+                  <option value={BranchStat.UndCon}>Under Construction</option>
+                </select>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-700 text-left mb-2">
-                Select New Status:
-              </label>
-              <select 
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value={BranchStat.Active}>Active</option>
-                <option value={BranchStat.InAct}>Inactive</option>
-                <option value={BranchStat.UndCon}>Under Construction</option>
-              </select>
-            </div>
+            {isChanged && (
+                <div className="flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400 text-xs">
+                  <AlertCircle size={14} />
+                  <span>Status will change from {currentStatusText} to {newStatusText}</span>
+                </div>
+            )}
           </div>
-          
-          <div className="flex items-center justify-center text-amber-600 bg-amber-50 rounded-lg p-3 mb-2">
-            <AlertCircle size={16} className="mr-2" />
-            <p className="text-sm font-medium">This action will immediately update the branch status</p>
-          </div>
-        </div>
-        
-        <DialogFooter className="flex justify-center items-center gap-1.5">
-          <Button 
-            variant="default" 
-            onClick={handleConfirm}
-            disabled={selectedStatus === currentStatus}
-            className="cursor-pointer px-6 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-          >
-            Confirm Change
-          </Button>
-          <DialogClose asChild>
-            <Button variant="outline" className="cursor-pointer px-6">
+
+          {/* Footer */}
+          <div className="flex justify-center gap-3 p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+            <Button
+                onClick={handleConfirm}
+                disabled={!isChanged}
+                className="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white px-5 h-8 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Confirm Change
+            </Button>
+            <Button
+                onClick={onClose}
+                variant="outline"
+                className="px-5 h-8 text-sm"
+            >
               Cancel
             </Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          </div>
+        </motion.div>
+      </div>
   );
 };
 

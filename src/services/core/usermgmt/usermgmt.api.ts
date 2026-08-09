@@ -1,3 +1,5 @@
+// src/services/core/usermgmt/usermgmt.api.ts
+
 import { api } from '../../api';
 import type { Step1Dto, EmpAddRes, EmpAddPrintDto, UUID } from '../../../types/hr/employee/empAddDto';
 import type { AdminEmpListDto, EmployeeListDto } from '../../../types/hr/employee';
@@ -7,11 +9,42 @@ const toUtcIso = (date: string): string => {
   return new Date(date).toISOString();
 };
 
+export interface PaginatedResult<T> {
+  items: T[];
+  pageNumber: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface UserListDto {
+  id: string;
+  code: string;
+  empFullName: string;
+  empFullNameAm: string;
+  gender: string;
+  department: string;
+  position: string;
+  branch: string;
+  empState: string;
+  hasAccount: boolean;
+  isAccountActive: boolean;
+  userId?: string;
+}
+
 class UsermgmtApi {
-  private baseUrl = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/AdminEmp`;
-  private baseUrlE = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/Employee`;
-  private addEmpUrl = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/AddEmp`;
-    private addBaseUrl = `${import.meta.env.VITE_AUTH_URL }/AdminEmp`;
+  // Auth service URL (for admin operations)
+  private authUrl = import.meta.env.VITE_AUTH_URL || '/api/auth/v1';
+
+  // Profile service URL (for employee operations)
+  private profileUrl = import.meta.env.VITE_HRMM_PROFILE_URL || '/api/hrm/profile/v1';
+
+  // Base URLs for different services
+  private get adminEmpUrl() { return `${this.authUrl}/AdminEmp`; }
+  private get employeeUrl() { return `${this.profileUrl}/Employee`; }
+  private get addEmpUrl() { return `${this.authUrl}/AdminEmp`; }
 
   private extractErrorMessage(error: any): string {
     if (error.response?.data?.message) return error.response.data.message;
@@ -22,18 +55,47 @@ class UsermgmtApi {
     return error.message || 'An unexpected error occurred';
   }
 
-  async getAllEmployees(): Promise<EmployeeListDto[]> {
+  // Get all employees - using Admin endpoint from Auth service
+  async getAllEmployeesAdmin(): Promise<AdminEmpListDto[]> {
     try {
-      const response = await api.get(`${this.baseUrlE}/AllEmployee`);
+      // Endpoint: /api/auth/v1/AdminEmp/AllEmployee
+      const response = await api.get(`${this.adminEmpUrl}/AllEmployee`);
       return response.data.data;
     } catch (error) {
+      console.error('API Error details:', error);
+      console.error('Request URL:', `${this.adminEmpUrl}/AllEmployee`);
       throw new Error(this.extractErrorMessage(error));
     }
   }
 
-  async getAllEmployeesAdmin(): Promise<AdminEmpListDto[]> {
+  // Get all employees - using Employee endpoint from Profile service
+  async getAllEmployees(): Promise<EmployeeListDto[]> {
     try {
-      const response = await api.get(`${this.addBaseUrl}/AllEmployee`);
+      // Endpoint: /api/hrm/profile/v1/Employee/AllEmployee
+      const response = await api.get(`${this.employeeUrl}/AllEmployee`);
+      return response.data.data;
+    } catch (error) {
+      console.error('API Error details:', error);
+      console.error('Request URL:', `${this.employeeUrl}/AllEmployee`);
+      throw new Error(this.extractErrorMessage(error));
+    }
+  }
+
+  // Get paginated users
+  async getPaginatedUsers(params: {
+    pageNumber: number;
+    pageSize: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+    searchTerm?: string;
+    department?: string;
+    branch?: string;
+    empState?: string;
+    gender?: string;
+  }): Promise<PaginatedResult<UserListDto>> {
+    try {
+      // Endpoint: /api/hrm/profile/v1/Employee/paginated
+      const response = await api.get(`${this.employeeUrl}/paginated`, { params });
       return response.data.data;
     } catch (error) {
       throw new Error(this.extractErrorMessage(error));
@@ -76,7 +138,7 @@ class UsermgmtApi {
       formData.append('Website', step1.website || '');
       if (step1.File) formData.append('File', step1.File);
 
-      const response = await api.post(`${this.baseUrl}/Step1`, formData, {
+      const response = await api.post(`${this.addEmpUrl}/Step1`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data.data;
@@ -96,15 +158,43 @@ class UsermgmtApi {
 
   async getAccountData(employeeId: UUID): Promise<any> {
     try {
-      const mockAccountData = {
-        userId: employeeId,
-        modules: ['module-1', 'module-2'],
-        permissions: ['perm-1', 'perm-2'],
-        apiPermissions: ['api-1', 'api-2'],
+      // Endpoint: /api/auth/v1/Permission/GetAppUserIdByEmployeeId/{employeeId}
+      const appUserResponse = await api.get(`${this.authUrl}/Permission/GetAppUserIdByEmployeeId/${employeeId}`);
+      const appUserId = appUserResponse.data?.data?.AppUserId;
+
+      if (appUserId) {
+        return {
+          hasAccount: true,
+          userId: appUserId,
+          employeeId: employeeId,
+          isActive: true,
+          modules: [],
+          permissions: [],
+          apiPermissions: [],
+          roleId: null
+        };
+      }
+
+      return {
+        hasAccount: false,
+        isActive: false,
+        userId: null,
+        modules: [],
+        permissions: [],
+        apiPermissions: [],
+        roleId: null
       };
-      return mockAccountData;
     } catch (error) {
-      throw new Error(this.extractErrorMessage(error));
+      console.error("Failed to fetch account data:", error);
+      return {
+        hasAccount: false,
+        isActive: false,
+        userId: null,
+        modules: [],
+        permissions: [],
+        apiPermissions: [],
+        roleId: null
+      };
     }
   }
 
@@ -121,7 +211,8 @@ export const usermgmtApi = new UsermgmtApi();
 
 export const usermgmtFetcher = {
   getAllEmployees: () => usermgmtApi.getAllEmployees(),
-   getAllEmployeesAdmin: () => usermgmtApi.getAllEmployeesAdmin(),
+  getAllEmployeesAdmin: () => usermgmtApi.getAllEmployeesAdmin(),
+  getPaginatedUsers: (params: any) => usermgmtApi.getPaginatedUsers(params),
   addEmployeeStep1: (data: Step1Dto) => usermgmtApi.addEmployeeStep1(data),
   getEmployeeStep2Data: (id: UUID) => usermgmtApi.getEmployeeStep2Data(id),
   getAccountData: (id: UUID) => usermgmtApi.getAccountData(id),

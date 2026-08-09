@@ -1,100 +1,118 @@
 import { Card } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
-import { MoreVertical, PenBox, Trash2 } from 'lucide-react';
+import { MoreVertical, PenBox, Trash2, Building2 } from 'lucide-react';
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
 } from '../../../components/ui/dropdown-menu';
-import { motion } from 'framer-motion';
 import type { CompListDto, UUID } from '../../../types/core/comp';
-import { useNavigate } from 'react-router-dom';
 
 interface CompListProps {
-  companies: CompListDto[];
-  onEditCompany: (company: CompListDto) => void;
-  onDeleteCompany: (company: CompListDto) => void;
-  onViewBranches: (companyId: UUID) => void;
+    companies: CompListDto[];
+    onEditCompany: (company: CompListDto) => void;
+    onDeleteCompany: (company: CompListDto) => void;
+    onViewBranches: (companyId: UUID) => void;
 }
 
 const CompList: React.FC<CompListProps> = ({
-  companies,
-  onEditCompany,
-  onDeleteCompany,
-  onViewBranches,
-}) => {
-  const navigate = useNavigate();
+                                               companies,
+                                               onEditCompany,
+                                               onDeleteCompany,
+                                               onViewBranches,
+                                           }) => {
+    const handleViewBranches = (companyId: UUID) => {
+        onViewBranches(companyId);
+    };
 
-  const handleViewBranches = (companyId: UUID) => {
-    onViewBranches(companyId as UUID);
-    navigate(`/branches?companyId=${companyId}`);
-  }
-  return (
-    <motion.div
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: { opacity: 0 },
-        visible: {
-          opacity: 1,
-          transition: { staggerChildren: 0.05 },
-        },
-      }}
-    >
-      {companies.map((company) => (
-        <motion.div
-          key={company.id}
-          variants={{
-            hidden: { opacity: 0, y: 20 },
-            visible: { opacity: 1, y: 0 },
-          }}
-        >
-          <Card className="relative rounded-xl border border-gray-200 shadow-sm p-4 space-y-3 transition hover:shadow-md">
-            <div>
-              <h4 className="text-md font-semibold text-black ">{company.nameAm}</h4>
-              <p className="text-sm text-gray-600 ">{company.name}</p>
-              <p className="text-xs text-gray-500 mt-1">{company.branchCount} branches</p>
+    if (companies.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-3">
+                    <Building2 className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+                </div>
+                <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">No companies found</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Click "Add Company" to create one</p>
             </div>
+        );
+    }
 
-            <div className="flex justify-between items-center">
-              <Button
-                className="text-emerald-600 bg-emerald-50 hover:bg-emerald-100 cursor-pointer"
-                size="sm"
-                onClick={() => handleViewBranches(company.id)}              >
-                View Branches
-              </Button>
-            </div>
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {companies.map((company) => (
+                <Card
+                    key={company.id}
+                    className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+                >
+                    <div className="p-4">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                                    <Building2 className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                        {company.nameAm}
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                        {company.name}
+                                    </p>
+                                </div>
+                            </div>
 
-            <div className="absolute top-2 right-2 z-10">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
-                    <MoreVertical className="w-4 h-4 text-gray-500" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEditCompany(company)}
-                    className='flex items-center gap-2'>
-                    <PenBox size={16} />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => onDeleteCompany(company)}
-                    className="flex items-center gap-2 text-red-600 data-[highlighted]:!bg-red-50 data-[highlighted]:text-red-700"
-                  >
-                    <Trash2 size={16} className="text-red-600" />
-                    <p className="text-red-600">Delete</p>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </Card>
-        </motion.div>
-      ))}
-    </motion.div>
-  );
+                            {/* Dropdown Menu */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                    >
+                                        <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-36 p-1">
+                                    <DropdownMenuItem
+                                        onClick={() => onEditCompany(company)}
+                                        className="text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md cursor-pointer"
+                                    >
+                                        <PenBox className="h-3.5 w-3.5 mr-2" />
+                                        Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => onDeleteCompany(company)}
+                                        className="text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md cursor-pointer"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+
+                        {/* Branch Count */}
+                        <div className="mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                <span className="font-medium text-slate-700 dark:text-slate-300">{company.branchCount}</span> branches
+                            </p>
+                        </div>
+
+                        {/* Action Button */}
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewBranches(company.id)}
+                            className="w-full text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200 transition-colors"
+                        >
+                            View Branches
+                        </Button>
+                    </div>
+                </Card>
+            ))}
+        </div>
+    );
 };
 
 export default CompList;

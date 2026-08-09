@@ -1,11 +1,35 @@
-import { api } from '../../api';
+import { useQuery } from "@tanstack/react-query";
+import { fiscalYearApi } from "./fisc.api";
 import type { NameListItem } from '../../../types/NameList/nameList';
 
-const baseUrl = `${import.meta.env.VITE_HRMM_LEAVE_URL || 'core/module/v1'}/Names`;
-
+// FIXED: Use the core module fiscal year API
 export const fiscNamesApi = {
-  getActiveFiscalYear: async (): Promise<NameListItem[]> => {
-    const res = await api.get(`${baseUrl}/ActiveFiscYear`);
-    return res.data;
+  getActiveFiscalYear: async (): Promise<NameListItem | null> => {
+    try {
+      const allFiscalYears = await fiscalYearApi.getAllFiscalYears();
+      const currentDate = new Date();
+
+      // Find the active fiscal year based on current date
+      const activeYear = allFiscalYears.find((year) => {
+        const startDate = new Date(year.dateStart);
+        const endDate = new Date(year.dateEnd);
+        return currentDate >= startDate && currentDate <= endDate;
+      });
+
+      // Transform to NameListItem format if needed
+      return activeYear ? { id: activeYear.id, name: activeYear.name } : null;
+    } catch (error) {
+      console.error("Error fetching active fiscal year:", error);
+      return null;
+    }
   },
+};
+
+// React Query hook for active fiscal year
+export const useActiveFiscalYear = () => {
+  return useQuery({
+    queryKey: ["active-fiscal-year"],
+    queryFn: () => fiscNamesApi.getActiveFiscalYear(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 };

@@ -12,14 +12,48 @@ export const AdmissionType = {
   "3": "Unknown",
 } as const;
 export type AdmissionType = (typeof AdmissionType)[keyof typeof AdmissionType];
-
+export const EmpState = {
+  "0": "Pending",
+  "1": "Approved",
+  "2": "Active",
+  "3": "Under Probation",
+  "4": "Terminated",
+  "5": "StandBy",
+  "6": "Retired",
+  "7": "On Leave",
+} as const;
 export const AwardReason = {
   "0": "Good Manner",
   "1": "Better Service",
   "2": "Other",
 } as const;
 export type AwardReason = (typeof AwardReason)[keyof typeof AwardReason];
+export const YesNo = {
+  "0": "Yes",
+  "1": "No",
+} as const;
+export type YesNo = (typeof YesNo)[keyof typeof YesNo];
+export const Gender = {
+  "0": "Male",
+  "1": "Female",
+} as const;
+export const AddressType = {
+  "0": "Residence",
+  "1": "Work Place",
+} as const;
+export type AddressType = (typeof AddressType)[keyof typeof AddressType];
+export type Gender = (typeof Gender)[keyof typeof Gender];
 
+export const GenderAm = {
+  "0": "ወንድ",
+  "1": "ሴት",
+} as const;
+export type GenderAm = (typeof GenderAm)[keyof typeof GenderAm];
+export const YesNoAm = {
+  "0": "አዎ",
+  "1": "አይ",
+} as const;
+export type YesNoAm = (typeof YesNoAm)[keyof typeof YesNoAm];
 export const AwardType = {
   "0": "Certificate",
   "1": "Cash",

@@ -57,9 +57,9 @@ const PageBenefitSet: React.FC = () => {
       setError(null);
       const updatedBenefitSet = await benefitSetService.updateBenefitSet(data);
       setBenefitSets((prev) =>
-        prev.map((set) =>
-          set.id === updatedBenefitSet.id ? updatedBenefitSet : set
-        )
+          prev.map((set) =>
+              set.id === updatedBenefitSet.id ? updatedBenefitSet : set
+          )
       );
       setEditingBenefitSet(null);
     } catch (error) {
@@ -87,156 +87,160 @@ const PageBenefitSet: React.FC = () => {
     setDeletingBenefitSet(benefitSet);
   };
 
-  // Filter benefit sets based on search term
+  // ✅ FIX: Handle null values in filter
   const filteredBenefitSets = benefitSets.filter(
-    (benefitSet) =>
-      benefitSet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      benefitSet.benefitStr.includes(searchTerm)
+      (benefitSet) => {
+        const searchLower = searchTerm.toLowerCase();
+        const name = benefitSet.name?.toLowerCase() || '';
+        const benefitStr = benefitSet.benefitStr?.toLowerCase() || '';
+
+        return name.includes(searchLower) || benefitStr.includes(searchLower);
+      }
   );
 
   return (
-    <motion.section
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="bg-gray-50 space-y-6 min-h-screen"
-    >
-      {/* Header Component - Always visible */}
-      <BenefitSetHeader />
-
-      {/* Search Filters Component - Always visible */}
-      <BenefitSearchFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        benefitSets={benefitSets}
-        onAddClick={() => setIsAddModalOpen(true)}
-        viewMode={viewMode}
-        setViewMode={setViewMode}
-      />
-
-      {/* Error Display - Now positioned under the search filter */}
-      {error && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mt-2"
-        >
-          <div className="flex justify-between items-center">
-            <span className="font-medium">
-              {error.includes("load") ? (
-                <>
-                  Failed to load benefit sets.{" "}
-                  <button
-                    onClick={loadBenefitSets}
-                    className="underline hover:text-red-800 font-semibold focus:outline-none"
-                  >
-                    Try again
-                  </button>{" "}
-                  later.
-                </>
-              ) : error.includes("create") ? (
-                "Failed to create benefit set. Please try again."
-              ) : error.includes("update") ? (
-                "Failed to update benefit set. Please try again."
-              ) : error.includes("delete") ? (
-                "Failed to delete benefit set. Please try again."
-              ) : (
-                error
-              )}
-            </span>
-            <button
-              onClick={() => setError(null)}
-              className="text-red-700 hover:text-red-900 font-bold text-lg ml-4"
-            >
-              ×
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <motion.div
+      <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="flex justify-center items-center py-12"
-        >
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading benefit sets...</p>
-          </div>
-        </motion.div>
-      )}
+          transition={{ duration: 0.5 }}
+          className="bg-gray-50 space-y-6 min-h-screen"
+      >
+        {/* Header Component - Always visible */}
+        <BenefitSetHeader />
 
-      {/* Content Area - Only show when not loading */}
-      {!loading && (
-        <>
-          {/* Benefit Sets Grid/List */}
-          <div
-            className={
-              viewMode === "grid"
-                ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-                : "space-y-4"
-            }
-          >
-            {filteredBenefitSets.map((benefitSet) => (
-              <BenefitSetCard
-                key={benefitSet.id}
-                benefitSet={benefitSet}
-                onEdit={() => setEditingBenefitSet(benefitSet)}
-                onDelete={() => handleDeleteClick(benefitSet)}
-                isDeleting={deletingId === benefitSet.id}
-                viewMode={viewMode}
-              />
-            ))}
-          </div>
+        {/* Search Filters Component - Always visible */}
+        <BenefitSearchFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            benefitSets={benefitSets}
+            onAddClick={() => setIsAddModalOpen(true)}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+        />
 
-          {filteredBenefitSets.length === 0 && !loading && (
+        {/* Error Display - Now positioned under the search filter */}
+        {error && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-center py-12 bg-white rounded-lg border border-gray-200"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mt-2"
             >
-              <div className="p-3 rounded-full bg-gray-100 w-12 h-12 mx-auto mb-4 flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-gray-400" />
+              <div className="flex justify-between items-center">
+            <span className="font-medium">
+              {error.includes("load") ? (
+                  <>
+                    Failed to load benefit sets.{" "}
+                    <button
+                        onClick={loadBenefitSets}
+                        className="underline hover:text-red-800 font-semibold focus:outline-none"
+                    >
+                      Try again
+                    </button>{" "}
+                    later.
+                  </>
+              ) : error.includes("create") ? (
+                  "Failed to create benefit set. Please try again."
+              ) : error.includes("update") ? (
+                  "Failed to update benefit set. Please try again."
+              ) : error.includes("delete") ? (
+                  "Failed to delete benefit set. Please try again."
+              ) : (
+                  error
+              )}
+            </span>
+                <button
+                    onClick={() => setError(null)}
+                    className="text-red-700 hover:text-red-900 font-bold text-lg ml-4"
+                >
+                  ×
+                </button>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No Benefit Setting Found !
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {searchTerm
-                  ? "No benefit setting matches your search."
-                  : "Get started by creating the first benefit settting."}
-              </p>
             </motion.div>
-          )}
-        </>
-      )}
+        )}
 
-      {/* Add Benefit Modal */}
-      <AddBenefitModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onAddBenefit={handleAddSubmit}
-      />
+        {/* Loading State */}
+        {loading && (
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex justify-center items-center py-12"
+            >
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading benefit sets...</p>
+              </div>
+            </motion.div>
+        )}
 
-      {/* Edit Benefit Set Modal */}
-      <EditBenefitSetModal
-        isOpen={!!editingBenefitSet}
-        onClose={() => setEditingBenefitSet(null)}
-        onSave={handleEditSubmit}
-        benefitSet={editingBenefitSet}
-      />
+        {/* Content Area - Only show when not loading */}
+        {!loading && (
+            <>
+              {/* Benefit Sets Grid/List */}
+              <div
+                  className={
+                    viewMode === "grid"
+                        ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                        : "space-y-4"
+                  }
+              >
+                {filteredBenefitSets.map((benefitSet) => (
+                    <BenefitSetCard
+                        key={benefitSet.id}
+                        benefitSet={benefitSet}
+                        onEdit={() => setEditingBenefitSet(benefitSet)}
+                        onDelete={() => handleDeleteClick(benefitSet)}
+                        isDeleting={deletingId === benefitSet.id}
+                        viewMode={viewMode}
+                    />
+                ))}
+              </div>
 
-      {/* Delete Benefit Set Modal */}
-      <DeleteBenefitModal
-        isOpen={!!deletingBenefitSet}
-        onClose={() => setDeletingBenefitSet(null)}
-        onConfirm={handleDeleteConfirm}
-        benefitSet={deletingBenefitSet}
-      />
-    </motion.section>
+              {filteredBenefitSets.length === 0 && !loading && (
+                  <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                      className="text-center py-12 bg-white rounded-lg border border-gray-200"
+                  >
+                    <div className="p-3 rounded-full bg-gray-100 w-12 h-12 mx-auto mb-4 flex items-center justify-center">
+                      <DollarSign className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No Benefit Setting Found !
+                    </h3>
+                    <p className="text-gray-500 mb-4">
+                      {searchTerm
+                          ? "No benefit setting matches your search."
+                          : "Get started by creating the first benefit settting."}
+                    </p>
+                  </motion.div>
+              )}
+            </>
+        )}
+
+        {/* Add Benefit Modal */}
+        <AddBenefitModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            onAddBenefit={handleAddSubmit}
+        />
+
+        {/* Edit Benefit Set Modal */}
+        <EditBenefitSetModal
+            isOpen={!!editingBenefitSet}
+            onClose={() => setEditingBenefitSet(null)}
+            onSave={handleEditSubmit}
+            benefitSet={editingBenefitSet}
+        />
+
+        {/* Delete Benefit Set Modal */}
+        <DeleteBenefitModal
+            isOpen={!!deletingBenefitSet}
+            onClose={() => setDeletingBenefitSet(null)}
+            onConfirm={handleDeleteConfirm}
+            benefitSet={deletingBenefitSet}
+        />
+      </motion.section>
   );
 };
 

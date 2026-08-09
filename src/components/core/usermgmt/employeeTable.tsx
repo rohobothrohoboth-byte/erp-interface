@@ -1,11 +1,21 @@
-import React from "react";
-import { motion } from "framer-motion";
+// components/core/usermgmt/employeeTable.tsx
+import React, { useMemo, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronLeft, ChevronRight, Loader2, PenBox, Lock,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  PenBox,
+  User,
+  Building2,
+  Briefcase,
+  MapPin,
+  UserPlus,
+  AlertCircle,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import type { AdminEmpListDto } from '../../../types/hr/employee';
-
-
 
 interface EmployeeTableProps {
   employees: AdminEmpListDto[];
@@ -14,359 +24,405 @@ interface EmployeeTableProps {
   totalItems: number;
   onPageChange: (page: number) => void;
   onEmployeeUpdate: (updatedEmployee: AdminEmpListDto) => void;
-  onEmployeeStatusChange: (
-    employeeId: string,
-    newStatus: "active" | "on-leave",
-  ) => void;
+  onEmployeeStatusChange: (employeeId: string, newStatus: "active" | "on-leave") => void;
   onEmployeeTerminate: (employeeId: string) => void;
   onAddAccount?: (employee: AdminEmpListDto) => void;
   onEditAccount?: (employee: AdminEmpListDto) => void;
   showAddAccountButton?: boolean;
   loading?: boolean;
+  itemsPerPage?: number;
 }
 
 const EmployeeTable: React.FC<EmployeeTableProps> = ({
-  employees,
-  currentPage,
-  totalPages,
-  totalItems,
-  onPageChange,
-  // onEmployeeDelete,
-  onAddAccount,
-  onEditAccount,
-  loading = false,
-}) => {
+                                                       employees,
+                                                       currentPage,
+                                                       totalPages,
+                                                       totalItems,
+                                                       onPageChange,
+                                                       onAddAccount,
+                                                       onEditAccount,
+                                                       loading = false,
+                                                       itemsPerPage = 10,
+                                                     }) => {
+  // Memoized sorted employees
+  const sortedEmployees = useMemo(() => {
+    return [...employees].sort((a, b) =>
+        (a.empFullName || "").localeCompare(b.empFullName || "")
+    );
+  }, [employees]);
 
-const sortedEmployees = [...employees].sort((a, b) =>
-  (a.empFullName || "").localeCompare(b.empFullName || "")
-);
+  // Memoized page range calculation
+  const pageRange = useMemo(() => {
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+    return { startItem, endItem };
+  }, [currentPage, itemsPerPage, totalItems]);
 
-  // Handle Add Account button click
-  const handleAddAccountClick = (employee: AdminEmpListDto) => {
-    if (onAddAccount) {
-      onAddAccount(employee);
+  // Get initials from full name
+  const getInitials = useCallback((fullName?: string): string => {
+    if (!fullName) return "?";
+    return fullName
+        .trim()
+        .split(" ")
+        .slice(0, 2)
+        .map(name => name.charAt(0).toUpperCase())
+        .join("");
+  }, []);
+
+  // Get status color classes
+  const getEmpStateColor = useCallback((state?: string): string => {
+    const stateMap: Record<string, string> = {
+      "active": "bg-green-100 text-green-800 border-green-200",
+      "approved": "bg-green-100 text-green-800 border-green-200",
+      "pending": "bg-blue-100 text-blue-800 border-blue-200",
+      "under probation": "bg-yellow-100 text-yellow-800 border-yellow-200",
+      "prob": "bg-yellow-100 text-yellow-800 border-yellow-200",
+      "standby": "bg-yellow-100 text-yellow-800 border-yellow-200",
+      "terminated": "bg-red-100 text-red-800 border-red-200",
+      "on leave": "bg-orange-100 text-orange-800 border-orange-200",
+      "leave": "bg-orange-100 text-orange-800 border-orange-200",
+      "retired": "bg-slate-100 text-slate-700 border-slate-200",
+    };
+
+    const normalizedState = (state || "").toLowerCase();
+    return stateMap[normalizedState] || "bg-gray-100 text-gray-700 border-gray-200";
+  }, []);
+
+  // Get account status color and icon
+  // In EmployeeTable.tsx - update the getAccountStatusDisplay function
+
+  const getAccountStatusDisplay = useCallback((hasAccount?: boolean, isActive?: boolean) => {
+    // ✅ Handle undefined/null
+    if (!hasAccount) {
+      return {
+        text: "No Account",
+        color: "bg-gray-100 text-gray-600",
+        icon: null
+      };
     }
-  };
-
-  // Handle Edit Account button click
-  const handleEditAccountClick = (employee: AdminEmpListDto) => {
-    if (onEditAccount) {
-      onEditAccount(employee);
+    if (isActive) {
+      return {
+        text: "Active",
+        color: "bg-green-100 text-green-700",
+        icon: <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+      };
     }
-  };
+    return {
+      text: "Inactive",
+      color: "bg-red-100 text-red-700",
+      icon: <XCircle className="h-3.5 w-3.5 text-red-500" />
+    };
+  }, []);
 
-   const getEmpStateColor = (state?: string): string => {
-  switch ((state || "").toLowerCase()) {
-    case "active":
-    case "approved":
-      return "bg-green-100 text-green-800 border border-green-200";
+  // Handlers
+  const handleAddAccountClick = useCallback((employee: AdminEmpListDto) => {
+    onAddAccount?.(employee);
+  }, [onAddAccount]);
 
-    case "pending":
-      return "bg-blue-100 text-blue-800 border border-blue-200";
+  const handleEditAccountClick = useCallback((employee: AdminEmpListDto) => {
+    onEditAccount?.(employee);
+  }, [onEditAccount]);
 
-    case "under probation":
-    case "prob":
-    case "standby":
-      return "bg-yellow-100 text-yellow-800 border border-yellow-200";
+  const handlePageChange = useCallback((page: number) => {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
+      onPageChange(page);
+    }
+  }, [currentPage, totalPages, onPageChange]);
 
-    case "terminated":
-      return "bg-red-100 text-red-800 border border-red-200";
+  const handlePreviousPage = useCallback(() => {
+    handlePageChange(currentPage - 1);
+  }, [currentPage, handlePageChange]);
 
-    case "on leave":
-    case "leave":
-      return "bg-orange-100 text-orange-800 border border-orange-200";
+  const handleNextPage = useCallback(() => {
+    handlePageChange(currentPage + 1);
+  }, [currentPage, handlePageChange]);
 
-    case "retired":
-    return "bg-slate-100 text-slate-700 border border-slate-200";
+  // Generate page numbers array with ellipsis
+  const getPageNumbers = useCallback(() => {
+    const delta = 2;
+    const range: (number | string)[] = [];
+    const rangeWithDots: (number | string)[] = [];
+    let l: number | undefined;
 
-    default:
-      return "bg-gray-100 text-gray-700 border border-gray-200";
-  }
-};
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || (i >= currentPage - delta && i <= currentPage + delta)) {
+        range.push(i);
+      }
+    }
 
+    range.forEach((i) => {
+      if (l !== undefined) {
+        if (i - l === 2) {
+          rangeWithDots.push(l + 1);
+        } else if (i - l !== 1) {
+          rangeWithDots.push('...');
+        }
+      }
+      rangeWithDots.push(i);
+      l = i as number;
+    });
+
+    return rangeWithDots;
+  }, [currentPage, totalPages]);
+
+  // Loading skeleton
   if (loading && employees.length === 0) {
     return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-8 flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-          <p className="text-gray-600">Loading employees...</p>
+        <div className="bg-white rounded-xl shadow-sm p-8 flex items-center justify-center">
+          <div className="flex flex-col items-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+            <p className="text-gray-600">Loading employees...</p>
+          </div>
         </div>
-      </div>
     );
   }
 
+  // Table headers configuration
+  const tableHeaders = [
+    { key: 'employee', label: 'Employee', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' },
+    { key: 'code', label: 'CODE', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' },
+    { key: 'branch', label: 'Branch', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' },
+    { key: 'department', label: 'Department', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' },
+    { key: 'position', label: 'Position', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' },
+    { key: 'status', label: 'Status', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' },
+    { key: 'account', label: 'Account', className: 'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider' },
+    { key: 'actions', label: 'Actions', className: 'px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider' },
+  ];
+
   return (
-    <>
       <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { y: 20, opacity: 0 },
-          visible: {
-            y: 0,
-            opacity: 1,
-            transition: {
-              type: "spring",
-              stiffness: 100,
-              damping: 15,
-              duration: 0.5,
-            },
-          },
-        }}
-        className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200"
       >
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-white">
-              <motion.tr
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
-                >
-                  Employee
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider "
-                >
-                  CODE
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Branch
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider "
-                >
-                  Department
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider "
-                >
-                  Position
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Status
-                </th>
-                <th
-                  scope="col"
-                  className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Actions
-                </th>
-              </motion.tr>
+            <thead className="bg-gray-50">
+            <tr>
+              {tableHeaders.map((header) => (
+                  <th key={header.key} scope="col" className={header.className}>
+                    {header.label}
+                  </th>
+              ))}
+            </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
+            <AnimatePresence>
               {sortedEmployees.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={9}
-                    className="px-4 py-8 text-center text-gray-500"
-                  >
-                    {loading ? "Loading employees..." : "No employees found"}
-                  </td>
-                </tr>
-              ) : (
-                sortedEmployees.map((employee, index) => (
-                  <motion.tr
-                    key={employee.id}
-                    custom={index}
-                    initial="hidden"
-                    animate="visible"
-                    whileHover="hover"
-                    className="hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <motion.div
-                          whileHover={{ rotate: 10 }}
-                          className="shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center"
-                        >
-                          <div className="shrink-0 h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                            <span className="text-emerald-600 font-medium">
-                              {employee.empFullName
-                                ?.trim()
-                                .split(" ")
-                                .slice(0, 2)
-                                .map((name) => name.charAt(0).toUpperCase())
-                                .join("")}
-                            </span>
-                          </div>
-                        </motion.div>
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900 truncate max-w-30 md:max-w-none">
-                            {employee.empFullName || "No Name"}
-                          </div>
-                          <div className="text-xs text-gray-400 truncate max-w-30 md:max-w-none">
-                            {employee.empFullNameAm ||
-                              employee.empFullName ||
-                              "No Name"}
-                          </div>
-                          <div className="text-xs text-gray-400 truncate max-w-30 md:max-w-none">
-                            {employee.gender || "N/A"}
-                          </div>
-                        </div>
+                  <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <td colSpan={tableHeaders.length} className="px-4 py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center gap-2">
+                        <User className="h-12 w-12 text-gray-300" />
+                        <p>{loading ? "Loading employees..." : "No employees found"}</p>
                       </div>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
-                      <div className="flex items-center">
-                        <span className="truncate max-w-30">
-                          {employee.code || "Not specified"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
-                      <div className="flex items-center">
-                        <span className="truncate max-w-30">
-                          {employee.branch || "Not specified"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
-                      <div className="flex items-center">
-                        <span className="truncate max-w-30">
-                          {employee.department || "Not specified"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
-                      <div className="flex items-center">
-                        <span className="truncate max-w-30">
-                          {employee.position || "Not specified"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900 ">
-                      <div className="flex items-center">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getEmpStateColor(employee.empState)}`}
-                        >
-                          {employee.empState || "Not specified"}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
-                      {employee.hasAccount ? (
-                        // Direct Edit button for users with accounts
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleEditAccountClick(employee)}
-                          className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
-                          title="Manage Account"
-                        >
-                          <PenBox className="h-5 w-5" />
-                        </motion.button>
-                      ) : (
-                        // Add Account button for users without accounts
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleAddAccountClick(employee)}
-                          className="p-2 rounded-full bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-colors"
-                          title="Add Account"
-                        >
-                          <Lock className="h-5 w-5" />
-                        </motion.button>
-                      )}
                     </td>
                   </motion.tr>
-                ))
+              ) : (
+                  sortedEmployees.map((employee, index) => {
+                    const accountStatus = getAccountStatusDisplay(employee.hasAccount, employee.isAccountActive);
+
+                    return (
+                        <motion.tr
+                            key={employee.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: Math.min(index * 0.03, 0.5), duration: 0.2 }}
+                            whileHover={{ backgroundColor: "rgb(249 250 251)" }}
+                            className="transition-colors duration-150"
+                        >
+                          {/* Employee Info */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              <div className="shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-emerald-100 to-green-100 flex items-center justify-center">
+                            <span className="text-emerald-700 font-semibold text-sm">
+                              {getInitials(employee.empFullName)}
+                            </span>
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">
+                                  {employee.empFullName || "No Name"}
+                                </div>
+                                {employee.empFullNameAm && (
+                                    <div className="text-xs text-gray-500">
+                                      {employee.empFullNameAm}
+                                    </div>
+                                )}
+                                <div className="text-xs text-gray-400">
+                                  {employee.gender || "N/A"}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Code */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <code className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                              {employee.code || "—"}
+                            </code>
+                          </td>
+
+                          {/* Branch */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                              <span className="text-sm text-gray-700">
+                            {employee.branch || "—"}
+                          </span>
+                            </div>
+                          </td>
+
+                          {/* Department */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <Building2 className="h-3.5 w-3.5 text-gray-400" />
+                              <span className="text-sm text-gray-700">
+                            {employee.department || "—"}
+                          </span>
+                            </div>
+                          </td>
+
+                          {/* Position */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                              <Briefcase className="h-3.5 w-3.5 text-gray-400" />
+                              <span className="text-sm text-gray-700">
+                            {employee.position || "—"}
+                          </span>
+                            </div>
+                          </td>
+
+                          {/* Status */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getEmpStateColor(employee.empState)}`}>
+                          {employee.empState || "Not specified"}
+                        </span>
+                          </td>
+
+                          {/* Account Status */}
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${accountStatus.color}`}>
+                            {accountStatus.text}
+                          </span>
+                              {accountStatus.icon}
+                              {employee.hasAccount && employee.isAccountActive === false && (
+                                  <AlertCircle className="h-3.5 w-3.5 text-amber-500" title="Account deactivated" />
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="px-4 py-3 whitespace-nowrap text-right">
+                            {employee.hasAccount ? (
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => handleEditAccountClick(employee)}
+                                    className={`p-2 rounded-full transition-all duration-200 ${
+                                        employee.isAccountActive !== false
+                                            ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
+                                            : "bg-amber-100 text-amber-600 hover:bg-amber-200"
+                                    }`}
+                                    title={employee.isAccountActive !== false ? "Edit Account" : "Reactivate Account"}
+                                >
+                                  <PenBox className="h-4 w-4" />
+                                </motion.button>
+                            ) : (
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => handleAddAccountClick(employee)}
+                                    className="p-2 rounded-full bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-all duration-200"
+                                    title="Create Account"
+                                >
+                                  <UserPlus className="h-4 w-4" />
+                                </motion.button>
+                            )}
+                          </td>
+                        </motion.tr>
+                    );
+                  })
               )}
+            </AnimatePresence>
             </tbody>
           </table>
         </div>
 
         {/* Pagination */}
-        <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
-          <div className="flex-1 flex justify-between sm:hidden">
-            <button
-              onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() =>
-                onPageChange(Math.min(totalPages, currentPage + 1))
-              }
-              disabled={currentPage === totalPages}
-              className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
-            >
-              Next
-            </button>
-          </div>
-          <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-gray-700">
-                Showing{" "}
-                <span className="font-medium">
-                  {(currentPage - 1) * 10 + 1}
-                </span>{" "}
-                to{" "}
-                <span className="font-medium">
-                  {Math.min(currentPage * 10, totalItems)}
-                </span>{" "}
-                of <span className="font-medium">{totalItems}</span> results
-              </p>
-            </div>
-            <div>
-              <nav
-                className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                aria-label="Pagination"
-              >
+        {totalItems > 0 && totalPages > 1 && (
+            <div className="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="flex-1 flex justify-between sm:hidden">
                 <button
-                  onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 cursor-pointer"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  <span className="sr-only">Previous</span>
-                  <ChevronLeft size={16} />
+                  Previous
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => (
+                <button
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{pageRange.startItem}</span> to{" "}
+                    <span className="font-medium">{pageRange.endItem}</span> of{" "}
+                    <span className="font-medium">{totalItems}</span> results
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                     <button
-                      key={page}
-                      onClick={() => onPageChange(page)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        currentPage === page
-                          ? "z-10 bg-blue-50 border-green-500 text-green-600"
-                          : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
-                      }`}
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1}
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      {page}
+                      <span className="sr-only">Previous</span>
+                      <ChevronLeft className="h-4 w-4" />
                     </button>
-                  ),
-                )}
-                <button
-                  onClick={() =>
-                    onPageChange(Math.min(totalPages, currentPage + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 cursor-pointer"
-                >
-                  <span className="sr-only">Next</span>
-                  <ChevronRight size={16} />
-                </button>
-              </nav>
+
+                    {getPageNumbers().map((page, index) => (
+                        page === '...' ? (
+                            <span key={`ellipsis-${index}`} className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                      ...
+                    </span>
+                        ) : (
+                            <button
+                                key={page}
+                                onClick={() => handlePageChange(page as number)}
+                                className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors ${
+                                    currentPage === page
+                                        ? "z-10 bg-emerald-50 border-emerald-500 text-emerald-600"
+                                        : "bg-white border-gray-300 text-gray-500 hover:bg-gray-50"
+                                }`}
+                            >
+                              {page}
+                            </button>
+                        )
+                    ))}
+
+                    <button
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <span className="sr-only">Next</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </nav>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+        )}
       </motion.div>
-    </>
   );
 };
 
-export default EmployeeTable;
+export default React.memo(EmployeeTable);

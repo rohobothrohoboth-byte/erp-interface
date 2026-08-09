@@ -24,7 +24,8 @@ export interface PolicyAssignmentRuleAddDto {
   priority: string; 
   effectiveFrom: string;
   effectiveTo: string | null; 
-  leavePolicyId: string; 
+  leavePolicyId: string;
+  leaveTypeId: string;  // ADD THIS
 }
 
 // Modify/Update DTO

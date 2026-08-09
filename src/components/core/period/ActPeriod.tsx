@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Calendar, MoreVertical, Eye, PenBox, Trash2, Loader } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, MoreVertical, Eye, PenBox, Trash2 } from 'lucide-react';
 import { Popover, PopoverTrigger, PopoverContent } from '../../ui/popover';
+import { Button } from '../../ui/button';
 import type { PeriodListDto } from '../../../types/core/period';
 
-// Define the period status enum to match your backend
-export const PeriodStat = {
-  "0": 'Active',
-  "1": 'Inactive'
-} as const;
-export type PeriodStat = typeof PeriodStat[keyof typeof PeriodStat];
-
-interface ActPeriodProps {
+interface PeriodTableProps {
   periods: PeriodListDto[];
   currentPage: number;
   totalPages: number;
@@ -23,288 +17,195 @@ interface ActPeriodProps {
   loading?: boolean;
 }
 
-export const ActPeriod: React.FC<ActPeriodProps> = ({
-  periods,
-  currentPage,
-  totalPages,
-  totalItems,
-  onPageChange,
-  onViewDetails,
-  onEdit,
-  onDelete,
-  loading = false
-}) => {
+export const PeriodTable: React.FC<PeriodTableProps> = ({
+                                                          periods,
+                                                          currentPage,
+                                                          totalPages,
+                                                          totalItems,
+                                                          onPageChange,
+                                                          onViewDetails,
+                                                          onEdit,
+                                                          onDelete,
+                                                          loading = false
+                                                        }) => {
   const [popoverOpen, setPopoverOpen] = useState<string | null>(null);
-  
-  // Filter periods to show only active ones (IsActive === "0")
-  const activePeriods = periods.filter(period => period.isActive === "0");
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1, 
-      transition: { 
-        staggerChildren: 0.1,
-        when: "beforeChildren"
-      } 
-    }
-  };
-
-  const rowVariants = {
-    hidden: { opacity: 0, y: 10 },
-    visible: (index: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: index * 0.1,
-        duration: 0.3
-      }
-    }),
-    hover: { backgroundColor: "rgba(0, 0, 0, 0.05)" }
-  };
-
-  const headerVariants = {
-    hidden: { opacity: 0, y: -10 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
-  };
 
   const getStatusColor = (status: string): string => {
-    return status === '0' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-gray-100 text-gray-800 border border-gray-200';
-  };
-
-  const getStatusText = (status: string): string => {
-    return status === '0' ? 'Active' : 'Inactive';
+    return status === '0' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200';
   };
 
   const getPeriodColor = (name: string): string => {
-    if (name.includes('Q1')) return 'text-blue-600';
-    if (name.includes('Q2')) return 'text-purple-600';
-    if (name.includes('Q3')) return 'text-orange-600';
-    if (name.includes('Q4')) return 'text-red-600';
-    return 'text-gray-600';
+    if (name.includes('Q1')) return 'text-blue-600 dark:text-blue-400';
+    if (name.includes('Q2')) return 'text-purple-600 dark:text-purple-400';
+    if (name.includes('Q3')) return 'text-amber-600 dark:text-amber-400';
+    if (name.includes('Q4')) return 'text-red-600 dark:text-red-400';
+    return 'text-slate-600 dark:text-slate-400';
   };
 
-  const formatDate = (dateString: string): string => {
-    return dateString;
-  };
-
-  const getDuration = (startDate: string, endDate: string): string => {
-    return `${formatDate(startDate)} - ${formatDate(endDate)}`;
-  };
+  const startItem = (currentPage - 1) * 10 + 1;
+  const endItem = Math.min(currentPage * 10, totalItems);
+  const totalPagesArray = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader className="h-8 w-8 animate-spin text-emerald-600" />
-        <span className="ml-2 text-gray-600">Loading active periods...</span>
-      </div>
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 dark:border-slate-700 border-t-slate-600 dark:border-t-slate-400" />
+        </div>
+    );
+  }
+
+  if (periods.length === 0) {
+    return (
+        <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+          <div className="p-4 bg-slate-100 dark:bg-slate-800 rounded-full mb-3">
+            <Calendar className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+          </div>
+          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300">No periods found</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Click "Add New Period" to create one</p>
+        </div>
     );
   }
 
   return (
-    <motion.div 
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-white">
-            <motion.tr 
-              variants={headerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+            <thead className="bg-slate-50 dark:bg-slate-800/50">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Period
               </th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Duration
               </th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden md:table-cell">
+                Ethiopian Duration
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">
                 Quarter
               </th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden lg:table-cell">
                 Fiscal Year
               </th>
-              <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider hidden sm:table-cell">
                 Status
               </th>
-              <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Actions
               </th>
-            </motion.tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {activePeriods.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
-                  <div className="flex flex-col items-center justify-center space-y-3">
-                    <Calendar className="h-12 w-12 text-gray-300" />
-                    <div>
-                      <p className="text-lg font-medium text-gray-600">No Active Periods</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        There are currently no active periods in the system.
-                      </p>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              activePeriods.map((period, index) => (
-                <motion.tr 
-                  key={period.id}
-                  custom={index}
-                  variants={rowVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="transition-colors hover:bg-gray-50"
-                >
-                  <td className="px-4 py-1 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <motion.div 
-                        whileHover={{ rotate: 10 }}
-                        className="flex-shrink-0 h-10 w-10 rounded-full bg-green-100 flex items-center justify-center"
-                      >
-                        <Calendar className="text-green-600 h-5 w-5" />
-                      </motion.div>
-                      <div className="ml-3">
-                        <div className={`text-sm font-medium truncate max-w-[120px] md:max-w-none ${getPeriodColor(period.name)}`}>
+            </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            {periods.map((period) => (
+                <tr key={period.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 h-9 w-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                        <Calendar className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                      </div>
+                      <div>
+                        <div className={`text-sm font-medium ${getPeriodColor(period.name)}`}>
                           {period.name}
-                        </div>
-                        <div className="text-xs text-gray-500 truncate max-w-[120px] md:max-w-none">
-                          {period.quarter}
                         </div>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex flex-col">
-                      <span className="text-xs text-gray-500">Gregorian:</span>
-                      <span>{getDuration(period.dateStartStr, period.dateEndStr)}</span>
-                      <span className="text-xs text-gray-500 mt-1">Ethiopian:</span>
-                      <span>{getDuration(period.dateStartStrAm, period.dateEndStrAm)}</span>
-                    </div>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400">
+                    {period.dateStartStr} - {period.dateEndStr}
                   </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400 hidden md:table-cell">
+                    {period.dateStartStrAm} - {period.dateEndStrAm}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400 hidden sm:table-cell">
                     {period.quarter}
                   </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">
+                  <td className="px-4 py-3 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400 hidden lg:table-cell">
                     {period.fiscYear}
                   </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(period.isActive)}`}>
-                      {getStatusText(period.isActive)}
-                    </span>
+                  <td className="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
+                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full border ${getStatusColor(period.isActive)}`}>
+                    {period.isActive === "0" ? "Active" : "Inactive"}
+                  </span>
                   </td>
-                  <td className="px-4 py-1 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-4 py-3 whitespace-nowrap text-right">
                     <Popover open={popoverOpen === period.id} onOpenChange={(open) => setPopoverOpen(open ? period.id : null)}>
                       <PopoverTrigger asChild>
-                        <motion.button 
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          className="text-gray-600 hover:text-gray-900 p-1 rounded-full hover:bg-gray-100"
-                        >
-                          <MoreVertical className="h-5 w-5" />
-                        </motion.button>
+                        <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-48 p-0" align="end">
-                        <div className="py-1">
-                          <button 
+                      <PopoverContent className="w-36 p-1 rounded-lg shadow-lg" align="end">
+                        <button
                             onClick={() => onViewDetails(period)}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
-                          >
-                            <Eye size={16} />
-                            View Details
-                          </button>
-                          <button 
+                            className="w-full text-left px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md flex items-center gap-2"
+                        >
+                          <Eye size={14} />
+                          View
+                        </button>
+                        <button
                             onClick={() => onEdit(period)}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded text-gray-700 flex items-center gap-2"
-                          >
-                            <PenBox size={16} />
-                            Edit
-                          </button>
-                          <button 
+                            className="w-full text-left px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md flex items-center gap-2"
+                        >
+                          <PenBox size={14} />
+                          Edit
+                        </button>
+                        <button
                             onClick={() => onDelete(period)}
-                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded flex items-center gap-2"
-                          >
-                            <Trash2 size={16} />
-                            Delete
-                          </button>
-                        </div>
+                            className="w-full text-left px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-md flex items-center gap-2"
+                        >
+                          <Trash2 size={14} />
+                          Delete
+                        </button>
                       </PopoverContent>
                     </Popover>
                   </td>
-                </motion.tr>
-              ))
-            )}
-          </tbody>
-        </table>
-        
-        {/* Pagination - Only show if there are active periods */}
-        {activePeriods.length > 0 && (
-          <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
-            <div className="flex-1 flex justify-between sm:hidden">
-              <button
-                onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Showing <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> to{' '}
-                  <span className="font-medium">{Math.min(currentPage * 10, totalItems)}</span> of{' '}
-                  <span className="font-medium">{totalItems}</span> active periods
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                  <button
-                    onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                </tr>
+            ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+            <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-slate-500 dark:text-slate-400">
+                  Showing {startItem} to {endItem} of {totalItems} periods
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onPageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8 p-0"
                   >
-                    <span className="sr-only">Previous</span>
                     <ChevronLeft size={16} />
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => onPageChange(page)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                        currentPage === page
-                          ? 'z-10 bg-emerald-50 border-emerald-500 text-emerald-600'
-                          : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                      }`}
-                    >
-                      {page}
-                    </button>
+                  </Button>
+                  {totalPagesArray.map((page) => (
+                      <Button
+                          key={page}
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => onPageChange(page)}
+                          className={`h-8 w-8 p-0 ${currentPage === page ? 'bg-slate-800 dark:bg-slate-700 text-white' : ''}`}
+                      >
+                        {page}
+                      </Button>
                   ))}
-                  <button
-                    onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                  <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onPageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="h-8 w-8 p-0"
                   >
-                    <span className="sr-only">Next</span>
                     <ChevronRight size={16} />
-                  </button>
-                </nav>
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
         )}
       </div>
-    </motion.div>
   );
 };

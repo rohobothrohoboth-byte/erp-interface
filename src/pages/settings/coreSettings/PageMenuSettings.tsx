@@ -6,15 +6,15 @@ import MenuPermissionTable from "../../../components/settings/coreSettings/menuP
 import EditMenuPermissionModal from "../../../components/settings/coreSettings/menuPermissions/EditMenuPermissionModal";
 import DeleteMenuPermissionModal from "../../../components/settings/coreSettings/menuPermissions/DeleteMenuPermissionModal";
 import { menuPermissionService } from "../../../services/core/settings/ModCore/menu-permissionservice";
-import type { 
-  PerMenuListDto, 
+import toast from "react-hot-toast";
+import type {
+  PerMenuListDto,
   PerMenuModDto,
   PerMenuAddDto,
   ModPerMenuListDto,
   UUID
 } from '../../../types/core/Settings/menu-permissions';
 
-// Animation variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -26,12 +26,18 @@ const containerVariants = {
   },
 };
 
+const safeString = (value: any): string => {
+  if (value === null || value === undefined || value === 'null') {
+    return '';
+  }
+  return String(value).toLowerCase();
+};
+
 function PageMenuSettings() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [editingPermission, setEditingPermission] = useState<PerMenuListDto | null>(null);
   const [deletingPermission, setDeletingPermission] = useState<PerMenuListDto | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [permissions, setPermissions] = useState<PerMenuListDto[]>([]);
   const [filteredPermissions, setFilteredPermissions] = useState<PerMenuListDto[]>([]);
@@ -48,17 +54,21 @@ function PageMenuSettings() {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Fetch all permissions and modules in parallel
+
       const [permissionsData, modulesData] = await Promise.all([
         menuPermissionService.getAllMenuPermissions(),
-        menuPermissionService.getMenuPermissionsByModule()
+        menuPermissionService.getAllModules()
       ]);
-      
-      setPermissions(permissionsData);
-      setFilteredPermissions(permissionsData);
+
+      // Filter out module records - NO HARDCODED MAPPINGS
+      const validPermissions = permissionsData.filter(p =>
+          p.key && !p.key.startsWith('mod.')
+      );
+
+      setPermissions(validPermissions);
+      setFilteredPermissions(validPermissions);
       setModules(modulesData);
-      
+
     } catch (err: any) {
       console.error("Error loading data:", err);
       setError(err.message || "Failed to load data. Please try again.");
@@ -70,23 +80,14 @@ function PageMenuSettings() {
   const handleAddPermission = async (newPermission: PerMenuAddDto) => {
     try {
       setError(null);
-      
       const createdPermission = await menuPermissionService.createMenuPermission(newPermission);
-      
       const updatedPermissions = [...permissions, createdPermission];
       const updatedFiltered = [...filteredPermissions, createdPermission];
-      
       setPermissions(updatedPermissions);
       setFilteredPermissions(updatedFiltered);
       setCurrentPage(1);
-      
-      console.log('Menu permission added successfully!');
-      
-      // Reload modules to ensure data consistency
       await reloadModules();
-      
       return { success: true, data: createdPermission };
-      
     } catch (err: any) {
       console.error("Error creating menu permission:", err);
       setError(err.message || "Failed to create menu permission. Please try again.");
@@ -96,39 +97,29 @@ function PageMenuSettings() {
 
   const handleEditClick = (permission: PerMenuListDto) => {
     setEditingPermission(permission);
-    setIsEditModalOpen(true);
   };
 
-  const handleUpdatePermission = async (updatedPermission: PerMenuModDto) => {
+  const handleEditClose = () => {
+    setEditingPermission(null);
+  };
+
+  const handleUpdatePermission = async (updatedMenu: PerMenuModDto) => {
+
+
+    if (!updatedMenu || !updatedMenu.id) {
+      toast.error("Invalid menu data");
+      return;
+    }
+
     try {
-      setError(null);
-      
-      const updatedPerm = await menuPermissionService.updateMenuPermission(updatedPermission);
-      
-      const updatedPermissions = permissions.map((perm) => 
-        perm.id === updatedPerm.id ? updatedPerm : perm
-      );
-      
-      const updatedFiltered = filteredPermissions.map((perm) => 
-        perm.id === updatedPerm.id ? updatedPerm : perm
-      );
-      
-      setPermissions(updatedPermissions);
-      setFilteredPermissions(updatedFiltered);
-      setIsEditModalOpen(false);
+      // Pass the entire updatedMenu object - the service will use updatedMenu.id
+      await menuPermissionService.updateMenuPermission(updatedMenu.id, updatedMenu);
+      toast.success("Menu permission updated successfully");
       setEditingPermission(null);
-      
-      console.log('Menu permission updated successfully!');
-      
-      // Reload modules to ensure data consistency
-      await reloadModules();
-      
-      return { success: true, data: updatedPerm };
-      
-    } catch (err: any) {
-      console.error("Error updating menu permission:", err);
-      setError(err.message || "Failed to update menu permission. Please try again.");
-      throw err;
+      await loadData();
+    } catch (error: any) {
+      console.error("Error updating menu permission:", error);
+      toast.error(error.message || "Failed to update menu permission");
     }
   };
 
@@ -137,27 +128,20 @@ function PageMenuSettings() {
     setIsDeleteModalOpen(true);
   };
 
-  const handleDeletePermission = async (permissionId: UUID) => {
+  const handleDeletePermission = async (permissionKey: string) => {
     try {
       setError(null);
-      
-      // Delete permission via API
-      await menuPermissionService.deleteMenuPermission(permissionId);
-      
-      // Update local state
-      const updatedPermissions = permissions.filter((perm) => perm.id !== permissionId);
-      const updatedFiltered = filteredPermissions.filter((perm) => perm.id !== permissionId);
-      
+
+      await menuPermissionService.deleteMenuPermissionByKey(permissionKey);
+
+      const updatedPermissions = permissions.filter((perm) => perm.key !== permissionKey);
+      const updatedFiltered = filteredPermissions.filter((perm) => perm.key !== permissionKey);
+
       setPermissions(updatedPermissions);
       setFilteredPermissions(updatedFiltered);
-      
-      console.log('Menu permission deleted successfully!');
-      
-      // Reload modules to ensure data consistency
       await reloadModules();
-      
+      toast.success('Menu permission deleted successfully!');
       return { success: true, message: 'Menu permission deleted successfully!' };
-      
     } catch (err: any) {
       console.error("Error deleting menu permission:", err);
       setError(err.message || "Failed to delete menu permission. Please try again.");
@@ -165,40 +149,42 @@ function PageMenuSettings() {
     }
   };
 
-  const handleDeleteConfirm = async (permissionId: UUID) => {
-    await handleDeletePermission(permissionId);
+  const handleDeleteConfirm = async (permissionKey: string) => {
+    await handleDeletePermission(permissionKey);
     setIsDeleteModalOpen(false);
     setDeletingPermission(null);
   };
 
+
   const reloadModules = async () => {
     try {
-      const modulesData = await menuPermissionService.getMenuPermissionsByModule();
+      const modulesData = await menuPermissionService.getAllModules();
       setModules(modulesData);
     } catch (err) {
       console.error("Error reloading modules:", err);
     }
   };
 
-  const filterPermissions = (permissions: PerMenuListDto[], term: string) => {
-    if (!term.trim()) return permissions;
-    
+  const filterPermissions = (permissionsList: PerMenuListDto[], term: string) => {
+    if (!term.trim()) return permissionsList;
     const searchLower = term.toLowerCase();
-    
-    return permissions.filter(permission => 
-      permission.key.toLowerCase().includes(searchLower) ||
-      permission.name.toLowerCase().includes(searchLower) ||
-      permission.module.toLowerCase().includes(searchLower) ||
-      (permission.label && permission.label.toLowerCase().includes(searchLower)) ||
-      (permission.path && permission.path.toLowerCase().includes(searchLower)) ||
-      (permission.icon && permission.icon.toLowerCase().includes(searchLower)) ||
-      (permission.parentKey && permission.parentKey.toLowerCase().includes(searchLower))
-    );
+    return permissionsList.filter(permission => {
+      const key = safeString(permission.key);
+      const name = safeString(permission.name);
+      const module = safeString(permission.module);
+      const label = safeString(permission.label);
+      const path = safeString(permission.path);
+      const icon = safeString(permission.icon);
+      const parentKey = safeString(permission.parentKey);
+      return key.includes(searchLower) || name.includes(searchLower) || module.includes(searchLower) ||
+          label.includes(searchLower) || path.includes(searchLower) || icon.includes(searchLower) ||
+          parentKey.includes(searchLower);
+    });
   };
 
-  // Handle search filtering
   useEffect(() => {
-    if (searchTerm) {
+    if (permissions.length === 0) return;
+    if (searchTerm && searchTerm.trim()) {
       const filtered = filterPermissions(permissions, searchTerm);
       setFilteredPermissions(filtered);
       setCurrentPage(1);
@@ -207,133 +193,112 @@ function PageMenuSettings() {
     }
   }, [searchTerm, permissions]);
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredPermissions.length / itemsPerPage);
   const paginatedPermissions = filteredPermissions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
   );
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredPermissions]);
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [filteredPermissions, totalPages, currentPage]);
 
   return (
-    <>
-      <motion.section
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className={`w-full h-full flex flex-col space-y-6 ${
-          isEditModalOpen || isDeleteModalOpen ? "blur-sm" : ""
-        }`}
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <MenuPermissionHeader menuPermissions={permissions} />
-        </div>
+      <>
+        <motion.section
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="w-full h-full flex flex-col space-y-6"
+        >
+          <div className="flex justify-between items-center">
+            <MenuPermissionHeader menuPermissions={permissions} />
+          </div>
 
-        {/* Main content area */}
-        <div className="flex-1">
-      
-          {isLoading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="flex justify-center items-center py-12"
-            >
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading menu permissions...</p>
-              </div>
-            </motion.div>
-          )}
-
-          {!isLoading && (
-            <div className="space-y-6">
-              {/* Error Message */}
-              {error && (
+          <div className="flex-1">
+            {isLoading && (
                 <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex justify-center items-center py-12"
                 >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">
-                      {error.includes("Failed to load") ? (
-                        <>
-                          Failed to load menu permissions.{" "}
-                          <button
-                            onClick={loadData}
-                            className="underline hover:text-red-800 font-semibold focus:outline-none"
-                          >
-                            Try again
-                          </button>
-                        </>
-                      ) : (
-                        error
-                      )}
-                    </span>
-                    <button
-                      onClick={() => setError(null)}
-                      className="text-red-700 hover:text-red-900 font-bold text-lg ml-4"
-                    >
-                      ×
-                    </button>
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading menu permissions...</p>
                   </div>
                 </motion.div>
-              )}
+            )}
 
-              {/* Search Filters */}
-              <MenuPermissionSearchFilters
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                modules={modules}
-                onAddPermission={handleAddPermission}
-              />
+            {!isLoading && (
+                <div className="space-y-6">
+                  {error && (
+                      <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg"
+                      >
+                        <div className="flex justify-between items-center">
+                    <span className="font-medium">
+                      {error.includes("Failed to load") ? (
+                          <>
+                            Failed to load menu permissions.{" "}
+                            <button onClick={loadData} className="underline hover:text-red-800 font-semibold">
+                              Try again
+                            </button>
+                          </>
+                      ) : (
+                          error
+                      )}
+                    </span>
+                          <button onClick={() => setError(null)} className="text-red-700 hover:text-red-900 font-bold text-lg ml-4">
+                            ×
+                          </button>
+                        </div>
+                      </motion.div>
+                  )}
 
-              {/* Menu Permissions Table */}
-              <MenuPermissionTable
-                permissions={paginatedPermissions}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={filteredPermissions.length}
-                onPageChange={setCurrentPage}
-                onEditPermission={handleEditClick}
-                onDeletePermission={handleDeleteClick}
-              />
-            </div>
-          )}
-        </div>
-      </motion.section>
+                  <MenuPermissionSearchFilters
+                      searchTerm={searchTerm}
+                      setSearchTerm={setSearchTerm}
+                      modules={modules}
+                      onAddPermission={handleAddPermission}
+                  />
 
-      {/* Edit Menu Permission Modal */}
-      {isEditModalOpen && editingPermission && (
+                  <MenuPermissionTable
+                      permissions={paginatedPermissions}
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      totalItems={filteredPermissions.length}
+                      onPageChange={setCurrentPage}
+                      onEditPermission={handleEditClick}
+                      onDeletePermission={handleDeleteClick}
+                  />
+                </div>
+            )}
+          </div>
+        </motion.section>
+
         <EditMenuPermissionModal
-          permission={editingPermission}
-          modules={modules}
-          onEditPermission={handleUpdatePermission}
-          onClose={() => {
-            setIsEditModalOpen(false);
-            setEditingPermission(null);
-          }}
+            permission={editingPermission}
+            modules={modules}
+            onEditPermission={handleUpdatePermission}
+            onClose={handleEditClose}
         />
-      )}
 
-      {/* Delete Menu Permission Modal */}
-      {isDeleteModalOpen && deletingPermission && (
-        <DeleteMenuPermissionModal
-          permission={deletingPermission}
-          onConfirm={handleDeleteConfirm}
-          isOpen={isDeleteModalOpen}
-          onClose={() => {
-            setIsDeleteModalOpen(false);
-            setDeletingPermission(null);
-          }}
-        />
-      )}
-    </>
+        {isDeleteModalOpen && deletingPermission && (
+            <DeleteMenuPermissionModal
+                permission={deletingPermission}
+                onConfirm={handleDeleteConfirm}
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                  setIsDeleteModalOpen(false);
+                  setDeletingPermission(null);
+                }}
+            />
+        )}
+      </>
   );
 }
 

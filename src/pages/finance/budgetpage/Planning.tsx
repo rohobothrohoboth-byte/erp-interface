@@ -1,9 +1,13 @@
-import React from 'react'
+// src/pages/finance/Planning.tsx
+import React from 'react';
+import BudgetList from '../../components/finance/budget/BudgetList';
 
-function Planning() {
+const Planning: React.FC = () => {
   return (
-    <div>Planning</div>
-  )
-}
+      <div className="min-h-screen bg-gray-50">
+        <BudgetList />
+      </div>
+  );
+};
 
-export default Planning
+export default Planning;

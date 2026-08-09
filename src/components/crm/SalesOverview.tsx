@@ -1,100 +1,121 @@
+// src/components/crm/SalesOverview.tsx
+import React from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { ChevronRight, TrendingUp, DollarSign } from 'lucide-react';
-import { Button } from '../ui/button';
-import { useNavigate } from 'react-router-dom';
-
-const salesData = [
-  { name: 'Jan', revenue: 4000, quota: 3800 },
-  { name: 'Feb', revenue: 3000, quota: 3500 },
-  { name: 'Mar', revenue: 5000, quota: 4500 },
-  { name: 'Apr', revenue: 4800, quota: 5000 },
-  { name: 'May', revenue: 6000, quota: 5500 },
-  { name: 'Jun', revenue: 7500, quota: 7000 },
-  { name: 'Jul', revenue: 8000, quota: 7500 },
-];
-
-const deals = [
-  { name: 'Enterprise Plan', value: 12000, stage: 'Closed Won' },
-  { name: 'Premium Support', value: 8500, stage: 'Negotiation' },
-  { name: 'Custom Integration', value: 15000, stage: 'Proposal' },
-  { name: 'Annual Renewal', value: 9500, stage: 'Discovery' },
-];
+import {
+  DollarSign,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Award,
+  Clock,
+  ArrowUp,
+  ArrowDown
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Progress } from '../ui/progress';
+import { useCrmData } from '../../hooks/useCrmData';
 
 export default function SalesOverview() {
-  const navigate = useNavigate();
+  const { opportunities, pipelineData, loading } = useCrmData();
+
+  if (loading) {
+    return (
+        <Card className="border-green-200 dark:border-green-800">
+          <CardContent className="pt-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+              <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            </div>
+          </CardContent>
+        </Card>
+    );
+  }
+
+  const totalValue = opportunities?.reduce((sum, opp) => sum + (opp.amount || 0), 0) || 0;
+  const wonDeals = opportunities?.filter(o => o.stage === 'ClosedWon').length || 0;
+  const pipelineValue = pipelineData?.reduce((sum: number, stage: any) => sum + (stage.value || 0), 0) || 0;
 
   return (
-    <motion.div 
-      className="bg-white rounded-lg border p-6 shadow-sm"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.2 }}
-    >
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-lg font-semibold flex items-center">
-          <TrendingUp className="mr-2 text-green-600" size={20} />
-          Sales Management
-        </h2>
-        <Button variant="ghost" size="sm" className="text-green-600" onClick={() => navigate('/crm/sales')}>
-          View All <ChevronRight size={16} />
-        </Button>
-      </div>
-      
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-500 mb-2">Revenue vs Quota</h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={salesData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Line 
-                type="monotone" 
-                dataKey="revenue" 
-                stroke="#10B981" 
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                activeDot={{ r: 6 }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="quota" 
-                stroke="#6B7280" 
-                strokeWidth={2}
-                strokeDasharray="5 5"
-                dot={{ r: 4 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-      
-      <div>
-        <h3 className="text-sm font-medium text-gray-500 mb-3">Top Deals</h3>
-        <div className="space-y-3">
-          {deals.map((deal, index) => (
-            <div key={index} className="flex items-center p-2 hover:bg-gray-50 rounded">
-              <div className="bg-green-100 text-green-600 p-2 rounded-full mr-3">
-                <DollarSign size={16} />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">{deal.name}</p>
-                <p className="text-sm text-gray-500">${deal.value.toLocaleString()}</p>
-              </div>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                deal.stage === 'Closed Won' ? 'bg-green-100 text-green-800' :
-                deal.stage === 'Negotiation' ? 'bg-orange-100 text-orange-800' :
-                deal.stage === 'Proposal' ? 'bg-blue-100 text-blue-800' :
-                'bg-gray-100 text-gray-800'
-              }`}>
-                {deal.stage}
-              </span>
+      <Card className="border-green-200 dark:border-green-800 shadow-sm hover:shadow-md transition-all duration-300">
+        <CardHeader className="border-b border-green-100 dark:border-green-800 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-green-900 dark:text-green-100 flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Sales Overview
+            </CardTitle>
+            <Badge className="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300">
+              {opportunities?.length || 0} Deals
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="pt-6">
+          {/* Key Metrics */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-100 dark:border-green-800">
+              <p className="text-xs text-green-700 dark:text-green-300">Pipeline Value</p>
+              <p className="text-lg font-bold text-green-900 dark:text-green-100">
+                ${(pipelineValue / 1000).toFixed(1)}K
+              </p>
             </div>
-          ))}
-        </div>
-      </div>
-    </motion.div>
+            <div className="p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800">
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">Won Deals</p>
+              <p className="text-lg font-bold text-emerald-900 dark:text-emerald-100">{wonDeals}</p>
+            </div>
+          </div>
+
+          {/* Pipeline Progress */}
+          {pipelineData && pipelineData.length > 0 && (
+              <div className="space-y-2 mb-4">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Pipeline Stages</p>
+                {pipelineData.slice(0, 4).map((stage: any, index: number) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">{stage.stage}</span>
+                        <span className="text-gray-900 dark:text-gray-100 font-medium">
+                    ${(stage.value / 1000).toFixed(1)}K
+                  </span>
+                      </div>
+                      <Progress
+                          value={(stage.value / pipelineValue) * 100}
+                          className="h-1.5"
+                      />
+                    </div>
+                ))}
+              </div>
+          )}
+
+          {/* Recent Deals */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Recent Deals</p>
+            {opportunities?.slice(0, 3).map((deal, index) => (
+                <motion.div
+                    key={deal.id || index}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {deal.name || 'Unnamed Deal'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {deal.customerName || 'No customer'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                      ${(deal.amount || 0).toLocaleString()}
+                    </p>
+                    <Badge variant="outline" className="text-xs">
+                      {deal.stage || 'Discovery'}
+                    </Badge>
+                  </div>
+                </motion.div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
   );
 }

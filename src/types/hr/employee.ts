@@ -131,17 +131,31 @@ export interface EmployeeDetailsData {
 }
 
 
+
 export interface AdminEmpListDto {
   id: string;
-  empFullName: string;
-  empFullNameAm: string;
-  gender: string;
   code: string;
-  branch: string;
-  department: string;
-  position: string;
-  empState: string;
-  hasAccount: boolean;
+  empFullName: string;
+  empFullNameAm?: string;
+  gender?: string;
+  empState?: string;
+  branch?: string;
+  department?: string;
+  position?: string;
+  jobGrade?: string;
+  empType?: string;
+  empNature?: string;
+  workArr?: string;
+  photo?: string;
+  hasAccount?: boolean;
+  isAccountActive?: boolean;
+  // Add these for the new format
+  firstName?: string;
+  lastName?: string;
+  positionName?: string;
+  departmentName?: string;
+  branchName?: string;
+  jobGradeName?: string;
 }
 
 export interface PwdChgDto

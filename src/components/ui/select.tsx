@@ -169,6 +169,60 @@ function SelectScrollDownButton({
   )
 }
 
+
+export interface SelectOptionProps
+    extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> {
+  /** Optional icon to display next to the option text */
+  icon?: React.ReactNode
+  /** Optional description text shown below the option */
+  description?: string
+  /** Optional badge text shown on the right side */
+  badge?: string
+}
+
+const SelectOption = React.forwardRef<
+    React.ElementRef<typeof SelectPrimitive.Item>,
+    SelectOptionProps
+>(({ className, children, icon, description, badge, ...props }, ref) => {
+  return (
+      <SelectPrimitive.Item
+          ref={ref}
+          className={cn(
+              "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+              className
+          )}
+          {...props}
+      >
+      <span className="absolute right-2 flex size-3.5 items-center justify-center">
+        <SelectPrimitive.ItemIndicator>
+          <CheckIcon className="size-4" />
+        </SelectPrimitive.ItemIndicator>
+      </span>
+
+        <div className="flex flex-1 items-center gap-2">
+          {icon && (
+              <span className="flex-shrink-0 text-muted-foreground">
+            {icon}
+          </span>
+          )}
+          <div className="flex flex-1 flex-col">
+          <span className="flex items-center gap-2">
+            <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+            {badge && (
+                <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {badge}
+              </span>
+            )}
+          </span>
+            {description && (
+                <span className="text-xs text-muted-foreground">{description}</span>
+            )}
+          </div>
+        </div>
+      </SelectPrimitive.Item>
+  )
+})
+
 export {
   Select,
   SelectContent,
@@ -180,4 +234,5 @@ export {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
+  SelectOption,
 }

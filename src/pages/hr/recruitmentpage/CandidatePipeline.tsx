@@ -1,331 +1,283 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
-import CandidateMetrics from "../../../components/hr/recrutement/CandidateMetrics";
-import CandidateDetail from "../../../components/hr/recrutement/CandidateDetail";
-import CandidateStageChart from "../../../components/hr/recrutement/CandidateStageChart";
-import DepartmentApplicationChart from "../../../components/hr/recrutement/DepartmentApplicationChart";
-import CandidateTable from "../../../components/hr/recrutement/CandidateTable";
-import { Users, CheckCircle, Clock, XCircle } from 'lucide-react';
-import { useModuleStore } from "../../../stores/module.store";
-import type { Candidate } from '../../../types/candidate';
+// src/pages/hr/recruitment/CandidatePipelinePage.tsx
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import {
+  Users, Search, RefreshCw, Loader2, Eye,
+  Filter, ChevronDown, Download, Printer,
+  User, Mail, Phone, MapPin, Briefcase,
+  CheckCircle, XCircle, Clock, Star, Award,
+  Activity, BarChart, TrendingUp
+} from 'lucide-react';
+import { Button } from '../../../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
+import { Input } from '../../../components/ui/input';
+import { Badge } from '../../../components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '../../../components/ui/tabs';
+import { useAllApplicants } from '../../../services/hr/recruitment/applicant/applicant.queries';
+import { formatDistanceToNow } from 'date-fns';
+import { BarChart as RechartsBar, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-const CandidatePipeline = () => {
-    // All hooks at the top
-  const setActiveModule = useModuleStore((s) => s.setActiveModule);
-  const storedModule = sessionStorage.getItem('currentModule');
-  
-  useEffect(() => {
-    if (storedModule) {
-      setActiveModule(storedModule);
-    }
-  }, [setActiveModule, storedModule]);
+const CandidatePipelinePage: React.FC = () => {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState('all');
 
-  const { candidateId } = useParams();
-  const [showFullHistory, setShowFullHistory] = useState(false);
-  
-  // Initialize candidates from sessionStorage or default data
-  const [candidates, setCandidates] = useState<Candidate[]>(() => {
-    const savedCandidates = sessionStorage.getItem('candidates');
-    return savedCandidates ? JSON.parse(savedCandidates) : [
-    {
-      id: 'CAN-1001',
-      name: 'John Smith',
-      position: 'Software Engineer',
-      source: 'LinkedIn',
-      stage: 'Interview',
-      status: 'Scheduled',
-      department: 'Engineering',
-      appliedDate: '2023-07-01',
-      daysInStage: 5,
-      email: 'john.smith@example.com',
-      phone: '(555) 123-4567',
-      resume: 'john_smith_resume.pdf',
-      interviewDate: '2023-07-15',
-      experience: '5 years',
-      skills: ['JavaScript', 'React', 'Node.js', 'TypeScript'],
-      notes: 'Strong technical skills, excellent communication',
-      education: 'BSc Computer Science, MIT',
-      location: 'San Francisco, CA',
-      salaryExpectation: '$120,000',
-      history: [
-        { date: '2023-07-01', stage: 'Application', status: 'New', note: 'Applied via LinkedIn' },
-        { date: '2023-07-03', stage: 'Screening', status: 'In Review', note: 'Resume screened by HR' },
-        { date: '2023-07-10', stage: 'Interview', status: 'Scheduled', note: 'Technical interview scheduled' }
-      ]
-    },
-    {
-      id: 'CAN-1002',
-      name: 'Sarah Johnson',
-      position: 'UX Designer',
-      source: 'Company Website',
-      stage: 'Application',
-      status: 'New',
-      department: 'Design',
-      appliedDate: '2023-07-10',
-      daysInStage: 2,
-      email: 'sarah.johnson@example.com',
-      phone: '(555) 987-6543',
-      resume: 'sarah_johnson_resume.pdf',
-      experience: '3 years',
-      skills: ['Figma', 'UI/UX Design', 'User Research', 'Prototyping'],
-      notes: 'Impressive portfolio with diverse projects',
-      education: 'BA Design, Stanford University',
-      location: 'New York, NY',
-      salaryExpectation: '$95,000',
-      history: [
-        { date: '2023-07-10', stage: 'Application', status: 'New', note: 'Applied via company website' }
-      ]
-    },
-    {
-      id: 'CAN-1003',
-      name: 'Michael Chen',
-      position: 'Data Analyst',
-      source: 'Referral',
-      stage: 'Offer',
-      status: 'Negotiating',
-      department: 'Data',
-      appliedDate: '2023-07-05',
-      daysInStage: 8,
-      email: 'michael.chen@example.com',
-      phone: '(555) 456-7890',
-      resume: 'michael_chen_resume.pdf',
-      interviewDate: '2023-07-18',
-      experience: '4 years',
-      skills: ['Python', 'SQL', 'Data Visualization', 'Machine Learning'],
-      notes: 'Strong analytical skills, needs visa sponsorship',
-      education: 'MSc Data Science, Harvard University',
-      location: 'Boston, MA',
-      salaryExpectation: '$110,000',
-      history: [
-        { date: '2023-07-05', stage: 'Application', status: 'New', note: 'Referred by employee' },
-        { date: '2023-07-08', stage: 'Screening', status: 'Approved', note: 'Passed initial screening' },
-        { date: '2023-07-12', stage: 'Interview', status: 'Completed', note: 'Technical interview passed' },
-        { date: '2023-07-15', stage: 'Offer', status: 'Negotiating', note: 'Salary negotiation in progress' }
-      ]
-    },
-    {
-      id: 'CAN-1004',
-      name: 'Emily Davis',
-      position: 'Product Manager',
-      source: 'Job Board',
-      stage: 'Screening',
-      status: 'In Review',
-      department: 'Product',
-      appliedDate: '2023-07-03',
-      daysInStage: 4,
-      email: 'emily.davis@example.com',
-      phone: '(555) 234-5678',
-      resume: 'emily_davis_resume.pdf',
-      experience: '6 years',
-      skills: ['Product Strategy', 'Agile', 'Market Research', 'Roadmapping'],
-      notes: 'Previous experience at FAANG companies',
-      education: 'MBA, Wharton School',
-      location: 'Seattle, WA',
-      salaryExpectation: '$140,000',
-      history: [
-        { date: '2023-07-03', stage: 'Application', status: 'New', note: 'Applied via job board' },
-        { date: '2023-07-05', stage: 'Screening', status: 'In Review', note: 'Resume under review' }
-      ]
-    },
-    {
-      id: 'CAN-1005',
-      name: 'David Wilson',
-      position: 'DevOps Engineer',
-      source: 'LinkedIn',
-      stage: 'Hired',
-      status: 'Completed',
-      department: 'Engineering',
-      appliedDate: '2023-06-20',
-      daysInStage: 0,
-      email: 'david.wilson@example.com',
-      phone: '(555) 876-5432',
-      resume: 'david_wilson_resume.pdf',
-      experience: '7 years',
-      skills: ['AWS', 'Docker', 'Kubernetes', 'CI/CD'],
-      notes: 'Extensive cloud infrastructure experience',
-      education: 'MSc Computer Engineering, Caltech',
-      location: 'Austin, TX',
-      salaryExpectation: '$135,000',
-      history: [
-        { date: '2023-06-20', stage: 'Application', status: 'New', note: 'Applied via LinkedIn' },
-        { date: '2023-06-25', stage: 'Screening', status: 'Approved', note: 'Passed initial screening' },
-        { date: '2023-06-30', stage: 'Interview', status: 'Completed', note: 'Technical interview passed' },
-        { date: '2023-07-05', stage: 'Offer', status: 'Accepted', note: 'Offer accepted' },
-        { date: '2023-07-10', stage: 'Hired', status: 'Completed', note: 'Onboarding completed' }
-      ]
-    },
-    {
-      id: 'CAN-1006',
-      name: 'Lisa Thompson',
-      position: 'Marketing Specialist',
-      source: 'Company Website',
-      stage: 'Rejected',
-      status: 'Declined',
-      department: 'Marketing',
-      appliedDate: '2023-07-02',
-      daysInStage: 3,
-      email: 'lisa.thompson@example.com',
-      phone: '(555) 345-6789',
-      resume: 'lisa_thompson_resume.pdf',
-      experience: '4 years',
-      skills: ['Digital Marketing', 'SEO', 'Content Strategy', 'Social Media'],
-      notes: 'Good skills but not the right cultural fit',
-      education: 'BA Marketing, NYU',
-      location: 'Chicago, IL',
-      salaryExpectation: '$85,000',
-      history: [
-        { date: '2023-07-02', stage: 'Application', status: 'New', note: 'Applied via company website' },
-        { date: '2023-07-05', stage: 'Screening', status: 'Approved', note: 'Resume approved' },
-        { date: '2023-07-08', stage: 'Interview', status: 'Completed', note: 'Interview completed' },
-        { date: '2023-07-12', stage: 'Rejected', status: 'Declined', note: 'Not selected after interview' }
-      ]
-    }
-    ];
+  const { data: applicants, isLoading, refetch } = useAllApplicants();
+
+  const stageColors = {
+    'Pending': '#3B82F6',
+    'Shortlisted': '#8B5CF6',
+    'Interviewed': '#F59E0B',
+    'Hired': '#10B981',
+    'Rejected': '#EF4444'
+  };
+
+  const stageData = applicants ? [
+    { name: 'Application', count: applicants.filter(a => a.statusStr === 'Pending').length || 0 },
+    { name: 'Screening', count: applicants.filter(a => a.statusStr === 'Shortlisted').length || 0 },
+    { name: 'Interview', count: applicants.filter(a => a.statusStr === 'Interviewed').length || 0 },
+    { name: 'Offer', count: applicants.filter(a => a.statusStr === 'Offered').length || 0 },
+    { name: 'Hired', count: applicants.filter(a => a.statusStr === 'Hired').length || 0 },
+  ] : [];
+
+  const departmentData = applicants ? [
+    { name: 'Engineering', count: applicants.filter(a => a.department === 'Engineering').length || 0 },
+    { name: 'Marketing', count: applicants.filter(a => a.department === 'Marketing').length || 0 },
+    { name: 'Sales', count: applicants.filter(a => a.department === 'Sales').length || 0 },
+    { name: 'HR', count: applicants.filter(a => a.department === 'HR').length || 0 },
+    { name: 'Finance', count: applicants.filter(a => a.department === 'Finance').length || 0 },
+  ] : [];
+
+  const filteredCandidates = applicants?.filter(candidate => {
+    const matchesTab = activeTab === 'all' || candidate.statusStr?.toLowerCase() === activeTab;
+    const matchesSearch = candidate.applicant?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        candidate.position?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        candidate.department?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesTab && matchesSearch;
   });
 
-  // Stage and status options
-  
-
-    // Save candidates to sessionStorage whenever they change
-  useEffect(() => {
-    sessionStorage.setItem('candidates', JSON.stringify(candidates));
-  }, [candidates]);
-
-  // Stage and status options
-  const stageOptions = ['Application', 'Screening', 'Interview', 'Offer', 'Hired', 'Rejected'];
-  const statusOptions = ['New', 'Scheduled', 'In Review', 'Completed', 'Approved', 'Negotiating', 'Accepted', 'Declined', 'Hired', 'Rejected'];
-
-  // Metrics data
-  const metrics = [
-    { id: 1, title: 'Total Applicants', value: 124, change: '+12%', icon: <Users className="w-6 h-6" /> },
-    { id: 2, title: 'Hired Candidates', value: 24, change: '+5%', icon: <CheckCircle className="w-6 h-6" /> },
-    { id: 3, title: 'Time to Hire (Avg)', value: '24 days', change: '-3 days', icon: <Clock className="w-6 h-6" /> },
-    { id: 4, title: 'Rejected Candidates', value: 86, change: '+8%', icon: <XCircle className="w-6 h-6" /> },
-  ];
-
-  // Charts data
-  const stageData = [
-    { name: 'Application', candidates: 45 },
-    { name: 'Screening', candidates: 28 },
-    { name: 'Interview', candidates: 18 },
-    { name: 'Offer', candidates: 12 },
-    { name: 'Hired', candidates: 24 },
-  ];
-
-  const departmentData = [
-    { name: 'Engineering', applicants: 42 },
-    { name: 'Marketing', applicants: 28 },
-    { name: 'Sales', applicants: 32 },
-    { name: 'HR', applicants: 12 },
-  ];
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
-  const handleViewDetails = (candidate: Candidate) => {
-    // Store candidate data and module context before opening new tab
-    sessionStorage.setItem('selectedCandidate', JSON.stringify(candidate));
-    sessionStorage.setItem('currentModule', 'HR');
-    window.open(`/hr/recruitment/candidates/${candidate.id}`, '_blank');
+  const stats = {
+    total: applicants?.length || 0,
+    pending: applicants?.filter(a => a.statusStr === 'Pending').length || 0,
+    shortlisted: applicants?.filter(a => a.statusStr === 'Shortlisted').length || 0,
+    interviewed: applicants?.filter(a => a.statusStr === 'Interviewed').length || 0,
+    hired: applicants?.filter(a => a.statusStr === 'Hired').length || 0,
+    rejected: applicants?.filter(a => a.statusStr === 'Rejected').length || 0,
   };
 
-  const handleStageChange = (candidateId: string, newStage: string) => {
-    setCandidates(prev => 
-      prev.map(candidate => 
-        candidate.id === candidateId 
-          ? { 
-              ...candidate, 
-              stage: newStage,
-              history: [
-                ...candidate.history,
-                { 
-                  date: new Date().toISOString().split('T')[0], 
-                  stage: newStage, 
-                  status: candidate.status,
-                  note: `Stage changed to ${newStage}`
-                }
-              ]
-            } 
-          : candidate
-      )
-    );
+  const getStageBadge = (status: string) => {
+    const stageMap: Record<string, { label: string; className: string }> = {
+      'Pending': { label: 'Application', className: 'bg-blue-100 text-blue-700' },
+      'Shortlisted': { label: 'Screening', className: 'bg-purple-100 text-purple-700' },
+      'Interviewed': { label: 'Interview', className: 'bg-yellow-100 text-yellow-700' },
+      'Offered': { label: 'Offer', className: 'bg-green-100 text-green-700' },
+      'Hired': { label: 'Hired', className: 'bg-emerald-100 text-emerald-700' },
+      'Rejected': { label: 'Rejected', className: 'bg-red-100 text-red-700' },
+    };
+    const stage = stageMap[status] || { label: status, className: 'bg-gray-100 text-gray-700' };
+    return <Badge className={stage.className}>{stage.label}</Badge>;
   };
 
-  const handleStatusChange = (candidateId: string, newStatus: string) => {
-    setCandidates(prev => 
-      prev.map(candidate => 
-        candidate.id === candidateId 
-          ? { 
-              ...candidate, 
-              status: newStatus,
-              history: [
-                ...candidate.history,
-                { 
-                  date: new Date().toISOString().split('T')[0], 
-                  stage: candidate.stage, 
-                  status: newStatus,
-                  note: `Status changed to ${newStatus}`
-                }
-              ]
-            } 
-          : candidate
-      )
-    );
-  };
-
-
-
-  // If we're in a candidate detail tab
-  if (candidateId) {
-    const storedCandidate = sessionStorage.getItem('selectedCandidate');
-    const storedModule = sessionStorage.getItem('currentModule');
-    
-    if (storedCandidate && storedModule === 'HR') {
-      const selectedCandidate = JSON.parse(storedCandidate);
-      
-      return (
-        <div className="space-y-6">
-          <CandidateDetail 
-            candidate={selectedCandidate}
-            onBack={() => window.close()}
-            onStageChange={(newStage) => handleStageChange(selectedCandidate.id, newStage)}
-            onStatusChange={(newStatus) => handleStatusChange(selectedCandidate.id, newStatus)}
-            
-            stageOptions={stageOptions}
-            statusOptions={statusOptions}
-          />
+  if (isLoading) {
+    return (
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
         </div>
-      );
-    }
-    return <div className="p-8 text-center">Candidate data not found. Please reopen from the candidate list.</div>;
+    );
   }
 
   return (
-    <div className='space-y-6'>
-      <CardHeader>
-        <CardTitle className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent text-2xl md:text-3xl font-bold mt-6">Candidate <span className='text-gray-900'>Pipeline</span> </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-8">
-        <CandidateMetrics metrics={metrics} />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CandidateStageChart data={stageData} />
-          <DepartmentApplicationChart data={departmentData} colors={COLORS} />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 p-6 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Candidate Pipeline</h1>
+            <p className="text-sm text-gray-500 mt-1">Track candidates through the hiring process</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => refetch()} disabled={isLoading} className="flex items-center gap-2">
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              Refresh
+            </Button>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Export
+            </Button>
+          </div>
         </div>
 
-        <CandidateTable 
-          candidates={candidates}
-          showFullHistory={showFullHistory}
-          onViewDetails={handleViewDetails}
-          onStageChange={handleStageChange}
-          onStatusChange={handleStatusChange}
-          onToggleHistory={() => setShowFullHistory(!showFullHistory)}
-          stageOptions={stageOptions}
-          statusOptions={statusOptions}
-        />
-      </CardContent>
-    </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Card className="border-l-4 border-blue-500">
+            <CardContent className="p-3">
+              <p className="text-xs text-gray-500">Total</p>
+              <p className="text-xl font-bold text-gray-900">{stats.total}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-yellow-500">
+            <CardContent className="p-3">
+              <p className="text-xs text-gray-500">Pending</p>
+              <p className="text-xl font-bold text-yellow-600">{stats.pending}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-purple-500">
+            <CardContent className="p-3">
+              <p className="text-xs text-gray-500">Shortlisted</p>
+              <p className="text-xl font-bold text-purple-600">{stats.shortlisted}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-orange-500">
+            <CardContent className="p-3">
+              <p className="text-xs text-gray-500">Interviewed</p>
+              <p className="text-xl font-bold text-orange-600">{stats.interviewed}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-green-500">
+            <CardContent className="p-3">
+              <p className="text-xs text-gray-500">Hired</p>
+              <p className="text-xl font-bold text-green-600">{stats.hired}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-l-4 border-red-500">
+            <CardContent className="p-3">
+              <p className="text-xs text-gray-500">Rejected</p>
+              <p className="text-xl font-bold text-red-600">{stats.rejected}</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Pipeline Stage Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBar data={stageData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#8B5CF6" />
+                  </RechartsBar>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Applications by Department</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                        data={departmentData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="count"
+                    >
+                      {departmentData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444'][index % 5]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+                <TabsList>
+                  <TabsTrigger value="all">All ({stats.total})</TabsTrigger>
+                  <TabsTrigger value="pending">Pending ({stats.pending})</TabsTrigger>
+                  <TabsTrigger value="shortlisted">Shortlisted ({stats.shortlisted})</TabsTrigger>
+                  <TabsTrigger value="interviewed">Interviewed ({stats.interviewed})</TabsTrigger>
+                  <TabsTrigger value="hired">Hired ({stats.hired})</TabsTrigger>
+                  <TabsTrigger value="rejected">Rejected ({stats.rejected})</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                    placeholder="Search candidates..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Candidate</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Position</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stage</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Applied</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                {filteredCandidates && filteredCandidates.length > 0 ? (
+                    filteredCandidates.map((candidate) => (
+                        <tr key={candidate.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                                <User className="w-4 h-4 text-emerald-600" />
+                              </div>
+                              <span className="font-medium text-gray-900">{candidate.applicant}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{candidate.position}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{candidate.department}</td>
+                          <td className="px-4 py-3">{getStageBadge(candidate.statusStr)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-500">
+                            {formatDistanceToNow(new Date(candidate.appliedDate), { addSuffix: true })}
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => navigate(`/recruitment/candidate/${candidate.id}`)}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                    ))
+                ) : (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                        No candidates found
+                      </td>
+                    </tr>
+                )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
   );
 };
 
-export default CandidatePipeline;
+export default CandidatePipelinePage;

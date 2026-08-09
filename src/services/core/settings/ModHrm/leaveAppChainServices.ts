@@ -8,9 +8,8 @@ import type {
 import type { UUID } from "../../../../types/core/Settings/leavePolicyConfig";
 import type { StatChangeDto } from "../../../../types/core/Settings/statChangeDto";
 
-const baseUrl = `${
-  import.meta.env.VITE_HRMM_LEAVE_URL || "hrm/leave/v1"
-}/LeaveAppChain`;
+// From LeavePolicyController - endpoints under /Policy/Chain
+const baseUrl = "/hrm/leave/v1/Policy/Chain";
 
 const extractErrorMessage = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;
@@ -24,20 +23,22 @@ const extractErrorMessage = (error: any): string => {
 export const leaveAppChainKeys = {
   all: ["leave-app-chain"] as const,
   byPolicy: (leavePolicyId: UUID) =>
-    [...leaveAppChainKeys.all, leavePolicyId] as const,
+      [...leaveAppChainKeys.all, leavePolicyId] as const,
   activeByPolicy: (leavePolicyId: UUID) =>
-    [...leaveAppChainKeys.all, "activeByPolicy", leavePolicyId] as const,
+      [...leaveAppChainKeys.all, "activeByPolicy", leavePolicyId] as const,
   byId: (leaveAppChainId: UUID) =>
-    [...leaveAppChainKeys.all, leaveAppChainId] as const,
+      [...leaveAppChainKeys.all, leaveAppChainId] as const,
 };
 
 export const leaveAppChainServices = (leavePolicyId: UUID) => {
   const queryClient = useQueryClient();
+
   const listByPolicy = useQuery({
     queryKey: leaveAppChainKeys.byPolicy(leavePolicyId),
     queryFn: async (): Promise<LeaveAppChainListDto[]> => {
-      const res = await api.get(`${baseUrl}/AllAppChain/${leavePolicyId}`);
-      return res.data.data;
+      // GET /Policy/Chain/All/{policyId}
+      const res = await api.get(`${baseUrl}/All/${leavePolicyId}`);
+      return res.data?.data || [];
     },
     enabled: !!leavePolicyId,
   });
@@ -46,15 +47,10 @@ export const leaveAppChainServices = (leavePolicyId: UUID) => {
     queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId),
     queryFn: async (): Promise<LeaveAppChainListDto | null> => {
       try {
-        const res = await api.get(`${baseUrl}/ActiveAppChain/${leavePolicyId}`);
-        console.log("Active chain response:", res.data);
-
-        if (res.data.success && res.data.data) {
-           return res.data.data;
-        }
-        return null;
+        // GET /Policy/Chain/Active/{policyId}
+        const res = await api.get(`${baseUrl}/Active/${leavePolicyId}`);
+        return res.data?.data || null;
       } catch (error: any) {
-        console.error("Error fetching active chain:", error);
         if (error.response?.status === 404) {
           return null;
         }
@@ -65,42 +61,29 @@ export const leaveAppChainServices = (leavePolicyId: UUID) => {
   });
 
   const create = useMutation({
-    mutationFn: async (
-      payload: LeaveAppChainAddDto
-    ): Promise<LeaveAppChainListDto> => {
-      const res = await api.post(`${baseUrl}/AddAppChain`, payload);
-      return res.data.data;
+    mutationFn: async (payload: LeaveAppChainAddDto): Promise<LeaveAppChainListDto> => {
+      // POST /Policy/Chain/Add
+      const res = await api.post(`${baseUrl}/Add`, payload);
+      return res.data?.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: leaveAppChainKeys.byPolicy(leavePolicyId),
-      });
-     queryClient.invalidateQueries({
-      queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId),
-    });
-  },
+      queryClient.invalidateQueries({ queryKey: leaveAppChainKeys.byPolicy(leavePolicyId) });
+      queryClient.invalidateQueries({ queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId) });
+    },
     onError: (error) => {
       throw new Error(extractErrorMessage(error));
     },
   });
 
   const update = useMutation({
-    mutationFn: async (
-      payload: LeaveAppChainModDto
-    ): Promise<LeaveAppChainListDto> => {
-      const res = await api.put(
-        `${baseUrl}/ModAppChain/${payload.id}`,
-        payload
-      );
-      return res.data.data;
+    mutationFn: async (payload: LeaveAppChainModDto): Promise<LeaveAppChainListDto> => {
+      // PUT /Policy/Chain/Update/{id}
+      const res = await api.put(`${baseUrl}/Update/${payload.id}`, payload);
+      return res.data?.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: leaveAppChainKeys.byPolicy(leavePolicyId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId),
-      });
+      queryClient.invalidateQueries({ queryKey: leaveAppChainKeys.byPolicy(leavePolicyId) });
+      queryClient.invalidateQueries({ queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId) });
     },
     onError: (error) => {
       throw new Error(extractErrorMessage(error));
@@ -109,15 +92,12 @@ export const leaveAppChainServices = (leavePolicyId: UUID) => {
 
   const changeStatus = useMutation({
     mutationFn: async (payload: StatChangeDto): Promise<void> => {
-      await api.post(`${baseUrl}/StatAppChain`, payload);
+      // PATCH /Policy/Chain/Step/Status
+      await api.patch(`/hrm/leave/v1/Policy/Chain/Step/Status`, payload);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: leaveAppChainKeys.byPolicy(leavePolicyId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId),
-      });
+      queryClient.invalidateQueries({ queryKey: leaveAppChainKeys.byPolicy(leavePolicyId) });
+      queryClient.invalidateQueries({ queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId) });
     },
     onError: (error) => {
       throw new Error(extractErrorMessage(error));
@@ -126,40 +106,29 @@ export const leaveAppChainServices = (leavePolicyId: UUID) => {
 
   const remove = useMutation({
     mutationFn: async (id: UUID): Promise<void> => {
-      await api.delete(`${baseUrl}/DelAppChain/${id}`);
+      // DELETE /Policy/Chain/Delete/{id}
+      await api.delete(`${baseUrl}/Delete/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: leaveAppChainKeys.byPolicy(leavePolicyId),
-      });
-      queryClient.invalidateQueries({
-        queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId),
-      });
+      queryClient.invalidateQueries({ queryKey: leaveAppChainKeys.byPolicy(leavePolicyId) });
+      queryClient.invalidateQueries({ queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId) });
     },
     onError: (error) => {
       throw new Error(extractErrorMessage(error));
     },
   });
 
+  const refetchActiveChain = async () => {
+    await queryClient.invalidateQueries({ queryKey: leaveAppChainKeys.activeByPolicy(leavePolicyId) });
+  };
+
   return {
     listByPolicy,
+    activeAppChain,
     create,
     update,
     changeStatus,
     remove,
-    activeAppChain
+    refetchActiveChain,
   };
 };
-export const GetAppChainById = ( leaveAppChainId:UUID) => {  
-  const GetAppChainById = useQuery({
-  queryKey: leaveAppChainKeys.byId(leaveAppChainId),
-  queryFn: async (): Promise<LeaveAppChainListDto[]> => {
-    const res = await api.get(`${baseUrl}/GetAppChain/${leaveAppChainId}`);
-    return res.data.data;
-  },
-  enabled: !!leaveAppChainId,
-});
-
-  return {
-    GetAppChainById,
-  };}

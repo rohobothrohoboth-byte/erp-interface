@@ -1,17 +1,17 @@
 import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Calendar } from 'lucide-react';
 import { FiscalYearTable } from '../../components/core/fiscalyear/FiscYearTable';
 import { FiscYearSearch } from '../../components/core/fiscalyear/FiscYearSearch';
 import { ViewFiscModal } from '../../components/core/fiscalyear/ViewFiscModal';
 import { EditFiscModal } from '../../components/core/fiscalyear/EditFiscModal';
 import { DeleteFiscModal } from '../../components/core/fiscalyear/DeleteFiscModal';
-import { 
-  useFiscalYears, 
-  useUpdateFiscalYear, 
-  useDeleteFiscalYear 
+import {
+  useFiscalYears,
+  useUpdateFiscalYear,
+  useDeleteFiscalYear
 } from '../../services/core/fiscalyear/fisc.queries';
 import type { FiscYearListDto, EditFiscYearDto, UUID } from '../../types/core/fisc';
-import { motion } from 'framer-motion';
-
 
 export default function FiscalYearHistory() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,7 +24,6 @@ export default function FiscalYearHistory() {
 
   const itemsPerPage = 10;
 
-  // React Query hooks
   const {
     data: years = [],
     isLoading,
@@ -54,20 +53,15 @@ export default function FiscalYearHistory() {
     },
   });
 
-  // Filter years based on search term
   const filteredYears = useMemo(() => {
     if (!searchTerm.trim()) return years;
-
     const term = searchTerm.toLowerCase().trim();
-    return years.filter(year => 
-      year.name.toLowerCase().includes(term) ||
-      year.dateStartStr.toLowerCase().includes(term) ||
-      year.dateEndStr.toLowerCase().includes(term) ||
-      year.isActiveStr.toLowerCase().includes(term) ||
-      (year.isActive === '0' && 'active'.includes(term)) ||
-      (year.isActive === '1' && 'inactive'.includes(term)) ||
-      (year.dateStartStrAm && year.dateStartStrAm.toLowerCase().includes(term)) ||
-      (year.dateEndStrAm && year.dateEndStrAm.toLowerCase().includes(term))
+    return years.filter(year =>
+        year.name.toLowerCase().includes(term) ||
+        year.dateStartStr.toLowerCase().includes(term) ||
+        year.dateEndStr.toLowerCase().includes(term) ||
+        (year.isActive === '0' && 'active'.includes(term)) ||
+        (year.isActive === '1' && 'inactive'.includes(term))
     );
   }, [years, searchTerm]);
 
@@ -75,47 +69,22 @@ export default function FiscalYearHistory() {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const paginatedYears = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredYears.slice(startIndex, endIndex);
-  }, [filteredYears, currentPage, itemsPerPage]);
+    return filteredYears.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredYears, currentPage]);
 
   const handleYearUpdate = async (updatedYear: EditFiscYearDto) => {
     setFormError(null);
-    
-    // Validate dates
     const startDate = new Date(updatedYear.dateStart);
     const endDate = new Date(updatedYear.dateEnd);
-    
     if (endDate <= startDate) {
       setFormError('End date must be after start date');
       return;
     }
-
-    // No try/catch needed - error is handled by mutation's onError
     await updateFiscalYearMutation.mutateAsync(updatedYear);
-  };
-
-  const handleYearStatusChange = async (yearId: UUID, newStatus: '0' | '1') => {
-    setFormError(null);
-    const year = years.find(y => y.id === yearId);
-    if (!year) return;
-
-    const editData: EditFiscYearDto = {
-      id: yearId,
-      name: year.name,
-      dateStart: year.dateStart,
-      dateEnd: year.dateEnd,
-      isActive: newStatus,
-      rowVersion: year.rowVersion || '1'
-    };
-    
-    // No try/catch needed - error is handled by mutation's onError
-    await updateFiscalYearMutation.mutateAsync(editData);
   };
 
   const handleYearDelete = async (yearId: UUID) => {
     setFormError(null);
-    // No try/catch needed - error is handled by mutation's onError
     await deleteFiscalYearMutation.mutateAsync(yearId);
   };
 
@@ -134,141 +103,108 @@ export default function FiscalYearHistory() {
     setDeleteModalOpen(true);
   };
 
-  const handleStatusChange = (year: FiscYearListDto) => {
-    const newStatus: '0' | '1' = year.isActive === '0' ? '1' : '0';
-    handleYearStatusChange(year.id, newStatus);
-  };
-
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   };
 
-  // Handle delete confirmation
   const handleDeleteConfirmation = async () => {
     if (selectedYear) {
       await handleYearDelete(selectedYear.id);
     }
   };
 
-  // Combine query error and form error
+  const handleRefresh = () => refetch();
+
   const displayError = queryError?.message || formError;
 
-  // Clear errors
   const clearErrors = () => {
     setFormError(null);
-    if (queryError) {
-      refetch();
-    }
+    if (queryError) refetch();
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
-      <div className="w-full -mt-4 py-4 mx-auto">
-        
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">
-            <span className='bg-gradient-to-r from-emerald-500 via-emerald-600 to-emerald-700 bg-clip-text text-transparent'>
-              Fiscal Year 
-            </span>{" "}
-            History
-          </h1>
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-slate-100 dark:bg-slate-800 rounded-lg">
+            <Calendar className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+              Fiscal Year History
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              View and manage all fiscal year records
+            </p>
+          </div>
         </div>
 
         {/* Error Message */}
         {displayError && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6"
-          >
-            <div className="flex justify-between items-center">
-              <span className="font-medium">
-                {displayError.includes("load") ? (
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+              <div className="flex justify-between items-center">
+            <span className="text-sm text-red-700 dark:text-red-400">
+              {displayError.includes("load") ? (
                   <>
-                    Failed to load fiscal years.{" "}
+                    Failed to load fiscal years.{' '}
                     <button
-                      onClick={() => refetch()}
-                      className="underline hover:text-red-800 font-semibold focus:outline-none"
-                      disabled={isLoading}
+                        onClick={handleRefresh}
+                        className="underline hover:text-red-800 font-medium"
                     >
                       Try again
                     </button>
                   </>
-                ) : displayError.includes("update") ? (
-                  "Failed to update fiscal year. Please try again."
-                ) : displayError.includes("delete") ? (
-                  "Failed to delete fiscal year. Please try again."
-                ) : displayError.includes("status") ? (
-                  "Failed to update status. Please try again."
-                ) : displayError.includes("End date") ? (
+              ) : (
                   displayError
-                ) : (
-                  displayError
-                )}
-              </span>
-              <button
-                onClick={clearErrors}
-                className="text-red-700 hover:text-red-900 font-bold text-lg ml-4"
-              >
-                ×
-              </button>
+              )}
+            </span>
+                <button onClick={clearErrors} className="text-red-700 dark:text-red-400 hover:text-red-900 font-bold text-lg ml-4">×</button>
+              </div>
             </div>
-          </motion.div>
         )}
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-          </div>
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-slate-200 dark:border-slate-700 border-t-slate-600 dark:border-t-slate-400" />
+            </div>
         )}
 
         {/* Content */}
         {!isLoading && !displayError && (
-          <div className="space-y-6">
-            {/* Search Component */}
-            <FiscYearSearch 
-              searchTerm={searchTerm}
-              onSearchChange={handleSearchChange}
-            />
-            <FiscalYearTable
-              years={paginatedYears}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
-              onPageChange={setCurrentPage}
-              onViewDetails={handleViewDetails}
-              onEdit={handleEdit}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDelete}
-            />
-          </div>
+            <>
+              <FiscYearSearch searchTerm={searchTerm} onSearchChange={handleSearchChange} />
+
+              <FiscalYearTable
+                  years={paginatedYears}
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={totalItems}
+                  onPageChange={setCurrentPage}
+                  onViewDetails={handleViewDetails}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+              />
+            </>
         )}
 
-        {/* View Modal */}
-        <ViewFiscModal
-          fiscalYear={selectedYear}
-          isOpen={viewModalOpen}
-          onClose={() => setViewModalOpen(false)}
-        />
+        {/* Modals */}
+        <ViewFiscModal fiscalYear={selectedYear} isOpen={viewModalOpen} onClose={() => setViewModalOpen(false)} />
 
-        {/* Edit Modal */}
         <EditFiscModal
-          fiscalYear={selectedYear}
-          isOpen={editModalOpen}
-          onClose={() => setEditModalOpen(false)}
-          onSave={handleYearUpdate}
+            fiscalYear={selectedYear}
+            isOpen={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            onSave={handleYearUpdate}
         />
 
-        {/* Delete Modal */}
         <DeleteFiscModal
-          fiscalYear={selectedYear}
-          isOpen={deleteModalOpen}
-          onClose={() => setDeleteModalOpen(false)}
-          onConfirm={handleDeleteConfirmation}
+            fiscalYear={selectedYear}
+            isOpen={deleteModalOpen}
+            onClose={() => setDeleteModalOpen(false)}
+            onConfirm={handleDeleteConfirmation}
         />
       </div>
-    </div>
   );
 }

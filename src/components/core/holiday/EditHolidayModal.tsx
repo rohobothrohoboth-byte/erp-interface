@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, PenBox } from 'lucide-react';
+import { X, PenBox, Calendar } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import { Label } from '../../ui/label';
@@ -13,20 +13,14 @@ interface EditHolidayModalProps {
   onClose: () => void;
   onSave: (holidayData: EditHolidayDto) => Promise<any>;
   holiday: HolidayListDto | null;
-  fiscalYears?: Array<{ id: UUID; name: string }>;
-}
-
-interface FormErrors {
-  name?: string;
-  date?: string;
 }
 
 export const EditHolidayModal: React.FC<EditHolidayModalProps> = ({
-  isOpen,
-  onClose,
-  onSave,
-  holiday,
-}) => {
+                                                                    isOpen,
+                                                                    onClose,
+                                                                    onSave,
+                                                                    holiday,
+                                                                  }) => {
   const [formData, setFormData] = useState<EditHolidayDto>({
     id: '' as UUID,
     name: '',
@@ -34,8 +28,6 @@ export const EditHolidayModal: React.FC<EditHolidayModalProps> = ({
     isPublic: true,
     rowVersion: '',
   });
-
-  const [errors, setErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -51,213 +43,140 @@ export const EditHolidayModal: React.FC<EditHolidayModalProps> = ({
         name: holiday.name || '',
         date: formatDateForInput(holiday.date),
         isPublic: holiday.isPublic ?? true,
-        rowVersion: holiday.rowVersion || '1', // Default to '1' if not provided
+        rowVersion: holiday.rowVersion || '',
       });
     }
   }, [holiday]);
 
-  const handleInputChange = (field: keyof EditHolidayDto, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Holiday name is required';
-    }
-    
-    if (!formData.date) {
-      newErrors.date = 'Date is required';
-    }
-    
-    if (formData.date) {
-      const holidayDate = new Date(formData.date);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      if (holidayDate < today) {
-        newErrors.date = 'Date cannot be in the past';
-      }
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      toast.error('Please fix the validation errors');
-      return;
-    }
-
     setIsLoading(true);
 
     try {
-      const submitData: EditHolidayDto = {
-        ...formData,
-        date: new Date(formData.date).toISOString(), // Ensure ISO format
-        name: formData.name.trim(),
-        isPublic: formData.isPublic,
-      };
-      
-      const response = await onSave(submitData);
-
-      const successMessage = 
-        response?.data?.message || 
-        response?.message || 
-        '';
-      
-      toast.success(successMessage);
-      
+      await onSave(formData);
+      toast.success('Holiday updated successfully');
       onClose();
-      
     } catch (error: any) {
-      const errorMessage = error.message || '';
-      toast.error(errorMessage);
-      console.error('Error updating holiday:', error);
+      toast.error(error.message || 'Failed to update holiday');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleClose = () => {
-    if (!isLoading) {
-      setErrors({});
-      onClose();
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-xl shadow-xl max-w-2xl w-1/3"
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center border-b px-6 py-4">
-          <div className="flex items-center gap-2">
-            <PenBox size={20} />
-            <h2 className="text-lg font-bold text-gray-800">Edit Holiday</h2>
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="bg-white dark:bg-slate-900 rounded-lg shadow-xl max-w-md w-full overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center px-5 py-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg">
+                <PenBox className="h-4 w-4 text-slate-600 dark:text-slate-400" />
+              </div>
+              <h2 className="text-base font-semibold text-slate-800 dark:text-slate-200">
+                Edit Holiday
+              </h2>
+            </div>
+            <button
+                onClick={onClose}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            >
+              <X size={18} />
+            </button>
           </div>
-          <button
-            onClick={handleClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
-            disabled={isLoading}
-          >
-            <X size={24} />
-          </button>
-        </div>
 
-        {/* Body */}
-        <div className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-4">
+          {/* Body */}
+          <form onSubmit={handleSubmit}>
+            <div className="p-5 space-y-4">
               {/* Holiday Name */}
-              <div className="space-y-2">
-                <Label htmlFor="holidayName" className="text-sm text-gray-500">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Holiday Name <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="holidayName"
-                  type="text"
-                  placeholder="e.g., New Year's Day"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="w-full focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent"
-                  disabled={isLoading}
+                    type="text"
+                    placeholder="e.g., New Year's Day"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="h-9 text-sm"
+                    required
+                    disabled={isLoading}
                 />
-                {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
               </div>
 
               {/* Date */}
-              <div className="space-y-2">
-                <Label htmlFor="holidayDate" className="text-sm text-gray-500">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Date <span className="text-red-500">*</span>
                 </Label>
                 <Input
-                  id="holidayDate"
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => handleInputChange('date', e.target.value)}
-                  className="w-full focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-transparent"
-                  disabled={isLoading}
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                    className="h-9 text-sm"
+                    required
+                    disabled={isLoading}
                 />
-                {errors.date && <p className="text-red-500 text-sm">{errors.date}</p>}
               </div>
 
               {/* Fiscal Year (Read-only) */}
               {holiday?.fiscalYearName && (
-                <div className="space-y-2">
-                  <Label htmlFor="fiscalYear" className="text-sm text-gray-500">
-                    Fiscal Year
-                  </Label>
-                  <Input
-                    id="fiscalYear"
-                    type="text"
-                    value={holiday.fiscalYearName}
-                    disabled
-                    className="w-full bg-gray-50 text-gray-600"
-                  />
-                  <p className="text-xs text-gray-500">
-                    Fiscal year cannot be changed after creation
-                  </p>
-                </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Fiscal Year
+                    </Label>
+                    <Input
+                        type="text"
+                        value={holiday.fiscalYearName}
+                        disabled
+                        className="h-9 text-sm bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                    />
+                  </div>
               )}
 
               {/* Is Public Switch */}
-              <div className="flex items-center justify-between space-y-2 py-2">
-                <Label htmlFor="isPublic" className="text-sm font-medium text-gray-700">
+              <div className="flex items-center justify-between pt-2">
+                <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
                   Public Holiday
                 </Label>
                 <Switch
-                  id="isPublic"
-                  checked={formData.isPublic}
-                  onCheckedChange={(checked) => handleInputChange('isPublic', checked)}
-                  disabled={isLoading}
+                    checked={formData.isPublic}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, isPublic: checked }))}
+                    disabled={isLoading}
                 />
               </div>
-              <p className="text-sm text-gray-500 -mt-2">
-                {formData.isPublic 
-                  ? 'This holiday will be visible to all employees' 
-                  : 'This holiday will be for specific groups only'
-                }
-              </p>
             </div>
 
             {/* Footer */}
-            <div className="border-t px-6 py-2 -mb-4">
-              <div className="mx-auto flex justify-center items-center gap-1.5">
+            <div className="px-5 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+              <div className="flex justify-center gap-2">
                 <Button
-                  type="submit"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer px-6"
-                  disabled={!formData.name.trim() || !formData.date || isLoading}
+                    type="submit"
+                    className="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white px-5 h-8 text-sm"
+                    disabled={!formData.name || !formData.date || isLoading}
                 >
-                  {isLoading ? 'Saving...' : 'Save Changes'}
+                  {isLoading ? "Saving..." : "Save Changes"}
                 </Button>
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleClose}
-                  className="cursor-pointer px-6"
-                  disabled={isLoading}
+                    type="button"
+                    variant="outline"
+                    onClick={onClose}
+                    className="px-5 h-8 text-sm"
+                    disabled={isLoading}
                 >
                   Cancel
                 </Button>
               </div>
             </div>
           </form>
-        </div>
-      </motion.div>
-    </div>
+        </motion.div>
+      </div>
   );
 };

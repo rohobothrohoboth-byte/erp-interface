@@ -14,38 +14,48 @@ export const empStateColors: Record<string, string> = {
 
 // ── Shared UI primitives ───────────────────────────────────────────────────
 export const Field = memo(({
-  label, value, icon,
-}: {
+                             label, value, icon,
+                           }: {
   label: string;
   value?: string;
   icon?: React.ReactNode;
 }) => (
-  <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-0.5">
     <span className="text-xs font-medium text-gray-400 uppercase tracking-wide flex items-center gap-1">
       {icon}{label}
     </span>
-    <span className="text-sm font-medium text-gray-800">{value || '—'}</span>
-  </div>
+      <span className="text-sm font-medium text-gray-800">{value || '—'}</span>
+    </div>
 ));
 
-export const ReadCard = memo(({
-  title, icon, children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-    <div className="flex items-center gap-2 mb-5">
-      <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
-        {icon}
-      </div>
-      <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{title}</h3>
-    </div>
-    {children}
-  </div>
-));
+export const ReadCard = memo(
+    ({
+       title,
+       icon,
+       children,
+     }: {
+      title: string;
+      icon: React.ReactNode;
+      children: React.ReactNode;
+    }) => (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm ">
+          {/* Header */}
+          <div className="flex items-center gap-3 px-5 py-2 bg-gradient-to-r from-emerald-50 via-green-50 to-emerald-100 border-b border-emerald-100 rounded-t-2xl">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white shadow-sm">
+              {icon}
+            </div>
+
+            <h3 className="text-sm font-semibold text-emerald-800 uppercase tracking-wide">
+              {title}
+            </h3>
+          </div>
+
+          {/* Content */}
+          <div className="p-6">{children}</div>
+        </div>
+    ),
+);
 
 export const Grid = memo(({ children }: { children: React.ReactNode }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">{children}</div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">{children}</div>
 ));

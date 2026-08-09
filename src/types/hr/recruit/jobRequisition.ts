@@ -37,22 +37,23 @@ export interface JobReqListDto extends BaseDto {
 /* =======================
    JobReqAddDto
 ======================= */
+// src/types/hr/recruit/jobRequisition.ts
+
 export interface JobReqAddDto {
-  reqReason: string;
-  reqPositions: number;
-  budgetCode: string;
-  startDate: string;
-  positionId: UUID;
-  jgStepId: UUID;
-  workforcePlanId: UUID;
-  keyRespo: string;
+  workforcePlanId: string; // This should be a string (GUID will be parsed by backend)
+  position: string;
+  departmentId: string;
+  numOpen: number;
+  jobGrade: string;
+  salary: number;
+  salaryCurrency: string;
   desc: string;
-  reqQual: string;
-  keySkills: string;
+  qualification?: string;
+  keySkills?: string;
+  employmentType?: string;
+  preferredGender?: string;
   workLocation: string;
-  preGender: string;   // enum.Gender numeric key
-  empNature: string;   // enum.EmpNature numeric key
-  workArr: string;     // enum.WorkArrangement numeric key
+  reqReason?: string;
 }
 
 /* =======================

@@ -8,9 +8,8 @@ import type {
 import type { StatChangeDto } from "../../../../../types/core/Settings/statChangeDto";
 
 class PolicyAssignmentRuleApi {
-  private baseUrl = `${
-    import.meta.env.VITE_HRMM_LEAVE_URL || "hrm/leave/v1"
-  }/PolicyAssignmentRule`;
+  // From LeavePolicyController - endpoints under /Policy/Rule
+  private baseUrl = "/hrm/leave/v1/Policy/Rule";
 
   private extractErrorMessage(error: any): string {
     if (error.response?.data?.message) return error.response.data.message;
@@ -21,77 +20,73 @@ class PolicyAssignmentRuleApi {
     return "An unexpected error occurred";
   }
 
-  // Get by ID
-  async getById(id: UUID): Promise<PolicyAssignmentRuleListDto> {
+  async getById(id: UUID): Promise<PolicyAssignmentRuleListDto | null> {
     try {
-      const res = await api.get(`${this.baseUrl}/GetPolicyAssRule/${id}`);
-      return res.data.data;
-    } catch (error) {
+      const res = await api.get(`${this.baseUrl}/${id}`);
+      return res.data?.data || null;
+    } catch (error: any) {
+      if (error.response?.status === 404) return null;
       throw new Error(this.extractErrorMessage(error));
     }
   }
 
-  // Get Active by ID
   async getActiveById(id: UUID): Promise<PolicyAssignmentRuleListDto[]> {
     try {
-      const res = await api.get(`${this.baseUrl}/ActivePolicyAssRule/${id}`);
-      return res.data.data;
-    } catch (error) {
-      throw new Error(this.extractErrorMessage(error));
+      // GET /Policy/Rule/Active/{policyId}
+      const res = await api.get(`${this.baseUrl}/Active/${id}`);
+      return res.data?.data || [];
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return [];
+      }
+      console.error("Error fetching active assignment rules:", error);
+      return [];
     }
   }
 
-  // Get All by Policy ID - Fixed endpoint name
   async getAllByPolicyId(policyId: UUID): Promise<PolicyAssignmentRuleListDto[]> {
     try {
-      const res = await api.get(`${this.baseUrl}/AllPolicyAssRule/${policyId}`);
-      return res.data.data;
+      // GET /Policy/Rule/All/{policyId}
+      const res = await api.get(`${this.baseUrl}/All/${policyId}`);
+      return res.data?.data || [];
     } catch (error) {
-      throw new Error(this.extractErrorMessage(error));
+      console.error("Error fetching assignment rules:", error);
+      return [];
     }
   }
 
-  // Create
-  async create(
-    data: PolicyAssignmentRuleAddDto,
-  ): Promise<PolicyAssignmentRuleListDto> {
+  async create(data: PolicyAssignmentRuleAddDto): Promise<PolicyAssignmentRuleListDto> {
     try {
-      const res = await api.post(`${this.baseUrl}/AddPolicyAssRule`, data);
-      return res.data.data;
+      // POST /Policy/Rule/Add
+      const res = await api.post(`${this.baseUrl}/Add`, data);
+      return res.data?.data;
     } catch (error) {
       throw new Error(this.extractErrorMessage(error));
     }
   }
 
-  // Update
-  async update(
-    data: PolicyAssignmentRuleModDto,
-  ): Promise<PolicyAssignmentRuleListDto> {
+  async update(data: PolicyAssignmentRuleModDto): Promise<PolicyAssignmentRuleListDto> {
     try {
-      const res = await api.put(
-        `${this.baseUrl}/ModPolicyAssRule/${data.id}`,
-        data,
-      );
-      return res.data.data;
+      // PUT /Policy/Rule/Update/{id}
+      const res = await api.put(`${this.baseUrl}/Update/${data.id}`, data);
+      return res.data?.data;
     } catch (error) {
       throw new Error(this.extractErrorMessage(error));
     }
   }
 
-  // Change Status
   async changeStatus(data: StatChangeDto): Promise<void> {
     try {
-      await api.post(`${this.baseUrl}/StatPolicyAssRule`, data);
+      // PATCH /Policy/Rule/Status
+      await api.patch(`${this.baseUrl}/Status`, data);
     } catch (error) {
       throw new Error(this.extractErrorMessage(error));
     }
   }
 
-  // Delete
-  async delete(id: UUID) {
+  async delete(id: UUID): Promise<void> {
     try {
-      const res = await api.delete(`${this.baseUrl}/DelPolicyAssRule/${id}`);
-      return res.data.data;
+      await api.delete(`${this.baseUrl}/Delete/${id}`);
     } catch (error) {
       throw new Error(this.extractErrorMessage(error));
     }
@@ -104,11 +99,8 @@ export const policyAssignmentRuleFetcher = {
   getById: (id: UUID) => policyAssignmentRuleApi.getById(id),
   getActiveById: (id: UUID) => policyAssignmentRuleApi.getActiveById(id),
   getAllByPolicyId: (policyId: UUID) => policyAssignmentRuleApi.getAllByPolicyId(policyId),
-  create: (data: PolicyAssignmentRuleAddDto) =>
-    policyAssignmentRuleApi.create(data),
-  update: (data: PolicyAssignmentRuleModDto) =>
-    policyAssignmentRuleApi.update(data),
-  changeStatus: (data: StatChangeDto) =>
-    policyAssignmentRuleApi.changeStatus(data),
+  create: (data: PolicyAssignmentRuleAddDto) => policyAssignmentRuleApi.create(data),
+  update: (data: PolicyAssignmentRuleModDto) => policyAssignmentRuleApi.update(data),
+  changeStatus: (data: StatChangeDto) => policyAssignmentRuleApi.changeStatus(data),
   delete: (id: UUID) => policyAssignmentRuleApi.delete(id),
 };

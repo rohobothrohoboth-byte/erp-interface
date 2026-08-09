@@ -23,7 +23,7 @@ export interface LeavePolicyConfigListDto extends BaseDto {
 
 export interface LeavePolicyConfigAddDto {
   annualEntitlement: number;
-  accrualFrequency: string;
+  accrualFrequency: string;  // Should match backend enum
   accrualRate: number;
   maxDaysPerReq: number;
   maxCarryOverDays: number;

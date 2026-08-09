@@ -1,11 +1,12 @@
+// src/components/finance/generalledger/chartOfAccounts/ChartOfAccountsSection.tsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import type { ComboboxOption } from '../../../ui/combobox';
 import ViewJournalEntryModal from '../journalEntries/ViewJournalEntryModal';
 import AccountSearchFilter from './AccountSearchFilter';
 import AccountLedgerTable from './AccountLedgerTable';
-import type { ChartOfAccount, UUID, JournalEntryWithLines } from '../../../../types/finance/generalLedger';
-import { getAccountLedger } from '../../../../utils/finance/glAutoPosting';
+import { getAccounts, getJournalEntries } from '../../../../services/finance/finance.api';
+import { showToast } from '../../../../layout/layout';
 
 interface LedgerTransaction {
   id: string;
@@ -20,298 +21,188 @@ interface LedgerTransaction {
   createdAt: string;
 }
 
+interface ChartOfAccount {
+  id: string;
+  code: string;
+  name: string;
+  nameAm?: string;
+  accountType: string;
+  accountSubType?: string;
+  parentId?: string;
+  parentName?: string;
+  level: number;
+  isActive: boolean;
+  description?: string;
+  openingBalance?: number;
+  dateAdd: string;
+  dateMod?: string;
+}
+
 const ChartOfAccountsSection: React.FC = () => {
+  const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [selectedAccount, setSelectedAccount] = useState<ChartOfAccount | null>(null);
   const [transactions, setTransactions] = useState<LedgerTransaction[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewingJournal, setViewingJournal] = useState<JournalEntryWithLines | null>(null);
+  const [viewingJournal, setViewingJournal] = useState<any | null>(null);
   const itemsPerPage = 15;
 
-  const loadAccounts = (): ChartOfAccount[] => {
-    const stored = localStorage.getItem('chartOfAccounts');
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    
-    // Default Chart of Accounts for Ethiopian IFRS compliance
-    const defaultAccounts: ChartOfAccount[] = [
-      {
-        id: '1' as UUID,
-        code: '1000',
-        name: 'Assets',
-        nameAm: 'ንብረቶች',
-        accountType: 'Asset',
-        parentId: null,
-        level: 1,
-        balance: 0,
-        debitBalance: 0,
-        creditBalance: 0,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: true,
-        allowManualEntry: false,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      },
-      {
-        id: '2' as UUID,
-        code: '1100',
-        name: 'Current Assets',
-        nameAm: 'የአሁን ንብረቶች',
-        accountType: 'Asset',
-        parentId: '1' as UUID,
-        level: 2,
-        balance: 0,
-        debitBalance: 0,
-        creditBalance: 0,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: true,
-        allowManualEntry: false,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      },
-      {
-        id: '3' as UUID,
-        code: '1110',
-        name: 'Cash and Bank',
-        nameAm: 'ጥሬ ገንዘብ እና ባንክ',
-        accountType: 'Asset',
-        parentId: '2' as UUID,
-        level: 3,
-        balance: 150000,
-        debitBalance: 150000,
-        creditBalance: 0,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: false,
-        allowManualEntry: true,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      },
-      {
-        id: '4' as UUID,
-        code: '1120',
-        name: 'Accounts Receivable',
-        nameAm: 'ተቀባይ ሂሳቦች',
-        accountType: 'Asset',
-        parentId: '2' as UUID,
-        level: 3,
-        balance: 250000,
-        debitBalance: 250000,
-        creditBalance: 0,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: false,
-        allowManualEntry: true,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      },
-      {
-        id: '5' as UUID,
-        code: '2000',
-        name: 'Liabilities',
-        nameAm: 'ዕዳዎች',
-        accountType: 'Liability',
-        parentId: null,
-        level: 1,
-        balance: 0,
-        debitBalance: 0,
-        creditBalance: 0,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: true,
-        allowManualEntry: false,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      },
-      {
-        id: '6' as UUID,
-        code: '2100',
-        name: 'Current Liabilities',
-        nameAm: 'የአሁን ዕዳዎች',
-        accountType: 'Liability',
-        parentId: '5' as UUID,
-        level: 2,
-        balance: 0,
-        debitBalance: 0,
-        creditBalance: 0,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: true,
-        allowManualEntry: false,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      },
-      {
-        id: '7' as UUID,
-        code: '2110',
-        name: 'Accounts Payable',
-        nameAm: 'ተከፋይ ሂሳቦች',
-        accountType: 'Liability',
-        parentId: '6' as UUID,
-        level: 3,
-        balance: 180000,
-        debitBalance: 0,
-        creditBalance: 180000,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: false,
-        allowManualEntry: true,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      },
-      {
-        id: '8' as UUID,
-        code: '3000',
-        name: 'Equity',
-        nameAm: 'ካፒታል',
-        accountType: 'Equity',
-        parentId: null,
-        level: 1,
-        balance: 200000,
-        debitBalance: 0,
-        creditBalance: 200000,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: true,
-        allowManualEntry: false,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      },
-      {
-        id: '9' as UUID,
-        code: '4000',
-        name: 'Revenue',
-        nameAm: 'ገቢ',
-        accountType: 'Revenue',
-        parentId: null,
-        level: 1,
-        balance: 800000,
-        debitBalance: 0,
-        creditBalance: 800000,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: true,
-        allowManualEntry: false,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      },
-      {
-        id: '10' as UUID,
-        code: '5000',
-        name: 'Expenses',
-        nameAm: 'ወጪዎች',
-        accountType: 'Expense',
-        parentId: null,
-        level: 1,
-        balance: 450000,
-        debitBalance: 450000,
-        creditBalance: 0,
-        currency: 'ETB',
-        status: 'Active',
-        isControlAccount: true,
-        allowManualEntry: false,
-        createdAt: new Date().toISOString(),
-        createdBy: 'System',
-        rowVersion: 1
-      }
-    ];
-    
-    localStorage.setItem('chartOfAccounts', JSON.stringify(defaultAccounts));
-    return defaultAccounts;
-  };
+  useEffect(() => {
+    fetchAccounts();
+  }, []);
 
-  const [accounts] = useState<ChartOfAccount[]>(loadAccounts());
+  const fetchAccounts = async () => {
+    try {
+      setLoading(true);
+      const res = await getAccounts();
+      const data = res.data.data || res.data || [];
+      setAccounts(data);
+    } catch (error) {
+      console.error('Error fetching accounts:', error);
+      showToast.error('Failed to load accounts');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load transactions when account is selected
   useEffect(() => {
     if (selectedAccount) {
-      const ledger = getAccountLedger(selectedAccount.code);
-      setTransactions(ledger);
-      setCurrentPage(1);
+      fetchAccountTransactions(selectedAccount);
     } else {
       setTransactions([]);
     }
   }, [selectedAccount]);
 
-  // Handle account selection
+  const fetchAccountTransactions = async (account: ChartOfAccount) => {
+    try {
+      // Get all journal entries
+      const res = await getJournalEntries({ accountId: account.id });
+      const entries = res.data.data || res.data || [];
+
+      // Transform to ledger transactions
+      const ledgerTransactions: LedgerTransaction[] = entries.flatMap((entry: any) =>
+          entry.lines
+              .filter((line: any) => line.accountId === account.id)
+              .map((line: any) => ({
+                id: `${entry.id}-${line.id}`,
+                date: entry.entryDate,
+                description: entry.description || line.description || 'Journal entry',
+                postReference: entry.reference,
+                journalId: entry.id,
+                debit: line.direction === 'Debit' ? line.amount : 0,
+                credit: line.direction === 'Credit' ? line.amount : 0,
+                balance: 0, // Calculate balance
+                balanceType: line.direction === 'Debit' ? 'Debit' : 'Credit',
+                createdAt: entry.dateAdd,
+              }))
+      );
+
+      // Calculate running balance
+      let runningBalance = account.openingBalance || 0;
+      ledgerTransactions.forEach(t => {
+        runningBalance += t.debit - t.credit;
+        t.balance = runningBalance;
+      });
+
+      setTransactions(ledgerTransactions);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      showToast.error('Failed to load account transactions');
+    }
+  };
+
   const handleAccountSelect = (accountId: string) => {
     setSelectedAccountId(accountId);
     const account = accounts.find(acc => acc.id === accountId);
     setSelectedAccount(account || null);
   };
 
-  // Prepare options for the combobox
   const accountOptions: ComboboxOption[] = accounts.map(account => ({
     value: account.id,
     label: `${account.code} - ${account.name}`,
     searchLabel: `${account.code} ${account.name} ${account.nameAm || ''}`.toLowerCase()
   }));
 
-  // Handle journal view
   const handleViewJournal = (journalId: string) => {
-    const journals = JSON.parse(localStorage.getItem('journalEntries') || '[]');
-    const journal = journals.find((j: JournalEntryWithLines) => j.id === journalId);
-    if (journal) {
-      setViewingJournal(journal);
-    }
+    // Fetch journal entry by ID
+    // For now, we'll show a placeholder
+    setViewingJournal({ id: journalId, reference: `JE-${journalId.substring(0, 8)}` });
   };
 
-  // Pagination for transactions
   const totalPages = Math.ceil(transactions.length / itemsPerPage);
   const paginatedTransactions = transactions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
   );
 
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+    );
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="space-y-4"
-    >
-      {/* Account Search Filter */}
-      <AccountSearchFilter
-        accountOptions={accountOptions}
-        selectedAccountId={selectedAccountId}
-        onAccountSelect={handleAccountSelect}
-      />
-
-      {/* Account Ledger Table */}
-      {selectedAccount && (
-        <AccountLedgerTable
-          transactions={paginatedTransactions}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={transactions.length}
-          onPageChange={setCurrentPage}
-          onViewJournal={handleViewJournal}
-          accountCode={selectedAccount.code}
-          accountName={selectedAccount.name}
+      <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="space-y-4"
+      >
+        {/* Account Search Filter */}
+        <AccountSearchFilter
+            accountOptions={accountOptions}
+            selectedAccountId={selectedAccountId}
+            onAccountSelect={handleAccountSelect}
         />
-      )}
 
-      {/* Journal View Modal */}
-      {viewingJournal && (
-        <ViewJournalEntryModal
-          isOpen={true}
-          onClose={() => setViewingJournal(null)}
-          entry={viewingJournal}
-        />
-      )}
-    </motion.div>
+        {/* Account Ledger Table */}
+        {selectedAccount && (
+            <AccountLedgerTable
+                transactions={paginatedTransactions}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={transactions.length}
+                onPageChange={setCurrentPage}
+                onViewJournal={handleViewJournal}
+                accountCode={selectedAccount.code}
+                accountName={selectedAccount.name}
+            />
+        )}
+
+        {/* Journal View Modal - Simplified */}
+        {viewingJournal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+              <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center border-b px-6 py-4">
+                  <h2 className="text-lg font-bold text-gray-900">Journal Entry</h2>
+                  <button
+                      onClick={() => setViewingJournal(null)}
+                      className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className="p-6">
+                  <p><strong>Reference:</strong> {viewingJournal.reference}</p>
+                  <p><strong>ID:</strong> {viewingJournal.id}</p>
+                  <p className="text-sm text-gray-500 mt-4">Journal entry details would appear here</p>
+                </div>
+                <div className="border-t px-6 py-4 flex justify-end">
+                  <button
+                      onClick={() => setViewingJournal(null)}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+      </motion.div>
   );
 };
 

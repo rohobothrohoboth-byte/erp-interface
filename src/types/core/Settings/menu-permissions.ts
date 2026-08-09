@@ -10,9 +10,13 @@ export interface NameList {
 
 // Main DTOs
 export interface ModPerMenuListDto {
-  perModuleId: string; // PerModule
-  perModule: string; // PerModule
+  perModuleId: UUID;
+  perModule: string;
   perMenuList: NameList[];
+  // Add these if they exist in your API response
+  id?: UUID;
+  name?: string;
+  desc?: string;
 }
 
 export interface PerMenuListDto extends BaseDto {
@@ -41,13 +45,13 @@ export interface PerMenuAddDto {
 }
 
 export interface PerMenuModDto {
-  perModuleId: UUID;
   id: UUID;
+  perModuleId: UUID;  // Make sure this is camelCase (lowercase p)
   key: string;
   label: string;
   path: string;
   icon: string;
   isChild: boolean;
-  parentKey: string;
+  parentKey: string;  // This will be mapped to parentId in the payload
   order: number;
 }

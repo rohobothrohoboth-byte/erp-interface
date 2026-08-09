@@ -8,7 +8,8 @@ export interface FiscalYearFilters {
 }
 
 class FiscalYearApi {
-  private baseUrl = `${import.meta.env.VITE_CORE_MODULE_URL || 'core/module/v1'}/FiscalYear`;
+  // FIXED: Add leading slash to match gateway pattern
+  private baseUrl = `/core/module/v1/FiscalYear`;
 
   // Helper method to extract error messages
   private extractErrorMessage(error: any): string {
@@ -29,19 +30,39 @@ class FiscalYearApi {
   async getAllFiscalYears(): Promise<FiscYearListDto[]> {
     try {
       const response = await api.get(`${this.baseUrl}/AllFiscalYear`);
-      return response.data.data;
+      return response.data?.data || [];
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
       console.error('Error fetching fiscal years:', errorMessage);
-      throw new Error(errorMessage);
+      return []; // Return empty array instead of throwing
     }
   }
 
-  async getFiscalYearById(id: UUID): Promise<FiscYearListDto> {
+  async getActiveFiscalYear(): Promise<FiscYearListDto | null> {
+    try {
+      const allFiscalYears = await this.getAllFiscalYears();
+      // Find the active fiscal year (based on current date or isActive flag)
+      const currentDate = new Date();
+      const activeFiscalYear = allFiscalYears.find((fy) => {
+        const startDate = new Date(fy.startDate);
+        const endDate = new Date(fy.endDate);
+        return currentDate >= startDate && currentDate <= endDate;
+      });
+      return activeFiscalYear || null;
+    } catch (error) {
+      console.error('Error fetching active fiscal year:', error);
+      return null;
+    }
+  }
+
+  async getFiscalYearById(id: UUID): Promise<FiscYearListDto | null> {
     try {
       const response = await api.get(`${this.baseUrl}/GetFiscalYear/${id}`);
-      return response.data.data;
-    } catch (error) {
+      return response.data?.data || null;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
       const errorMessage = this.extractErrorMessage(error);
       console.error('Error fetching fiscal year:', errorMessage);
       throw new Error(errorMessage);
@@ -51,8 +72,8 @@ class FiscalYearApi {
   async createFiscalYear(fiscalYear: AddFiscYearDto): Promise<FiscYearListDto> {
     try {
       const response = await api.post(`${this.baseUrl}/AddFiscalYear`, fiscalYear);
-      console.info('Fiscal year created successfully:', response.data.data.id);
-      return response.data.data;
+      console.info('Fiscal year created successfully:', response.data?.data?.id);
+      return response.data?.data;
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
       console.error('Error creating fiscal year:', errorMessage);
@@ -63,7 +84,7 @@ class FiscalYearApi {
   async updateFiscalYear(updateData: EditFiscYearDto): Promise<FiscYearListDto> {
     try {
       const response = await api.put(`${this.baseUrl}/ModFiscalYear/${updateData.id}`, updateData);
-      return response.data.data;
+      return response.data?.data;
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
       console.error('Error updating fiscal year:', errorMessage);
@@ -74,7 +95,7 @@ class FiscalYearApi {
   async deleteFiscalYear(id: UUID): Promise<void> {
     try {
       const response = await api.delete(`${this.baseUrl}/DelFiscalYear/${id}`);
-      console.info('Fiscal year deleted successfully:', response.data.message);
+      console.info('Fiscal year deleted successfully:', response.data?.message);
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
       console.error('Error deleting fiscal year:', errorMessage);
@@ -90,6 +111,7 @@ export const fiscalYearApi = new FiscalYearApi();
 export const fiscalYearFetcher = {
   // Queries
   getAllFiscalYears: () => fiscalYearApi.getAllFiscalYears(),
+  getActiveFiscalYear: () => fiscalYearApi.getActiveFiscalYear(),
   getFiscalYearById: (id: UUID) => fiscalYearApi.getFiscalYearById(id),
 
   // Mutations
@@ -101,7 +123,8 @@ export const fiscalYearFetcher = {
 // For easy service replacement, export an interface
 export interface IFiscalYearApi {
   getAllFiscalYears(): Promise<FiscYearListDto[]>;
-  getFiscalYearById(id: UUID): Promise<FiscYearListDto>;
+  getActiveFiscalYear(): Promise<FiscYearListDto | null>;
+  getFiscalYearById(id: UUID): Promise<FiscYearListDto | null>;
   createFiscalYear(fiscalYear: AddFiscYearDto): Promise<FiscYearListDto>;
   updateFiscalYear(updateData: EditFiscYearDto): Promise<FiscYearListDto>;
   deleteFiscalYear(id: UUID): Promise<void>;

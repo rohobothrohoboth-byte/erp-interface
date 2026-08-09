@@ -1,9 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as yup from 'yup';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
+import {
+  User,
+  Shield,
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
+  Building2,
+  Home,
+  Heart,
+  Users,
+  Save,
+  CheckCircle,
+  AlertCircle,
+  ChevronRight,
+  ChevronLeft,
+  FileText,
+  Award
+} from 'lucide-react';
 import { GuarantorProfileUpload } from '../../AddEmployee/steps/GuarantorProfileUpload';
 import { Input } from '../../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../../components/ui/select';
@@ -33,33 +52,27 @@ const validationSchema = yup.object({
   country: yup.string().required('Country is required'),
   region: yup.string().required('Region is required'),
   telephone: yup.string().required('Telephone is required'),
-  woreda: yup.string().required('woreda is required'),
+  woreda: yup.string().required('Woreda is required'),
   subcity: yup.string().required('Subcity is required'),
   houseNo: yup.string().required('House number is required'),
 });
 
 export const GuarantorStep: React.FC<GuarantorStepProps> = ({
-  data,
-  onNext,
-  onBack,
-  employeeId,
-  loading = false,
-  isEditMode = false
-}) => {
-
+                                                              data,
+                                                              onNext,
+                                                              onBack,
+                                                              employeeId,
+                                                              loading = false,
+                                                              isEditMode = false
+                                                            }) => {
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
-  // Scroll to top function
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    if (document.documentElement) {
-      document.documentElement.scrollTop = 0;
-    }
-
-    if (document.body) {
-      document.body.scrollTop = 0;
-    }
+    if (document.documentElement) document.documentElement.scrollTop = 0;
+    if (document.body) document.body.scrollTop = 0;
   };
 
   const formik = useFormik<EmpModGuarDto>({
@@ -95,21 +108,19 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
     validateOnMount: false,
     onSubmit: (values) => {
       setSubmitError(null);
+      setSuccessMessage('Guarantor information saved successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
       scrollToTop();
       onNext(values);
     },
   });
 
-  // Update employeeId when prop changes
   useEffect(() => {
     if (employeeId && employeeId !== formik.values.employeeId) {
       formik.setFieldValue('employeeId', employeeId);
     }
   }, [employeeId]);
 
-
-
-  // Handle phone input change
   const handlePhoneChange = (value: string) => {
     formik.setFieldValue('telephone', value);
     formik.setFieldTouched('telephone', true);
@@ -123,649 +134,550 @@ export const GuarantorStep: React.FC<GuarantorStepProps> = ({
     formik.setFieldValue('file', null);
   };
 
-  // Helper function to safely get error messages
   const getErrorMessage = (fieldName: string): string => {
     const error = formik.errors[fieldName as keyof typeof formik.errors];
     const touched = formik.touched[fieldName as keyof typeof formik.touched];
-
-    if (touched && error) {
-      return typeof error === 'string' ? error : 'Invalid value';
-    }
+    if (touched && error) return typeof error === 'string' ? error : 'Invalid value';
     return '';
   };
 
-
-
-  // Handle form submission - same as EmergencyContactStep
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
-    
-    // Validate form before submission
+
     const errors = formik.validateForm();
     if (Object.keys(errors).length > 0) {
-      // Set touched for all fields to show errors
       const allTouched = Object.keys(formik.values).reduce((acc, key) => {
         acc[key as keyof EmpModGuarDto] = true;
         return acc;
       }, {} as Record<keyof EmpModGuarDto, boolean>);
       formik.setTouched(allTouched);
-      
-      // Scroll to first error
       scrollToTop();
       return;
     }
-    
-    // Scroll to top before form submission
+
     scrollToTop();
     formik.handleSubmit();
   };
 
-  // Handle back button click with scroll to top
   const handleBackClick = () => {
     scrollToTop();
     onBack();
   };
 
+  const sectionVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-8"
-    >
-      {/* Error Display - Similar to EmergencyContactStep */}
-      {submitError && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
+      <motion.div
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 bg-red-50 border border-red-200 rounded-xl p-4"
-        >
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-5 w-5 text-red-400"
-                viewBox="0 0 20 20"
-                fill="currentColor"
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+          className="space-y-8"
+      >
+        {/* Success Message Toast */}
+        <AnimatePresence>
+          {successMessage && (
+              <motion.div
+                  initial={{ opacity: 0, y: -50, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -50, scale: 0.9 }}
+                  className="fixed top-20 right-4 z-50"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                  clipRule="evenodd"
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5" />
+                  <span className="font-medium">{successMessage}</span>
+                </div>
+              </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Error Display */}
+        <AnimatePresence>
+          {submitError && (
+              <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-gradient-to-r from-red-50 to-red-100 border border-red-200 rounded-xl shadow-sm"
+              >
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-red-200 rounded-lg">
+                      <AlertCircle className="w-5 h-5 text-red-700" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-red-800">Error</h3>
+                      <p className="text-sm text-red-700">{submitError}</p>
+                    </div>
+                  </div>
+                  <button
+                      onClick={() => setSubmitError(null)}
+                      className="text-red-700 hover:text-red-900 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </motion.div>
+          )}
+        </AnimatePresence>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Guarantor Information Section */}
+          <motion.div variants={sectionVariants} initial="hidden" animate="visible" className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg">
+                <Shield className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">Guarantor Information</h3>
+                <p className="text-sm text-slate-500">Personal details of the guarantor</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  First Name <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                      name="firstName"
+                      value={formik.values.firstName}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      onFocus={() => setFocusedField('firstName')}
+                      onBlurCapture={() => setFocusedField(null)}
+                      className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-amber-500 transition-all ${
+                          getErrorMessage("firstName") ? "border-red-500" : "border-slate-200"
+                      } ${focusedField === 'firstName' ? 'border-amber-500 ring-2 ring-amber-500/20' : ''}`}
+                      placeholder="John"
+                      disabled={loading}
+                  />
+                </div>
+                {getErrorMessage("firstName") && <p className="text-red-500 text-xs">{getErrorMessage("firstName")}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Middle Name <span className="text-red-500">*</span>
+                </label>
+                <Input
+                    name="middleName"
+                    value={formik.values.middleName}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-amber-500 transition-all ${
+                        getErrorMessage("middleName") ? "border-red-500" : "border-slate-200"
+                    }`}
+                    placeholder="Michael"
+                    disabled={loading}
                 />
-              </svg>
+                {getErrorMessage("middleName") && <p className="text-red-500 text-xs">{getErrorMessage("middleName")}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
+                <Input
+                    name="lastName"
+                    value={formik.values.lastName}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-amber-500 transition-all ${
+                        getErrorMessage("lastName") ? "border-red-500" : "border-slate-200"
+                    }`}
+                    placeholder="Doe"
+                    disabled={loading}
+                />
+                {getErrorMessage("lastName") && <p className="text-red-500 text-xs">{getErrorMessage("lastName")}</p>}
+              </div>
             </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error</h3>
-              <p className="text-sm text-red-700 mt-1">{submitError}</p>
-            </div>
-            <div className="ml-auto pl-3">
-              <button
-                onClick={() => setSubmitError(null)}
-                className="text-red-800 hover:text-red-900"
-              >
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Nationality <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                      name="nationality"
+                      value={formik.values.nationality}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-amber-500 transition-all ${
+                          getErrorMessage("nationality") ? "border-red-500" : "border-slate-200"
+                      }`}
+                      placeholder="Ethiopian"
+                      disabled={loading}
+                  />
+                </div>
+                {getErrorMessage("nationality") && <p className="text-red-500 text-xs">{getErrorMessage("nationality")}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Gender <span className="text-red-500">*</span>
+                </label>
+                <Select
+                    value={formik.values.gender}
+                    onValueChange={(value: Gender) => formik.setFieldValue("gender", value)}
+                    disabled={loading}
                 >
-                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
+                  <SelectTrigger className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-amber-500 ${
+                      getErrorMessage("gender") ? "border-red-500" : "border-slate-200"
+                  }`}>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(Gender).map(([key, value]) => (
+                        <SelectItem key={key} value={key}>{value}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {getErrorMessage("gender") && <p className="text-red-500 text-xs">{getErrorMessage("gender")}</p>}
+              </div>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Guarantor Information Section */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-8 bg-gradient-to-b from-purple-400 to-purple-600 rounded-full"></div>
-            <h3 className="text-xl font-semibold text-gray-800">
-              Guarantor Information
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {/* First Name */}
-            <div className="space-y-2">
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                First Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="firstName"
-                name="firstName"
-                value={formik.values.firstName}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("firstName") ? "border-red-500" : "border-gray-300"}`}
-                placeholder="John"
-                disabled={loading}
-              />
-              {getErrorMessage("firstName") && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage("firstName")}</div>
-              )}
-            </div>
-
-            {/* Middle Name */}
-            <div className="space-y-2">
-              <label htmlFor="middleName" className="block text-sm font-medium text-gray-700 mb-1">
-                Middle Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="middleName"
-                name="middleName"
-                value={formik.values.middleName}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("middleName") ? "border-red-500" : "border-gray-300"}`}
-                placeholder="Michael"
-                disabled={loading}
-              />
-              {getErrorMessage("middleName") && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage("middleName")}</div>
-              )}
-            </div>
-
-            {/* Last Name */}
-            <div className="space-y-2">
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                Last Name <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="lastName"
-                name="lastName"
-                value={formik.values.lastName}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("lastName") ? "border-red-500" : "border-gray-300"}`}
-                placeholder="Doe"
-                disabled={loading}
-              />
-              {getErrorMessage("lastName") && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage("lastName")}</div>
-              )}
-            </div>
-          </div>
-
-          {/* Additional Guarantor Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-6">
-            <div className="space-y-2">
-              <label
-                htmlFor="nationality"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-              Nationality <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="nationality"
-                name="nationality"
-                value={formik.values.nationality}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                  getErrorMessage("nationality")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder="Ethiopian"
-                disabled={loading}
-              />
-              {getErrorMessage("nationality") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("nationality")}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Relation <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Heart className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 z-10" />
+                  <EnumSelect
+                      enumObject={Relation}
+                      value={formik.values.relation?.toString() || ""}
+                      onChange={(value) => formik.setFieldValue("relation", value)}
+                      placeholder="Select relation"
+                      disabled={loading}
+                      className="pl-10"
+                  />
                 </div>
-              )}
+                {getErrorMessage("relation") && <p className="text-red-500 text-xs">{getErrorMessage("relation")}</p>}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Address Information Section */}
+          <motion.div variants={sectionVariants} initial="hidden" animate="visible" transition={{ delay: 0.1 }} className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl shadow-lg">
+                <MapPin className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">Address Information</h3>
+                <p className="text-sm text-slate-500">Guarantor's contact and location details</p>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="gender"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Gender <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={formik.values.gender}
-                onValueChange={(value: Gender) =>
-                  formik.setFieldValue("gender", value)
-                }
-                disabled={loading}
-              >
-                <SelectTrigger
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                    getErrorMessage("gender")
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Address Type <span className="text-red-500">*</span>
+                </label>
+                <Select
+                    value={formik.values.addressType}
+                    onValueChange={(value: AddressType) => formik.setFieldValue("addressType", value)}
+                    disabled={loading}
                 >
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(Gender).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getErrorMessage("gender") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("gender")}
+                  <SelectTrigger className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 ${
+                      getErrorMessage("addressType") ? "border-red-500" : "border-slate-200"
+                  }`}>
+                    <SelectValue placeholder="Select address type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(AddressType).map(([key, value]) => (
+                        <SelectItem key={key} value={key}>{value}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {getErrorMessage("addressType") && <p className="text-red-500 text-xs">{getErrorMessage("addressType")}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Country <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                      name="country"
+                      value={formik.values.country}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"
+                      placeholder="Ethiopia"
+                      disabled={loading}
+                  />
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="relation"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Relation <span className="text-red-500">*</span>
-              </label>
-
-              <EnumSelect
-                enumObject={Relation}
-                value={formik.values.relation?.toString() || ""}
-                onChange={(value) =>
-                  formik.setFieldValue("relation", value)
-                }
-                placeholder="Select relation"
-                disabled={loading}
-              />
-
-              {getErrorMessage("relation") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("relation")}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Address Information Section */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full"></div>
-            <h3 className="text-xl font-semibold text-gray-800">
-              Guarantor Address Information
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {/* Address Type */}
-            <div className="space-y-2">
-              <label
-                htmlFor="addressType"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Address Type <span className="text-red-500">*</span>
-              </label>
-              <Select
-                value={formik.values.addressType}
-                onValueChange={(value: AddressType) =>
-                  formik.setFieldValue("addressType", value)
-                }
-                disabled={loading}
-              >
-                <SelectTrigger
-                  className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                    getErrorMessage("addressType")
-                      ? "border-red-500"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <SelectValue placeholder="Select address type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(AddressType).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {getErrorMessage("addressType") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("addressType")}
-                </div>
-              )}
-            </div>
-
-            {/* Country */}
-            <div className="space-y-2">
-              <label
-                htmlFor="country"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Country <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="country"
-                name="country"
-                value={formik.values.country}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                  getErrorMessage("country")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder="Ethiopia"
-                disabled={loading}
-              />
-              {getErrorMessage("country") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("country")}
-                </div>
-              )}
-            </div>
-
-            {/* Region */}
-            <div className="space-y-2">
-              <label
-                htmlFor="region"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Region <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="region"
-                name="region"
-                value={formik.values.region}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${
-                  getErrorMessage("region")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-                placeholder="Addis Ababa"
-                disabled={loading}
-              />
-              {getErrorMessage("region") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("region")}
-                </div>
-              )}
-            </div>
-
-            {/* Telephone */}
-            <div className="space-y-2">
-              <label
-                htmlFor="telephone"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Telephone <span className="text-red-500">*</span>
-              </label>
-              <div
-                className={`w-full border rounded-md transition-colors duration-200 ${
-                  getErrorMessage("telephone")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
-              >
-                <PhoneInput
-                  country={"et"}
-                  value={formik.values.telephone}
-                  onChange={handlePhoneChange}
-                  disabled={loading}
-                  inputProps={{
-                    name: "telephone",
-                    onBlur: formik.handleBlur,
-                    disabled: loading,
-                  }}
-                  inputStyle={{
-                    width: "100%",
-                    height: "42px",
-                    paddingLeft: "48px",
-                    outline: "none",
-                    fontSize: "14px",
-                    borderRadius: "6px",
-                    border: "none",
-                    ...(loading && {
-                      backgroundColor: "#f3f4f6",
-                      cursor: "not-allowed",
-                    }),
-                  }}
-                  buttonStyle={{
-                    border: "none",
-                    borderRight: "1px solid #ccc",
-                    borderRadius: "6px 0 0 6px",
-                    backgroundColor: "#f8f9fa",
-                    ...(loading && { cursor: "not-allowed" }),
-                  }}
-                  containerStyle={{
-                    width: "100%",
-                  }}
-                  dropdownStyle={{
-                    borderRadius: "6px",
-                  }}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Region <span className="text-red-500">*</span>
+                </label>
+                <Input
+                    name="region"
+                    value={formik.values.region}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder="Addis Ababa"
+                    disabled={loading}
                 />
               </div>
-              {getErrorMessage("telephone") && (
-                <div className="text-red-500 text-xs mt-1">
-                  {getErrorMessage("telephone")}
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Telephone <span className="text-red-500">*</span>
+                </label>
+                <PhoneInput
+                    country={'et'}
+                    value={formik.values.telephone}
+                    onChange={handlePhoneChange}
+                    disabled={loading}
+                    inputProps={{ name: 'telephone', onBlur: formik.handleBlur }}
+                    containerClass="w-full"
+                    inputClass={`!w-full !px-4 !py-2.5 !rounded-xl !border-slate-200 focus:!ring-2 focus:!ring-blue-500 ${
+                        getErrorMessage("telephone") ? "!border-red-500" : ""
+                    }`}
+                />
+                {getErrorMessage("telephone") && <p className="text-red-500 text-xs">{getErrorMessage("telephone")}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Subcity <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                      name="subcity"
+                      value={formik.values.subcity}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-all ${
+                          getErrorMessage("subcity") ? "border-red-500" : "border-slate-200"
+                      }`}
+                      placeholder="Kirkos"
+                      disabled={loading}
+                  />
                 </div>
-              )}
+                {getErrorMessage("subcity") && <p className="text-red-500 text-xs">{getErrorMessage("subcity")}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">Zone</label>
+                <Input
+                    name="zone"
+                    value={formik.values.zone}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder="Zone 3"
+                    disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  Woreda <span className="text-red-500">*</span>
+                </label>
+                <Input
+                    name="woreda"
+                    value={formik.values.woreda}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className={`w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-all ${
+                        getErrorMessage("woreda") ? "border-red-500" : "border-slate-200"
+                    }`}
+                    placeholder="08"
+                    disabled={loading}
+                />
+                {getErrorMessage("woreda") && <p className="text-red-500 text-xs">{getErrorMessage("woreda")}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">Kebele</label>
+                <Input
+                    name="kebele"
+                    value={formik.values.kebele}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder="09"
+                    disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">
+                  House Number <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Home className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                      name="houseNo"
+                      value={formik.values.houseNo}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className={`w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-blue-500 transition-all ${
+                          getErrorMessage("houseNo") ? "border-red-500" : "border-slate-200"
+                      }`}
+                      placeholder="H-123"
+                      disabled={loading}
+                  />
+                </div>
+                {getErrorMessage("houseNo") && <p className="text-red-500 text-xs">{getErrorMessage("houseNo")}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">Email</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Input
+                      name="email"
+                      type="email"
+                      value={formik.values.email}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                      className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"
+                      placeholder="example@email.com"
+                      disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">P.O. Box</label>
+                <Input
+                    name="poBox"
+                    value={formik.values.poBox}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder="1234"
+                    disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">Fax</label>
+                <Input
+                    name="fax"
+                    value={formik.values.fax}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder="+251111223344"
+                    disabled={loading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700">Website</label>
+                <Input
+                    name="website"
+                    value={formik.values.website}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder="https://example.com"
+                    disabled={loading}
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Document Upload Section */}
+          <motion.div variants={sectionVariants} initial="hidden" animate="visible" transition={{ delay: 0.2 }} className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl shadow-lg">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">Supporting Document</h3>
+                <p className="text-sm text-slate-500">Upload guarantor identification document</p>
+              </div>
             </div>
 
-            {/* Optional Fields (same as EmergencyContactStep) */}
-            <div className="space-y-2">
-              <label htmlFor="subcity" className="block text-sm font-medium text-gray-700 mb-1">
-                Subcity <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="subcity"
-                name="subcity"
-                value={formik.values.subcity}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("subcity") ? "border-red-500" : "border-gray-300"}`}
-                placeholder="Kirkos"
-                disabled={loading}
-              />
-              {getErrorMessage("subcity") && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage("subcity")}</div>
-              )}
+            <div className="flex justify-center">
+              <div className="w-full max-w-2xl">
+                <GuarantorProfileUpload
+                    guarantorFile={formik.values.file ?? null}
+                    onGuarantorFileSelect={handleGuarantorfileSelect}
+                    onGuarantorFileRemove={handleGuarantorfileRemove}
+                    guarantorName={`${formik.values.firstName} ${formik.values.lastName}`}
+                />
+              </div>
             </div>
+          </motion.div>
 
-            <div className="space-y-2">
-              <label
-                htmlFor="zone"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Zone
-              </label>
-              <Input
-                id="zone"
-                name="zone"
-                value={formik.values.zone}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                placeholder="Zone 3"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="woreda" className="block text-sm font-medium text-gray-700 mb-1">
-                Woreda <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="woreda"
-                name="woreda"
-                value={formik.values.woreda}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("woreda") ? "border-red-500" : "border-gray-300"}`}
-                placeholder="08"
-                disabled={loading}
-              />
-              {getErrorMessage("woreda") && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage("woreda")}</div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="kebele"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Kebele
-              </label>
-              <Input
-                id="kebele"
-                name="kebele"
-                value={formik.values.kebele}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                placeholder="09"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="houseNo" className="block text-sm font-medium text-gray-700 mb-1">
-                House Number <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="houseNo"
-                name="houseNo"
-                value={formik.values.houseNo}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className={`w-full px-3 py-2 border focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200 ${getErrorMessage("houseNo") ? "border-red-500" : "border-gray-300"}`}
-                placeholder="H-123"
-                disabled={loading}
-              />
-              {getErrorMessage("houseNo") && (
-                <div className="text-red-500 text-xs mt-1">{getErrorMessage("houseNo")}</div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Email
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formik.values.email}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                placeholder="example@email.com"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="poBox"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                P.O. Box
-              </label>
-              <Input
-                id="poBox"
-                name="poBox"
-                value={formik.values.poBox}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                placeholder="1234"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="fax"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Fax
-              </label>
-              <Input
-                id="fax"
-                name="fax"
-                value={formik.values.fax}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                placeholder="+251111223344"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="website"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Website
-              </label>
-              <Input
-                id="website"
-                name="website"
-                value={formik.values.website}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                className="w-full px-3 py-2 border border-gray-300 focus:outline-none focus:border-green-500 focus:outline-2 rounded-md transition-colors duration-200"
-                placeholder="https://example.com"
-                disabled={loading}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Guarantor Document Upload Section - Centered */}
-        <div className="flex justify-center mb-8">
-          <div className="w-full max-w-2xl">
-            <GuarantorProfileUpload
-              guarantorFile={formik.values.file ?? null}
-              onGuarantorFileSelect={handleGuarantorfileSelect}
-              onGuarantorFileRemove={handleGuarantorfileRemove}
-            />
-          </div>
-        </div>
-
-        {/* Navigation Buttons */}
-        <div className="flex justify-between pt-6">
-          <button
-            type="button"
-            onClick={handleBackClick}
-            disabled={loading}
-            className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+          {/* Navigation Buttons */}
+          <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="flex justify-between pt-6 border-t border-slate-200"
           >
-            Back
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-8 py-3 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
-          >
-            {loading ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Saving...
-              </>
-            ) : isEditMode ? (
-              "Save Changes"
-            ) : (
-              "Save & Continue"
-            )}
-          </button>
-        </div>
-      </form>
-    </motion.div>
+            <button
+                type="button"
+                onClick={handleBackClick}
+                disabled={loading}
+                className="group px-8 py-3 border border-slate-300 rounded-xl text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Back
+            </button>
+            <button
+                type="submit"
+                disabled={loading}
+                className="group px-8 py-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Saving...
+                  </>
+              ) : (
+                  <>
+                    <Save className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    {isEditMode ? "Save Changes" : "Save & Continue"}
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+              )}
+            </button>
+          </motion.div>
+        </form>
+
+        {/* Footer Stats */}
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="flex justify-center items-center gap-6 pt-4"
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-xs text-slate-500">Data encrypted</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span className="text-xs text-slate-500">Secure connection</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+            <span className="text-xs text-slate-500">Document verified</span>
+          </div>
+        </motion.div>
+      </motion.div>
   );
 };

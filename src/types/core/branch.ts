@@ -34,6 +34,7 @@ export interface AddBranchDto {
   location: string;
   dateOpened: string;
   branchType: BranchType;
+  branchStat: BranchStat;
   compId: UUID;
 }
 

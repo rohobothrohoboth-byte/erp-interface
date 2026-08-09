@@ -1,37 +1,23 @@
 import { api } from '../../../api';
 import type {
-  EmpDetailInfo,
-  EmpDetailPhoto,
-  EmpDetailOverview,
-  EmpDetailBasic,
-  EmpDetailBio,
-  EmpDetailContact,
-  EmpDetailFamily,
-  EmpDetailGuarantor,
-  EmpDetailDocument,
-  EmpDetailLeaveBalance,
-  EmpFileList,
+  EmpDetailInfo, EmpDetailPhoto, EmpDetailOverview, EmpDetailBasic,
+  EmpDetailBio, EmpDetailContact, EmpDetailFamily, EmpDetailGuarantor,
+  EmpDetailDocument, EmpDetailLeaveBalance, EmpFileList,
 } from '../../../../types/hr/employee/empDetail';
 
-const BASE = '/hrm/profile/v1/EmpPro';
-
-const extractError = (error: unknown): string => {
-  if (typeof error === 'object' && error !== null) {
-    const e = error as any;
-    if (e.response?.data?.message) return e.response.data.message;
-    if (e.response?.data?.errors)
-      return (Object.values(e.response.data.errors) as string[][]).flat().join(', ');
-    if (e.message) return e.message;
-  }
-  return 'An unexpected error occurred';
-};
+// FIXED: Use gateway path for profile service
+const BASE = 'hrm/profile/v1/EmpPro';
 
 const get = async <T>(url: string): Promise<T> => {
   try {
     const res = await api.get(url);
     return res.data.data as T;
-  } catch (e) {
-    throw new Error(extractError(e));
+  } catch (e: any) {
+    // Return empty/null for 401/404 instead of throwing
+    if (e?.response?.status === 401 || e?.response?.status === 404) {
+      return (e?.response?.status === 404 ? null : []) as unknown as T;
+    }
+    throw e;
   }
 };
 
@@ -48,22 +34,20 @@ export const empDetailApi = {
       const res = await api.get(`${BASE}/GetEmpGuaranty/${id}`);
       return res.data.data as EmpDetailGuarantor;
     } catch (e: any) {
-      if (e?.response?.status === 404) return null;
-      throw new Error(extractError(e));
+      if (e?.response?.status === 404 || e?.response?.status === 401) return null;
+      throw e;
     }
   },
-  // Documents endpoint — update path once available
   getDocuments: (id: string) => get<EmpDetailDocument[]>(`${BASE}/GetEmpDocuments/${id}`),
-  // All employee certificates
-  getCertAll:   (id: string) => get<EmpFileList[]>(`/hrm/profile/v1/EmpMod/EmpCertAll/${id}`),
-  // Leave balance — no dedicated endpoint yet, returns empty
+  getCertAll:   (id: string) => get<EmpFileList[]>(`hrm/profile/v1/EmpMod/EmpCertAll/${id}`),
   getLeave:     (_id: string): Promise<EmpDetailLeaveBalance[]> => Promise.resolve([]),
 };
 
-/** Fetch a certificate by ID with auth headers, returns a blob object URL */
 export async function fetchCertBlobUrl(certId: string): Promise<string> {
-  const res = await api.get(`/hrm/profile/v1/EmpMod/EmpCertById/${certId}`, {
-    responseType: 'blob',
-  });
-  return URL.createObjectURL(res.data as Blob);
+  try {
+    const res = await api.get(`hrm/profile/v1/EmpMod/EmpCertById/${certId}`, { responseType: 'blob' });
+    return URL.createObjectURL(res.data as Blob);
+  } catch {
+    return '';
+  }
 }

@@ -1,13 +1,11 @@
 ﻿import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import type { UUID } from "../../../../../../types/core/Settings/PolicyRuleCondtion";
 import { Button } from "../../../../../ui/button";
 import { useAllPolicyRuleConditions } from "../../../../../../services/core/settings/ModHrm/PolicyRuleCondition/policyRuleCondition.queries";
 import { EmpNature, WorkArrangement } from "../../../../../../types/hr/enum";
-import {
-  PolicyGender,
-} from "../../../../../../types/core/enum";
+import { PolicyGender } from "../../../../../../types/core/enum";
 import type { NameListItem } from "../../../../../../types/NameList/nameList";
 import { hrmmNamesApi } from "../../../../../../services/List/hrmmNames/hrmmNames.api";
 
@@ -19,16 +17,15 @@ interface RuleConditionModalProps {
 }
 
 const RuleConditionModal: React.FC<RuleConditionModalProps> = ({
-  isOpen,
-  onClose,
-  ruleId,
-  ruleName,
-}) => {
+                                                                 isOpen,
+                                                                 onClose,
+                                                                 ruleId,
+                                                                 ruleName,
+                                                               }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const [jobGrades, setJobGrades] = useState<NameListItem[]>([]);
 
-  
   const {
     data: conditions = [],
     refetch,
@@ -54,16 +51,16 @@ const RuleConditionModal: React.FC<RuleConditionModalProps> = ({
     if (isOpen) {
       refetch();
       setCurrentPage(1);
-       const fetchJobGrades = async () => {
-              try {
-                const grades = await hrmmNamesApi.getAllJobGradeNames();
-                setJobGrades(grades);
-              } catch (error) {
-                console.error("Failed to fetch job grades:", error);
-                setJobGrades([]);
-              }
-            };
-            fetchJobGrades();
+      const fetchJobGrades = async () => {
+        try {
+          const grades = await hrmmNamesApi.getAllJobGradeNames();
+          setJobGrades(grades);
+        } catch (error) {
+          console.error("Failed to fetch job grades:", error);
+          setJobGrades([]);
+        }
+      };
+      fetchJobGrades();
     }
   }, [isOpen, refetch]);
 
@@ -76,17 +73,21 @@ const RuleConditionModal: React.FC<RuleConditionModalProps> = ({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, handleClose]);
 
-  if (!isOpen) return null;
   const getDisplayValue = (field: string, value: string) => {
     switch (field) {
+      case "EmploymentType":
       case "0":
         return EmpNature[value as keyof typeof EmpNature] || value;
+      case "Gender":
       case "1":
         return PolicyGender[value as keyof typeof PolicyGender] || value;
+      case "ServiceYears":
       case "2":
-        return `${value} Months`;
+        return `${value} Years`;
+      case "WorkArrangement":
       case "3":
         return WorkArrangement[value as keyof typeof WorkArrangement] || value;
+      case "JobGrade":
       case "4":
         const jobGrade = jobGrades.find((grade) => grade.id === value);
         return jobGrade ? jobGrade.name : value;
@@ -95,97 +96,121 @@ const RuleConditionModal: React.FC<RuleConditionModalProps> = ({
     }
   };
 
+  const getFieldLabel = (field: string) => {
+    switch (field) {
+      case "EmploymentType": return "Employment Type";
+      case "Department": return "Department";
+      case "Position": return "Position";
+      case "JobGrade": return "Job Grade";
+      case "ServiceYears": return "Service Years";
+      case "Gender": return "Gender";
+      case "WorkArrangement": return "Work Arrangement";
+      default: return field;
+    }
+  };
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-2 sm:px-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-lg shadow-xl w-full max-w-xl h-[70vh] flex flex-col overflow-y-auto"
-      >
-        {/* Header */}
-        <div className="flex justify-between items-center border-b px-4 sm:px-6 py-3 bg-white rounded-t-lg">
-          <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
-            {ruleName} Conditions
-          </h2>
-          <button
-            onClick={handleClose}
-            className="text-green-400 hover:text-green-600 p-1 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
-            <X size={18} />
-          </button>
-        </div>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-2 sm:px-4">
+        <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-lg shadow-xl w-full max-w-xl h-[70vh] flex flex-col overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center border-b px-4 sm:px-6 py-3 bg-white rounded-t-lg shrink-0">
+            <div>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+                {ruleName}
+              </h2>
+              <p className="text-xs text-gray-500">Assignment Rule Conditions</p>
+            </div>
+            <button
+                onClick={handleClose}
+                className="text-gray-400 hover:text-gray-600 p-1 sm:p-2 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <X size={18} />
+            </button>
+          </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-auto p-4">
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-            </div>
-          ) : conditions.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              No conditions configured for this rule.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {paginatedConditions.map((cond, idx) => (
-                <motion.div
-                  key={cond.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
-                >
-                  {/* Left: Index + Field + Operator */}
-                  <div className="flex items-center gap-3">
-                    <div className="bg-green-100 text-green-700 font-semibold w-6 h-6 flex items-center justify-center rounded-full text-xs">
-                      {(currentPage - 1) * itemsPerPage + idx + 1}
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {isLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+                </div>
+            ) : conditions.length === 0 ? (
+                <div className="text-center py-12 text-gray-500">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                      <Plus size={24} className="text-gray-400" />
                     </div>
-                    <div className="flex gap-x-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {cond.fieldStr || cond.field}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                    {cond.operatorStr || cond.operator}
-                      </p>
-                      <span className="text-sm text-gray-700 font-medium">
+                    <p>No conditions configured for this rule.</p>
+                    <p className="text-sm text-gray-400">
+                      No conditions have been added yet
+                    </p>
+                  </div>
+                </div>
+            ) : (
+                <div className="space-y-3">
+                  {paginatedConditions.map((cond, idx) => (
+                      <motion.div
+                          key={cond.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className="flex items-center justify-between bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
+                      >
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <div className="bg-emerald-100 text-emerald-700 font-semibold w-6 h-6 flex items-center justify-center rounded-full text-xs shrink-0">
+                            {(currentPage - 1) * itemsPerPage + idx + 1}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-medium text-gray-900">
+                        {getFieldLabel(cond.fieldStr || cond.field)}
+                      </span>
+                            <span className="text-sm text-gray-500">
+                        {cond.operatorStr || cond.operator}
+                      </span>
+                            <span className="text-sm font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
                         {getDisplayValue(cond.field, cond.value)}
                       </span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          )}
+                          </div>
+                        </div>
+                      </motion.div>
+                  ))}
+                </div>
+            )}
 
-          {/* Pagination */}
-          {totalItems > itemsPerPage && (
-            <div className="flex justify-between items-center mt-4">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
-              >
-                Prev
-              </button>
-              <span className="text-sm">
+            {/* Pagination */}
+            {totalItems > itemsPerPage && (
+                <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                  <button
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 bg-gray-100 rounded-md disabled:opacity-50 hover:bg-gray-200 transition-colors flex items-center gap-1"
+                  >
+                    <ChevronLeft size={14} />
+                    Prev
+                  </button>
+                  <span className="text-sm text-gray-600">
                 Page {currentPage} of {totalPages}
               </span>
-              <button
-                onClick={() =>
-                  setCurrentPage(Math.min(totalPages, currentPage + 1))
-                }
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 bg-gray-100 rounded disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </div>
+                  <button
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 bg-gray-100 rounded-md disabled:opacity-50 hover:bg-gray-200 transition-colors flex items-center gap-1"
+                  >
+                    Next
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+            )}
+          </div>
+        </motion.div>
+      </div>
   );
 };
 

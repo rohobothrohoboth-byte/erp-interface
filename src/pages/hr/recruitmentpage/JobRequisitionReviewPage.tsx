@@ -1,3 +1,4 @@
+// src/pages/hr/recruitment/JobRequisitionReviewPage.tsx
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import JobRequisitionReviewSection from '../../../components/hr/recruitment/jobRequisition/JobRequisitionReviewSection';
