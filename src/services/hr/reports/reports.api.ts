@@ -3,8 +3,8 @@ import { extractApiError, unwrapData } from '../apiError';
 import type { HrReportEnvelope, HrReportsSummaryDto } from '../../../types/hr/reports';
 
 const BASE = import.meta.env.VITE_HR_REPORTS_URL || '/hrm/reports';
-/** Backend domain budget is ~7s; keep UI timeout slightly above that. */
-const REPORTS_TIMEOUT_MS = 20_000;
+/** Backend hard-stops around 6–10s; keep UI slightly above that. */
+const REPORTS_TIMEOUT_MS = 15_000;
 
 const getReport = async <T>(path: string) => {
   try {

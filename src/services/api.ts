@@ -228,7 +228,13 @@ api.interceptors.response.use(
 
         // Handle timeout errors
         if (error.code === 'ECONNABORTED') {
-            console.error('🔴 TIMEOUT ERROR');
+            const url = originalRequest?.url || '';
+            console.error('🔴 TIMEOUT ERROR', url);
+            if (String(url).includes('/hrm/reports') || String(url).includes('/reports')) {
+                return Promise.reject(new Error(
+                    'HR Reports timed out. Restart Svc.HRM.Reports (:7018) on the latest branch and confirm Gateway :5000 is up.'
+                ));
+            }
             return Promise.reject(new Error('Request timed out. Please try again.'));
         }
 
