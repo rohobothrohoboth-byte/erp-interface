@@ -535,6 +535,5 @@ export function AccessPermissionsStep({ selectedMenuIds, initialData, onSubmit, 
                 </div>
             </div>
         </div>
-        </div>
     );
 }
