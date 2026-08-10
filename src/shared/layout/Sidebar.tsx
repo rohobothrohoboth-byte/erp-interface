@@ -224,14 +224,14 @@ const isSettingsMenu = (menu: PermissionMenu): boolean =>
 const extractMenuGuidsFromPermissions = (permissions: PermissionModule[]): Set<string> => {
     const menuGuids = new Set<string>();
 
-    permissions?.forEach(mod => {
-        mod.M?.forEach(menu => {
-            menuGuids.add(menu.K);
-            menu.C?.forEach(child => {
-                menuGuids.add(child.K);
-            });
+    const walk = (menus?: PermissionMenu[] | null) => {
+        menus?.forEach(menu => {
+            if (menu.K) menuGuids.add(menu.K);
+            walk(menu.C);
         });
-    });
+    };
+
+    permissions?.forEach(mod => walk(mod.M));
 
     return menuGuids;
 };
