@@ -27,7 +27,7 @@ import { Badge } from '../../../../components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../../../components/ui/dialog';
 import { useJobPostings, useDeleteJobPosting } from '../../../../services/hr/recruitment/jobPosting/jobPosting.queries';
-import { usePublishJobPosting, useCloseJobPosting } from '../../../../services/hr/recruitment/jobPublish/jobPublish.queries';
+import { usePublishJobPosting, useCloseJobPosting } from '../../../../services/hr/recruitment/JobPublish/jobPublish.queries';
 import { useAuthStore } from '../../../../stores/auth.store';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';

@@ -36,7 +36,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Textarea } from '../../../../components/ui/textarea';
 import { Label } from '../../../../components/ui/label';
 import { useJobPostingDetail, useDeleteJobPosting } from '../../../../services/hr/recruitment/jobPosting/jobPosting.queries';
-import { usePublishJobPosting, useCloseJobPosting } from '../../../../services/hr/recruitment/jobPublish/jobPublish.queries';
+import { usePublishJobPosting, useCloseJobPosting } from '../../../../services/hr/recruitment/JobPublish/jobPublish.queries';
 import { useApplicantsByPost } from '../../../../services/hr/recruitment/applicant/applicant.queries';
 import { useJpEvalFlows } from '../../../../services/hr/recruitment/jpEvalFlow/jpEvalFlow.queries';
 import { useAuthStore } from '../../../../stores/auth.store';

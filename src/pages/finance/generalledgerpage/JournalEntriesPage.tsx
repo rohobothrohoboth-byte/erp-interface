@@ -16,11 +16,11 @@ import {
 import { useJournalEntries } from '../../../hooks/finance/useJournalEntries';
 import { journalEntryHelpers } from '../../../utils/finance/journalEntryHelpers';
 import { showToast } from '../../../layout/layout';
-import { Label } from '../../../components/ui/Label';
+import { Label } from '../../../components/ui/label';
 
 // Components
 import { JournalEntrySummaryCards } from '../../../components/finance/journal-entries/JournalEntrySummaryCards';
-import { JournalEntryFilters } from '../../../components/finance/journal-entries/JournalEntryFilters';
+import { JournalEntryFilters } from '../../../components/finance/journal-entries/journalEntryFilters';
 import { JournalEntryList } from '../../../components/finance/journal-entries/JournalEntryList';
 import { JournalEntryForm } from '../../../components/finance/journal-entries/JournalEntryForm';
 import { JournalEntryActionModal } from '../../../components/finance/journal-entries/JournalEntryActionModals';
