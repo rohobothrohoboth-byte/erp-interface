@@ -238,6 +238,7 @@ export default function Setup() {
             });
 
             if (response.data?.success) {
+                localStorage.removeItem('setup_status');
                 setTempCredentials({
                     username: formData.admin.userName,
                     password: formData.admin.password,
@@ -254,6 +255,7 @@ export default function Setup() {
     };
 
     const handleGoToLogin = () => {
+        localStorage.removeItem('setup_status');
         setShowCredentials(false);
         navigate('/login');
     };

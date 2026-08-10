@@ -72,12 +72,31 @@ interface AuthState {
 // HELPERS
 // ============================================================
 
-// ✅ Normalize permission keys and preserve hierarchy
+// ✅ Normalize permission keys and preserve hierarchy (nested C or flat ParentId)
 const normalizePermissions = (data: any[]): NormalizedModule[] => {
   if (!data || !Array.isArray(data)) return [];
 
-  const normalizeMenu = (menu: any): NormalizedMenu => {
-    const children = (menu.c || menu.C || []).map((child: any) => normalizeMenu(child));
+  const getMenuId = (menu: any): string =>
+    String(menu.Id || menu.id || menu.k || menu.K || '');
+
+  const normalizeMenu = (menu: any, allMenus: any[] = []): NormalizedMenu => {
+    const nested = (menu.c || menu.C || []).map((child: any) => normalizeMenu(child, allMenus));
+    const menuId = getMenuId(menu);
+
+    // Flat ParentId payloads: attach children that point at this menu id/key
+    const fromFlat =
+      nested.length === 0 && allMenus.length > 0
+        ? allMenus
+            .filter((candidate) => {
+              const parent = candidate.ParentId || candidate.parentId || null;
+              if (parent == null) return false;
+              return String(parent) === menuId || String(parent) === String(menu.k || menu.K || '');
+            })
+            .sort((a, b) => (a.O || a.o || 0) - (b.O || b.o || 0))
+            .map((child) => normalizeMenu(child, allMenus))
+        : [];
+
+    const children = nested.length > 0 ? nested : fromFlat;
 
     return {
       K: menu.k || menu.K || '',
@@ -91,14 +110,25 @@ const normalizePermissions = (data: any[]): NormalizedModule[] => {
     };
   };
 
-  const buildMenuTree = (menus: any[], parentId: string | null = null): NormalizedMenu[] => {
-    return menus
-        .filter(menu => {
-          const menuParentId = menu.ParentId || menu.parentId || null;
-          return menuParentId === parentId;
-        })
+  const buildMenuTree = (menus: any[]): NormalizedMenu[] => {
+    const hasNestedChildren = menus.some((menu) => (menu.c || menu.C || []).length > 0);
+
+    // Already nested from Menu/structure — keep top-level nodes as-is
+    if (hasNestedChildren) {
+      return menus
+        .slice()
         .sort((a, b) => (a.O || a.o || 0) - (b.O || b.o || 0))
-        .map(menu => normalizeMenu(menu));
+        .map((menu) => normalizeMenu(menu, menus));
+    }
+
+    // Flat list: roots have null ParentId, children hang off ParentId
+    return menus
+      .filter((menu) => {
+        const menuParentId = menu.ParentId || menu.parentId || null;
+        return menuParentId == null || menuParentId === '';
+      })
+      .sort((a, b) => (a.O || a.o || 0) - (b.O || b.o || 0))
+      .map((menu) => normalizeMenu(menu, menus));
   };
 
   return data.map((module: any) => {
@@ -106,7 +136,7 @@ const normalizePermissions = (data: any[]): NormalizedModule[] => {
     return {
       K: module.k || module.K || '',
       L: module.l || module.L || '',
-      M: buildMenuTree(menus, null),
+      M: buildMenuTree(Array.isArray(menus) ? menus : []),
     };
   });
 };

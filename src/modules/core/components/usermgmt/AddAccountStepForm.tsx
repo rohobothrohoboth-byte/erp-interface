@@ -22,7 +22,6 @@ import { registerApi } from '@/modules/auth/services/register/register.api';
 import { perMenuApi } from '@/modules/auth/services/perMenu/perMenu.api';
 import { menuPerApiApi } from '@/modules/auth/services/menuPerApi/menuPerApi.api';
 import toast from 'react-hot-toast';
-import { accountApi } from '@/modules/auth/services/account/account.api';
 import { authListApi } from '@/modules/list/services/auth/authList.api';
 import type { RoleListItem, NameListItem } from '@/modules/list/types/NameList/nameList';
 import { Label } from '@/shared/components/ui/label';
@@ -433,7 +432,18 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({ onBackTo
     setLoading(true);
     try {
       if (!employee?.id) throw new Error('Employee ID not found');
-      const result = await registerApi.step1({ employeeId: employee.id as UUID, password: step1Data.password, roleId: step1Data.role, perModules: step1Data.modules.map((id: string) => id as UUID) });
+      const result = await registerApi.step1({
+        employeeId: employee.id as UUID,
+        userName: step1Data.userName || employee.code || employee.empFullName || '',
+        email: step1Data.email || '',
+        password: step1Data.password,
+        confirmPassword: step1Data.confirmPassword || step1Data.password,
+        roleId: step1Data.role,
+        perModules: (step1Data.modules || []).map((id: string) => id as UUID),
+        firstName: employee.empFullName?.split(' ')[0] || '',
+        lastName: employee.empFullName?.split(' ').slice(1).join(' ') || '',
+        fullName: employee.empFullName || '',
+      });
       if (!result.userId) throw new Error('No userId returned');
       setUserId(result.userId);
       setFormData(prev => ({ ...prev, step1: { ...step1Data, roleName: step1Data.roleName || '', moduleNames: step1Data.moduleNames || [] } }));
@@ -466,7 +476,10 @@ export const AddAccountStepForm: React.FC<AddAccountStepFormProps> = ({ onBackTo
     setLoading(true);
     try {
       if (!userId) throw new Error('User ID not found');
-      const result = await accountApi.step3({ userId: userId as UUID, perAccess: formData.step3.apiPermissions as UUID[] });
+      const result = await registerApi.step3({
+        userId: userId as UUID,
+        perAccess: formData.step3.apiPermissions as UUID[],
+      });
       if (result) {
         toast.success("Account created successfully!");
         localStorage.removeItem(getDraftKey());

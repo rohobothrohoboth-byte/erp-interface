@@ -226,33 +226,35 @@ function Modules() {
         setLoadingPermissions(true);
         const response = await api.get(`/auth/v1/Permission/GetPerMenuByUser/${userId}`);
 
+        // Backend may return PascalCase (Modules) or camelCase (modules)
+        const raw = response.data?.data ?? response.data ?? {};
+        const moduleGuids: string[] = raw.modules ?? raw.Modules ?? [];
 
-        const permissionsData: UserPermissions = response.data?.data;
-
-        if (permissionsData && permissionsData.modules && permissionsData.modules.length > 0) {
-
-
+        if (Array.isArray(moduleGuids) && moduleGuids.length > 0) {
           const moduleGuidToKeyMap = new Map<string, string>();
-          if (modulesFromAPI.length > 0) {
-            modulesFromAPI.forEach(module => {
-              moduleGuidToKeyMap.set(module.id, module.key);
-            });
-
-            const userKeys = permissionsData.modules
-                .map(guid => moduleGuidToKeyMap.get(guid))
-                .filter((key): key is string => key !== undefined);
-
-            if (userKeys.length > 0) {
-              setUserModuleKeys(userKeys);
-            } else {
-              const tokenKeys = getModuleKeysFromToken();
-              setUserModuleKeys(tokenKeys.length > 0 ? tokenKeys : []);
+          modulesFromAPI.forEach((module) => {
+            if (module.id && module.key) {
+              moduleGuidToKeyMap.set(String(module.id).toLowerCase(), module.key);
             }
+          });
+
+          const userKeys = moduleGuids
+            .map((guid) => moduleGuidToKeyMap.get(String(guid).toLowerCase()))
+            .filter((key): key is string => Boolean(key));
+
+          if (userKeys.length > 0) {
+            setUserModuleKeys(userKeys);
+          } else {
+            // GUID map miss — fall back to already-loaded menu structure / token
+            const structureKeys = getModuleKeysFromMenuStructure();
+            const tokenKeys = getModuleKeysFromToken();
+            setUserModuleKeys(structureKeys.length > 0 ? structureKeys : tokenKeys);
           }
         } else {
           console.warn('⚠️ No modules found in permissions response');
+          const structureKeys = getModuleKeysFromMenuStructure();
           const tokenKeys = getModuleKeysFromToken();
-          setUserModuleKeys(tokenKeys.length > 0 ? tokenKeys : []);
+          setUserModuleKeys(structureKeys.length > 0 ? structureKeys : tokenKeys);
         }
       } catch (error) {
         console.error('❌ Error fetching permissions:', error);
@@ -299,6 +301,11 @@ function Modules() {
       console.error('❌ Error extracting permissions:', error);
       return [];
     }
+  };
+
+  const getModuleKeysFromMenuStructure = (): string[] => {
+    if (!Array.isArray(rawPermissions) || rawPermissions.length === 0) return [];
+    return [...new Set(rawPermissions.map((m: any) => m.K || m.k).filter(Boolean))];
   };
 
   // ✅ 1. Timer effect
