@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../ui/button';
 import { Checkbox } from '../../../ui/checkbox';
-import type { WizardFormData } from '../../../AddAccountWizard';
+import type { WizardFormData } from '../v2/AddAccountWizard';
 import { api } from '../../../../services/api';
 import toast from 'react-hot-toast';
 
@@ -534,7 +534,6 @@ export function AccessPermissionsStep({ selectedMenuIds, initialData, onSubmit, 
                     </Button>
                 </div>
             </div>
-        </div>
         </div>
     );
 }

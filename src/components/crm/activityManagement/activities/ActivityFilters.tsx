@@ -268,7 +268,6 @@ export default function ActivityFilters({
               )}
             </div>
           )}
-        </div>
       </div>
     </motion.div>
   );

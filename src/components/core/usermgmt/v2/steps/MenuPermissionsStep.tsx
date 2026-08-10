@@ -14,6 +14,10 @@ import { Input } from '../../../../ui/input';
 import { permissionStructureApi } from '../../../../../services/auth/permission/permissionStructure.api';
 import toast from 'react-hot-toast';
 
+// Optional display-name overrides keyed by module GUID. The module label
+// normally comes from the API (menu.module); this map is only a fallback.
+const MODULE_NAME_MAP: Record<string, string> = {};
+
 const useDarkMode = () => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -225,16 +229,19 @@ export function MenuPermissionsStep({ selectedModuleIds, initialData, onSubmit, 
   }, [selected, getModuleMenuIds]);
 
   const toggleParentMenu = useCallback((menu: MenuItem) => {
-    if (!menu.children) {
+    if (!menu.children || menu.children.length === 0) {
       toggleLeafMenu(menu.id);
       return;
     }
     const childIds = menu.children.map(c => c.id);
+    // Include the parent's own GUID so the saved assignment matches the
+    // rendered hierarchy (the parent/group node itself is selected too).
+    const groupIds = [menu.id, ...childIds];
     const allSelected = childIds.every(id => selected.includes(id));
     if (allSelected) {
-      setSelected(prev => prev.filter(id => !childIds.includes(id)));
+      setSelected(prev => prev.filter(id => !groupIds.includes(id)));
     } else {
-      setSelected(prev => [...new Set([...prev, ...childIds])]);
+      setSelected(prev => [...new Set([...prev, ...groupIds])]);
     }
   }, [selected]);
 

@@ -13,7 +13,7 @@ import { AccessPermissionsStep } from './steps/AccessPermissionsStep';
 import { ReviewStep } from './steps/ReviewStep';
 import type { EmpSearchRes } from '../../../../types/core/EmpSearchRes';
 import { registerApi } from '../../../../services/auth/register/register.api';
-import type { UUID } from '../../../../types/auth/registration';
+import type { UUID, RegStep1 } from '../../../../types/auth/registration';
 import toast from 'react-hot-toast';
 
 export interface WizardFormData {
