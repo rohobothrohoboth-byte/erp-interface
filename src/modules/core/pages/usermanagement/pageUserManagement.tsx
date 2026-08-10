@@ -9,6 +9,7 @@ import type { AdminEmpListDto } from "@/modules/hr/types/employee";
 import { useNavigate } from "react-router-dom";
 import EmployeeSearch, { type AdminEmployeeFilters } from "@/modules/core/components/usermgmt/EmployeeSearch";
 import { getAllAppUsers } from "@/modules/auth/services/account/account.api";
+import toast from "react-hot-toast";
 
 // ✅ ADD THE MAPPING FUNCTION HERE
 const mapEmployeeData = (employee: any): AdminEmpListDto => {
@@ -235,12 +236,21 @@ const UserManagement: React.FC = () => {
       empState: employeeData.empState,
     };
 
-    const appUserId = userStatusMap.get(employeeData.id)?.userId || employeeData.id;
+    const appUserId =
+      userStatusMap.get(employeeData.id)?.userId ||
+      employeeData.appUserId ||
+      employeeData.userId ||
+      null;
+
+    if (!appUserId) {
+      toast.error('No AppUser linked to this employee. Create an account first.');
+      return;
+    }
 
     navigate(`/core/user-management/edit/${employeeData.id}`, {
       state: {
-        employee: empSearchRes,
-        appUserId: appUserId
+        employee: { ...empSearchRes, appUserId },
+        appUserId,
       }
     });
   };

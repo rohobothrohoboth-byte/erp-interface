@@ -1,6 +1,6 @@
 ﻿// steps/EditMenuPermissionsStep.tsx - FIXED VERSION
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Search, Check, ChevronDown, Save, X, FileText, FolderTree, AlertCircle, Loader2, Plus, Minus, ArrowRight } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
@@ -175,18 +175,13 @@ export function EditMenuPermissionsStep({
               });
             }
 
-            // ✅ Add menu with children
-            const menuWithChildren = {
+            // Keep full recursive children (grandchildren included)
+            moduleMap.get(modId).menus.push({
               ...menu,
               name: getMenuName(menu),
               label: getMenuName(menu),
-              children: menu.children ? menu.children.map((child: any) => ({
-                ...child,
-                name: getMenuName(child),
-                label: getMenuName(child)
-              })) : []
-            };
-            moduleMap.get(modId).menus.push(menuWithChildren);
+              children: menu.children ? processMenuTree(menu.children) : [],
+            });
           } else {
             skippedMenus++;
             console.log(`⏭️ Skipping menu ${menu.name} - not in selected modules (${modId})`);
@@ -542,95 +537,66 @@ export function EditMenuPermissionsStep({
                   <div className="text-center py-12 text-gray-400">No menus found</div>
               ) : (
                   filteredMenus.map((menu) => {
-                    // ✅ Check if this is a parent menu with children
-                    if (menu.children && menu.children.length > 0) {
-                      const expanded = expandedParents[menu.id] ?? true;
-                      const childIds = menu.children.map((c: any) => c.id);
-                      const allSelected = childIds.every(id => selected.includes(id));
-                      const selectedCount = childIds.filter(id => selected.includes(id)).length;
-
-                      return (
-                          <div key={menu.id} className="border border-gray-200 rounded overflow-hidden">
+                    const renderNode = (node: any, depth = 0): React.ReactNode => {
+                      const hasKids = Boolean(node.children?.length);
+                      if (hasKids) {
+                        const expanded = expandedParents[node.id] ?? true;
+                        const subtreeIds = getAllMenuIds([node]);
+                        const allSelected = subtreeIds.every((id) => selected.includes(id));
+                        const selectedCount = subtreeIds.filter((id) => selected.includes(id)).length;
+                        return (
+                          <div key={node.id} className="border border-gray-200 rounded overflow-hidden" style={{ marginLeft: depth ? 8 : 0 }}>
                             <div
-                                onClick={() => toggleParentExpand(menu.id)}
-                                className="flex items-center gap-2 px-3 py-2 bg-white cursor-pointer hover:bg-gray-50"
+                              onClick={() => toggleParentExpand(node.id)}
+                              className="flex items-center gap-2 px-3 py-2 bg-white cursor-pointer hover:bg-gray-50"
                             >
+                              <Checkbox
+                                checked={allSelected}
+                                onCheckedChange={() => {
+                                  const next = allSelected
+                                    ? selected.filter((id) => !subtreeIds.includes(id))
+                                    : [...new Set([...selected, ...subtreeIds])];
+                                  setSelected(next);
+                                  onFormChange?.();
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
                               <FolderTree className="w-4 h-4 text-gray-500" />
-                              <span className="text-sm font-medium text-gray-800 flex-1 truncate">{menu.name}</span>
-                              <span className="text-xs text-gray-600">{selectedCount}/{childIds.length}</span>
+                              <span className="text-sm font-medium text-gray-800 flex-1 truncate">{node.name}</span>
+                              <span className="text-xs text-gray-600">{selectedCount}/{subtreeIds.length}</span>
                               <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? "" : "-rotate-90"}`} />
                             </div>
                             {expanded && (
-                                <div className="pl-6 pr-2 py-2 space-y-1 border-t border-gray-100 bg-gray-50/50">
-                                  <button
-                                      onClick={() => {
-                                        const newSelected = allSelected
-                                            ? selected.filter(id => !childIds.includes(id))
-                                            : [...new Set([...selected, ...childIds])];
-                                        setSelected(newSelected);
-                                        onFormChange?.();
-                                      }}
-                                      className="text-xs text-gray-600 hover:text-gray-800 mb-1"
-                                  >
-                                    {allSelected ? "Deselect All" : "Select All"}
-                                  </button>
-                                  {menu.children.map((child: any) => {
-                                    const checked = selected.includes(child.id);
-                                    const isNew = isNewlyAdded(child.id);
-                                    const isRemovedMenu = isRemoved(child.id);
-                                    // ✅ Use child.name which should now be properly populated
-                                    const childName = child.name || child.label || child.title || child.key || 'Unnamed Child';
-
-                                    return (
-                                        <label
-                                            key={child.id}
-                                            className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition ${
-                                                checked ? "bg-gray-100" : "hover:bg-gray-100"
-                                            } ${isNew && checked ? "bg-emerald-50 border border-emerald-200" : ""} 
-                                               ${isRemovedMenu && !checked ? "bg-red-50 border border-red-200 opacity-60" : ""}`}
-                                        >
-                                          <Checkbox
-                                              checked={checked}
-                                              onCheckedChange={() => toggleMenu(child.id)}
-                                          />
-                                          <FileText className="w-3.5 h-3.5 text-gray-400" />
-                                          <span className="text-sm text-gray-700 flex-1 truncate">{childName}</span>
-                                          {isNew && checked && <span className="text-xs text-emerald-600 font-medium">✨ New</span>}
-                                          {isRemovedMenu && !checked && <span className="text-xs text-red-600 font-medium">🗑️ Removed</span>}
-                                          {checked && <Check className="w-3.5 h-3.5 text-gray-600" />}
-                                        </label>
-                                    );
-                                  })}
-                                </div>
+                              <div className="pl-4 pr-2 py-2 space-y-1 border-t border-gray-100 bg-gray-50/50">
+                                {node.children.map((child: any) => renderNode(child, depth + 1))}
+                              </div>
                             )}
                           </div>
-                      );
-                    }
+                        );
+                      }
 
-                    // ✅ Single menu (no children)
-                    const checked = selected.includes(menu.id);
-                    const isNew = isNewlyAdded(menu.id);
-                    const isRemovedMenu = isRemoved(menu.id);
-
-                    return (
+                      const checked = selected.includes(node.id);
+                      const isNew = isNewlyAdded(node.id);
+                      const isRemovedMenu = isRemoved(node.id);
+                      const nodeName = node.name || node.label || node.key || 'Unnamed';
+                      return (
                         <label
-                            key={menu.id}
-                            className={`flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition ${
-                                checked ? "border-gray-400 bg-gray-50" : "border-gray-200 bg-white hover:border-gray-300"
-                            } ${isNew && checked ? "border-emerald-400 bg-emerald-50" : ""} 
-                               ${isRemovedMenu && !checked ? "border-red-400 bg-red-50 opacity-60" : ""}`}
+                          key={node.id}
+                          className={`flex items-center gap-2 px-3 py-2 rounded border cursor-pointer transition ${
+                            checked ? "border-gray-400 bg-gray-50" : "border-gray-200 bg-white hover:border-gray-300"
+                          } ${isNew && checked ? "border-emerald-400 bg-emerald-50" : ""}
+                             ${isRemovedMenu && !checked ? "border-red-400 bg-red-50 opacity-60" : ""}`}
+                          style={{ marginLeft: depth ? 8 : 0 }}
                         >
-                          <Checkbox
-                              checked={checked}
-                              onCheckedChange={() => toggleMenu(menu.id)}
-                          />
+                          <Checkbox checked={checked} onCheckedChange={() => toggleMenu(node.id)} />
                           <FileText className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-700 flex-1 truncate">{menu.name}</span>
-                          {isNew && checked && <span className="text-xs text-emerald-600 font-medium">✨ New</span>}
-                          {isRemovedMenu && !checked && <span className="text-xs text-red-600 font-medium">🗑️ Removed</span>}
+                          <span className="text-sm text-gray-700 flex-1 truncate">{nodeName}</span>
                           {checked && <Check className="w-4 h-4 text-gray-600" />}
                         </label>
-                    );
+                      );
+                    };
+
+                    return renderNode(menu, 0);
                   })
               )}
             </div>

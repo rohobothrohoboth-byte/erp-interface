@@ -73,15 +73,26 @@ export default function EditAccountPage() {
         const employeeIdForApi = empId;
         console.log("Using EmployeeId for API:", employeeIdForApi);
 
-        const account = await getAccountByEmployeeId(employeeIdForApi);
-        const apiPermissions = await getUserApiPermissions(employeeIdForApi);
+        if (!appUserId) {
+          throw new Error("AppUser ID not found for this employee. Open Edit from the user list after the account exists.");
+        }
+
+        // Prefer AppUser id for permission APIs (also accepts employee id on some endpoints)
+        const account = await getAccountByEmployeeId(appUserId);
+        const apiPermissions = await getUserApiPermissions(appUserId);
+
+        const moduleIds = account?.moduleIds || account?.modules || [];
+        const menuIds = account?.menuIds || account?.menus || account?.permissions || [];
+        const apiIds = Array.isArray(apiPermissions)
+          ? apiPermissions.map((x: any) => (typeof x === 'string' ? x : x.id || x.perApiId)).filter(Boolean)
+          : account?.apiPermissions || [];
 
         setAccountData({
-          userId: employeeIdForApi,
+          userId: appUserId,
           appUserId: appUserId,
-          modules: account?.modules || account?.moduleIds || [],
-          permissions: account?.permissions || account?.menuIds || [],
-          apiPermissions: apiPermissions || account?.apiPermissions || [],
+          modules: moduleIds,
+          permissions: menuIds,
+          apiPermissions: apiIds,
           roleId: account?.roleId,
           isActive: accountActive,
           hasAccount: stateEmployee.hasAccount === true,

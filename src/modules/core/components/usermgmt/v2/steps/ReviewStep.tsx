@@ -52,9 +52,10 @@ function HelpTooltip({ text }: { text: string }) {
 interface Props {
     employee: EmpSearchRes;
     formData: WizardFormData;
-    onFinish: () => void;  // Remove userId from props
+    onFinish: () => void | Promise<void>;
     onBack: () => void;
     isSubmitting?: boolean;
+    userId?: string;
 }
 
 // Confirmation Modal Component
@@ -308,14 +309,13 @@ export function ReviewStep({ employee, formData, userId, onFinish, onBack }: Pro
     const handleConfirm = async () => {
         setIsLoading(true);
         try {
-            // Just call onFinish - the wizard handles account creation
-            onFinish();
+            await onFinish();
+            setShowConfirmation(false);
         } catch (error: any) {
             console.error('CONFIRMATION ERROR:', error);
             toast.error(error?.response?.data?.message || error?.message || 'Failed to confirm');
         } finally {
             setIsLoading(false);
-            setShowConfirmation(false);
         }
     };
 

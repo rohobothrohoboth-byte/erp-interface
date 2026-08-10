@@ -262,14 +262,14 @@ export const getAccountByEmployeeId = async (employeeId: string) => {
         // Extract the data properly
         // The API might return different property names
         const result = {
-            // Module IDs - try different possible property names
-            moduleIds: data?.moduleIds || data?.modules || [],
-            // Menu IDs - try different possible property names
-            menuIds: data?.menuIds || data?.permissions || data?.menus || [],
-            // API permissions
-            apiPermissions: data?.apiPermissions || data?.apiActions || [],
+            // Module IDs - camelCase or PascalCase from GetPerMenuByUser
+            moduleIds: data?.moduleIds || data?.modules || data?.Modules || [],
+            // Menu IDs
+            menuIds: data?.menuIds || data?.permissions || data?.menus || data?.Menus || [],
+            // API permissions (often loaded separately)
+            apiPermissions: data?.apiPermissions || data?.apiActions || data?.ApiActions || [],
             // Role
-            roleId: data?.roleId || data?.role,
+            roleId: data?.roleId || data?.role || data?.RoleId,
         };
 
         console.log('Extracted result:', result);

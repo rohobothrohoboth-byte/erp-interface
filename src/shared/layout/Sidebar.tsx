@@ -552,7 +552,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
                 if (hasDirectAccess || filteredChildren.length > 0) {
                     return {
                         ...menu,
-                        C: filteredChildren.length > 0 ? filteredChildren : menu.C
+                        // Only keep children that passed the filter (never restore ungranted children)
+                        C: filteredChildren.length > 0 ? filteredChildren : null,
                     };
                 }
 
@@ -560,6 +561,61 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
             })
             .filter(Boolean) as PermissionMenu[];
     }, []);
+
+    // Recursively render parent → child → grandchild menu trees
+    const renderMenuNode = useCallback((menu: PermissionMenu, commonProps: any, depth = 0): React.ReactNode => {
+        const children = (menu.C || []).slice().sort((a, b) => (a.O || 0) - (b.O || 0));
+        const hasVisibleChildren = children.length > 0;
+        const groupKey = `${activeModule}:${menu.K}`;
+
+        if (hasVisibleChildren) {
+            return (
+                <NavGroupWithTheme
+                    key={menu.K}
+                    icon={getIcon(menu.I)}
+                    label={menu.L}
+                    labelKey={menu.K}
+                    isOpen={openGroups[groupKey] === menu.L}
+                    onToggle={() => toggleGroup(groupKey, menu.L)}
+                >
+                    {children.map((child) => {
+                        const childHasKids = Boolean(child.C?.length);
+                        if (childHasKids) {
+                            return renderMenuNode(child, commonProps, depth + 1);
+                        }
+                        if (!hasValidPath(child)) return null;
+                        return (
+                            <NavItemWithClose
+                                key={child.K}
+                                to={getMenuPath(child)}
+                                label={child.L}
+                                labelKey={child.K}
+                                isChild
+                                {...commonProps}
+                            />
+                        );
+                    })}
+                </NavGroupWithTheme>
+            );
+        }
+
+        if (!hasValidPath(menu)) {
+            console.warn('⚠️ Menu has no path and no children:', menu.K, menu.L);
+            return null;
+        }
+
+        return (
+            <NavItemWithClose
+                key={menu.K}
+                to={getMenuPath(menu)}
+                icon={getIcon(menu.I)}
+                label={menu.L}
+                labelKey={menu.K}
+                isChild={depth > 0}
+                {...commonProps}
+            />
+        );
+    }, [NavGroupWithTheme, NavItemWithClose, activeModule, openGroups, toggleGroup]);
 
     // ✅ RENDER MENUS
     const renderMenus = useCallback(() => {
@@ -596,72 +652,17 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
         // Sort menus by order
         hierarchicalMenus.sort((a, b) => (a.O || 0) - (b.O || 0));
 
-
-
-        // Render hierarchical menus
-        return hierarchicalMenus.map((menu: PermissionMenu) => {
-            const children = menu.C || [];
-            const hasVisibleChildren = children.length > 0;
-
-            if (hasVisibleChildren) {
-                return (
-                    <NavGroupWithTheme
-                        key={menu.K}
-                        icon={getIcon(menu.I)}
-                        label={menu.L}
-                        labelKey={menu.K}
-                        isOpen={openGroups[activeModule] === menu.L}
-                        onToggle={() => toggleGroup(activeModule, menu.L)}
-                    >
-                        {children.map((child: PermissionMenu) => {
-                            if (!hasValidPath(child)) {
-
-                                return null;
-                            }
-                            return (
-                                <NavItemWithClose
-                                    key={child.K}
-                                    to={getMenuPath(child)}
-                                    label={child.L}
-                                    labelKey={child.K}
-                                    isChild
-                                    {...commonProps}
-                                />
-                            );
-                        })}
-                    </NavGroupWithTheme>
-                );
-            }
-
-            if (!hasValidPath(menu)) {
-                console.warn('⚠️ Menu has no path and no children:', menu.K, menu.L);
-                return null;
-            }
-
-            return (
-                <NavItemWithClose
-                    key={menu.K}
-                    to={getMenuPath(menu)}
-                    icon={getIcon(menu.I)}
-                    label={menu.L}
-                    labelKey={menu.K}
-                    {...commonProps}
-                />
-            );
-        });
+        return hierarchicalMenus.map((menu: PermissionMenu) => renderMenuNode(menu, commonProps, 0));
     }, [
         permissions,
         activeModule,
         collapsed,
         theme,
-        openGroups,
-        toggleGroup,
-        NavItemWithClose,
-        NavGroupWithTheme,
         isPrivileged,
         userMenuGuids,
         filterMenusByPermissions,
-        setActiveModule
+        setActiveModule,
+        renderMenuNode,
     ]);
 
     const showSettings = useMemo(() => {

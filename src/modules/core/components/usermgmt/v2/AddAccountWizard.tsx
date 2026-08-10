@@ -13,7 +13,7 @@ import { AccessPermissionsStep } from '@/modules/core/components/usermgmt/v2/ste
 import { ReviewStep } from '@/modules/core/components/usermgmt/v2/steps/ReviewStep';
 import type { EmpSearchRes } from '@/modules/core/types/EmpSearchRes';
 import { registerApi } from '@/modules/auth/services/register/register.api';
-import type { UUID } from '@/modules/auth/types/registration';
+import type { RegStep1, UUID } from '@/modules/auth/types/registration';
 import toast from 'react-hot-toast';
 
 export interface WizardFormData {
@@ -217,6 +217,18 @@ export function AddAccountWizard({ employee, onDone, onCancel }: Props) {
         return;
       }
 
+      // Already created in this session — don't call Step1 again
+      const existingUserId = createdUserId || data.userId || formData.step1.userId;
+      if (existingUserId) {
+        setCreatedUserId(existingUserId);
+        setFormData(f => ({
+          ...f,
+          step1: { ...data, userId: existingUserId },
+        }));
+        goNext();
+        return;
+      }
+
       // ✅ Prepare request data with ALL required fields
       const regStep1Data: RegStep1 = {
         employeeId: employee.id as UUID,
@@ -238,15 +250,15 @@ export function AddAccountWizard({ employee, onDone, onCancel }: Props) {
 
       console.log('📥 Registration result:', step1Result);
 
-      const newUserId = step1Result?.userId || step1Result?.data?.userId || step1Result?.id;
+      const newUserId = step1Result?.userId || (step1Result as any)?.data?.userId || (step1Result as any)?.id;
 
       if (newUserId) {
         setCreatedUserId(newUserId);
         setFormData(f => ({
           ...f,
-          step1: { ...f.step1, userId: newUserId }
+          step1: { ...data, userId: newUserId }
         }));
-        toast.success('✅ User account created successfully!');
+        toast.success('User account created — continue to assign menus.');
         goNext();
       } else {
         throw new Error('No userId returned from account creation');
@@ -281,25 +293,29 @@ export function AddAccountWizard({ employee, onDone, onCancel }: Props) {
         throw new Error('No userId found. Please go back and create the account first.');
       }
 
-      // Step 2: Menu permissions (if not already saved)
-      if (formData.step2.menuIds.length > 0) {
-        await registerApi.step2({
-          userId: userId as UUID,
-          perMenus: formData.step2.menuIds as UUID[]
-        });
-        console.log('✅ Menu permissions saved');
+      if (!formData.step2.menuIds.length) {
+        throw new Error('Select at least one menu before finishing account setup.');
       }
 
-      // Step 3: Access permissions (if not already saved)
+      await registerApi.step2({
+        userId: userId as UUID,
+        perMenus: formData.step2.menuIds as UUID[]
+      });
+
       if (formData.step3.accessIds.length > 0) {
         await registerApi.step3({
           userId: userId as UUID,
           perAccess: formData.step3.accessIds as UUID[]
         });
-        console.log('✅ Access permissions saved');
+      } else {
+        toast.error('No API permissions selected — menus were saved; edit the account to add actions.');
       }
 
-      toast.success("Account created successfully with all permissions!");
+      toast.success(
+        formData.step3.accessIds.length > 0
+          ? 'Account created with modules, menus, and API permissions.'
+          : 'Account created with modules and menus.'
+      );
       localStorage.removeItem(getDraftKey(employee.code));
       onDone();
 
@@ -313,6 +329,7 @@ export function AddAccountWizard({ employee, onDone, onCancel }: Props) {
           "Failed to complete account setup";
 
       toast.error(errorMessage);
+      throw error;
     } finally {
       setIsSubmitting(false);
     }
@@ -498,8 +515,10 @@ export function AddAccountWizard({ employee, onDone, onCancel }: Props) {
               </div>
               {step > 1 && step < 4 && (
                   <div className="flex gap-2">
-                    <button onClick={goBack} className="p-2 rounded hover:bg-gray-100"><ChevronLeft className="w-4 h-4 text-gray-500" /></button>
-                    <button onClick={goNext} className="p-2 rounded hover:bg-gray-100"><ChevronRight className="w-4 h-4 text-gray-500" /></button>
+                    <button onClick={goBack} className="p-2 rounded hover:bg-gray-100" title="Back">
+                      <ChevronLeft className="w-4 h-4 text-gray-500" />
+                    </button>
+                    {/* Intentionally no free Next chevron — each step form must validate/submit */}
                   </div>
               )}
             </div>

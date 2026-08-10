@@ -140,35 +140,20 @@ export const EditAccountTabs: React.FC<EditAccountTabsProps> = ({
     // ✅ FIX: Ensure we're using AppUser ID, not Employee ID
     // ============================================================
     const [userId] = useState<string>(() => {
-        // Get the ID from accountData
-        let id = accountData?.userId || "";
+        // Prefer explicit AppUser id — never fall back to employee.id
+        const resolved =
+            accountData?.appUserId ||
+            employee?.appUserId ||
+            (accountData?.userId && accountData.userId !== employee?.id ? accountData.userId : '') ||
+            '';
 
-        // ✅ Check if this is an Employee ID (starts with 019f)
-        const isEmployeeId = id.startsWith('019f') && id.length === 36;
-
-        if (isEmployeeId) {
-            console.warn('⚠️ WARNING: userId appears to be an Employee ID, not AppUser ID');
-            console.warn('   Employee ID:', id);
-            console.warn('   Expected: AppUser ID (different format)');
-
-            // ✅ If we have accountData.appUserId, use that instead
-            if (accountData?.appUserId) {
-                console.warn('   ✅ Using appUserId instead:', accountData.appUserId);
-                return accountData.appUserId;
-            }
-
-            // ✅ If employee has appUserId, use that
-            if (employee?.appUserId) {
-                console.warn('   ✅ Using employee.appUserId instead:', employee.appUserId);
-                return employee.appUserId;
-            }
-
-            // ⚠️ Fallback: try to get from localStorage or context
-            console.error('❌ No valid AppUser ID found!');
-            console.error('   Please ensure accountData.userId is the AppUser ID');
+        if (!resolved) {
+            console.error('❌ No AppUser ID found for edit permissions');
+        } else if (employee?.id && resolved === employee.id) {
+            console.error('❌ userId matches Employee ID — permission saves will fail');
         }
 
-        return id;
+        return resolved;
     });
 
     // ✅ Track employee ID separately for reference
@@ -183,10 +168,8 @@ export const EditAccountTabs: React.FC<EditAccountTabsProps> = ({
         console.log('  📋 accountData?.appUserId:', accountData?.appUserId);
         console.log('  📋 employee?.appUserId:', employee?.appUserId);
 
-        // ✅ Validate that userId is not an Employee ID
-        if (userId?.startsWith('019f')) {
+        if (employeeId && userId && userId === employeeId) {
             console.error('❌ CRITICAL: Still using Employee ID as userId!');
-            console.error('   This will cause all permission operations to fail.');
         }
     }, [userId, employeeId, accountData, employee]);
 
@@ -997,9 +980,13 @@ export const EditAccountTabs: React.FC<EditAccountTabsProps> = ({
 
             {/* Delete Confirmation Modal */}
             <DeleteAccountModal
-                userId={accountData?.userId as any}
+                userId={(accountData?.appUserId || userId) as any}
                 isOpen={showDeleteConfirm}
                 onClose={() => {
+                    // Cancel / dismiss only — do NOT treat as successful delete
+                    setShowDeleteConfirm(false);
+                }}
+                onDeleted={() => {
                     setShowDeleteConfirm(false);
                     if (onAccountDeleted) onAccountDeleted({ success: true });
                     else onBackToAccounts();

@@ -10,6 +10,8 @@ interface DeleteAccountModalProps {
   userId?: UUID;
   isOpen: boolean;
   onClose: () => void;
+  /** Called only after a successful delete (not on cancel/dismiss) */
+  onDeleted?: () => void;
   userName?: string;
   userEmail?: string;
 }
@@ -18,6 +20,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                                                                         userId,
                                                                         isOpen,
                                                                         onClose,
+                                                                        onDeleted,
                                                                         userName,
                                                                         userEmail,
                                                                       }) => {
@@ -33,6 +36,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
     try {
       await mutateAsync(userId);
       toast.success('Account deleted successfully');
+      onDeleted?.();
       onClose();
     } catch (error: any) {
       toast.error(error?.message ?? 'Failed to delete account');
