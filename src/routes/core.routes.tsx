@@ -621,7 +621,7 @@ export const coreSidebarRoutes: SidebarNavSection[] = [
         items: [
             { title: 'Companies', href: '/core/company', activeMatch: 'prefix' },
             { title: 'Departments', href: '/core/department', activeMatch: 'prefix' },
-            { title: 'Branches', href: '/core/branches', activeMatch: 'prefix' },
+            { title: 'Branches', href: '/core/branch', activeMatch: 'prefix' },
             { title: 'Fiscal Year', href: '/core/fiscal-year', activeMatch: 'prefix' },
         ],
     },
@@ -653,7 +653,7 @@ const ROUTE_TITLE_BY_PREFIX: [string, string][] = [
     ['/core/users', 'User Management'],
     ['/core/department', 'Departments'],
     ['/core/company', 'Companies'],
-    ['/core/branches', 'Branches'],
+    ['/core/branch', 'Branches'],
     ['/settings', 'Settings'],
     ['/settings/core', 'Core Settings'],
     ['/settings/hr', 'HR Settings'],

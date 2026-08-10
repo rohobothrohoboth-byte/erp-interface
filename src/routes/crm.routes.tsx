@@ -68,10 +68,17 @@ const ContactGroupingPage = lazy(() => import('@/modules/crm/pages/contactManage
 // ============================================================
 const SalesManagement = lazy(() => import('@/modules/crm/pages/salesManagement/SalesManagement'));
 const OpportunitiesPage = lazy(() => import('@/modules/crm/pages/salesManagement/OpportunitiesPage'));
+const OpportunityCreatePage = lazy(() => import('@/modules/crm/pages/salesManagement/OpportunityCreatePage'));
+const OpportunityDetailPage = lazy(() => import('@/modules/crm/pages/salesManagement/OpportunityDetailPage'));
 const QuotationsPage = lazy(() => import('@/modules/crm/pages/salesManagement/QuotationsPage'));
+const QuotationCreatePage = lazy(() => import('@/modules/crm/pages/salesManagement/QuotationCreatePage'));
+const QuotationDetailPage = lazy(() => import('@/modules/crm/pages/salesManagement/QuotationDetailPage'));
 const OrdersPage = lazy(() => import('@/modules/crm/pages/salesManagement/OrdersPage'));
+const OrderCreatePage = lazy(() => import('@/modules/crm/pages/salesManagement/OrderCreatePage'));
 const OrderDetailPage = lazy(() => import('@/modules/crm/pages/salesManagement/OrderDetailPage'));
 const ContractsPage = lazy(() => import('@/modules/crm/pages/salesManagement/ContractsPage'));
+const ContractCreatePage = lazy(() => import('@/modules/crm/pages/salesManagement/ContractCreatePage'));
+const ContractDetailPage = lazy(() => import('@/modules/crm/pages/salesManagement/ContractDetailPage'));
 const SalesForecastPage = lazy(() => import('@/modules/crm/pages/salesManagement/SalesForecastPage'));
 
 // ============================================================
@@ -353,7 +360,15 @@ export const crmRoutes: AppRoute[] = [
         href: '/crm/sales/opportunities/add',
         title: 'Add Opportunity',
         icon: BarChart3,
-        element: withSuspense(OpportunitiesPage),
+        element: withSuspense(OpportunityCreatePage),
+        nav: false,
+    },
+    {
+        path: 'crm/sales/opportunities/:id',
+        href: '/crm/sales/opportunities/:id',
+        title: 'Opportunity Details',
+        icon: BarChart3,
+        element: withSuspense(OpportunityDetailPage),
         nav: false,
     },
     {
@@ -369,7 +384,7 @@ export const crmRoutes: AppRoute[] = [
         href: '/crm/sales/quotes/add',
         title: 'Create Quote',
         icon: FileText,
-        element: withSuspense(QuotationsPage),
+        element: withSuspense(QuotationCreatePage),
         nav: false,
     },
     {
@@ -385,7 +400,7 @@ export const crmRoutes: AppRoute[] = [
         href: '/crm/sales/orders/add',
         title: 'Create Order',
         icon: BarChart3,
-        element: withSuspense(OrdersPage),
+        element: withSuspense(OrderCreatePage),
         nav: false,
     },
     {
@@ -401,7 +416,7 @@ export const crmRoutes: AppRoute[] = [
         href: '/crm/sales/contracts/add',
         title: 'Create Contract',
         icon: FileText,
-        element: withSuspense(ContractsPage),
+        element: withSuspense(ContractCreatePage),
         nav: false,
     },
     {
@@ -441,7 +456,7 @@ export const crmRoutes: AppRoute[] = [
         href: '/crm/sales/quotes/edit/:id',
         title: 'Edit Quote',
         icon: FileText,
-        element: withSuspense(QuotationsPage),
+        element: withSuspense(QuotationDetailPage),
         nav: false,
     },
     {
@@ -457,7 +472,7 @@ export const crmRoutes: AppRoute[] = [
         href: '/crm/sales/contracts/edit/:id',
         title: 'Edit Contract',
         icon: FileText,
-        element: withSuspense(ContractsPage),
+        element: withSuspense(ContractDetailPage),
         nav: false,
     },
     {
@@ -465,7 +480,7 @@ export const crmRoutes: AppRoute[] = [
         href: '/crm/sales/quotes/:id',
         title: 'Quote Details',
         icon: FileText,
-        element: withSuspense(QuotationsPage),
+        element: withSuspense(QuotationDetailPage),
         nav: false,
     },
     {
@@ -481,7 +496,7 @@ export const crmRoutes: AppRoute[] = [
         href: '/crm/sales/contracts/:id',
         title: 'Contract Details',
         icon: FileText,
-        element: withSuspense(ContractsPage),
+        element: withSuspense(ContractDetailPage),
         nav: false,
     },
 

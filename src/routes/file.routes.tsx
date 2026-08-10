@@ -38,10 +38,12 @@ const RecentFilesPage = lazy(() => import('@/modules/file/pages/RecentFilesPage'
 const ArchivePage = lazy(() => import('@/modules/file/pages/ArchivePage'));
 const StarredFilesPage = lazy(() => import('@/modules/file/pages/StarredFilesPage'));
 const FolderContentsPage = lazy(() => import('@/modules/file/pages/FolderContentsPage/index'));
+const FileSettings = lazy(() => import('@/modules/file/pages/FileSettings'));
+const FolderDocumentsPage = lazy(() => import('@/modules/file/pages/FolderDocumentsPage'));
 
 // ✅ DocumentDetailPage - Keep as a regular import since it's already a component
 // or use lazy if you want code splitting
-import DocumentDetailPage from '@/modules/file/pages/DocumentDetailPage';
+const DocumentDetailPage = lazy(() => import('@/modules/file/pages/DocumentDetailPage'));
 
 export const fileRoutes: AppRoute[] = [
     // Dashboard
@@ -139,6 +141,24 @@ export const fileRoutes: AppRoute[] = [
         icon: Archive,
         element: withSuspense(ArchivePage),
         nav: true,
+    },
+    // Settings
+    {
+        path: 'file/settings',
+        href: '/file/settings',
+        title: 'File Settings',
+        icon: Settings,
+        element: withSuspense(FileSettings),
+        nav: false,
+    },
+    // Documents inside a folder
+    {
+        path: 'file/folders/:id/documents',
+        href: '/file/folders/:id/documents',
+        title: 'Folder Documents',
+        icon: File,
+        element: withSuspense(FolderDocumentsPage),
+        nav: false,
     },
 ];
 
