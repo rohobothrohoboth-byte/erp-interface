@@ -11,7 +11,7 @@ import {
     Settings,
     type LucideIcon
 } from 'lucide-react';
-import { PageLoader } from '../components/ui/page-loader';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
 
 const withSuspense = (
@@ -23,66 +23,66 @@ const withSuspense = (
 );
 
 // Procurement Pages
-const ProcurementDashboard = lazy(() => import('../pages/modules/Procurement'));
+const ProcurementDashboard = lazy(() => import('@/modules/procurement/pages/ModuleDashboard'));
 
 // Requisitions
-const RequisitionList = lazy(() => import('../pages/procurement/requisitions/RequisitionList'));
-const CreateRequisition = lazy(() => import('../pages/procurement/requisitions/CreateRequisition'));
-const RequisitionApproval = lazy(() => import('../pages/procurement/requisitions/RequisitionApproval'));
+const RequisitionList = lazy(() => import('@/modules/procurement/pages/requisitions/RequisitionList'));
+const CreateRequisition = lazy(() => import('@/modules/procurement/pages/requisitions/CreateRequisition'));
+const RequisitionApproval = lazy(() => import('@/modules/procurement/pages/requisitions/RequisitionApproval'));
 
 // Vendors
-const VendorList = lazy(() => import('../pages/procurement/vendors/VendorList'));
-const VendorEvaluation = lazy(() => import('../pages/procurement/vendors/VendorEvaluation'));
-const VendorContracts = lazy(() => import('../pages/procurement/vendors/VendorContracts'));
+const VendorList = lazy(() => import('@/modules/procurement/pages/vendors/VendorList'));
+const VendorEvaluation = lazy(() => import('@/modules/procurement/pages/vendors/VendorEvaluation'));
+const VendorContracts = lazy(() => import('@/modules/procurement/pages/vendors/VendorContracts'));
 
 // Purchase Orders
-const PurchaseOrderList = lazy(() => import('../pages/procurement/po/PurchaseOrderList'));
-const CreatePurchaseOrder = lazy(() => import('../pages/procurement/po/CreatePurchaseOrder'));
-const EditPurchaseOrder = lazy(() => import('../pages/procurement/po/EditPurchaseOrder')); // ✅ ADD THIS
-const ReceivePurchaseOrder = lazy(() => import('../pages/procurement/po/ReceivePurchaseOrder')); // ✅ ADD THIS
-const POApproval = lazy(() => import('../pages/procurement/po/POApproval'));
-const POTracking = lazy(() => import('../pages/procurement/po/POTracking'));
+const PurchaseOrderList = lazy(() => import('@/modules/procurement/pages/po/PurchaseOrderList'));
+const CreatePurchaseOrder = lazy(() => import('@/modules/procurement/pages/po/CreatePurchaseOrder'));
+const EditPurchaseOrder = lazy(() => import('@/modules/procurement/pages/po/EditPurchaseOrder')); // ✅ ADD THIS
+const ReceivePurchaseOrder = lazy(() => import('@/modules/procurement/pages/po/ReceivePurchaseOrder')); // ✅ ADD THIS
+const POApproval = lazy(() => import('@/modules/procurement/pages/po/POApproval'));
+const POTracking = lazy(() => import('@/modules/procurement/pages/po/POTracking'));
 
 // Receiving
-const GRNList = lazy(() => import('../pages/procurement/receiving/GRNList'));
-const CreateGRN = lazy(() => import('../pages/procurement/receiving/CreateGRN'));
+const GRNList = lazy(() => import('@/modules/procurement/pages/receiving/GRNList'));
+const CreateGRN = lazy(() => import('@/modules/procurement/pages/receiving/CreateGRN'));
 
 
 // Invoices
-const InvoiceList = lazy(() => import('../pages/procurement/invoices/InvoiceList'));
-const InvoiceVerification = lazy(() => import('../pages/procurement/invoices/InvoiceVerification'));
-const PaymentProcessing = lazy(() => import('../pages/procurement/invoices/PaymentProcessing'));
+const InvoiceList = lazy(() => import('@/modules/procurement/pages/invoices/InvoiceList'));
+const InvoiceVerification = lazy(() => import('@/modules/procurement/pages/invoices/InvoiceVerification'));
+const PaymentProcessing = lazy(() => import('@/modules/procurement/pages/invoices/PaymentProcessing'));
 
 // Analytics
-const SpendAnalysis = lazy(() => import('../pages/procurement/analytics/SpendAnalysis'));
-const VendorPerformance = lazy(() => import('../pages/procurement/analytics/VendorPerformance'));
-const ProcurementReports = lazy(() => import('../pages/procurement/reports/ProcurementReports'));
+const SpendAnalysis = lazy(() => import('@/modules/procurement/pages/analytics/SpendAnalysis'));
+const VendorPerformance = lazy(() => import('@/modules/procurement/pages/analytics/VendorPerformance'));
+const ProcurementReports = lazy(() => import('@/modules/procurement/pages/reports/ProcurementReports'));
 
-const GRNDetail = lazy(() => import('../pages/procurement/receiving/GRNDetail'));
-const QualityInspection = lazy(() => import('../pages/procurement/receiving/QualityInspection'));
-const PerformInspection = lazy(() => import('../pages/procurement/receiving/PerformInspection'));
+const GRNDetail = lazy(() => import('@/modules/procurement/pages/receiving/GRNDetail'));
+const QualityInspection = lazy(() => import('@/modules/procurement/pages/receiving/QualityInspection'));
+const PerformInspection = lazy(() => import('@/modules/procurement/pages/receiving/PerformInspection'));
 
-const InvoiceDetail = lazy(() => import('../pages/procurement/invoices/InvoiceDetail'));
-const CreateInvoice = lazy(() => import('../pages/procurement/invoices/CreateInvoice'));
-const EditInvoice = lazy(() => import('../pages/procurement/invoices/EditInvoice'));
-const MakePayment = lazy(() => import('../pages/procurement/invoices/MakePayment'));
-
-
-const VendorDetail = lazy(() => import('../pages/procurement/vendors/VendorDetail'));
-const CreateVendor = lazy(() => import('../pages/procurement/vendors/CreateVendor'));
-const EditVendor = lazy(() => import('../pages/procurement/vendors/EditVendor'));
+const InvoiceDetail = lazy(() => import('@/modules/procurement/pages/invoices/InvoiceDetail'));
+const CreateInvoice = lazy(() => import('@/modules/procurement/pages/invoices/CreateInvoice'));
+const EditInvoice = lazy(() => import('@/modules/procurement/pages/invoices/EditInvoice'));
+const MakePayment = lazy(() => import('@/modules/procurement/pages/invoices/MakePayment'));
 
 
-const EvaluationDetail = lazy(() => import('../pages/procurement/vendors/EvaluationDetail'));
-const CreateEvaluation = lazy(() => import('../pages/procurement/vendors/CreateEvaluation'));
+const VendorDetail = lazy(() => import('@/modules/procurement/pages/vendors/VendorDetail'));
+const CreateVendor = lazy(() => import('@/modules/procurement/pages/vendors/CreateVendor'));
+const EditVendor = lazy(() => import('@/modules/procurement/pages/vendors/EditVendor'));
+
+
+const EvaluationDetail = lazy(() => import('@/modules/procurement/pages/vendors/EvaluationDetail'));
+const CreateEvaluation = lazy(() => import('@/modules/procurement/pages/vendors/CreateEvaluation'));
 
 
 
-const ReportDetail = lazy(() => import('../pages/procurement/reports/ReportDetail'));
-const GenerateReport = lazy(() => import('../pages/procurement/reports/GenerateReport'));
+const ReportDetail = lazy(() => import('@/modules/procurement/pages/reports/ReportDetail'));
+const GenerateReport = lazy(() => import('@/modules/procurement/pages/reports/GenerateReport'));
 
-const CreateContract = lazy(() => import('../pages/procurement/vendors/CreateContract'));
-const ContractDetail = lazy(() => import('../pages/procurement/vendors/ContractDetail'));
+const CreateContract = lazy(() => import('@/modules/procurement/pages/vendors/CreateContract'));
+const ContractDetail = lazy(() => import('@/modules/procurement/pages/vendors/ContractDetail'));
 export const procurementRoutes: AppRoute[] = [
     // Dashboard
     {
@@ -344,7 +344,7 @@ export const procurementRoutes: AppRoute[] = [
         href: '/procurement/requisitions/:id',
         title: 'Requisition Details',
         icon: FileText,
-        element: withSuspense(lazy(() => import('../pages/procurement/requisitions/RequisitionDetail'))),
+        element: withSuspense(lazy(() => import('@/modules/procurement/pages/requisitions/RequisitionDetail'))),
         nav: false,
     },
 // Requisition Edit
@@ -353,7 +353,7 @@ export const procurementRoutes: AppRoute[] = [
         href: '/procurement/requisitions/:id/edit',
         title: 'Edit Requisition',
         icon: FileText,
-        element: withSuspense(lazy(() => import('../pages/procurement/requisitions/EditRequisition'))),
+        element: withSuspense(lazy(() => import('@/modules/procurement/pages/requisitions/EditRequisition'))),
         nav: false,
     },
     // ✅ ADD THIS - Receive Purchase Order

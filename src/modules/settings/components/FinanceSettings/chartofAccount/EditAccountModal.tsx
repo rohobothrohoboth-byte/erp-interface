@@ -1,0 +1,355 @@
+import { useState, useEffect } from 'react';
+import type { UUID } from 'crypto';
+import { motion } from 'framer-motion';
+import { X, PenBox, Calculator } from 'lucide-react';
+import { Button } from '@/shared/components/ui/button';
+import { Label } from '@/shared/components/ui/label';
+import useToast from '@/shared/hooks/useToast';
+import type { Account, AccountCategory, Currency, Company } from '@/modules/settings/components/FinanceSettings/chartofAccount/AccountsSection';
+
+interface EditAccountModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onEditAccount: (account: any) => Promise<any>;
+  account: Account | null;
+  accountCategories: AccountCategory[];
+  currencies: Currency[];
+  companies: Company[];
+}
+
+const EditAccountModal: React.FC<EditAccountModalProps> = ({
+  isOpen,
+  onClose,
+  onEditAccount,
+  account,
+  accountCategories,
+  currencies,
+  companies,
+}) => {
+  const toast = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    code: '',
+    name: '',
+    accountCategoryId: '' as UUID | '',
+    isGroup: false,
+    accountType: '' as 'Asset' | 'Liability' | 'Capital' | 'Income' | 'Expenditure' | '',
+    currencyId: '' as UUID | '',
+    companyId: '' as UUID | '',
+    isActive: true,
+  });
+
+  const accountTypes: Array<'Asset' | 'Liability' | 'Capital' | 'Income' | 'Expenditure'> = [
+    'Asset',
+    'Liability',
+    'Capital',
+    'Income',
+    'Expenditure',
+  ];
+
+  useEffect(() => {
+    if (account) {
+      setFormData({
+        code: account.code,
+        name: account.name,
+        accountCategoryId: account.accountCategoryId,
+        isGroup: account.isGroup,
+        accountType: account.accountType || '',
+        currencyId: account.currencyId,
+        companyId: account.companyId,
+        isActive: account.isActive,
+      });
+    }
+  }, [account]);
+
+  const handleSubmit = async () => {
+    if (!formData.code.trim()) {
+      toast.error('Please enter an account code');
+      return;
+    }
+
+    if (!formData.name.trim()) {
+      toast.error('Please enter an account name');
+      return;
+    }
+
+    if (!formData.accountCategoryId) {
+      toast.error('Please select an account category');
+      return;
+    }
+
+    if (formData.isGroup && !formData.accountType) {
+      toast.error('Please select an account type for group accounts');
+      return;
+    }
+
+    if (!formData.currencyId) {
+      toast.error('Please select a currency');
+      return;
+    }
+
+    if (!formData.companyId) {
+      toast.error('Please select a company');
+      return;
+    }
+
+    setIsLoading(true);
+    const loadingToastId = toast.loading('Updating account...');
+
+    try {
+      const response = await onEditAccount(formData);
+      toast.dismiss(loadingToastId);
+
+      const successMessage =
+        response?.data?.message || response?.message || 'Account updated successfully!';
+
+      toast.success(successMessage);
+      onClose();
+    } catch (error: any) {
+      toast.dismiss(loadingToastId);
+
+      const errorMessage =
+        error.response?.data?.message || error.message || 'Failed to update account. Please try again.';
+
+      toast.error(errorMessage);
+      console.error('Error updating account:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  const isFormValid =
+    formData.code.trim() &&
+    formData.name.trim() &&
+    formData.accountCategoryId &&
+    formData.currencyId &&
+    formData.companyId &&
+    (!formData.isGroup || formData.accountType);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6 h-dvh">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white rounded-xl shadow-xl max-w-2xl w-1/2 max-h-[90vh] overflow-y-auto"
+      >
+        {/* Header */}
+        <div className="flex justify-between items-center border-b px-6 py-2 sticky top-0 bg-white z-10">
+          <div className="flex items-center gap-2">
+            <PenBox size={20} />
+            <h2 className="text-lg font-bold text-gray-800">Edit Account</h2>
+          </div>
+          <button
+            onClick={handleClose}
+            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+            disabled={isLoading}
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6">
+          <div className="py-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Account Code */}
+              <div className="space-y-2">
+                <Label htmlFor="accountCode" className="text-sm text-gray-500">
+                  Account Code <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <Calculator
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-indigo-400"
+                    size={18}
+                  />
+                  <input
+                    id="accountCode"
+                    value={formData.code}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, code: e.target.value }))}
+                    placeholder="e.g., 1000, 1100"
+                    className="w-full pl-10 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Account Name */}
+              <div className="space-y-2">
+                <Label htmlFor="accountName" className="text-sm text-gray-500">
+                  Account Name <span className="text-red-500">*</span>
+                </Label>
+                <input
+                  id="accountName"
+                  value={formData.name}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g., Cash & Bank, Accounts Receivable"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Account Category */}
+              <div className="space-y-2">
+                <Label htmlFor="accountCategory" className="text-sm text-gray-500">
+                  Account Category <span className="text-red-500">*</span>
+                </Label>
+                <select
+                  id="accountCategory"
+                  value={formData.accountCategoryId || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, accountCategoryId: e.target.value as UUID }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                  disabled={isLoading}
+                >
+                  <option value="">Select category</option>
+                  {accountCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Currency */}
+              <div className="space-y-2">
+                <Label htmlFor="currency" className="text-sm text-gray-500">
+                  Currency <span className="text-red-500">*</span>
+                </Label>
+                <select
+                  id="currency"
+                  value={formData.currencyId || ''}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, currencyId: e.target.value as UUID }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                  disabled={isLoading}
+                >
+                  <option value="">Select currency</option>
+                  {currencies.map((currency) => (
+                    <option key={currency.id} value={currency.id}>
+                      {currency.code} - {currency.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Company */}
+              <div className="space-y-2">
+                <Label htmlFor="company" className="text-sm text-gray-500">
+                  Company <span className="text-red-500">*</span>
+                </Label>
+                <select
+                  id="company"
+                  value={formData.companyId || ''}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, companyId: e.target.value as UUID }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                  disabled={isLoading}
+                >
+                  <option value="">Select company</option>
+                  {companies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Is Active Checkbox */}
+              <div className="flex items-center space-x-2">
+                <input
+                  id="isActive"
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  disabled={isLoading}
+                />
+                <Label htmlFor="isActive" className="text-sm text-gray-500">
+                  Is Active
+                </Label>
+              </div>
+
+              {/* Is Group Checkbox */}
+              <div className="flex items-center space-x-2">
+                <input
+                  id="isGroup"
+                  type="checkbox"
+                  checked={formData.isGroup}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      isGroup: e.target.checked,
+                      accountType: e.target.checked ? prev.accountType : '',
+                    }))
+                  }
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                  disabled={isLoading}
+                />
+                <Label htmlFor="isGroup" className="text-sm text-gray-500">
+                  Is Group
+                </Label>
+              </div>
+
+              {/* Account Type (only shown if Is Group is checked) */}
+              {formData.isGroup && (
+                <div className="space-y-2">
+                  <Label htmlFor="accountType" className="text-sm text-gray-500">
+                    Account Type <span className="text-red-500">*</span>
+                  </Label>
+                  <select
+                    id="accountType"
+                    value={formData.accountType || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        accountType: e.target.value as
+                          | 'Asset'
+                          | 'Liability'
+                          | 'Capital'
+                          | 'Income'
+                          | 'Expenditure',
+                      }))
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-transparent"
+                    disabled={isLoading}
+                  >
+                    <option value="">Select account type</option>
+                    {accountTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="border-t px-6 py-2">
+          <div className="mx-auto flex justify-center items-center gap-1.5">
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700 text-white cursor-pointer px-6"
+              onClick={handleSubmit}
+              disabled={!isFormValid || isLoading}
+            >
+              {isLoading ? 'Updating...' : 'Update'}
+            </Button>
+            <Button variant="outline" className="cursor-pointer px-6" onClick={handleClose} disabled={isLoading}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+export default EditAccountModal;

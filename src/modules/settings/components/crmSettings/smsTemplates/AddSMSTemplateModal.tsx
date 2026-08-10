@@ -1,0 +1,66 @@
+﻿import { useState } from "react";
+import { motion } from "framer-motion";
+import { MessageSquare } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Textarea } from "@/shared/components/ui/textarea";
+import type { SMSTemplate } from "@/modules/settings/components/crmSettings/smsTemplates/SMSTemplatesSection";
+
+interface AddSMSTemplateModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: Omit<SMSTemplate, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>) => void;
+}
+
+export default function AddSMSTemplateModal({ isOpen, onClose, onSubmit }: AddSMSTemplateModalProps) {
+  const [formData, setFormData] = useState({ name: "", text: "" });
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const reset = () => { setFormData({ name: "", text: "" }); setError(null); };
+  const handleClose = () => { if (!isSubmitting) { reset(); onClose(); } };
+
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) return setError("Please enter a template name");
+    if (!formData.text.trim()) return setError("Please enter message text");
+    setIsSubmitting(true); setError(null);
+    try { await onSubmit(formData); reset(); } catch { setError("Failed to add SMS template. Please try again."); } finally { setIsSubmitting(false); }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 px-6">
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+        className="bg-white rounded-xl shadow-xl max-w-md w-full">
+        <div className="flex items-center gap-2 border-b px-6 py-4">
+          <MessageSquare className="w-5 h-5 text-orange-600" />
+          <h2 className="text-base font-semibold text-gray-800">Add SMS Template</h2>
+        </div>
+        <div className="px-6">
+          <div className="py-4 space-y-3">
+            {error && <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded">{error}</p>}
+            <div className="space-y-1">
+              <Label>Template Name <span className="text-red-500">*</span></Label>
+              <Input value={formData.name} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} placeholder="e.g., Welcome SMS, Follow-up" disabled={isSubmitting} />
+            </div>
+            <div className="space-y-1">
+              <Label>Message Text <span className="text-red-500">*</span></Label>
+              <Textarea value={formData.text} onChange={e => setFormData(p => ({ ...p, text: e.target.value }))} placeholder="Enter SMS message text..." rows={4} maxLength={160} disabled={isSubmitting} />
+              <p className="text-xs text-gray-500">{formData.text.length}/160 characters</p>
+            </div>
+          </div>
+        </div>
+        <div className="border-t px-6 py-2">
+          <div className="flex justify-center items-center gap-1.5">
+            <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>Cancel</Button>
+            <Button onClick={handleSubmit} disabled={isSubmitting} className="bg-orange-600 hover:bg-orange-700 text-white">
+              {isSubmitting ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />Adding...</> : "Save"}
+            </Button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
