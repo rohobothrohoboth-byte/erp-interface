@@ -1,0 +1,1829 @@
+From 5bbdc3d114096b48b1c463319d3d26ed716e4bbd Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Mon, 10 Aug 2026 22:27:28 +0000
+Subject: [PATCH] feat(crm): Common canonical permission registry + expand
+ Cor.CRM PerAuth pilot
+
+Promote the seeded permission key list into Common.PermissionRegistry so Auth
+and every microservice share identical ph bit indices without a runtime Auth
+HTTP dependency. Auth initializes from CanonicalKeys and only logs DB drift;
+Cor.CRM switches from /Registry fetch to InitializeFromCanonical().
+
+Extend the CRM enforcement pilot from Routing/Scoring to LeadController
+(crm.leads.list/conversion/bulk/assigned/routing keys). Document Postman
+200/403 checks for the pilot.
+---
+ docs/crm-perauth-pilot-postman.md             |   54 +
+ .../Controllers/PermissionController.cs       |    7 +-
+ src/Svc.Auth/Middlewares/MigrationExt.cs      |   39 +-
+ .../Cor.CRM/Controllers/LeadController.cs     |   15 +
+ src/Svc.Core/Cor.CRM/Program.cs               |   39 +-
+ src/gRPC/Common/PermissionRegistry.cs         | 1395 +++++++++++++++++
+ src/gRPC/Common/Permissions.cs                |   36 +-
+ 7 files changed, 1532 insertions(+), 53 deletions(-)
+ create mode 100644 docs/crm-perauth-pilot-postman.md
+ create mode 100644 src/gRPC/Common/PermissionRegistry.cs
+
+diff --git a/docs/crm-perauth-pilot-postman.md b/docs/crm-perauth-pilot-postman.md
+new file mode 100644
+index 0000000..ffb2f3a
+--- /dev/null
++++ b/docs/crm-perauth-pilot-postman.md
+@@ -0,0 +1,54 @@
++# Cor.CRM [PerAuth] pilot — Postman checks
++
++Rebuild **Auth** and **Cor.CRM** from this branch. Admin bypass (`Admin` / `super_admin`) remains in effect.
++
++## What changed
++
++1. **Common.PermissionRegistry.CanonicalKeys** — shared 1374-key list (seeders ∪ legacy). Bit indices are identical in every service that calls `PermissionMap.InitializeFromCanonical()`.
++2. **Auth** initializes from CanonicalKeys (logs DB drift; does not diverge indices).
++3. **Cor.CRM** initializes from CanonicalKeys (no Auth HTTP call at startup).
++4. Protected endpoints:
++   - Routing: `crm.settings.routing.{view,add,mod,del}`
++   - Scoring: `crm.settings.scoring.{view,add,mod,del}`
++   - Leads: `crm.leads.list.*`, `crm.leads.conversion.convert`, `crm.leads.bulk.*`, `crm.leads.assigned.view`, `crm.leads.routing.view`
++
++> Lead Sources / Statuses / Email Templates UI is still localStorage-only — no CRM controllers to decorate yet. Add `[PerAuth]` when those APIs exist.
++
++## Prep
++
++1. Start Auth, then Cor.CRM. CRM log should show:  
++   `Permission registry initialized from Common with 1374 permissions`
++2. Auth log: `Permission registry initialized from Common canonical keys (1374 permissions)`
++3. After changing a user's permissions, **re-login** so JWT `ph` is rebuilt.
++
++## A. Registry sanity (Auth)
++
++`GET {{auth}}/api/auth/v1/Permission/Registry`  
++Expect `data.count` = 1374 and `data.source` = `Common.PermissionRegistry.CanonicalKeys`.
++
++`GET {{auth}}/api/auth/v1/Permission/MyPermissionCheck/crm.settings.routing.view`  
++(with Bearer token) — `granted: true/false` matches assignment.
++
++## B. Cross-service 200 / 403 (Cor.CRM)
++
++Base: `{{crm}}/api/core/crm/v1.0`
++
++| User | Call | Expect |
++|------|------|--------|
++| Admin / super_admin | `GET /Routing/Rules` | **200** (bypass) |
++| Non-admin **with** `crm.settings.routing.view` | `GET /Routing/Rules` | **200** |
++| Non-admin **without** that permission | `GET /Routing/Rules` | **403** |
++| Non-admin with `crm.settings.scoring.view` | `GET /Scoring/Rules` | **200** |
++| Non-admin without it | `GET /Scoring/Rules` | **403** |
++| Non-admin with `crm.leads.list.view` | `GET /Lead/AllLeads` | **200** |
++| Non-admin without it | `GET /Lead/AllLeads` | **403** |
++| Non-admin without `crm.leads.list.add` | `POST /Lead/AddLead` | **403** |
++| No / expired token | any of the above | **401** |
++
++Mutations (add/mod/del) use the matching `.add` / `.mod` / `.del` keys the same way.
++
++## C. Suggested test users
++
++1. **admin** — role Admin → always 200 on protected routes.
++2. **crm-reader** — only `crm.settings.routing.view`, `crm.settings.scoring.view`, `crm.leads.list.view`.
++3. **crm-denied** — authenticated, no CRM settings/leads permissions → 403 on all pilot routes.
+diff --git a/src/Svc.Auth/Controllers/PermissionController.cs b/src/Svc.Auth/Controllers/PermissionController.cs
+index afca8be..d71a34b 100644
+--- a/src/Svc.Auth/Controllers/PermissionController.cs
++++ b/src/Svc.Auth/Controllers/PermissionController.cs
+@@ -557,9 +557,9 @@ public async Task<IActionResult> DeletePerModule(Guid id)
+ 
+ // ==================== PERMISSION REGISTRY (enforcement foundation) ====================
+ 
+-// Returns the deterministically-ordered canonical permission registry. Other
+-// services can call this at startup and PermissionMap.Initialize(keys) to get an
+-// identical IndexMap, enabling consistent cross-service [PerAuth] enforcement.
++// Returns the deterministically-ordered canonical permission registry.
++// Preferred: services call PermissionMap.InitializeFromCanonical() from Common
++// (zero runtime coupling). This endpoint remains for verification / debugging.
+ [HttpGet("Registry")]
+ [ProducesResponseType(StatusCodes.Status200OK)]
+ public IActionResult PermissionRegistry()
+@@ -567,6 +567,7 @@ public IActionResult PermissionRegistry()
+     return Ok(ApiResponse<object>.Ok(new
+     {
+         Count = PermissionMap.IndexMap.Count,
++        Source = "Common.PermissionRegistry.CanonicalKeys",
+         Keys = PermissionMap.OrderedKeys
+     }));
+ }
+diff --git a/src/Svc.Auth/Middlewares/MigrationExt.cs b/src/Svc.Auth/Middlewares/MigrationExt.cs
+index 1b9f56d..c27dd9e 100644
+--- a/src/Svc.Auth/Middlewares/MigrationExt.cs
++++ b/src/Svc.Auth/Middlewares/MigrationExt.cs
+@@ -269,10 +269,11 @@ public static class MigrationExt
+   }
+ 
+ 
+-    // Initialize the in-memory permission registry (PermissionMap.IndexMap) from
+-    // the seeded permission keys so the JWT `ph` bitmask and [PerAuth] policies
+-    // cover every real permission, not just the legacy static list. Keys are
+-    // ordered deterministically so bit indices are stable across restarts.
++    // Initialize the in-memory permission registry from the shared Common
++    // canonical key list so JWT `ph` bit indices match every other service that
++    // calls PermissionMap.InitializeFromCanonical() — no cross-service coupling.
++    // Then compare against DB PerApi keys and log drift (extra/missing) without
++    // changing the live index map (indices must stay identical across services).
+     public static async Task InitializePermissionRegistry(this IApplicationBuilder app)
+     {
+         using var scope = app.ApplicationServices.CreateScope();
+@@ -281,23 +282,45 @@ public static class MigrationExt
+ 
+         try
+         {
++            PermissionMap.InitializeFromCanonical();
++            logger.LogInformation(
++                "Permission registry initialized from Common canonical keys ({Count} permissions)",
++                PermissionMap.IndexMap.Count);
++
+             if (!await dbContext.Database.CanConnectAsync())
+             {
+-                logger.LogWarning("Cannot connect to database for permission registry init");
++                logger.LogWarning("Cannot connect to database to verify permission registry drift");
+                 return;
+             }
+ 
+-            var keys = await dbContext.PerApi
++            var dbKeys = await dbContext.PerApi
+                 .Where(a => !a.IsDeleted)
+                 .Select(a => a.Key)
+                 .ToListAsync();
+ 
+-            PermissionMap.Initialize(keys);
+-            logger.LogInformation($"Permission registry initialized with {PermissionMap.IndexMap.Count} permissions");
++            var canonical = new HashSet<string>(PermissionRegistry.CanonicalKeys, StringComparer.Ordinal);
++            var dbSet = new HashSet<string>(dbKeys.Where(k => !string.IsNullOrWhiteSpace(k)), StringComparer.Ordinal);
++            var missingInDb = canonical.Except(dbSet).Take(20).ToList();
++            var extraInDb = dbSet.Except(canonical).Take(20).ToList();
++
++            if (missingInDb.Count == 0 && extraInDb.Count == 0)
++            {
++                logger.LogInformation("Permission registry matches DB PerApi keys (no drift)");
++            }
++            else
++            {
++                logger.LogWarning(
++                    "Permission registry drift vs DB: missingInDb={MissingCount} (sample: {Missing}), extraInDb={ExtraCount} (sample: {Extra}). " +
++                    "JWT/PerAuth indices follow Common.PermissionRegistry — update seeders + regenerate CanonicalKeys if intentional.",
++                    missingInDb.Count, string.Join(", ", missingInDb),
++                    extraInDb.Count, string.Join(", ", extraInDb));
++            }
+         }
+         catch (Exception ex)
+         {
+             logger.LogError(ex, "Error initializing permission registry");
++            // Fall back to canonical even on verification failure.
++            PermissionMap.InitializeFromCanonical();
+         }
+     }
+ 
+diff --git a/src/Svc.Core/Cor.CRM/Controllers/LeadController.cs b/src/Svc.Core/Cor.CRM/Controllers/LeadController.cs
+index f59b135..211c54d 100644
+--- a/src/Svc.Core/Cor.CRM/Controllers/LeadController.cs
++++ b/src/Svc.Core/Cor.CRM/Controllers/LeadController.cs
+@@ -1,4 +1,5 @@
+ using Asp.Versioning;
++using Common;
+ using Cor.CRM.Commands;
+ using Cor.CRM.Models.DTOs;
+ using Cor.CRM.Queries;
+@@ -33,6 +34,7 @@ public class LeadController : ControllerBase
+     /// Get all leads with optional filters
+     /// </summary>
+     [HttpGet("AllLeads")]
++    [PerAuth("crm.leads.list.view")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ResponseCache(Duration = 60, VaryByQueryKeys = new[] { "page", "pageSize", "status", "searchTerm" })]
+     public async Task<IActionResult> GetAllLeads([FromQuery] LeadFilterDto? filter)
+@@ -53,6 +55,7 @@ public class LeadController : ControllerBase
+     /// Get a single lead by ID
+     /// </summary>
+     [HttpGet("GetLead/{id:guid}")]
++    [PerAuth("crm.leads.list.view")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ProducesResponseType(StatusCodes.Status404NotFound)]
+     [ResponseCache(Duration = 120)]
+@@ -78,6 +81,7 @@ public class LeadController : ControllerBase
+     /// Create a new lead
+     /// </summary>
+     [HttpPost("AddLead")]
++    [PerAuth("crm.leads.list.add")]
+     [ProducesResponseType(StatusCodes.Status201Created)]
+     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+     [ResponseCache(NoStore = true)]
+@@ -108,6 +112,7 @@ public class LeadController : ControllerBase
+     /// Update an existing lead
+     /// </summary>
+     [HttpPut("ModLead/{id:guid}")]
++    [PerAuth("crm.leads.list.mod")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+     [ProducesResponseType(StatusCodes.Status404NotFound)]
+@@ -140,6 +145,7 @@ public class LeadController : ControllerBase
+     /// Delete a lead (soft delete)
+     /// </summary>
+     [HttpDelete("DelLead/{id:guid}")]
++    [PerAuth("crm.leads.list.del")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ProducesResponseType(StatusCodes.Status404NotFound)]
+     [ResponseCache(NoStore = true)]
+@@ -162,6 +168,7 @@ public class LeadController : ControllerBase
+     /// Convert a lead to customer
+     /// </summary>
+     [HttpPost("ConvertLead/{id:guid}")]
++    [PerAuth("crm.leads.conversion.convert")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ProducesResponseType(StatusCodes.Status404NotFound)]
+     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+@@ -185,6 +192,7 @@ public class LeadController : ControllerBase
+     /// Assign a lead to a user
+     /// </summary>
+     [HttpPost("AssignLead/{id:guid}")]
++    [PerAuth("crm.leads.list.assign")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ProducesResponseType(StatusCodes.Status404NotFound)]
+     [ResponseCache(NoStore = true)]
+@@ -207,6 +215,7 @@ public class LeadController : ControllerBase
+     /// Bulk action on leads (assign, change status, add tags, delete)
+     /// </summary>
+     [HttpPost("BulkAction")]
++    [PerAuth("crm.leads.bulk.update")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+     [ResponseCache(NoStore = true)]
+@@ -237,6 +246,7 @@ public class LeadController : ControllerBase
+     /// Bulk assign leads to a user
+     /// </summary>
+     [HttpPost("BulkAssign")]
++    [PerAuth("crm.leads.bulk.assign")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+     [ResponseCache(NoStore = true)]
+@@ -271,6 +281,7 @@ public class LeadController : ControllerBase
+     /// Get lead statistics
+     /// </summary>
+     [HttpGet("Stats")]
++    [PerAuth("crm.leads.list.view")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ResponseCache(Duration = 30)]
+     public async Task<IActionResult> GetStats()
+@@ -291,6 +302,7 @@ public class LeadController : ControllerBase
+     /// Get leads by status
+     /// </summary>
+     [HttpGet("ByStatus/{status}")]
++    [PerAuth("crm.leads.list.view")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ResponseCache(Duration = 60)]
+     public async Task<IActionResult> GetLeadsByStatus(string status)
+@@ -311,6 +323,7 @@ public class LeadController : ControllerBase
+     /// Get leads assigned to a specific user
+     /// </summary>
+     [HttpGet("ByAssignedUser/{userId:guid}")]
++    [PerAuth("crm.leads.assigned.view")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ResponseCache(Duration = 60)]
+     public async Task<IActionResult> GetLeadsByAssignedUser(Guid userId)
+@@ -331,6 +344,7 @@ public class LeadController : ControllerBase
+     /// Get leads for routing (unassigned high priority leads)
+     /// </summary>
+     [HttpGet("ForRouting")]
++    [PerAuth("crm.leads.routing.view")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ResponseCache(Duration = 30)]
+     public async Task<IActionResult> GetLeadsForRouting()
+@@ -351,6 +365,7 @@ public class LeadController : ControllerBase
+     /// Get total lead count
+     /// </summary>
+     [HttpGet("Count")]
++    [PerAuth("crm.leads.list.view")]
+     [ProducesResponseType(StatusCodes.Status200OK)]
+     [ResponseCache(Duration = 30)]
+     public async Task<IActionResult> GetLeadCount([FromQuery] string? status)
+diff --git a/src/Svc.Core/Cor.CRM/Program.cs b/src/Svc.Core/Cor.CRM/Program.cs
+index e3fe26a..1f38d37 100644
+--- a/src/Svc.Core/Cor.CRM/Program.cs
++++ b/src/Svc.Core/Cor.CRM/Program.cs
+@@ -500,41 +500,10 @@ using (var scope = app.Services.CreateScope())
+ }
+ 
+ // ============= PERMISSION REGISTRY (for [PerAuth] enforcement) =============
+-// Initialize the shared permission registry from Auth so the ph bitmask indices
+-// match Auth's. Must run before the request pipeline handles [PerAuth] policies.
+-try
+-{
+-    using var regHandler = new HttpClientHandler
+-    {
+-        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+-    };
+-    using var regHttp = new HttpClient(regHandler)
+-    {
+-        BaseAddress = new Uri(authUrl),
+-        Timeout = TimeSpan.FromSeconds(15)
+-    };
+-
+-    var regResp = await regHttp.GetAsync("/api/auth/v1/Permission/Registry");
+-    regResp.EnsureSuccessStatusCode();
+-
+-    await using var regStream = await regResp.Content.ReadAsStreamAsync();
+-    using var regDoc = await System.Text.Json.JsonDocument.ParseAsync(regStream);
+-
+-    var regKeys = regDoc.RootElement.GetProperty("data").GetProperty("keys")
+-        .EnumerateArray()
+-        .Select(e => e.GetString())
+-        .Where(s => !string.IsNullOrWhiteSpace(s))
+-        .Select(s => s!)
+-        .ToList();
+-
+-    PermissionMap.Initialize(regKeys);
+-    Console.WriteLine($"✅ Permission registry initialized from Auth with {PermissionMap.IndexMap.Count} permissions");
+-}
+-catch (Exception ex)
+-{
+-    Console.WriteLine($"⚠️ Failed to initialize permission registry from Auth: {ex.Message}. " +
+-                      "[PerAuth] checks may deny non-admins until Auth is reachable and this service is restarted.");
+-}
++// Load the shared Common canonical key list so ph bitmask indices match Auth
++// without a runtime HTTP dependency on Auth. Must run before [PerAuth] policies.
++PermissionMap.InitializeFromCanonical();
++Console.WriteLine($"✅ Permission registry initialized from Common with {PermissionMap.IndexMap.Count} permissions");
+ 
+ // ============= PIPELINE =============
+ if (app.Environment.IsDevelopment())
+diff --git a/src/gRPC/Common/PermissionRegistry.cs b/src/gRPC/Common/PermissionRegistry.cs
+new file mode 100644
+index 0000000..bedf531
+--- /dev/null
++++ b/src/gRPC/Common/PermissionRegistry.cs
+@@ -0,0 +1,1395 @@
++// <auto-generated>
++// Canonical permission key registry shared by Auth and all microservices.
++// Source of truth for JWT `ph` bit indices and [PerAuth] resolution.
++// Keep in sync with Svc.Auth/Seeder/Permissions/*PermissionsSeeder.cs
++// Regenerate: extract Keys (not MenuKeys) from seeders, OrderBy ordinal, union legacy Permissions.All.
++// </auto-generated>
++
++namespace Common;
++
++public static class PermissionRegistry
++{
++    /// <summary>
++    /// Deterministically ordered canonical permission keys.
++    /// Bit index = position in this array (after PermissionMap.Initialize).
++    /// </summary>
++    public static readonly string[] CanonicalKeys =
++    [
++        "branch.manage",
++        "branch.view",
++        "core.audit.view",
++        "core.backup.create",
++        "core.backup.restore",
++        "core.backup.view",
++        "core.branch.add",
++        "core.branch.del",
++        "core.branch.mod",
++        "core.branch.view",
++        "core.company.add",
++        "core.company.del",
++        "core.company.mod",
++        "core.company.view",
++        "core.db.view",
++        "core.dept.add",
++        "core.dept.del",
++        "core.dept.mod",
++        "core.dept.view",
++        "core.fiscal.add",
++        "core.fiscal.del",
++        "core.fiscal.mod",
++        "core.fiscal.view",
++        "core.roles.add",
++        "core.roles.assign",
++        "core.roles.del",
++        "core.roles.mod",
++        "core.roles.view",
++        "core.settings.mod",
++        "core.settings.view",
++        "core.users.add",
++        "core.users.del",
++        "core.users.mod",
++        "core.users.perm",
++        "core.users.reset",
++        "core.users.view",
++        "crm.activities.calendar.add",
++        "crm.activities.calendar.del",
++        "crm.activities.calendar.export",
++        "crm.activities.calendar.mod",
++        "crm.activities.calendar.sync",
++        "crm.activities.calendar.view",
++        "crm.activities.list.add",
++        "crm.activities.list.complete",
++        "crm.activities.list.del",
++        "crm.activities.list.export",
++        "crm.activities.list.mod",
++        "crm.activities.list.view",
++        "crm.activities.manage",
++        "crm.activities.view",
++        "crm.analytics.customer.churn",
++        "crm.analytics.customer.export",
++        "crm.analytics.customer.lifetime",
++        "crm.analytics.customer.satisfaction",
++        "crm.analytics.customer.segmentation",
++        "crm.analytics.customer.view",
++        "crm.analytics.dashboard.export",
++        "crm.analytics.dashboard.view",
++        "crm.analytics.manage",
++        "crm.analytics.marketing.channel",
++        "crm.analytics.marketing.conversion",
++        "crm.analytics.marketing.engagement",
++        "crm.analytics.marketing.export",
++        "crm.analytics.marketing.roi",
++        "crm.analytics.marketing.view",
++        "crm.analytics.sales.export",
++        "crm.analytics.sales.forecast",
++        "crm.analytics.sales.pipeline",
++        "crm.analytics.sales.revenue",
++        "crm.analytics.sales.view",
++        "crm.analytics.view",
++        "crm.contacts.assigned.reassign",
++        "crm.contacts.assigned.update",
++        "crm.contacts.assigned.view",
++        "crm.contacts.companies.add",
++        "crm.contacts.companies.del",
++        "crm.contacts.companies.export",
++        "crm.contacts.companies.mod",
++        "crm.contacts.companies.view",
++        "crm.contacts.grouping.add",
++        "crm.contacts.grouping.assign",
++        "crm.contacts.grouping.del",
++        "crm.contacts.grouping.mod",
++        "crm.contacts.grouping.view",
++        "crm.contacts.interactions.add",
++        "crm.contacts.interactions.del",
++        "crm.contacts.interactions.export",
++        "crm.contacts.interactions.mod",
++        "crm.contacts.interactions.template",
++        "crm.contacts.interactions.view",
++        "crm.contacts.list.add",
++        "crm.contacts.list.del",
++        "crm.contacts.list.export",
++        "crm.contacts.list.import",
++        "crm.contacts.list.merge",
++        "crm.contacts.list.mod",
++        "crm.contacts.list.view",
++        "crm.contacts.manage",
++        "crm.contacts.view",
++        "crm.db.export",
++        "crm.db.view",
++        "crm.leads.assigned.reassign",
++        "crm.leads.assigned.update",
++        "crm.leads.assigned.view",
++        "crm.leads.bulk.assign",
++        "crm.leads.bulk.delete",
++        "crm.leads.bulk.export",
++        "crm.leads.bulk.update",
++        "crm.leads.bulk.view",
++        "crm.leads.conversion.convert",
++        "crm.leads.conversion.history",
++        "crm.leads.conversion.opportunity",
++        "crm.leads.conversion.view",
++        "crm.leads.generation.add",
++        "crm.leads.generation.import",
++        "crm.leads.generation.source",
++        "crm.leads.generation.view",
++        "crm.leads.grouping.add",
++        "crm.leads.grouping.assign",
++        "crm.leads.grouping.del",
++        "crm.leads.grouping.mod",
++        "crm.leads.grouping.view",
++        "crm.leads.import.history",
++        "crm.leads.import.template",
++        "crm.leads.import.upload",
++        "crm.leads.import.view",
++        "crm.leads.list.add",
++        "crm.leads.list.assign",
++        "crm.leads.list.del",
++        "crm.leads.list.export",
++        "crm.leads.list.import",
++        "crm.leads.list.mod",
++        "crm.leads.list.view",
++        "crm.leads.manage",
++        "crm.leads.qualification.criteria",
++        "crm.leads.qualification.disqualify",
++        "crm.leads.qualification.qualify",
++        "crm.leads.qualification.score",
++        "crm.leads.qualification.view",
++        "crm.leads.routing.activate",
++        "crm.leads.routing.add",
++        "crm.leads.routing.del",
++        "crm.leads.routing.mod",
++        "crm.leads.routing.view",
++        "crm.leads.view",
++        "crm.marketing.add.create",
++        "crm.marketing.add.view",
++        "crm.marketing.campaigns.add",
++        "crm.marketing.campaigns.add.add",
++        "crm.marketing.campaigns.add.view",
++        "crm.marketing.campaigns.all.view",
++        "crm.marketing.campaigns.analytics",
++        "crm.marketing.campaigns.archive",
++        "crm.marketing.campaigns.budget",
++        "crm.marketing.campaigns.cancel",
++        "crm.marketing.campaigns.del",
++        "crm.marketing.campaigns.duplicate",
++        "crm.marketing.campaigns.export",
++        "crm.marketing.campaigns.mod",
++        "crm.marketing.campaigns.pause",
++        "crm.marketing.campaigns.resume",
++        "crm.marketing.campaigns.roi",
++        "crm.marketing.campaigns.start",
++        "crm.marketing.campaigns.view",
++        "crm.marketing.dashboard.export",
++        "crm.marketing.dashboard.view",
++        "crm.marketing.email.analytics",
++        "crm.marketing.email.create",
++        "crm.marketing.email.list",
++        "crm.marketing.email.send",
++        "crm.marketing.email.template",
++        "crm.marketing.email.track",
++        "crm.marketing.email.view",
++        "crm.marketing.manage",
++        "crm.marketing.sms.analytics",
++        "crm.marketing.sms.create",
++        "crm.marketing.sms.list",
++        "crm.marketing.sms.send",
++        "crm.marketing.sms.template",
++        "crm.marketing.sms.view",
++        "crm.marketing.social.mod",
++        "crm.marketing.social.view",
++        "crm.marketing.view",
++        "crm.realestate.commissions.add",
++        "crm.realestate.commissions.del",
++        "crm.realestate.commissions.mod",
++        "crm.realestate.commissions.view",
++        "crm.realestate.properties.add",
++        "crm.realestate.properties.del",
++        "crm.realestate.properties.mod",
++        "crm.realestate.properties.view",
++        "crm.realestate.transactions.add",
++        "crm.realestate.transactions.del",
++        "crm.realestate.transactions.mod",
++        "crm.realestate.transactions.view",
++        "crm.realestate.view",
++        "crm.sales.contracts.add",
++        "crm.sales.contracts.del",
++        "crm.sales.contracts.mod",
++        "crm.sales.contracts.renew",
++        "crm.sales.contracts.sign",
++        "crm.sales.contracts.template",
++        "crm.sales.contracts.terminate",
++        "crm.sales.contracts.view",
++        "crm.sales.dashboard.export",
++        "crm.sales.dashboard.view",
++        "crm.sales.forecast.compare",
++        "crm.sales.forecast.export",
++        "crm.sales.forecast.generate",
++        "crm.sales.forecast.view",
++        "crm.sales.manage",
++        "crm.sales.opportunities.add",
++        "crm.sales.opportunities.del",
++        "crm.sales.opportunities.export",
++        "crm.sales.opportunities.lost",
++        "crm.sales.opportunities.mod",
++        "crm.sales.opportunities.pipeline",
++        "crm.sales.opportunities.stage",
++        "crm.sales.opportunities.view",
++        "crm.sales.opportunities.won",
++        "crm.sales.orders.add",
++        "crm.sales.orders.approve",
++        "crm.sales.orders.del",
++        "crm.sales.orders.export",
++        "crm.sales.orders.fulfill",
++        "crm.sales.orders.mod",
++        "crm.sales.orders.ship",
++        "crm.sales.orders.status",
++        "crm.sales.orders.view",
++        "crm.sales.quotes.add",
++        "crm.sales.quotes.approve",
++        "crm.sales.quotes.convert",
++        "crm.sales.quotes.del",
++        "crm.sales.quotes.mod",
++        "crm.sales.quotes.print",
++        "crm.sales.quotes.reject",
++        "crm.sales.quotes.send",
++        "crm.sales.quotes.template",
++        "crm.sales.quotes.view",
++        "crm.sales.view",
++        "crm.settings.crm.mod",
++        "crm.settings.crm.view",
++        "crm.settings.routing.add",
++        "crm.settings.routing.del",
++        "crm.settings.routing.mod",
++        "crm.settings.routing.view",
++        "crm.settings.scoring.add",
++        "crm.settings.scoring.del",
++        "crm.settings.scoring.mod",
++        "crm.settings.scoring.view",
++        "crm.settings.sources.add",
++        "crm.settings.sources.del",
++        "crm.settings.sources.mod",
++        "crm.settings.sources.view",
++        "crm.settings.statuses.add",
++        "crm.settings.statuses.del",
++        "crm.settings.statuses.mod",
++        "crm.settings.statuses.view",
++        "crm.settings.templates.add",
++        "crm.settings.templates.del",
++        "crm.settings.templates.mod",
++        "crm.settings.templates.view",
++        "crm.settings.view",
++        "crm.support.dashboard.export",
++        "crm.support.dashboard.view",
++        "crm.support.feedback.analytics",
++        "crm.support.feedback.export",
++        "crm.support.feedback.respond",
++        "crm.support.feedback.view",
++        "crm.support.knowledge.add",
++        "crm.support.knowledge.category",
++        "crm.support.knowledge.del",
++        "crm.support.knowledge.mod",
++        "crm.support.knowledge.publish",
++        "crm.support.knowledge.search",
++        "crm.support.knowledge.view",
++        "crm.support.manage",
++        "crm.support.tickets.add",
++        "crm.support.tickets.assign",
++        "crm.support.tickets.category",
++        "crm.support.tickets.del",
++        "crm.support.tickets.escalate",
++        "crm.support.tickets.export",
++        "crm.support.tickets.mod",
++        "crm.support.tickets.priority",
++        "crm.support.tickets.reopen",
++        "crm.support.tickets.resolve",
++        "crm.support.tickets.satisfaction",
++        "crm.support.tickets.view",
++        "crm.support.view",
++        "department.manage",
++        "department.view",
++        "emp.add",
++        "emp.delete",
++        "emp.edit",
++        "emp.list",
++        "emp.test",
++        "emp.view",
++        "flm.archive.del",
++        "flm.archive.export",
++        "flm.archive.restore",
++        "flm.archive.search",
++        "flm.archive.view",
++        "flm.company.folders.copy",
++        "flm.company.folders.create",
++        "flm.company.folders.del",
++        "flm.company.folders.mod",
++        "flm.company.folders.move",
++        "flm.company.folders.view",
++        "flm.company.manage",
++        "flm.company.shared.comment",
++        "flm.company.shared.del",
++        "flm.company.shared.download",
++        "flm.company.shared.preview",
++        "flm.company.shared.rename",
++        "flm.company.shared.restore",
++        "flm.company.shared.share",
++        "flm.company.shared.upload",
++        "flm.company.shared.version",
++        "flm.company.shared.view",
++        "flm.company.view",
++        "flm.db.export",
++        "flm.db.view",
++        "flm.personal.folders.create",
++        "flm.personal.folders.del",
++        "flm.personal.folders.mod",
++        "flm.personal.folders.view",
++        "flm.personal.manage",
++        "flm.personal.recent.del",
++        "flm.personal.recent.download",
++        "flm.personal.recent.favorite",
++        "flm.personal.recent.share",
++        "flm.personal.recent.upload",
++        "flm.personal.recent.version",
++        "flm.personal.recent.view",
++        "flm.personal.view",
++        "flm.settings.integration",
++        "flm.settings.mod",
++        "flm.settings.security",
++        "flm.settings.storage",
++        "flm.settings.view",
++        "fnm.ap.approval.process",
++        "fnm.ap.approval.view",
++        "fnm.ap.approval.workflow",
++        "fnm.ap.invoice.add",
++        "fnm.ap.invoice.approve",
++        "fnm.ap.invoice.del",
++        "fnm.ap.invoice.export",
++        "fnm.ap.invoice.match",
++        "fnm.ap.invoice.mod",
++        "fnm.ap.invoice.reject",
++        "fnm.ap.invoice.view",
++        "fnm.ap.manage",
++        "fnm.ap.payment.add",
++        "fnm.ap.payment.approve",
++        "fnm.ap.payment.bulk",
++        "fnm.ap.payment.del",
++        "fnm.ap.payment.export",
++        "fnm.ap.payment.mod",
++        "fnm.ap.payment.view",
++        "fnm.ap.report.aging",
++        "fnm.ap.report.export",
++        "fnm.ap.report.view",
++        "fnm.ap.vendor.add",
++        "fnm.ap.vendor.approve",
++        "fnm.ap.vendor.del",
++        "fnm.ap.vendor.export",
++        "fnm.ap.vendor.import",
++        "fnm.ap.vendor.mod",
++        "fnm.ap.vendor.view",
++        "fnm.ap.view",
++        "fnm.ar.collection.followup",
++        "fnm.ar.collection.reminder",
++        "fnm.ar.collection.report",
++        "fnm.ar.collection.view",
++        "fnm.ar.customer.add",
++        "fnm.ar.customer.credit",
++        "fnm.ar.customer.del",
++        "fnm.ar.customer.export",
++        "fnm.ar.customer.mod",
++        "fnm.ar.customer.view",
++        "fnm.ar.invoice.add",
++        "fnm.ar.invoice.approve",
++        "fnm.ar.invoice.del",
++        "fnm.ar.invoice.export",
++        "fnm.ar.invoice.mod",
++        "fnm.ar.invoice.print",
++        "fnm.ar.invoice.send",
++        "fnm.ar.invoice.view",
++        "fnm.ar.manage",
++        "fnm.ar.receipt.add",
++        "fnm.ar.receipt.del",
++        "fnm.ar.receipt.export",
++        "fnm.ar.receipt.mod",
++        "fnm.ar.receipt.view",
++        "fnm.ar.report.aging",
++        "fnm.ar.report.export",
++        "fnm.ar.report.view",
++        "fnm.ar.view",
++        "fnm.assets.depreciation.forecast",
++        "fnm.assets.depreciation.report",
++        "fnm.assets.depreciation.run",
++        "fnm.assets.depreciation.view",
++        "fnm.assets.disposal.approve",
++        "fnm.assets.disposal.gainloss",
++        "fnm.assets.disposal.process",
++        "fnm.assets.disposal.view",
++        "fnm.assets.manage",
++        "fnm.assets.register.add",
++        "fnm.assets.register.del",
++        "fnm.assets.register.export",
++        "fnm.assets.register.import",
++        "fnm.assets.register.mod",
++        "fnm.assets.register.view",
++        "fnm.assets.view",
++        "fnm.audit.logs.export",
++        "fnm.audit.logs.view",
++        "fnm.cash.bank.activate",
++        "fnm.cash.bank.add",
++        "fnm.cash.bank.del",
++        "fnm.cash.bank.mod",
++        "fnm.cash.bank.view",
++        "fnm.cash.manage",
++        "fnm.cash.petty.add",
++        "fnm.cash.petty.fund",
++        "fnm.cash.petty.reconcile",
++        "fnm.cash.petty.view",
++        "fnm.cash.reconciliation.import",
++        "fnm.cash.reconciliation.process",
++        "fnm.cash.reconciliation.report",
++        "fnm.cash.reconciliation.view",
++        "fnm.cash.transaction.add",
++        "fnm.cash.transaction.del",
++        "fnm.cash.transaction.export",
++        "fnm.cash.transaction.mod",
++        "fnm.cash.transaction.view",
++        "fnm.cash.view",
++        "fnm.co.costcenters.activate",
++        "fnm.co.costcenters.add",
++        "fnm.co.costcenters.budget",
++        "fnm.co.costcenters.deactivate",
++        "fnm.co.costcenters.del",
++        "fnm.co.costcenters.export",
++        "fnm.co.costcenters.import",
++        "fnm.co.costcenters.mod",
++        "fnm.co.costcenters.report",
++        "fnm.co.costcenters.view",
++        "fnm.co.manage",
++        "fnm.co.orders.activate",
++        "fnm.co.orders.add",
++        "fnm.co.orders.budget",
++        "fnm.co.orders.close",
++        "fnm.co.orders.del",
++        "fnm.co.orders.export",
++        "fnm.co.orders.mod",
++        "fnm.co.orders.report",
++        "fnm.co.orders.view",
++        "fnm.co.profitcenters.activate",
++        "fnm.co.profitcenters.add",
++        "fnm.co.profitcenters.deactivate",
++        "fnm.co.profitcenters.del",
++        "fnm.co.profitcenters.export",
++        "fnm.co.profitcenters.import",
++        "fnm.co.profitcenters.mod",
++        "fnm.co.profitcenters.report",
++        "fnm.co.profitcenters.view",
++        "fnm.co.report.analysis",
++        "fnm.co.report.export",
++        "fnm.co.report.variance",
++        "fnm.co.report.view",
++        "fnm.co.view",
++        "fnm.compliance.audit.analysis",
++        "fnm.compliance.audit.export",
++        "fnm.compliance.audit.filter",
++        "fnm.compliance.audit.view",
++        "fnm.compliance.controls.activate",
++        "fnm.compliance.controls.add",
++        "fnm.compliance.controls.deactivate",
++        "fnm.compliance.controls.del",
++        "fnm.compliance.controls.export",
++        "fnm.compliance.controls.mod",
++        "fnm.compliance.controls.report",
++        "fnm.compliance.controls.test",
++        "fnm.compliance.controls.view",
++        "fnm.compliance.manage",
++        "fnm.compliance.report.export",
++        "fnm.compliance.report.summary",
++        "fnm.compliance.report.view",
++        "fnm.compliance.requirements.add",
++        "fnm.compliance.requirements.assess",
++        "fnm.compliance.requirements.del",
++        "fnm.compliance.requirements.export",
++        "fnm.compliance.requirements.mod",
++        "fnm.compliance.requirements.report",
++        "fnm.compliance.requirements.view",
++        "fnm.compliance.view",
++        "fnm.cons.eliminations.add",
++        "fnm.cons.eliminations.del",
++        "fnm.cons.eliminations.mod",
++        "fnm.cons.eliminations.post",
++        "fnm.cons.eliminations.report",
++        "fnm.cons.eliminations.view",
++        "fnm.cons.entities.activate",
++        "fnm.cons.entities.add",
++        "fnm.cons.entities.del",
++        "fnm.cons.entities.export",
++        "fnm.cons.entities.mod",
++        "fnm.cons.entities.view",
++        "fnm.cons.groups.add",
++        "fnm.cons.groups.approve",
++        "fnm.cons.groups.del",
++        "fnm.cons.groups.export",
++        "fnm.cons.groups.mod",
++        "fnm.cons.groups.run",
++        "fnm.cons.groups.view",
++        "fnm.cons.manage",
++        "fnm.cons.report.analysis",
++        "fnm.cons.report.export",
++        "fnm.cons.report.financial",
++        "fnm.cons.report.view",
++        "fnm.cons.view",
++        "fnm.db.export",
++        "fnm.db.view",
++        "fnm.gl.audit.export",
++        "fnm.gl.audit.filter",
++        "fnm.gl.audit.view",
++        "fnm.gl.budget.add",
++        "fnm.gl.budget.approve",
++        "fnm.gl.budget.copy",
++        "fnm.gl.budget.del",
++        "fnm.gl.budget.mod",
++        "fnm.gl.budget.variance",
++        "fnm.gl.budget.view",
++        "fnm.gl.closing.process",
++        "fnm.gl.closing.reopen",
++        "fnm.gl.closing.report",
++        "fnm.gl.closing.view",
++        "fnm.gl.coa.activate",
++        "fnm.gl.coa.add",
++        "fnm.gl.coa.deactivate",
++        "fnm.gl.coa.del",
++        "fnm.gl.coa.export",
++        "fnm.gl.coa.import",
++        "fnm.gl.coa.mod",
++        "fnm.gl.coa.view",
++        "fnm.gl.journal.add",
++        "fnm.gl.journal.approve",
++        "fnm.gl.journal.del",
++        "fnm.gl.journal.export",
++        "fnm.gl.journal.mod",
++        "fnm.gl.journal.reverse",
++        "fnm.gl.journal.template",
++        "fnm.gl.journal.view",
++        "fnm.gl.manage",
++        "fnm.gl.view",
++        "fnm.gl.voucher.add",
++        "fnm.gl.voucher.approve",
++        "fnm.gl.voucher.del",
++        "fnm.gl.voucher.export",
++        "fnm.gl.voucher.mod",
++        "fnm.gl.voucher.post",
++        "fnm.gl.voucher.reject",
++        "fnm.gl.voucher.unpost",
++        "fnm.gl.voucher.view",
++        "fnm.gl.voucher.void",
++        "fnm.ifrs.dashboard.comparison",
++        "fnm.ifrs.dashboard.export",
++        "fnm.ifrs.dashboard.view",
++        "fnm.ifrs.ifrs15.analyze",
++        "fnm.ifrs.ifrs15.export",
++        "fnm.ifrs.ifrs15.generate",
++        "fnm.ifrs.ifrs15.schedule",
++        "fnm.ifrs.ifrs15.view",
++        "fnm.ifrs.ifrs16.analyze",
++        "fnm.ifrs.ifrs16.export",
++        "fnm.ifrs.ifrs16.generate",
++        "fnm.ifrs.ifrs16.schedule",
++        "fnm.ifrs.ifrs16.view",
++        "fnm.ifrs.ifrs7.analyze",
++        "fnm.ifrs.ifrs7.export",
++        "fnm.ifrs.ifrs7.generate",
++        "fnm.ifrs.ifrs7.schedule",
++        "fnm.ifrs.ifrs7.view",
++        "fnm.ifrs.ifrs8.analyze",
++        "fnm.ifrs.ifrs8.export",
++        "fnm.ifrs.ifrs8.generate",
++        "fnm.ifrs.ifrs8.schedule",
++        "fnm.ifrs.ifrs8.view",
++        "fnm.ifrs.ifrs9.analyze",
++        "fnm.ifrs.ifrs9.export",
++        "fnm.ifrs.ifrs9.generate",
++        "fnm.ifrs.ifrs9.schedule",
++        "fnm.ifrs.ifrs9.view",
++        "fnm.ifrs.manage",
++        "fnm.ifrs.view",
++        "fnm.payroll.calendar.export",
++        "fnm.payroll.calendar.manage",
++        "fnm.payroll.calendar.view",
++        "fnm.payroll.dashboard.export",
++        "fnm.payroll.dashboard.view",
++        "fnm.payroll.history.detail",
++        "fnm.payroll.history.export",
++        "fnm.payroll.history.view",
++        "fnm.payroll.manage",
++        "fnm.payroll.payslips.archive",
++        "fnm.payroll.payslips.bulk",
++        "fnm.payroll.payslips.download",
++        "fnm.payroll.payslips.generate",
++        "fnm.payroll.payslips.print",
++        "fnm.payroll.payslips.send",
++        "fnm.payroll.payslips.view",
++        "fnm.payroll.reports.attendance",
++        "fnm.payroll.reports.department",
++        "fnm.payroll.reports.export",
++        "fnm.payroll.reports.overtime",
++        "fnm.payroll.reports.summary",
++        "fnm.payroll.reports.tax",
++        "fnm.payroll.reports.view",
++        "fnm.payroll.run.approve",
++        "fnm.payroll.run.cancel",
++        "fnm.payroll.run.create",
++        "fnm.payroll.run.export",
++        "fnm.payroll.run.process",
++        "fnm.payroll.run.reject",
++        "fnm.payroll.run.view",
++        "fnm.payroll.salaries.add",
++        "fnm.payroll.salaries.bulk",
++        "fnm.payroll.salaries.del",
++        "fnm.payroll.salaries.export",
++        "fnm.payroll.salaries.import",
++        "fnm.payroll.salaries.mod",
++        "fnm.payroll.salaries.view",
++        "fnm.payroll.settings.approval",
++        "fnm.payroll.settings.integration",
++        "fnm.payroll.settings.mod",
++        "fnm.payroll.settings.policies",
++        "fnm.payroll.settings.view",
++        "fnm.payroll.structure.activate",
++        "fnm.payroll.structure.add",
++        "fnm.payroll.structure.clone",
++        "fnm.payroll.structure.deactivate",
++        "fnm.payroll.structure.del",
++        "fnm.payroll.structure.export",
++        "fnm.payroll.structure.mod",
++        "fnm.payroll.structure.view",
++        "fnm.payroll.tax.activate",
++        "fnm.payroll.tax.add",
++        "fnm.payroll.tax.calculate",
++        "fnm.payroll.tax.deactivate",
++        "fnm.payroll.tax.del",
++        "fnm.payroll.tax.export",
++        "fnm.payroll.tax.import",
++        "fnm.payroll.tax.mod",
++        "fnm.payroll.tax.view",
++        "fnm.payroll.view",
++        "fnm.portal.invoices.approve",
++        "fnm.portal.invoices.del",
++        "fnm.portal.invoices.export",
++        "fnm.portal.invoices.mod",
++        "fnm.portal.invoices.reject",
++        "fnm.portal.invoices.submit",
++        "fnm.portal.invoices.view",
++        "fnm.portal.manage",
++        "fnm.portal.notifications.markread",
++        "fnm.portal.notifications.send",
++        "fnm.portal.notifications.view",
++        "fnm.portal.payments.export",
++        "fnm.portal.payments.update",
++        "fnm.portal.payments.view",
++        "fnm.portal.vendors.activate",
++        "fnm.portal.vendors.add",
++        "fnm.portal.vendors.deactivate",
++        "fnm.portal.vendors.del",
++        "fnm.portal.vendors.export",
++        "fnm.portal.vendors.mod",
++        "fnm.portal.vendors.view",
++        "fnm.portal.view",
++        "fnm.reports.balance.compare",
++        "fnm.reports.balance.export",
++        "fnm.reports.balance.view",
++        "fnm.reports.cashflow.export",
++        "fnm.reports.cashflow.view",
++        "fnm.reports.export",
++        "fnm.reports.income.compare",
++        "fnm.reports.income.export",
++        "fnm.reports.income.view",
++        "fnm.reports.ledger.export",
++        "fnm.reports.ledger.view",
++        "fnm.reports.schedule",
++        "fnm.reports.trial.export",
++        "fnm.reports.trial.view",
++        "fnm.reports.view",
++        "fnm.tax.manage",
++        "fnm.tax.report.export",
++        "fnm.tax.report.summary",
++        "fnm.tax.report.view",
++        "fnm.tax.vat.add",
++        "fnm.tax.vat.config",
++        "fnm.tax.vat.report",
++        "fnm.tax.vat.return",
++        "fnm.tax.vat.view",
++        "fnm.tax.view",
++        "fnm.tax.withholding.calculate",
++        "fnm.tax.withholding.certificate",
++        "fnm.tax.withholding.report",
++        "fnm.tax.withholding.view",
++        "hr.attend.checkin.correction",
++        "hr.attend.checkin.do",
++        "hr.attend.checkin.manual",
++        "hr.attend.list.export",
++        "hr.attend.list.filter",
++        "hr.attend.list.view",
++        "hr.attend.manage",
++        "hr.attend.report.export",
++        "hr.attend.report.summary",
++        "hr.attend.report.view",
++        "hr.attend.shift.add",
++        "hr.attend.shift.assign",
++        "hr.attend.shift.del",
++        "hr.attend.shift.mod",
++        "hr.attend.shift.template",
++        "hr.attend.shift.view",
++        "hr.attend.view",
++        "hr.db.export",
++        "hr.db.view",
++        "hr.emp.add",
++        "hr.emp.add.add",
++        "hr.emp.add.view",
++        "hr.emp.bulk",
++        "hr.emp.contract.add",
++        "hr.emp.contract.del",
++        "hr.emp.contract.mod",
++        "hr.emp.contract.renew",
++        "hr.emp.contract.terminate",
++        "hr.emp.contract.view",
++        "hr.emp.del",
++        "hr.emp.document.add",
++        "hr.emp.document.del",
++        "hr.emp.document.download",
++        "hr.emp.document.mod",
++        "hr.emp.document.view",
++        "hr.emp.dtl",
++        "hr.emp.export",
++        "hr.emp.import",
++        "hr.emp.list.export",
++        "hr.emp.list.view",
++        "hr.emp.mod",
++        "hr.emp.performance.add",
++        "hr.emp.performance.approve",
++        "hr.emp.performance.del",
++        "hr.emp.performance.mod",
++        "hr.emp.performance.submit",
++        "hr.emp.performance.view",
++        "hr.emp.print",
++        "hr.emp.profile.history",
++        "hr.emp.profile.image",
++        "hr.emp.profile.mod",
++        "hr.emp.profile.view",
++        "hr.emp.promotion.add",
++        "hr.emp.promotion.approve",
++        "hr.emp.promotion.del",
++        "hr.emp.promotion.mod",
++        "hr.emp.promotion.view",
++        "hr.emp.termination.add",
++        "hr.emp.termination.approve",
++        "hr.emp.termination.mod",
++        "hr.emp.termination.view",
++        "hr.emp.view",
++        "hr.leave.config",
++        "hr.leave.manage",
++        "hr.leave.view",
++        "hr.payroll.history.export",
++        "hr.payroll.history.reprint",
++        "hr.payroll.history.view",
++        "hr.payroll.manage",
++        "hr.payroll.run.approve",
++        "hr.payroll.run.post",
++        "hr.payroll.run.preview",
++        "hr.payroll.run.process",
++        "hr.payroll.salary.add",
++        "hr.payroll.salary.assign",
++        "hr.payroll.salary.del",
++        "hr.payroll.salary.increment",
++        "hr.payroll.salary.mod",
++        "hr.payroll.salary.view",
++        "hr.payroll.tax.calculate",
++        "hr.payroll.tax.mod",
++        "hr.payroll.tax.report",
++        "hr.payroll.tax.view",
++        "hr.payroll.view",
++        "hr.recruit.analytics.export",
++        "hr.recruit.analytics.view",
++        "hr.recruit.applicant.evaluate.feedback",
++        "hr.recruit.applicant.evaluate.score",
++        "hr.recruit.applicant.evaluate.view",
++        "hr.recruit.applicant.list.assign",
++        "hr.recruit.applicant.list.export",
++        "hr.recruit.applicant.list.hire",
++        "hr.recruit.applicant.list.import",
++        "hr.recruit.applicant.list.move",
++        "hr.recruit.applicant.list.reject",
++        "hr.recruit.applicant.list.review",
++        "hr.recruit.applicant.list.shortlist",
++        "hr.recruit.applicant.list.view",
++        "hr.recruit.applicant.manage",
++        "hr.recruit.applicant.view",
++        "hr.recruit.dashboard.export",
++        "hr.recruit.dashboard.view",
++        "hr.recruit.evaluation.flow.assign",
++        "hr.recruit.evaluation.flow.export",
++        "hr.recruit.evaluation.flow.start",
++        "hr.recruit.evaluation.flow.submit",
++        "hr.recruit.evaluation.flow.view",
++        "hr.recruit.evaluation.manage",
++        "hr.recruit.evaluation.view",
++        "hr.recruit.interview.list.cancel",
++        "hr.recruit.interview.list.export",
++        "hr.recruit.interview.list.feedback",
++        "hr.recruit.interview.list.mod",
++        "hr.recruit.interview.list.reschedule",
++        "hr.recruit.interview.list.schedule",
++        "hr.recruit.interview.list.score",
++        "hr.recruit.interview.list.view",
++        "hr.recruit.interview.manage",
++        "hr.recruit.interview.schedule.do",
++        "hr.recruit.interview.schedule.template",
++        "hr.recruit.interview.view",
++        "hr.recruit.offer.create.do",
++        "hr.recruit.offer.create.template",
++        "hr.recruit.offer.list.accept",
++        "hr.recruit.offer.list.create",
++        "hr.recruit.offer.list.del",
++        "hr.recruit.offer.list.export",
++        "hr.recruit.offer.list.mod",
++        "hr.recruit.offer.list.reject",
++        "hr.recruit.offer.list.send",
++        "hr.recruit.offer.list.view",
++        "hr.recruit.offer.list.withdraw",
++        "hr.recruit.offer.manage",
++        "hr.recruit.offer.view",
++        "hr.recruit.onboard.assignments.complete",
++        "hr.recruit.onboard.assignments.create",
++        "hr.recruit.onboard.assignments.del",
++        "hr.recruit.onboard.assignments.mod",
++        "hr.recruit.onboard.assignments.view",
++        "hr.recruit.onboard.manage",
++        "hr.recruit.onboard.tasks.assign",
++        "hr.recruit.onboard.tasks.complete",
++        "hr.recruit.onboard.tasks.create",
++        "hr.recruit.onboard.tasks.del",
++        "hr.recruit.onboard.tasks.export",
++        "hr.recruit.onboard.tasks.mod",
++        "hr.recruit.onboard.tasks.verify",
++        "hr.recruit.onboard.tasks.view",
++        "hr.recruit.onboard.view",
++        "hr.recruit.posting.create.add",
++        "hr.recruit.posting.create.view",
++        "hr.recruit.posting.list.add",
++        "hr.recruit.posting.list.close",
++        "hr.recruit.posting.list.del",
++        "hr.recruit.posting.list.export",
++        "hr.recruit.posting.list.mod",
++        "hr.recruit.posting.list.publish",
++        "hr.recruit.posting.list.repost",
++        "hr.recruit.posting.list.unpublish",
++        "hr.recruit.posting.list.view",
++        "hr.recruit.posting.manage",
++        "hr.recruit.posting.published.apply",
++        "hr.recruit.posting.published.view",
++        "hr.recruit.posting.view",
++        "hr.recruit.requisition.approved.post",
++        "hr.recruit.requisition.approved.view",
++        "hr.recruit.requisition.create.add",
++        "hr.recruit.requisition.create.view",
++        "hr.recruit.requisition.list.add",
++        "hr.recruit.requisition.list.approve",
++        "hr.recruit.requisition.list.copy",
++        "hr.recruit.requisition.list.del",
++        "hr.recruit.requisition.list.export",
++        "hr.recruit.requisition.list.mod",
++        "hr.recruit.requisition.list.reject",
++        "hr.recruit.requisition.list.submit",
++        "hr.recruit.requisition.list.view",
++        "hr.recruit.requisition.manage",
++        "hr.recruit.requisition.view",
++        "hr.recruit.view",
++        "hr.recruit.workforce.create.add",
++        "hr.recruit.workforce.create.view",
++        "hr.recruit.workforce.manage",
++        "hr.recruit.workforce.plans.add",
++        "hr.recruit.workforce.plans.approve",
++        "hr.recruit.workforce.plans.del",
++        "hr.recruit.workforce.plans.export",
++        "hr.recruit.workforce.plans.mod",
++        "hr.recruit.workforce.plans.reject",
++        "hr.recruit.workforce.plans.review",
++        "hr.recruit.workforce.plans.view",
++        "hr.recruit.workforce.view",
++        "hr.reports.attendance.export",
++        "hr.reports.attendance.view",
++        "hr.reports.employee.export",
++        "hr.reports.employee.view",
++        "hr.reports.export",
++        "hr.reports.leave.export",
++        "hr.reports.leave.view",
++        "hr.reports.payroll.export",
++        "hr.reports.payroll.view",
++        "hr.reports.recruitment.export",
++        "hr.reports.recruitment.view",
++        "hr.reports.schedule",
++        "hr.reports.view",
++        "hr.training.calendar.add",
++        "hr.training.calendar.export",
++        "hr.training.calendar.view",
++        "hr.training.certificate.issue",
++        "hr.training.certificate.print",
++        "hr.training.certificate.verify",
++        "hr.training.certificate.view",
++        "hr.training.feedback.add",
++        "hr.training.feedback.export",
++        "hr.training.feedback.view",
++        "hr.training.list.add",
++        "hr.training.list.cancel",
++        "hr.training.list.del",
++        "hr.training.list.enroll",
++        "hr.training.list.mod",
++        "hr.training.list.view",
++        "hr.training.manage",
++        "hr.training.view",
++        "inv.analytics.forecast.export",
++        "inv.analytics.forecast.generate",
++        "inv.analytics.forecast.seasonal",
++        "inv.analytics.forecast.view",
++        "inv.analytics.manage",
++        "inv.analytics.movement.export",
++        "inv.analytics.movement.fast",
++        "inv.analytics.movement.slow",
++        "inv.analytics.movement.view",
++        "inv.analytics.stock.export",
++        "inv.analytics.stock.summary",
++        "inv.analytics.stock.value",
++        "inv.analytics.stock.view",
++        "inv.analytics.view",
++        "inv.db.export",
++        "inv.db.view",
++        "inv.products.barcode.bulk",
++        "inv.products.barcode.generate",
++        "inv.products.barcode.print",
++        "inv.products.barcode.scan",
++        "inv.products.barcode.view",
++        "inv.products.category.add",
++        "inv.products.category.del",
++        "inv.products.category.export",
++        "inv.products.category.mod",
++        "inv.products.category.sub",
++        "inv.products.category.view",
++        "inv.products.list.activate",
++        "inv.products.list.add",
++        "inv.products.list.copy",
++        "inv.products.list.deactivate",
++        "inv.products.list.del",
++        "inv.products.list.export",
++        "inv.products.list.image",
++        "inv.products.list.import",
++        "inv.products.list.mod",
++        "inv.products.list.price",
++        "inv.products.list.view",
++        "inv.products.manage",
++        "inv.products.unit.add",
++        "inv.products.unit.conversion",
++        "inv.products.unit.del",
++        "inv.products.unit.mod",
++        "inv.products.unit.view",
++        "inv.products.view",
++        "inv.reorder.level.alert",
++        "inv.reorder.level.bulk",
++        "inv.reorder.level.mod",
++        "inv.reorder.level.view",
++        "inv.reorder.manage",
++        "inv.reorder.request.approve",
++        "inv.reorder.request.convert",
++        "inv.reorder.request.create",
++        "inv.reorder.request.export",
++        "inv.reorder.request.reject",
++        "inv.reorder.request.view",
++        "inv.reorder.view",
++        "inv.stock.adjustment.add",
++        "inv.stock.adjustment.approve",
++        "inv.stock.adjustment.del",
++        "inv.stock.adjustment.mod",
++        "inv.stock.adjustment.reason",
++        "inv.stock.adjustment.view",
++        "inv.stock.count.approve",
++        "inv.stock.count.create",
++        "inv.stock.count.export",
++        "inv.stock.count.perform",
++        "inv.stock.count.reconcile",
++        "inv.stock.count.schedule",
++        "inv.stock.count.variance",
++        "inv.stock.count.view",
++        "inv.stock.inbound.add",
++        "inv.stock.inbound.approve",
++        "inv.stock.inbound.bulk",
++        "inv.stock.inbound.del",
++        "inv.stock.inbound.export",
++        "inv.stock.inbound.mod",
++        "inv.stock.inbound.reject",
++        "inv.stock.inbound.view",
++        "inv.stock.manage",
++        "inv.stock.outbound.add",
++        "inv.stock.outbound.approve",
++        "inv.stock.outbound.bulk",
++        "inv.stock.outbound.del",
++        "inv.stock.outbound.export",
++        "inv.stock.outbound.mod",
++        "inv.stock.outbound.view",
++        "inv.stock.transfer.add",
++        "inv.stock.transfer.approve",
++        "inv.stock.transfer.del",
++        "inv.stock.transfer.export",
++        "inv.stock.transfer.mod",
++        "inv.stock.transfer.receive",
++        "inv.stock.transfer.view",
++        "inv.stock.view",
++        "inv.valuation.manage",
++        "inv.valuation.method.avg",
++        "inv.valuation.method.fifo",
++        "inv.valuation.method.lifo",
++        "inv.valuation.method.mod",
++        "inv.valuation.method.view",
++        "inv.valuation.report.detail",
++        "inv.valuation.report.export",
++        "inv.valuation.report.summary",
++        "inv.valuation.report.view",
++        "inv.valuation.view",
++        "inv.warehouse.layout.design",
++        "inv.warehouse.layout.mod",
++        "inv.warehouse.layout.print",
++        "inv.warehouse.layout.view",
++        "inv.warehouse.list.activate",
++        "inv.warehouse.list.add",
++        "inv.warehouse.list.deactivate",
++        "inv.warehouse.list.del",
++        "inv.warehouse.list.mod",
++        "inv.warehouse.list.view",
++        "inv.warehouse.manage",
++        "inv.warehouse.view",
++        "inv.warehouse.zone.add",
++        "inv.warehouse.zone.bin",
++        "inv.warehouse.zone.del",
++        "inv.warehouse.zone.mod",
++        "inv.warehouse.zone.view",
++        "leave.approve.bulk",
++        "leave.approve.comment",
++        "leave.approve.process",
++        "leave.approve.view",
++        "leave.balance.export",
++        "leave.balance.view",
++        "leave.policies.assign",
++        "leave.policies.mod",
++        "leave.policies.view",
++        "leave.types.add",
++        "leave.types.del",
++        "leave.types.mod",
++        "leave.types.quota",
++        "leave.types.view",
++        "my.leave.add",
++        "my.leave.del",
++        "my.leave.mod",
++        "my.leave.view",
++        "my.leave.withdraw",
++        "pld.calendar.export",
++        "pld.calendar.mod",
++        "pld.calendar.sync",
++        "pld.calendar.view",
++        "pld.db.export",
++        "pld.db.view",
++        "pld.initiatives.active.add",
++        "pld.initiatives.active.assign",
++        "pld.initiatives.active.complete",
++        "pld.initiatives.active.del",
++        "pld.initiatives.active.export",
++        "pld.initiatives.active.mod",
++        "pld.initiatives.active.update",
++        "pld.initiatives.active.view",
++        "pld.initiatives.budget.mod",
++        "pld.initiatives.budget.track",
++        "pld.initiatives.budget.variance",
++        "pld.initiatives.budget.view",
++        "pld.initiatives.completed.lessons",
++        "pld.initiatives.completed.review",
++        "pld.initiatives.completed.view",
++        "pld.initiatives.manage",
++        "pld.initiatives.view",
++        "pld.milestones.add",
++        "pld.milestones.complete",
++        "pld.milestones.del",
++        "pld.milestones.dependency",
++        "pld.milestones.mod",
++        "pld.milestones.view",
++        "pld.reports.export",
++        "pld.reports.performance.export",
++        "pld.reports.performance.scorecard",
++        "pld.reports.performance.view",
++        "pld.reports.progress.dashboard",
++        "pld.reports.progress.export",
++        "pld.reports.progress.view",
++        "pld.reports.schedule",
++        "pld.reports.view",
++        "pld.risks.add",
++        "pld.risks.assess",
++        "pld.risks.del",
++        "pld.risks.export",
++        "pld.risks.matrix",
++        "pld.risks.mitigate",
++        "pld.risks.mod",
++        "pld.risks.register",
++        "pld.risks.view",
++        "pld.strategic.kpi.add",
++        "pld.strategic.kpi.dashboard",
++        "pld.strategic.kpi.del",
++        "pld.strategic.kpi.export",
++        "pld.strategic.kpi.mod",
++        "pld.strategic.kpi.target",
++        "pld.strategic.kpi.track",
++        "pld.strategic.kpi.view",
++        "pld.strategic.manage",
++        "pld.strategic.objectives.add",
++        "pld.strategic.objectives.align",
++        "pld.strategic.objectives.del",
++        "pld.strategic.objectives.mod",
++        "pld.strategic.objectives.progress",
++        "pld.strategic.objectives.view",
++        "pld.strategic.plans.add",
++        "pld.strategic.plans.approve",
++        "pld.strategic.plans.archive",
++        "pld.strategic.plans.del",
++        "pld.strategic.plans.export",
++        "pld.strategic.plans.mod",
++        "pld.strategic.plans.version",
++        "pld.strategic.plans.view",
++        "pld.strategic.view",
++        "position.manage",
++        "position.view",
++        "prm.budget.forecast",
++        "prm.budget.mod",
++        "prm.budget.track",
++        "prm.budget.variance",
++        "prm.budget.view",
++        "prm.db.export",
++        "prm.db.view",
++        "prm.milestones.add",
++        "prm.milestones.complete",
++        "prm.milestones.del",
++        "prm.milestones.gantt",
++        "prm.milestones.mod",
++        "prm.milestones.view",
++        "prm.projects.create.add",
++        "prm.projects.create.wizard",
++        "prm.projects.list.add",
++        "prm.projects.list.archive",
++        "prm.projects.list.clone",
++        "prm.projects.list.del",
++        "prm.projects.list.export",
++        "prm.projects.list.mod",
++        "prm.projects.list.status",
++        "prm.projects.list.view",
++        "prm.projects.manage",
++        "prm.projects.template.add",
++        "prm.projects.template.apply",
++        "prm.projects.template.del",
++        "prm.projects.template.mod",
++        "prm.projects.template.view",
++        "prm.projects.view",
++        "prm.reports.export",
++        "prm.reports.financial.cost",
++        "prm.reports.financial.export",
++        "prm.reports.financial.view",
++        "prm.reports.progress.export",
++        "prm.reports.progress.status",
++        "prm.reports.progress.view",
++        "prm.reports.schedule",
++        "prm.reports.time.export",
++        "prm.reports.time.timesheet",
++        "prm.reports.time.view",
++        "prm.reports.view",
++        "prm.risks.add",
++        "prm.risks.assess",
++        "prm.risks.mitigate",
++        "prm.risks.mod",
++        "prm.risks.register",
++        "prm.risks.view",
++        "prm.tasks.all.add",
++        "prm.tasks.all.assign",
++        "prm.tasks.all.bulk",
++        "prm.tasks.all.del",
++        "prm.tasks.all.dependency",
++        "prm.tasks.all.export",
++        "prm.tasks.all.mod",
++        "prm.tasks.all.priority",
++        "prm.tasks.all.view",
++        "prm.tasks.board.config",
++        "prm.tasks.board.drag",
++        "prm.tasks.board.view",
++        "prm.tasks.calendar.export",
++        "prm.tasks.calendar.view",
++        "prm.tasks.manage",
++        "prm.tasks.my.complete",
++        "prm.tasks.my.update",
++        "prm.tasks.my.view",
++        "prm.tasks.view",
++        "prm.team.manage",
++        "prm.team.members.add",
++        "prm.team.members.remove",
++        "prm.team.members.role",
++        "prm.team.members.view",
++        "prm.team.roles.assign",
++        "prm.team.roles.permissions",
++        "prm.team.roles.view",
++        "prm.team.view",
++        "prm.team.workload.balance",
++        "prm.team.workload.report",
++        "prm.team.workload.view",
++        "prm.timeline.critical",
++        "prm.timeline.export",
++        "prm.timeline.mod",
++        "prm.timeline.view",
++        "pro.analytics.manage",
++        "pro.analytics.report.export",
++        "pro.analytics.report.savings",
++        "pro.analytics.report.summary",
++        "pro.analytics.report.view",
++        "pro.analytics.spend.bycategory",
++        "pro.analytics.spend.byvendor",
++        "pro.analytics.spend.export",
++        "pro.analytics.spend.view",
++        "pro.analytics.vendor.export",
++        "pro.analytics.vendor.on_time",
++        "pro.analytics.vendor.price",
++        "pro.analytics.vendor.quality",
++        "pro.analytics.vendor.view",
++        "pro.analytics.view",
++        "pro.db.export",
++        "pro.db.view",
++        "pro.invoice.list.del",
++        "pro.invoice.list.export",
++        "pro.invoice.list.mod",
++        "pro.invoice.list.view",
++        "pro.invoice.manage",
++        "pro.invoice.payment.approve",
++        "pro.invoice.payment.history",
++        "pro.invoice.payment.process",
++        "pro.invoice.payment.schedule",
++        "pro.invoice.verify.discrepancy",
++        "pro.invoice.verify.match",
++        "pro.invoice.verify.process",
++        "pro.invoice.view",
++        "pro.po.approval.approve",
++        "pro.po.approval.bulk",
++        "pro.po.approval.reject",
++        "pro.po.approval.view",
++        "pro.po.create.add",
++        "pro.po.create.from_req",
++        "pro.po.list.copy",
++        "pro.po.list.del",
++        "pro.po.list.export",
++        "pro.po.list.mod",
++        "pro.po.list.print",
++        "pro.po.list.send",
++        "pro.po.list.view",
++        "pro.po.manage",
++        "pro.po.tracking.report",
++        "pro.po.tracking.update",
++        "pro.po.tracking.view",
++        "pro.po.view",
++        "pro.receipt.create.add",
++        "pro.receipt.create.from_po",
++        "pro.receipt.inspection.approve",
++        "pro.receipt.inspection.perform",
++        "pro.receipt.inspection.qc",
++        "pro.receipt.inspection.reject",
++        "pro.receipt.inspection.view",
++        "pro.receipt.list.del",
++        "pro.receipt.list.export",
++        "pro.receipt.list.mod",
++        "pro.receipt.list.view",
++        "pro.receipt.manage",
++        "pro.receipt.view",
++        "pro.req.approval.approve",
++        "pro.req.approval.bulk",
++        "pro.req.approval.reject",
++        "pro.req.approval.return",
++        "pro.req.approval.view",
++        "pro.req.approval.workflow",
++        "pro.req.create.add",
++        "pro.req.create.template",
++        "pro.req.list.copy",
++        "pro.req.list.del",
++        "pro.req.list.export",
++        "pro.req.list.mod",
++        "pro.req.list.view",
++        "pro.req.manage",
++        "pro.req.view",
++        "pro.vendor.contract.add",
++        "pro.vendor.contract.del",
++        "pro.vendor.contract.mod",
++        "pro.vendor.contract.renew",
++        "pro.vendor.contract.template",
++        "pro.vendor.contract.terminate",
++        "pro.vendor.contract.view",
++        "pro.vendor.evaluation.add",
++        "pro.vendor.evaluation.del",
++        "pro.vendor.evaluation.mod",
++        "pro.vendor.evaluation.report",
++        "pro.vendor.evaluation.scorecard",
++        "pro.vendor.evaluation.view",
++        "pro.vendor.list.add",
++        "pro.vendor.list.approve",
++        "pro.vendor.list.category",
++        "pro.vendor.list.del",
++        "pro.vendor.list.export",
++        "pro.vendor.list.import",
++        "pro.vendor.list.mod",
++        "pro.vendor.list.rating",
++        "pro.vendor.list.suspend",
++        "pro.vendor.list.view",
++        "pro.vendor.manage",
++        "pro.vendor.view",
++        "rpt.crm.custom",
++        "rpt.crm.export",
++        "rpt.crm.schedule",
++        "rpt.crm.view",
++        "rpt.custom.builder",
++        "rpt.custom.create",
++        "rpt.custom.del",
++        "rpt.custom.export",
++        "rpt.custom.mod",
++        "rpt.custom.schedule",
++        "rpt.custom.share",
++        "rpt.custom.template",
++        "rpt.custom.view",
++        "rpt.db.export",
++        "rpt.db.view",
++        "rpt.finance.custom",
++        "rpt.finance.export",
++        "rpt.finance.schedule",
++        "rpt.finance.view",
++        "rpt.hr.custom",
++        "rpt.hr.export",
++        "rpt.hr.schedule",
++        "rpt.hr.view",
++        "rpt.inventory.custom",
++        "rpt.inventory.export",
++        "rpt.inventory.schedule",
++        "rpt.inventory.view",
++        "rpt.procurement.custom",
++        "rpt.procurement.export",
++        "rpt.procurement.schedule",
++        "rpt.procurement.view",
++        "rpt.project.custom",
++        "rpt.project.export",
++        "rpt.project.schedule",
++        "rpt.project.view",
++        "rpt.scheduler.add",
++        "rpt.scheduler.del",
++        "rpt.scheduler.enable",
++        "rpt.scheduler.log",
++        "rpt.scheduler.mod",
++        "rpt.scheduler.recipient",
++        "rpt.scheduler.view",
++        "user.manage",
++        "user.view",
++        "user.view.branch",
++        "user.view.dept",
++    ];
++
++    public static int Count => CanonicalKeys.Length;
++}
+diff --git a/src/gRPC/Common/Permissions.cs b/src/gRPC/Common/Permissions.cs
+index 90b6319..ad2cdfc 100644
+--- a/src/gRPC/Common/Permissions.cs
++++ b/src/gRPC/Common/Permissions.cs
+@@ -26,6 +26,8 @@ public static class Permissions
+     public const string PositionView = "position.view";
+     public const string PositionManage = "position.manage";
+ 
++    // Legacy 16-key set kept for backward compatibility with older callers.
++    // The live registry used by JWT `ph` / [PerAuth] is PermissionRegistry.CanonicalKeys.
+     public static readonly string[] All =
+     {
+         EmpAdd,
+@@ -46,10 +48,12 @@ public static class Permissions
+         PositionManage
+     };
+ }
++
+ public static class PermissionMap
+ {
+-    private static Dictionary<string, int> _indexMap = BuildMap(Permissions.All);
+-    private static string[] _orderedKeys = Permissions.All;
++    private static Dictionary<string, int> _indexMap = BuildMap(PermissionRegistry.CanonicalKeys);
++    private static string[] _orderedKeys = PermissionRegistry.CanonicalKeys;
++    private static bool _initializedFromExternal;
+ 
+     // The authoritative permission -> bit-index map used by the JWT `ph` bitmask
+     // and the [PerAuth] policy provider.
+@@ -58,13 +62,30 @@ public static class PermissionMap
+     // Deterministically ordered permission keys backing the index map.
+     public static IReadOnlyList<string> OrderedKeys => _orderedKeys;
+ 
++    public static bool IsInitializedFromExternal => _initializedFromExternal;
++
+     private static Dictionary<string, int> BuildMap(IEnumerable<string> keys) =>
+         keys.Select((p, i) => new { p, i }).ToDictionary(x => x.p, x => x.i, StringComparer.Ordinal);
+ 
+-    // Initialize the registry from the authoritative permission set (the seeded
+-    // permission keys), unioned with the legacy static keys and deterministically
+-    // ordered (ordinal) so bit indices are identical across restarts and services
+-    // that initialize from the same key set.
++    /// <summary>
++    /// Ensure the in-memory map is loaded from the shared Common canonical key list.
++    /// Safe to call at every service startup; no network dependency.
++    /// </summary>
++    public static void InitializeFromCanonical()
++    {
++        _orderedKeys = PermissionRegistry.CanonicalKeys;
++        _indexMap = BuildMap(_orderedKeys);
++        _initializedFromExternal = false;
++    }
++
++    // Initialize the registry from an external key set (e.g. Auth DB or /Registry),
++    // unioned with the legacy static keys and deterministically ordered (ordinal)
++    // so bit indices are identical across restarts and services that initialize
++    // from the same key set.
++    //
++    // Prefer InitializeFromCanonical() in microservices so they do not depend on
++    // Auth being reachable at boot. Auth may still call this with DB keys to
++    // detect drift against PermissionRegistry.CanonicalKeys.
+     public static void Initialize(IEnumerable<string> permissionKeys)
+     {
+         var ordered = Permissions.All
+@@ -75,5 +96,6 @@ public static class PermissionMap
+             .ToArray();
+         _orderedKeys = ordered;
+         _indexMap = BuildMap(ordered);
++        _initializedFromExternal = true;
+     }
+-}
+\ No newline at end of file
++}
+-- 
+2.43.0
+
