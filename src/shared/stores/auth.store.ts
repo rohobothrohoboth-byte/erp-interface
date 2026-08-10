@@ -121,13 +121,17 @@ const normalizePermissions = (data: any[]): NormalizedModule[] => {
 // ancestor groups with their real labels/icons.
 
 interface CatalogEntry {
+  key: string;        // canonical dot-key (e.g. "hr.emp.list")
   label: string;
   path: string;
   icon: string;
   order: number;
-  parentKey: string;
+  parentKey: string;  // parent's canonical dot-key
 }
 
+// Build a catalog indexed by BOTH the menu's dot-key and its GUID id, so we can
+// resolve whatever identifier /Menu/structure emits (some backends send the
+// menu GUID as the key, others send the dot-key) back to the canonical dot-key.
 const fetchMenuCatalog = async (): Promise<Record<string, CatalogEntry>> => {
   try {
     if (!api || typeof api.get !== 'function') return {};
@@ -139,13 +143,17 @@ const fetchMenuCatalog = async (): Promise<Record<string, CatalogEntry>> => {
     for (const m of list) {
       const key = m.key || m.Key;
       if (!key) continue;
-      map[key] = {
+      const entry: CatalogEntry = {
+        key,
         label: m.label || m.Label || key,
         path: m.path || m.Path || '',
         icon: m.icon || m.Icon || '',
         order: m.order ?? m.Order ?? 0,
         parentKey: m.parentKey || m.ParentKey || '',
       };
+      map[key] = entry;
+      const id = m.id || m.Id;
+      if (id) map[String(id)] = entry; // allow GUID lookups too
     }
     return map;
   } catch (error) {
@@ -168,11 +176,14 @@ const normalizeWithCatalog = (
     const rawMenus = module.menus || module.M || module.m || [];
 
     // Flatten the menus the user is permitted to see (any nesting depth).
+    // Resolve each identifier (dot-key OR GUID) to its canonical dot-key so the
+    // hierarchy can be rebuilt from the catalog's ParentKey links.
     const permitted = new Map<string, { A: string[]; P: string; L: string; I: string; O: number }>();
     const collect = (menus: any[]) => {
       for (const mu of menus || []) {
-        const key = mu.k || mu.K;
-        if (!key) continue;
+        const rawKey = mu.k || mu.K;
+        if (!rawKey) continue;
+        const key = catalog[rawKey]?.key || rawKey;
         permitted.set(key, {
           A: mu.a || mu.A || [],
           P: mu.p || mu.P || '',
