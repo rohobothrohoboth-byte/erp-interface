@@ -81,7 +81,7 @@ import {
     X,
     MoreVertical,
 } from 'lucide-react';
-import { PageLoader } from '../components/ui/page-loader';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
 
 const withSuspense = (
@@ -95,139 +95,139 @@ const withSuspense = (
 // ============================================
 // ✅ EXISTING FINANCE PAGES
 // ============================================
-const FinanceDashboard = lazy(() => import('../pages/modules/Finance'));
+const FinanceDashboard = lazy(() => import('@/modules/finance/pages/ModuleDashboard'));
 
 // General Ledger
-const GlPage = lazy(() => import('../pages/finance/generalledgerpage/GlPage'));
-const ChartOfAccountsPage = lazy(() => import('../pages/finance/generalledgerpage/ChartOfAccountsPage'));
-const JournalEntriesPage = lazy(() => import('../pages/finance/generalledgerpage/JournalEntriesPage'));
-const AuditTrailPage = lazy(() => import('../pages/finance/generalledgerpage/AuditTrailPage'));
+const GlPage = lazy(() => import('@/modules/finance/pages/generalledgerpage/GlPage'));
+const ChartOfAccountsPage = lazy(() => import('@/modules/finance/pages/generalledgerpage/ChartOfAccountsPage'));
+const JournalEntriesPage = lazy(() => import('@/modules/finance/pages/generalledgerpage/JournalEntriesPage'));
+const AuditTrailPage = lazy(() => import('@/modules/finance/pages/generalledgerpage/AuditTrailPage'));
 
 // Budget
-const BudgetList = lazy(() => import('../pages/finance/budgetpage/BudgetList'));
-const BudgetCreate = lazy(() => import('../pages/finance/budgetpage/BudgetCreate'));
-const PageBudget = lazy(() => import('../pages/finance/budgeting/PageBudget'));
-const PageBudgetPlan = lazy(() => import('../pages/finance/budgeting/PageBudgetPlan'));
-const PageBudgetExpenses = lazy(() => import('../pages/finance/budgeting/PageBudgetExpenses'));
-const PageBudgetApproval = lazy(() => import('../pages/finance/budgeting/PageBudgetApproval'));
-const PageExpenseApproval = lazy(() => import('../pages/finance/budgeting/PageExpenseApproval'));
-const PageAdditionalBudget = lazy(() => import('../pages/finance/budgeting/PageAdditionalBudget'));
-const PageBudgetReview = lazy(() => import('../pages/finance/budgeting/PageBudgetReview'));
-const PageAdditionalBudgetApproval = lazy(() => import('../pages/finance/budgeting/PageAdditionalBudgetApproval'));
-const PageBudgetVersions = lazy(() => import('../pages/finance/budgeting/PageBudgetVersions'));
-const PageJournal = lazy(() => import('../pages/finance/PageJournal'));
+const BudgetList = lazy(() => import('@/modules/finance/pages/budgetpage/BudgetList'));
+const BudgetCreate = lazy(() => import('@/modules/finance/pages/budgetpage/BudgetCreate'));
+const PageBudget = lazy(() => import('@/modules/finance/pages/budgeting/PageBudget'));
+const PageBudgetPlan = lazy(() => import('@/modules/finance/pages/budgeting/PageBudgetPlan'));
+const PageBudgetExpenses = lazy(() => import('@/modules/finance/pages/budgeting/PageBudgetExpenses'));
+const PageBudgetApproval = lazy(() => import('@/modules/finance/pages/budgeting/PageBudgetApproval'));
+const PageExpenseApproval = lazy(() => import('@/modules/finance/pages/budgeting/PageExpenseApproval'));
+const PageAdditionalBudget = lazy(() => import('@/modules/finance/pages/budgeting/PageAdditionalBudget'));
+const PageBudgetReview = lazy(() => import('@/modules/finance/pages/budgeting/PageBudgetReview'));
+const PageAdditionalBudgetApproval = lazy(() => import('@/modules/finance/pages/budgeting/PageAdditionalBudgetApproval'));
+const PageBudgetVersions = lazy(() => import('@/modules/finance/pages/budgeting/PageBudgetVersions'));
+const PageJournal = lazy(() => import('@/modules/finance/pages/PageJournal'));
 
 // Accounts Payable
-const PageAccountsPayable = lazy(() => import('../pages/finance/PageAccountsPayable'));
-const PagePayments = lazy(() => import('../pages/finance/PagePayments'));
-const InvoiceEntry = lazy(() => import('../pages/finance/ap/InvoiceEntry'));
+const PageAccountsPayable = lazy(() => import('@/modules/finance/pages/PageAccountsPayable'));
+const PagePayments = lazy(() => import('@/modules/finance/pages/PagePayments'));
+const InvoiceEntry = lazy(() => import('@/modules/finance/pages/ap/InvoiceEntry'));
 
-const InvoiceApprovalAP = lazy(() => import('../pages/finance/PageInvoiceApproval'));
-const APReports = lazy(() => import('../pages/finance/ap/APReports'));
-const VendorManagement = lazy(() => import('../pages/finance/ap/VendorManagement'));
-const VoucherManagement = lazy(() => import('../pages/finance/ap/VoucherManagement'));
+const InvoiceApprovalAP = lazy(() => import('@/modules/finance/pages/PageInvoiceApproval'));
+const APReports = lazy(() => import('@/modules/finance/pages/ap/APReports'));
+const VendorManagement = lazy(() => import('@/modules/finance/pages/ap/VendorManagement'));
+const VoucherManagement = lazy(() => import('@/modules/finance/pages/ap/VoucherManagement'));
 
 // Accounts Receivable
-const PageInvoicePosting = lazy(() => import('../pages/finance/PageInvoicePosting'));
-const PagePaymentReceipt = lazy(() => import('../pages/finance/PagePaymentReceipt'));
-const CollectionFollowup = lazy(() => import('../pages/finance/ar/CollectionFollowup'));
-const ARReports = lazy(() => import('../pages/finance/ar/ARReports'));
-const CustomerManagement = lazy(() => import('../pages/finance/ar/CustomerManagement'));
+const PageInvoicePosting = lazy(() => import('@/modules/finance/pages/PageInvoicePosting'));
+const PagePaymentReceipt = lazy(() => import('@/modules/finance/pages/PagePaymentReceipt'));
+const CollectionFollowup = lazy(() => import('@/modules/finance/pages/ar/CollectionFollowup'));
+const ARReports = lazy(() => import('@/modules/finance/pages/ar/ARReports'));
+const CustomerManagement = lazy(() => import('@/modules/finance/pages/ar/CustomerManagement'));
 
 // Cash & Bank
-const BankAccounts = lazy(() => import('../pages/finance/BankAccounts'));
-const BankReconciliation = lazy(() => import('../pages/finance/BankReconciliation'));
-const PettyCash = lazy(() => import('../pages/finance/PettyCash'));
-const PageTransactions = lazy(() => import('../pages/finance/PageTransactions'));
+const BankAccounts = lazy(() => import('@/modules/finance/pages/BankAccounts'));
+const BankReconciliation = lazy(() => import('@/modules/finance/pages/BankReconciliation'));
+const PettyCash = lazy(() => import('@/modules/finance/pages/PettyCash'));
+const PageTransactions = lazy(() => import('@/modules/finance/pages/PageTransactions'));
 
 // Cost Controlling (CO)
-const CostCenters = lazy(() => import('../pages/finance/costcontrolling/CostCenters'));
-const ProfitCenters = lazy(() => import('../pages/finance/costcontrolling/ProfitCenters'));
-const InternalOrders = lazy(() => import('../pages/finance/costcontrolling/InternalOrders'));
-const Coreports = lazy(() => import('../pages/finance/costcontrolling/Coreports'));
+const CostCenters = lazy(() => import('@/modules/finance/pages/costcontrolling/CostCenters'));
+const ProfitCenters = lazy(() => import('@/modules/finance/pages/costcontrolling/ProfitCenters'));
+const InternalOrders = lazy(() => import('@/modules/finance/pages/costcontrolling/InternalOrders'));
+const Coreports = lazy(() => import('@/modules/finance/pages/costcontrolling/Coreports'));
 
 // Consolidation
-const ConsolidationManagement = lazy(() => import('../pages/finance/consolidation/ConsolidationManagement'));
-const Entities = lazy(() => import('../pages/finance/consolidation/Entities'));
-const ConsolidationGroups = lazy(() => import('../pages/finance/consolidation/ConsolidationGroups'));
-const EliminationEntries = lazy(() => import('../pages/finance/consolidation/EliminationEntries'));
-const ConsolidationReports = lazy(() => import('../pages/finance/consolidation/ConsolidationReports'));
+const ConsolidationManagement = lazy(() => import('@/modules/finance/pages/consolidation/ConsolidationManagement'));
+const Entities = lazy(() => import('@/modules/finance/pages/consolidation/Entities'));
+const ConsolidationGroups = lazy(() => import('@/modules/finance/pages/consolidation/ConsolidationGroups'));
+const EliminationEntries = lazy(() => import('@/modules/finance/pages/consolidation/EliminationEntries'));
+const ConsolidationReports = lazy(() => import('@/modules/finance/pages/consolidation/ConsolidationReports'));
 
 // Compliance
-const ComplianceManagement = lazy(() => import('../pages/finance/compliance/ComplianceManagement'));
-const InternalControls = lazy(() => import('../pages/finance/compliance/InternalControls'));
-const ComplianceRequirements = lazy(() => import('../pages/finance/compliance/ComplianceRequirements'));
-const ComplianceReports = lazy(() => import('../pages/finance/compliance/ComplianceReports'));
+const ComplianceManagement = lazy(() => import('@/modules/finance/pages/compliance/ComplianceManagement'));
+const InternalControls = lazy(() => import('@/modules/finance/pages/compliance/InternalControls'));
+const ComplianceRequirements = lazy(() => import('@/modules/finance/pages/compliance/ComplianceRequirements'));
+const ComplianceReports = lazy(() => import('@/modules/finance/pages/compliance/ComplianceReports'));
 
 // Vendor Portal
-const VendorPortal = lazy(() => import('../pages/finance/portal/VendorPortal'));
-const Vendors = lazy(() => import('../pages/finance/portal/Vendors'));
-const InvoiceSubmission = lazy(() => import('../pages/finance/portal/InvoiceSubmission'));
-const PaymentTracking = lazy(() => import('../pages/finance/portal/PaymentTracking'));
-const Notifications = lazy(() => import('../pages/finance/portal/Notifications'));
+const VendorPortal = lazy(() => import('@/modules/finance/pages/portal/VendorPortal'));
+const Vendors = lazy(() => import('@/modules/finance/pages/portal/Vendors'));
+const InvoiceSubmission = lazy(() => import('@/modules/finance/pages/portal/InvoiceSubmission'));
+const PaymentTracking = lazy(() => import('@/modules/finance/pages/portal/PaymentTracking'));
+const Notifications = lazy(() => import('@/modules/finance/pages/portal/Notifications'));
 
 // IFRS Reports
-const IFRSReports = lazy(() => import('../pages/finance/ifrs/IFRSReports'));
-const IFRS9 = lazy(() => import('../pages/finance/ifrs/IFRS9'));
-const IFRS15 = lazy(() => import('../pages/finance/ifrs/IFRS15'));
-const IFRS16 = lazy(() => import('../pages/finance/ifrs/IFRS16'));
-const IFRS7 = lazy(() => import('../pages/finance/ifrs/IFRS7'));
-const IFRS8 = lazy(() => import('../pages/finance/ifrs/IFRS8'));
-const IFRSDashboard = lazy(() => import('../pages/finance/ifrs/IFRSDashboard'));
+const IFRSReports = lazy(() => import('@/modules/finance/pages/ifrs/IFRSReports'));
+const IFRS9 = lazy(() => import('@/modules/finance/pages/ifrs/IFRS9'));
+const IFRS15 = lazy(() => import('@/modules/finance/pages/ifrs/IFRS15'));
+const IFRS16 = lazy(() => import('@/modules/finance/pages/ifrs/IFRS16'));
+const IFRS7 = lazy(() => import('@/modules/finance/pages/ifrs/IFRS7'));
+const IFRS8 = lazy(() => import('@/modules/finance/pages/ifrs/IFRS8'));
+const IFRSDashboard = lazy(() => import('@/modules/finance/pages/ifrs/IFRSDashboard'));
 
 // Audit
-const AuditLogs = lazy(() => import('../pages/finance/audit/AuditLogs'));
+const AuditLogs = lazy(() => import('@/modules/finance/pages/audit/AuditLogs'));
 
 // Payroll
-const PagePayroll = lazy(() => import('../pages/finance/PagePayroll'));
-const PayrollSettings = lazy(() => import('../pages/finance/payroll/PayrollSettings'));
-const PayrollCalendar = lazy(() => import('../pages/finance/payroll/PayrollCalendar'));
-const PayslipHistory = lazy(() => import('../pages/finance/payroll/PayslipHistory'));
-const PayrollReports = lazy(() => import('../pages/finance/payroll/PayrollReports'));
-const EmployeeSalaries = lazy(() => import('../pages/finance/payroll/EmployeeSalaries'));
-const PayrollDashboard = lazy(() => import('../pages/finance/payroll/PayrollDashboard'));
-const RunPayroll = lazy(() => import('../pages/finance/payroll/RunPayroll'));
-const PayrollHistory = lazy(() => import('../pages/finance/payroll/PayrollHistory'));
-const SalaryStructure = lazy(() => import('../pages/finance/payroll/SalaryStructure'));
-const TaxConfigurations = lazy(() => import('../pages/finance/payroll/TaxConfigurations'));
+const PagePayroll = lazy(() => import('@/modules/finance/pages/PagePayroll'));
+const PayrollSettings = lazy(() => import('@/modules/finance/pages/payroll/PayrollSettings'));
+const PayrollCalendar = lazy(() => import('@/modules/finance/pages/payroll/PayrollCalendar'));
+const PayslipHistory = lazy(() => import('@/modules/finance/pages/payroll/PayslipHistory'));
+const PayrollReports = lazy(() => import('@/modules/finance/pages/payroll/PayrollReports'));
+const EmployeeSalaries = lazy(() => import('@/modules/finance/pages/payroll/EmployeeSalaries'));
+const PayrollDashboard = lazy(() => import('@/modules/finance/pages/payroll/PayrollDashboard'));
+const RunPayroll = lazy(() => import('@/modules/finance/pages/payroll/RunPayroll'));
+const PayrollHistory = lazy(() => import('@/modules/finance/pages/payroll/PayrollHistory'));
+const SalaryStructure = lazy(() => import('@/modules/finance/pages/payroll/SalaryStructure'));
+const TaxConfigurations = lazy(() => import('@/modules/finance/pages/payroll/TaxConfigurations'));
 
 // Fixed Assets
-const PageAssets = lazy(() => import('../pages/finance/PageAssets'));
-const AssetRegisterPage = lazy(() => import('../pages/finance/assetRegisterPage/AssetRegisterPage'));
-const AssetCapitalizationPage = lazy(() => import('../pages/finance/assetCapitalizationPage/AssetCapitalizationPage'));
-const AssetDetailPage = lazy(() => import('../pages/finance/assetDetailPage/AssetDetailPage'));
-const DepreciationManagementPage = lazy(() => import('../pages/finance/depreciationManagementPage/DepreciationManagementPage'));
-const AssetDisposal = lazy(() => import('../pages/finance/assetDisposalPage/AssetDisposal'));
+const PageAssets = lazy(() => import('@/modules/finance/pages/PageAssets'));
+const AssetRegisterPage = lazy(() => import('@/modules/finance/pages/assetRegisterPage/AssetRegisterPage'));
+const AssetCapitalizationPage = lazy(() => import('@/modules/finance/pages/assetCapitalizationPage/AssetCapitalizationPage'));
+const AssetDetailPage = lazy(() => import('@/modules/finance/pages/assetDetailPage/AssetDetailPage'));
+const DepreciationManagementPage = lazy(() => import('@/modules/finance/pages/depreciationManagementPage/DepreciationManagementPage'));
+const AssetDisposal = lazy(() => import('@/modules/finance/pages/assetDisposalPage/AssetDisposal'));
 
 // Tax
-const VATManagement = lazy(() => import('../pages/finance/tax/VATManagement'));
-const WithholdingTax = lazy(() => import('../pages/finance/tax/WithholdingTax'));
-const TaxReports = lazy(() => import('../pages/finance/tax/TaxReports'));
+const VATManagement = lazy(() => import('@/modules/finance/pages/tax/VATManagement'));
+const WithholdingTax = lazy(() => import('@/modules/finance/pages/tax/WithholdingTax'));
+const TaxReports = lazy(() => import('@/modules/finance/pages/tax/TaxReports'));
 
 // Reports
-const PageReports = lazy(() => import('../pages/finance/PageReports'));
-const BalanceSheet = lazy(() => import('../pages/finance/reports/BalanceSheet'));
-const IncomeStatement = lazy(() => import('../pages/finance/reports/IncomeStatement'));
-const CashFlow = lazy(() => import('../pages/finance/reports/CashFlow'));
-const TrialBalance = lazy(() => import('../pages/finance/reports/TrialBalance'));
-const GeneralLedger = lazy(() => import('../pages/finance/reports/GeneralLedger'));
+const PageReports = lazy(() => import('@/modules/finance/pages/PageReports'));
+const BalanceSheet = lazy(() => import('@/modules/finance/pages/reports/BalanceSheet'));
+const IncomeStatement = lazy(() => import('@/modules/finance/pages/reports/IncomeStatement'));
+const CashFlow = lazy(() => import('@/modules/finance/pages/reports/CashFlow'));
+const TrialBalance = lazy(() => import('@/modules/finance/pages/reports/TrialBalance'));
+const GeneralLedger = lazy(() => import('@/modules/finance/pages/reports/GeneralLedger'));
 
 // Accounts
-const FinancePageAccounts = lazy(() => import('../pages/finance/Account/PageAccounts'));
-const FinancePageAccountDetail = lazy(() => import('../pages/finance/Account/PageAccountDetail'));
+const FinancePageAccounts = lazy(() => import('@/modules/finance/pages/Account/PageAccounts'));
+const FinancePageAccountDetail = lazy(() => import('@/modules/finance/pages/Account/PageAccountDetail'));
 
 // Settings
-const PageAccounts = lazy(() => import('../pages/settings/FinanceSettings/Account/PageAccounts'));
-const PageAccountDetail = lazy(() => import('../pages/settings/FinanceSettings/Account/PageAccountDetail'));
-const PageAccountCategory = lazy(() => import('../pages/settings/FinanceSettings/Account/PageAccountCategory'));
-const PageFinanceSettings = lazy(() => import('../pages/settings/FinanceSettings/PageFinanceSettings'));
-const PageCostCenter = lazy(() => import('../pages/settings/FinanceSettings/CostCenter/PageCostCenter'));
-const PageBudgetCode = lazy(() => import('../pages/settings/FinanceSettings/BudgetCode/PageBudgetCode'));
-const PageBudgetCategory = lazy(() => import('../pages/settings/FinanceSettings/BudgetCategory/PageBudgetCategory'));
-const PagePaymentApprovalChain = lazy(() => import('../pages/settings/FinanceSettings/PagePaymentApprovalChain'));
+const PageAccounts = lazy(() => import('@/modules/settings/pages/FinanceSettings/Account/PageAccounts'));
+const PageAccountDetail = lazy(() => import('@/modules/settings/pages/FinanceSettings/Account/PageAccountDetail'));
+const PageAccountCategory = lazy(() => import('@/modules/settings/pages/FinanceSettings/Account/PageAccountCategory'));
+const PageFinanceSettings = lazy(() => import('@/modules/settings/pages/FinanceSettings/PageFinanceSettings'));
+const PageCostCenter = lazy(() => import('@/modules/settings/pages/FinanceSettings/CostCenter/PageCostCenter'));
+const PageBudgetCode = lazy(() => import('@/modules/settings/pages/FinanceSettings/BudgetCode/PageBudgetCode'));
+const PageBudgetCategory = lazy(() => import('@/modules/settings/pages/FinanceSettings/BudgetCategory/PageBudgetCategory'));
+const PagePaymentApprovalChain = lazy(() => import('@/modules/settings/pages/FinanceSettings/PagePaymentApprovalChain'));
 
 // Period Closing
-const PagePeriodClosing = lazy(() => import('../pages/finance/PagePeriodClosing'));
+const PagePeriodClosing = lazy(() => import('@/modules/finance/pages/PagePeriodClosing'));
 
 // ============================================
 // ✅ FINANCE ROUTES
