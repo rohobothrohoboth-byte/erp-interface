@@ -126,6 +126,12 @@ const EditEmployeePage =safeLazy(() => import('@/modules/hr/pages/employeepage/E
 const PendingEmployeePage =safeLazy(() => import('@/modules/hr/pages/employeepage/PendingEmployeePage'));
 const PendingEmployeeDetail =safeLazy(() => import('@/modules/hr/components/employee/PendingEmployee/PendingEmployeeDetail'));
 const Termination =safeLazy(() => import('@/modules/hr/pages/employeepage/Termination'));
+const EmployeeProfilePage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeProfilePage'));
+const EmployeeDocumentsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeDocumentsPage'));
+const EmployeeContractsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeContractsPage'));
+const EmployeePerformancePage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeePerformancePage'));
+const EmployeePromotionsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeePromotionsPage'));
+const EmployeeTransfersPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeTransfersPage'));
 
 // ✅ Add Pending Education/Experience Page
 const PendingEmpEduExpPage =safeLazy(() => import('@/modules/hr/pages/employeepage/PendingEmpEduExpPage'));
@@ -149,6 +155,20 @@ const TimeClockFormContainer =safeLazy(() => import('@/modules/hr/pages/attendan
 
 // Training
 const Training =safeLazy(() => import('@/modules/hr/pages/trainingpage/Training'));
+const TrainingProgramsPage =safeLazy(() => import('@/modules/hr/pages/trainingpage/TrainingProgramsPage'));
+
+// Payroll
+const PayrollRunPage =safeLazy(() => import('@/modules/hr/pages/payrollpage/PayrollRunPage'));
+const PayrollHistoryPage =safeLazy(() => import('@/modules/hr/pages/payrollpage/PayrollHistoryPage'));
+const SalaryStructurePage =safeLazy(() => import('@/modules/hr/pages/payrollpage/SalaryStructurePage'));
+const TaxConfigPage =safeLazy(() => import('@/modules/hr/pages/payrollpage/TaxConfigPage'));
+
+// HR Reports (Auth seeder paths)
+const EmployeeReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/EmployeeReportsPage'));
+const AttendanceReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/AttendanceReportsPage'));
+const LeaveReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/LeaveReportsPage'));
+const PayrollReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/PayrollReportsPage'));
+const RecruitmentReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/RecruitmentReportsPage'));
 
 // ==================== RECRUITMENT MODULE PAGES ====================
 const RecruitmentDashboard =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/RecruitmentDashboard'));
@@ -195,6 +215,8 @@ const InterviewEdit =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/i
 // Offer Management
 const OffersPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/offer/OffersPage'));
 const OfferDetail =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/offer/OfferDetail'));
+const OfferCreatePage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/offer/OfferCreatePage'));
+const ApplicantEvaluateEntryPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/applicant/ApplicantEvaluateEntryPage'));
 
 // Onboarding
 const OnboardingTasksPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/onboarding/OnboardingTasksPage'));
@@ -307,6 +329,63 @@ export const hrRoutes: AppRoute[] = [
         element: withSuspense(Termination),
         nav: false,
     },
+    // Auth seeder uses plural "terminations"
+    {
+        path: 'hr/employees/terminations',
+        href: '/hr/employees/terminations',
+        title: 'Terminations',
+        icon: UserX,
+        element: withSuspense(Termination),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/profile',
+        href: '/hr/employees/profile',
+        title: 'Employee Profile',
+        icon: Users,
+        element: withSuspense(EmployeeProfilePage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/documents',
+        href: '/hr/employees/documents',
+        title: 'Employee Documents',
+        icon: FileText,
+        element: withSuspense(EmployeeDocumentsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/contracts',
+        href: '/hr/employees/contracts',
+        title: 'Contracts',
+        icon: FileText,
+        element: withSuspense(EmployeeContractsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/performance',
+        href: '/hr/employees/performance',
+        title: 'Performance Reviews',
+        icon: BarChart3,
+        element: withSuspense(EmployeePerformancePage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/promotions',
+        href: '/hr/employees/promotions',
+        title: 'Promotions',
+        icon: Award,
+        element: withSuspense(EmployeePromotionsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/transfers',
+        href: '/hr/employees/transfers',
+        title: 'Transfers',
+        icon: Users,
+        element: withSuspense(EmployeeTransfersPage),
+        nav: false,
+    },
     // ✅ Add Pending Education/Experience Route
     {
         path: 'hr/employees/pending-edu-exp',
@@ -390,6 +469,14 @@ export const hrRoutes: AppRoute[] = [
         element: withSuspense(YearEndProcessingPage),
         nav: false,
     },
+    {
+        path: 'hr/leave/types',
+        href: '/hr/leave/types',
+        title: 'Leave Types',
+        icon: Calendar,
+        element: withSuspense(PageAnnualLeave),
+        nav: false,
+    },
 
     // Attendance
     {
@@ -441,7 +528,7 @@ export const hrRoutes: AppRoute[] = [
         nav: false,
     },
 
-    // Training
+    // Training (Auth seeder paths)
     {
         path: 'hr/training',
         href: '/hr/training',
@@ -449,6 +536,114 @@ export const hrRoutes: AppRoute[] = [
         icon: GraduationCap,
         element: withSuspense(Training),
         nav: true,
+    },
+    {
+        path: 'hr/training/programs',
+        href: '/hr/training/programs',
+        title: 'Training Programs',
+        icon: GraduationCap,
+        element: withSuspense(TrainingProgramsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/training/calendar',
+        href: '/hr/training/calendar',
+        title: 'Training Calendar',
+        icon: Calendar,
+        element: withSuspense(TrainingProgramsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/training/feedback',
+        href: '/hr/training/feedback',
+        title: 'Training Feedback',
+        icon: ClipboardList,
+        element: withSuspense(TrainingProgramsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/training/certificates',
+        href: '/hr/training/certificates',
+        title: 'Certifications',
+        icon: Award,
+        element: withSuspense(TrainingProgramsPage),
+        nav: false,
+    },
+
+    // Payroll (Auth seeder paths)
+    {
+        path: 'hr/payroll/run',
+        href: '/hr/payroll/run',
+        title: 'Run Payroll',
+        icon: Briefcase,
+        element: withSuspense(PayrollRunPage),
+        nav: false,
+    },
+    {
+        path: 'hr/payroll/history',
+        href: '/hr/payroll/history',
+        title: 'Payroll History',
+        icon: FileText,
+        element: withSuspense(PayrollHistoryPage),
+        nav: false,
+    },
+    {
+        path: 'hr/payroll/salary-structure',
+        href: '/hr/payroll/salary-structure',
+        title: 'Salary Structure',
+        icon: FileText,
+        element: withSuspense(SalaryStructurePage),
+        nav: false,
+    },
+    {
+        path: 'hr/payroll/tax',
+        href: '/hr/payroll/tax',
+        title: 'Tax Configurations',
+        icon: FileText,
+        element: withSuspense(TaxConfigPage),
+        nav: false,
+    },
+
+    // HR Reports (Auth seeder paths)
+    {
+        path: 'hr/reports/employees',
+        href: '/hr/reports/employees',
+        title: 'Employee Reports',
+        icon: Users,
+        element: withSuspense(EmployeeReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/attendance',
+        href: '/hr/reports/attendance',
+        title: 'Attendance Reports',
+        icon: Clock,
+        element: withSuspense(AttendanceReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/leave',
+        href: '/hr/reports/leave',
+        title: 'Leave Reports',
+        icon: Calendar,
+        element: withSuspense(LeaveReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/payroll',
+        href: '/hr/reports/payroll',
+        title: 'Payroll Reports',
+        icon: FileText,
+        element: withSuspense(PayrollReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/recruitment',
+        href: '/hr/reports/recruitment',
+        title: 'Recruitment Reports',
+        icon: ClipboardList,
+        element: withSuspense(RecruitmentReportsPage),
+        nav: false,
     },
 
     // Recruitment Dashboard & Analytics
@@ -620,6 +815,15 @@ export const hrRoutes: AppRoute[] = [
         element: withSuspense(ApplicantsPage),
         nav: true,
     },
+    // Auth seeder path without applicant id — must be before :applicantId
+    {
+        path: 'hr/recruitment/applicant/evaluate',
+        href: '/hr/recruitment/applicant/evaluate',
+        title: 'Evaluate Applicant',
+        icon: ClipboardList,
+        element: withSuspense(ApplicantEvaluateEntryPage),
+        nav: false,
+    },
     {
         path: 'hr/recruitment/applicant/:applicantId',
         href: '/hr/recruitment/applicant/:applicantId',
@@ -679,6 +883,14 @@ export const hrRoutes: AppRoute[] = [
         icon: FileText,
         element: withSuspense(OffersPage),
         nav: true,
+    },
+    {
+        path: 'hr/recruitment/offer/new',
+        href: '/hr/recruitment/offer/new',
+        title: 'Create Offer',
+        icon: FileText,
+        element: withSuspense(OfferCreatePage),
+        nav: false,
     },
     {
         path: 'hr/recruitment/offer/:offerId',
@@ -1034,7 +1246,33 @@ export const hrSidebarRoutes: SidebarNavSection[] = [
         title: 'Training',
         icon: GraduationCap,
         items: [
-            { title: 'Training Programs', href: '/hr/training', activeMatch: 'prefix' },
+            { title: 'Training Programs', href: '/hr/training/programs', activeMatch: 'prefix' },
+            { title: 'Training Calendar', href: '/hr/training/calendar', activeMatch: 'prefix' },
+            { title: 'Feedback', href: '/hr/training/feedback', activeMatch: 'prefix' },
+            { title: 'Certifications', href: '/hr/training/certificates', activeMatch: 'prefix' },
+        ],
+    },
+    {
+        id: 'hr-payroll',
+        title: 'Payroll',
+        icon: Briefcase,
+        items: [
+            { title: 'Run Payroll', href: '/hr/payroll/run', activeMatch: 'prefix' },
+            { title: 'Payroll History', href: '/hr/payroll/history', activeMatch: 'prefix' },
+            { title: 'Salary Structure', href: '/hr/payroll/salary-structure', activeMatch: 'prefix' },
+            { title: 'Tax Configurations', href: '/hr/payroll/tax', activeMatch: 'prefix' },
+        ],
+    },
+    {
+        id: 'hr-reports',
+        title: 'HR Reports',
+        icon: FileText,
+        items: [
+            { title: 'Employee Reports', href: '/hr/reports/employees', activeMatch: 'prefix' },
+            { title: 'Attendance Reports', href: '/hr/reports/attendance', activeMatch: 'prefix' },
+            { title: 'Leave Reports', href: '/hr/reports/leave', activeMatch: 'prefix' },
+            { title: 'Payroll Reports', href: '/hr/reports/payroll', activeMatch: 'prefix' },
+            { title: 'Recruitment Reports', href: '/hr/reports/recruitment', activeMatch: 'prefix' },
         ],
     },
     {
