@@ -17,7 +17,7 @@ import {
     TrendingUp,DollarSign,
     type LucideIcon
 } from 'lucide-react';
-import { PageLoader } from '../components/ui/page-loader';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
 
 const withSuspense = (
@@ -33,92 +33,92 @@ const withSuspense = (
 // ============================================================
 
 // Dashboard
-const CRMDashboard = lazy(() => import('../pages/modules/CRM'));
+const CRMDashboard = lazy(() => import('@/modules/crm/pages/ModuleDashboard'));
 
 // ============================================================
 // LEAD MANAGEMENT PAGES
 // ============================================================
-const LeadManagementPage = lazy(() => import('../pages/crm/leadManagement/LeadManagementPage'));
-const AddLeadPage = lazy(() => import('../pages/crm/leadManagement/AddLeadPage'));
-const EditLeadPage = lazy(() => import('../pages/crm/leadManagement/EditLeadPage'));
-const LeadDetailPage = lazy(() => import('../pages/crm/leadManagement/LeadDetailPage'));
-const LeadGenerationPage = lazy(() => import('../pages/crm/leadManagement/LeadGenerationPage'));
-const LeadRoutingPage = lazy(() => import('../pages/crm/leadManagement/LeadRoutingPage'));
-const LeadGroupingPage = lazy(() => import('../pages/crm/leadManagement/LeadGroupingPage'));
-const LeadConversion = lazy(() => import('../pages/crm/leadManagement/LeadConversion'));
-const LeadBulkAction = lazy(() => import('../pages/crm/leadManagement/LeadBulkAction'));
-const ImportLeadPage = lazy(() => import('../pages/crm/leadManagement/ImportLeadPage'));
-const AssignedLeadsPage = lazy(() => import('../pages/crm/leadManagement/AssignedLeadsPage'));
-const LeadQualificationPage = lazy(() => import('../pages/crm/leadManagement/LeadQualificationPage'));
-const CompaniesPage = lazy(() => import('../pages/crm/contactManagement/CompaniesPage'));
-const InteractionsPage = lazy(() => import('../pages/crm/contactManagement/InteractionsPage'));
+const LeadManagementPage = lazy(() => import('@/modules/crm/pages/leadManagement/LeadManagementPage'));
+const AddLeadPage = lazy(() => import('@/modules/crm/pages/leadManagement/AddLeadPage'));
+const EditLeadPage = lazy(() => import('@/modules/crm/pages/leadManagement/EditLeadPage'));
+const LeadDetailPage = lazy(() => import('@/modules/crm/pages/leadManagement/LeadDetailPage'));
+const LeadGenerationPage = lazy(() => import('@/modules/crm/pages/leadManagement/LeadGenerationPage'));
+const LeadRoutingPage = lazy(() => import('@/modules/crm/pages/leadManagement/LeadRoutingPage'));
+const LeadGroupingPage = lazy(() => import('@/modules/crm/pages/leadManagement/LeadGroupingPage'));
+const LeadConversion = lazy(() => import('@/modules/crm/pages/leadManagement/LeadConversion'));
+const LeadBulkAction = lazy(() => import('@/modules/crm/pages/leadManagement/LeadBulkAction'));
+const ImportLeadPage = lazy(() => import('@/modules/crm/pages/leadManagement/ImportLeadPage'));
+const AssignedLeadsPage = lazy(() => import('@/modules/crm/pages/leadManagement/AssignedLeadsPage'));
+const LeadQualificationPage = lazy(() => import('@/modules/crm/pages/leadManagement/LeadQualificationPage'));
+const CompaniesPage = lazy(() => import('@/modules/crm/pages/contactManagement/CompaniesPage'));
+const InteractionsPage = lazy(() => import('@/modules/crm/pages/contactManagement/InteractionsPage'));
 
 // ============================================================
 // CONTACT MANAGEMENT
 // ============================================================
-const ContactManagementPage = lazy(() => import('../pages/crm/contactManagement/ContactManagementPage'));
-const AddContactPage = lazy(() => import('../pages/crm/contactManagement/AddContactPage'));
-const EditContactPage = lazy(() => import('../pages/crm/contactManagement/EditContactPage'));
-const ContactDetailPage = lazy(() => import('../pages/crm/contactManagement/ContactDetailPage'));
-const AssignedContactsPage = lazy(() => import('../pages/crm/contactManagement/AssignedContactsPage'));
-const ContactGroupingPage = lazy(() => import('../pages/crm/contactManagement/ContactGroupingPage'));
+const ContactManagementPage = lazy(() => import('@/modules/crm/pages/contactManagement/ContactManagementPage'));
+const AddContactPage = lazy(() => import('@/modules/crm/pages/contactManagement/AddContactPage'));
+const EditContactPage = lazy(() => import('@/modules/crm/pages/contactManagement/EditContactPage'));
+const ContactDetailPage = lazy(() => import('@/modules/crm/pages/contactManagement/ContactDetailPage'));
+const AssignedContactsPage = lazy(() => import('@/modules/crm/pages/contactManagement/AssignedContactsPage'));
+const ContactGroupingPage = lazy(() => import('@/modules/crm/pages/contactManagement/ContactGroupingPage'));
 
 // ============================================================
 // SALES MANAGEMENT
 // ============================================================
-const SalesManagement = lazy(() => import('../pages/crm/salesManagement/SalesManagement'));
-const OpportunitiesPage = lazy(() => import('../pages/crm/salesManagement/OpportunitiesPage'));
-const QuotationsPage = lazy(() => import('../pages/crm/salesManagement/QuotationsPage'));
-const OrdersPage = lazy(() => import('../pages/crm/salesManagement/OrdersPage'));
-const OrderDetailPage = lazy(() => import('../pages/crm/salesManagement/OrderDetailPage'));
-const ContractsPage = lazy(() => import('../pages/crm/salesManagement/ContractsPage'));
-const SalesForecastPage = lazy(() => import('../pages/crm/salesManagement/SalesForecastPage'));
+const SalesManagement = lazy(() => import('@/modules/crm/pages/salesManagement/SalesManagement'));
+const OpportunitiesPage = lazy(() => import('@/modules/crm/pages/salesManagement/OpportunitiesPage'));
+const QuotationsPage = lazy(() => import('@/modules/crm/pages/salesManagement/QuotationsPage'));
+const OrdersPage = lazy(() => import('@/modules/crm/pages/salesManagement/OrdersPage'));
+const OrderDetailPage = lazy(() => import('@/modules/crm/pages/salesManagement/OrderDetailPage'));
+const ContractsPage = lazy(() => import('@/modules/crm/pages/salesManagement/ContractsPage'));
+const SalesForecastPage = lazy(() => import('@/modules/crm/pages/salesManagement/SalesForecastPage'));
 
 // ============================================================
 // MARKETING - STATIC ROUTES FIRST
 // ============================================================
-const MarketingAutomation = lazy(() => import('../pages/crm/marketingAutomation/MarketingAutomation'));
-const CampaignsPage = lazy(() => import('../pages/crm/marketingAutomation/CampaignsPage'));
-const EmailCampaignsPage = lazy(() => import('../pages/crm/marketingAutomation/EmailCampaignsPage'));
-const SMSCampaignsPage = lazy(() => import('../pages/crm/marketingAutomation/SMSCampaignsPage'));
-const SocialMediaPage = lazy(() => import('../pages/crm/marketingAutomation/SocialMediaPage'));
-const AddCampaignPage = lazy(() => import('../pages/crm/marketingAutomation/AddCampaignPage'));
-const EditCampaignPage = lazy(() => import('../pages/crm/marketingAutomation/EditCampaignPage'));
-const CampaignDetailPage = lazy(() => import('../pages/crm/marketingAutomation/CampaignDetailPage'));
-const CampaignAnalyticsPage = lazy(() => import('../pages/crm/marketingAutomation/CampaignAnalyticsPage'));
+const MarketingAutomation = lazy(() => import('@/modules/crm/pages/marketingAutomation/MarketingAutomation'));
+const CampaignsPage = lazy(() => import('@/modules/crm/pages/marketingAutomation/CampaignsPage'));
+const EmailCampaignsPage = lazy(() => import('@/modules/crm/pages/marketingAutomation/EmailCampaignsPage'));
+const SMSCampaignsPage = lazy(() => import('@/modules/crm/pages/marketingAutomation/SMSCampaignsPage'));
+const SocialMediaPage = lazy(() => import('@/modules/crm/pages/marketingAutomation/SocialMediaPage'));
+const AddCampaignPage = lazy(() => import('@/modules/crm/pages/marketingAutomation/AddCampaignPage'));
+const EditCampaignPage = lazy(() => import('@/modules/crm/pages/marketingAutomation/EditCampaignPage'));
+const CampaignDetailPage = lazy(() => import('@/modules/crm/pages/marketingAutomation/CampaignDetailPage'));
+const CampaignAnalyticsPage = lazy(() => import('@/modules/crm/pages/marketingAutomation/CampaignAnalyticsPage'));
 
 // ============================================================
 // CUSTOMER SUPPORT
 // ============================================================
-const CustomerSupport = lazy(() => import('../pages/crm/customerService/CustomerService'));
-const TicketsPage = lazy(() => import('../pages/crm/customerService/TicketsPage'));
+const CustomerSupport = lazy(() => import('@/modules/crm/pages/customerService/CustomerService'));
+const TicketsPage = lazy(() => import('@/modules/crm/pages/customerService/TicketsPage'));
 
 // ============================================================
 // ACTIVITIES
 // ============================================================
-const ActivityManagement = lazy(() => import('../pages/crm/activityManagement/ActivityManagement'));
-const CalendarPage = lazy(() => import('../pages/crm/activityManagement/CalendarPage'));
+const ActivityManagement = lazy(() => import('@/modules/crm/pages/activityManagement/ActivityManagement'));
+const CalendarPage = lazy(() => import('@/modules/crm/pages/activityManagement/CalendarPage'));
 
 // ============================================================
 // ANALYTICS
 // ============================================================
-const AnalyticsReporting = lazy(() => import('../pages/crm/analytics/AnalyticsReporting'));
+const AnalyticsReporting = lazy(() => import('@/modules/crm/pages/analytics/AnalyticsReporting'));
 
 // ============================================================
 // SETTINGS
 // ============================================================
-const PageCrmSettings = lazy(() => import('../pages/settings/crmSettings/PageCrmSettings'));
-const PageLeadSources = lazy(() => import('../pages/settings/crmSettings/pageLeadSources'));
-const PageLeadStatuses = lazy(() => import('../pages/settings/crmSettings/pageLeadStatuses'));
-const PageIndustries = lazy(() => import('../pages/settings/crmSettings/pageIndustries'));
-const PageRoutingRules = lazy(() => import('../pages/settings/crmSettings/pageRoutingRules'));
-const PageLeadScoring = lazy(() => import('../pages/settings/crmSettings/pageLeadScoring'));
-const PageEmailTemplates = lazy(() => import('../pages/settings/crmSettings/pageEmailTemplates'));
+const PageCrmSettings = lazy(() => import('@/modules/settings/pages/crmSettings/PageCrmSettings'));
+const PageLeadSources = lazy(() => import('@/modules/settings/pages/crmSettings/pageLeadSources'));
+const PageLeadStatuses = lazy(() => import('@/modules/settings/pages/crmSettings/pageLeadStatuses'));
+const PageIndustries = lazy(() => import('@/modules/settings/pages/crmSettings/pageIndustries'));
+const PageRoutingRules = lazy(() => import('@/modules/settings/pages/crmSettings/pageRoutingRules'));
+const PageLeadScoring = lazy(() => import('@/modules/settings/pages/crmSettings/pageLeadScoring'));
+const PageEmailTemplates = lazy(() => import('@/modules/settings/pages/crmSettings/pageEmailTemplates'));
 
 
-const PropertiesPage = lazy(() => import('../pages/crm/realEstate/PropertiesPage'));
-const TransactionsPage = lazy(() => import('../pages/crm/realEstate/TransactionsPage'));
-const CommissionsPage = lazy(() => import('../pages/crm/realEstate/CommissionsPage'));
+const PropertiesPage = lazy(() => import('@/modules/crm/pages/realEstate/PropertiesPage'));
+const TransactionsPage = lazy(() => import('@/modules/crm/pages/realEstate/TransactionsPage'));
+const CommissionsPage = lazy(() => import('@/modules/crm/pages/realEstate/CommissionsPage'));
 // ============================================================
 // CRM ROUTES
 // ============================================================
