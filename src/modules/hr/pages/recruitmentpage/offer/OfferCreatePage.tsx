@@ -1,4 +1,4 @@
-import HrPlaceholderPage from "../placeholders/HrPlaceholderPage";
+import HrPlaceholderPage from "../../placeholders/HrPlaceholderPage";
 
 export default function OfferCreatePage() {
   return (
