@@ -1,0 +1,65 @@
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import BudgetApprovalHeader from '@/modules/finance/components/budgeting/budgetApproval/BudgetApprovalHeader';
+import BudgetApprovalSearchFilter from '@/modules/finance/components/budgeting/budgetApproval/BudgetApprovalSearchFilter';
+import BudgetApprovalTable from '@/modules/finance/components/budgeting/budgetApproval/BudgetApprovalTable';
+import type { BudgetPlan } from '@/modules/finance/components/budgeting/budgetPlan/BudgetPlanSection';
+
+export default function BudgetApprovalSection() {
+  const navigate = useNavigate();
+  const [budgetPlans, setBudgetPlans] = useState<BudgetPlan[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    // Load budget plans from localStorage
+    const stored = localStorage.getItem('budgetPlans');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setBudgetPlans(parsed);
+        }
+      } catch (e) {
+        console.error('Error parsing budgetPlans:', e);
+      }
+    }
+  }, []);
+
+  const handleViewExpenses = (plan: BudgetPlan) => {
+    navigate(`/finance/budget-approval/${plan.id}/expenses`);
+  };
+
+  const filteredPlans = budgetPlans.filter(plan =>
+    plan.fiscalYear.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    plan.costCenter.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredPlans.length / 10);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      <BudgetApprovalHeader />
+
+      <BudgetApprovalSearchFilter
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+      />
+
+      <BudgetApprovalTable
+        budgetPlans={filteredPlans}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredPlans.length}
+        onPageChange={setCurrentPage}
+        onViewExpenses={handleViewExpenses}
+      />
+    </motion.div>
+  );
+}

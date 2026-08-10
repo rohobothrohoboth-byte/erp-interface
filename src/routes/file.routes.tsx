@@ -16,7 +16,7 @@ import {
     Clock,
     type LucideIcon
 } from 'lucide-react';
-import { PageLoader } from '../components/ui/page-loader';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
 
 const withSuspense = (
@@ -28,20 +28,22 @@ const withSuspense = (
 );
 
 // File Pages - Updated with all the new pages
-const FileDashboard = lazy(() => import('../pages/modules/File'));
-const CompanyDocumentsPage = lazy(() => import('../pages/File/CompanyDocumentsPage'));
-const CompanyFoldersPage = lazy(() => import('../pages/File/CompanyFoldersPage'));
-const SharedDocumentsPage = lazy(() => import('../pages/File/SharedDocumentsPage'));
-const PersonalDocumentsPage = lazy(() => import('../pages/File/PersonalDocumentsPage'));
-const MyFoldersPage = lazy(() => import('../pages/File/MyFoldersPage'));
-const RecentFilesPage = lazy(() => import('../pages/File/RecentFilesPage'));
-const ArchivePage = lazy(() => import('../pages/File/ArchivePage'));
-const StarredFilesPage = lazy(() => import('../pages/File/StarredFilesPage'));
-const FolderContentsPage = lazy(() => import('../pages/File/FolderContentsPage'));
+const FileDashboard = lazy(() => import('@/modules/file/pages/ModuleDashboard'));
+const CompanyDocumentsPage = lazy(() => import('@/modules/file/pages/CompanyDocumentsPage'));
+const CompanyFoldersPage = lazy(() => import('@/modules/file/pages/CompanyFoldersPage'));
+const SharedDocumentsPage = lazy(() => import('@/modules/file/pages/SharedDocumentsPage'));
+const PersonalDocumentsPage = lazy(() => import('@/modules/file/pages/PersonalDocumentsPage'));
+const MyFoldersPage = lazy(() => import('@/modules/file/pages/MyFoldersPage'));
+const RecentFilesPage = lazy(() => import('@/modules/file/pages/RecentFilesPage'));
+const ArchivePage = lazy(() => import('@/modules/file/pages/ArchivePage'));
+const StarredFilesPage = lazy(() => import('@/modules/file/pages/StarredFilesPage'));
+const FolderContentsPage = lazy(() => import('@/modules/file/pages/FolderContentsPage/index'));
+const FileSettings = lazy(() => import('@/modules/file/pages/FileSettings'));
+const FolderDocumentsPage = lazy(() => import('@/modules/file/pages/FolderDocumentsPage'));
 
 // ✅ DocumentDetailPage - Keep as a regular import since it's already a component
 // or use lazy if you want code splitting
-import DocumentDetailPage from '../pages/file/DocumentDetailPage';
+const DocumentDetailPage = lazy(() => import('@/modules/file/pages/DocumentDetailPage'));
 
 export const fileRoutes: AppRoute[] = [
     // Dashboard
@@ -139,6 +141,24 @@ export const fileRoutes: AppRoute[] = [
         icon: Archive,
         element: withSuspense(ArchivePage),
         nav: true,
+    },
+    // Settings
+    {
+        path: 'file/settings',
+        href: '/file/settings',
+        title: 'File Settings',
+        icon: Settings,
+        element: withSuspense(FileSettings),
+        nav: false,
+    },
+    // Documents inside a folder
+    {
+        path: 'file/folders/:id/documents',
+        href: '/file/folders/:id/documents',
+        title: 'Folder Documents',
+        icon: File,
+        element: withSuspense(FolderDocumentsPage),
+        nav: false,
     },
 ];
 

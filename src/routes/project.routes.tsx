@@ -13,7 +13,7 @@ import {
     AlertTriangle,
     type LucideIcon
 } from 'lucide-react';
-import { PageLoader } from '../components/ui/page-loader';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
 
 const withSuspense = (
@@ -25,7 +25,24 @@ const withSuspense = (
 );
 
 // Project Management Pages
-const ProjectManagementDashboard = lazy(() => import('../pages/modules/ProjectManagement'));
+const ProjectManagementDashboard = lazy(() => import('@/modules/project/pages/ModuleDashboard'));
+const ProjectList = lazy(() => import('@/modules/project/pages/projects/ProjectList'));
+const CreateProject = lazy(() => import('@/modules/project/pages/projects/CreateProject'));
+const ProjectTemplates = lazy(() => import('@/modules/project/pages/projects/ProjectTemplates'));
+const TaskList = lazy(() => import('@/modules/project/pages/tasks/TaskList'));
+const MyTasksPage = lazy(() => import('@/modules/project/pages/tasks/MyTasksPage'));
+const TaskBoardPage = lazy(() => import('@/modules/project/pages/tasks/TaskBoardPage'));
+const TaskCalendarPage = lazy(() => import('@/modules/project/pages/tasks/TaskCalendarPage'));
+const TeamMembersPage = lazy(() => import('@/modules/project/pages/team/TeamMembersPage'));
+const RolesPage = lazy(() => import('@/modules/project/pages/team/RolesPage'));
+const WorkloadPage = lazy(() => import('@/modules/project/pages/team/WorkloadPage'));
+const TimelinePage = lazy(() => import('@/modules/project/pages/timeline/TimelinePage'));
+const MilestonesPage = lazy(() => import('@/modules/project/pages/milestones/MilestonesPage'));
+const BudgetPage = lazy(() => import('@/modules/project/pages/budget/BudgetPage'));
+const RiskRegisterPage = lazy(() => import('@/modules/project/pages/risks/RiskRegisterPage'));
+const ProgressReportsPage = lazy(() => import('@/modules/project/pages/reports/ProgressReportsPage'));
+const TimeReportsPage = lazy(() => import('@/modules/project/pages/reports/TimeReportsPage'));
+const FinancialReportsPage = lazy(() => import('@/modules/project/pages/reports/FinancialReportsPage'));
 
 export const projectRoutes: AppRoute[] = [
     // Dashboard
@@ -44,7 +61,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/projects',
         title: 'Projects',
         icon: Projector,
-        element: withSuspense(() => import('../pages/projectmanagement/projects/ProjectList')),
+        element: withSuspense(ProjectList),
         nav: true,
     },
     {
@@ -52,7 +69,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/projects/create',
         title: 'Create Project',
         icon: Projector,
-        element: withSuspense(() => import('../pages/projectmanagement/projects/CreateProject')),
+        element: withSuspense(CreateProject),
         nav: false,
     },
     {
@@ -60,7 +77,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/templates',
         title: 'Project Templates',
         icon: Projector,
-        element: withSuspense(() => import('../pages/projectmanagement/projects/ProjectTemplates')),
+        element: withSuspense(ProjectTemplates),
         nav: false,
     },
     // Tasks
@@ -69,7 +86,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/tasks',
         title: 'Tasks',
         icon: ListTodo,
-        element: withSuspense(() => import('../pages/projectmanagement/tasks/TaskList')),
+        element: withSuspense(TaskList),
         nav: true,
     },
     {
@@ -77,7 +94,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/tasks/my',
         title: 'My Tasks',
         icon: ListTodo,
-        element: withSuspense(() => import('../pages/projectmanagement/tasks/MyTasksPage')),
+        element: withSuspense(MyTasksPage),
         nav: false,
     },
     {
@@ -85,7 +102,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/tasks/board',
         title: 'Task Board',
         icon: ListTodo,
-        element: withSuspense(() => import('../pages/projectmanagement/tasks/TaskBoardPage')),
+        element: withSuspense(TaskBoardPage),
         nav: false,
     },
     {
@@ -93,7 +110,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/tasks/calendar',
         title: 'Task Calendar',
         icon: Calendar,
-        element: withSuspense(() => import('../pages/projectmanagement/tasks/TaskCalendarPage')),
+        element: withSuspense(TaskCalendarPage),
         nav: false,
     },
     // Team
@@ -102,7 +119,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/team',
         title: 'Team Members',
         icon: Users,
-        element: withSuspense(() => import('../pages/projectmanagement/team/TeamMembersPage')),
+        element: withSuspense(TeamMembersPage),
         nav: true,
     },
     {
@@ -110,7 +127,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/team/roles',
         title: 'Roles & Responsibilities',
         icon: Users,
-        element: withSuspense(() => import('../pages/projectmanagement/team/RolesPage')),
+        element: withSuspense(RolesPage),
         nav: false,
     },
     {
@@ -118,7 +135,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/team/workload',
         title: 'Workload',
         icon: Users,
-        element: withSuspense(() => import('../pages/projectmanagement/team/WorkloadPage')),
+        element: withSuspense(WorkloadPage),
         nav: false,
     },
     // Timeline & Milestones
@@ -127,7 +144,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/timeline',
         title: 'Timeline',
         icon: Clock,
-        element: withSuspense(() => import('../pages/projectmanagement/timeline/TimelinePage')),
+        element: withSuspense(TimelinePage),
         nav: false,
     },
     {
@@ -135,7 +152,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/milestones',
         title: 'Milestones',
         icon: Calendar,
-        element: withSuspense(() => import('../pages/projectmanagement/milestones/MilestonesPage')),
+        element: withSuspense(MilestonesPage),
         nav: false,
     },
     // Budget
@@ -144,7 +161,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/budget',
         title: 'Budget & Costs',
         icon: BarChart3,
-        element: withSuspense(() => import('../pages/projectmanagement/budget/BudgetPage')),
+        element: withSuspense(BudgetPage),
         nav: false,
     },
     // Risks
@@ -153,7 +170,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/risks',
         title: 'Risk Register',
         icon: AlertTriangle,
-        element: withSuspense(() => import('../pages/projectmanagement/risks/RiskRegisterPage')),
+        element: withSuspense(RiskRegisterPage),
         nav: false,
     },
     // Reports
@@ -162,7 +179,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/reports/progress',
         title: 'Progress Reports',
         icon: FileText,
-        element: withSuspense(() => import('../pages/projectmanagement/reports/ProgressReportsPage')),
+        element: withSuspense(ProgressReportsPage),
         nav: false,
     },
     {
@@ -170,7 +187,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/reports/time',
         title: 'Time Reports',
         icon: FileText,
-        element: withSuspense(() => import('../pages/projectmanagement/reports/TimeReportsPage')),
+        element: withSuspense(TimeReportsPage),
         nav: false,
     },
     {
@@ -178,7 +195,7 @@ export const projectRoutes: AppRoute[] = [
         href: '/project-management/reports/financial',
         title: 'Financial Reports',
         icon: FileText,
-        element: withSuspense(() => import('../pages/projectmanagement/reports/FinancialReportsPage')),
+        element: withSuspense(FinancialReportsPage),
         nav: false,
     },
 ];

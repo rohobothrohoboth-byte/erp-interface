@@ -16,7 +16,7 @@ import {
     BookOpen,
     Award,
 } from 'lucide-react';
-import { PageLoader } from '../components/ui/page-loader';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
 
 // ✅ Error Boundary Component
@@ -118,116 +118,138 @@ const safeLazy = (importFn: () => Promise<any>) => {
 
 // ==================== HR MODULE PAGES ====================
 // All imports go up one level (../) from src/routes/ to src/
-const Dashboard =safeLazy(() => import('../pages/modules/HR'));
-const EmployeeManagementPage =safeLazy(() => import('../pages/hr/employeepage/EmployeeRecord'));
-const EmployeeDetailsPage =safeLazy(() => import('../pages/hr/employeepage/EmployeeDetailsPage'));
-const AddEmployeePage =safeLazy(() => import('../pages/hr/employeepage/AddEmployeePage'));
-const EditEmployeePage =safeLazy(() => import('../pages/hr/employeepage/EditEmployeePage'));
-const PendingEmployeePage =safeLazy(() => import('../pages/hr/employeepage/PendingEmployeePage'));
-const PendingEmployeeDetail =safeLazy(() => import('../components/hr/employee/PendingEmployee/PendingEmployeeDetail'));
-const Termination =safeLazy(() => import('../pages/hr/employeepage/Termination'));
+const Dashboard =safeLazy(() => import('@/modules/hr/pages/ModuleDashboard'));
+const EmployeeManagementPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeRecord'));
+const EmployeeDetailsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeDetailsPage'));
+const AddEmployeePage =safeLazy(() => import('@/modules/hr/pages/employeepage/AddEmployeePage'));
+const EditEmployeePage =safeLazy(() => import('@/modules/hr/pages/employeepage/EditEmployeePage'));
+const PendingEmployeePage =safeLazy(() => import('@/modules/hr/pages/employeepage/PendingEmployeePage'));
+const PendingEmployeeDetail =safeLazy(() => import('@/modules/hr/components/employee/PendingEmployee/PendingEmployeeDetail'));
+const Termination =safeLazy(() => import('@/modules/hr/pages/employeepage/Termination'));
+const EmployeeProfilePage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeProfilePage'));
+const EmployeeDocumentsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeDocumentsPage'));
+const EmployeeContractsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeContractsPage'));
+const EmployeePerformancePage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeePerformancePage'));
+const EmployeePromotionsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeePromotionsPage'));
+const EmployeeTransfersPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeTransfersPage'));
 
 // ✅ Add Pending Education/Experience Page
-const PendingEmpEduExpPage =safeLazy(() => import('../pages/hr/employeepage/PendingEmpEduExpPage'));
+const PendingEmpEduExpPage =safeLazy(() => import('@/modules/hr/pages/employeepage/PendingEmpEduExpPage'));
 
 // Leave Management
-const LeaveList =safeLazy(() => import('../pages/hr/leavepage/MyLeavePage'));
-const LeaveApprovalPage =safeLazy(() => import('../pages/hr/leavepage/LeaveApprovalPage'));
-const LeaveRequestForm =safeLazy(() => import('../pages/hr/leavepage/LeaveRequestForm'));
-const LeaveEntitlementPage =safeLazy(() => import('../pages/hr/leavepage/LeaveEntitlementPage'));
-const YearEndProcessingPage =safeLazy(() => import('../pages/hr/leavepage/YearEndProcessingPage'));
-const MyLeaveRequestsPage =safeLazy(() => import('../pages/hr/leavepage/MyLeaveRequestsPage'));
-const LeaveAppChainManagement =safeLazy(() => import('../pages/settings/hrSettings/Leave/LeaveAppChainManagement'));
-const AppChainHistorySection =safeLazy(() => import('../components/settings/hrSettings/leave/LeaveAppChain/appChainHistory/AppChainHistorySection'));
+const LeaveList =safeLazy(() => import('@/modules/hr/pages/leavepage/MyLeavePage'));
+const LeaveApprovalPage =safeLazy(() => import('@/modules/hr/pages/leavepage/LeaveApprovalPage'));
+const LeaveRequestForm =safeLazy(() => import('@/modules/hr/pages/leavepage/LeaveRequestForm'));
+const LeaveEntitlementPage =safeLazy(() => import('@/modules/hr/pages/leavepage/LeaveEntitlementPage'));
+const YearEndProcessingPage =safeLazy(() => import('@/modules/hr/pages/leavepage/YearEndProcessingPage'));
+const MyLeaveRequestsPage =safeLazy(() => import('@/modules/hr/pages/leavepage/MyLeaveRequestsPage'));
+const LeaveAppChainManagement =safeLazy(() => import('@/modules/settings/pages/hrSettings/Leave/LeaveAppChainManagement'));
+const AppChainHistorySection =safeLazy(() => import('@/modules/settings/components/hrSettings/leave/LeaveAppChain/appChainHistory/AppChainHistorySection'));
 
 // Attendance
-const AttendanceList =safeLazy(() => import('../pages/hr/attendancepage/AttendanceList'));
-const AttendanceReport =safeLazy(() => import('../pages/hr/attendancepage/AttendanceReport'));
-const ShiftScheduler =safeLazy(() => import('../pages/hr/attendancepage/ShiftScheduler'));
-const TimeClock =safeLazy(() => import('../pages/hr/attendancepage/TimeClock'));
-const TimeClockFormContainer =safeLazy(() => import('../pages/hr/attendancepage/TimeClockFormContainer'));
+const AttendanceList =safeLazy(() => import('@/modules/hr/pages/attendancepage/AttendanceList'));
+const AttendanceReport =safeLazy(() => import('@/modules/hr/pages/attendancepage/AttendanceReport'));
+const ShiftScheduler =safeLazy(() => import('@/modules/hr/pages/attendancepage/ShiftScheduler'));
+const TimeClock =safeLazy(() => import('@/modules/hr/pages/attendancepage/TimeClock'));
+const TimeClockFormContainer =safeLazy(() => import('@/modules/hr/pages/attendancepage/TimeClockFormContainer'));
 
 // Training
-const Training =safeLazy(() => import('../pages/hr/trainingpage/Training'));
+const Training =safeLazy(() => import('@/modules/hr/pages/trainingpage/Training'));
+const TrainingProgramsPage =safeLazy(() => import('@/modules/hr/pages/trainingpage/TrainingProgramsPage'));
+
+// Payroll
+const PayrollRunPage =safeLazy(() => import('@/modules/hr/pages/payrollpage/PayrollRunPage'));
+const PayrollHistoryPage =safeLazy(() => import('@/modules/hr/pages/payrollpage/PayrollHistoryPage'));
+const SalaryStructurePage =safeLazy(() => import('@/modules/hr/pages/payrollpage/SalaryStructurePage'));
+const TaxConfigPage =safeLazy(() => import('@/modules/hr/pages/payrollpage/TaxConfigPage'));
+
+// HR Reports (Auth seeder paths)
+const EmployeeReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/EmployeeReportsPage'));
+const AttendanceReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/AttendanceReportsPage'));
+const LeaveReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/LeaveReportsPage'));
+const PayrollReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/PayrollReportsPage'));
+const RecruitmentReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/RecruitmentReportsPage'));
 
 // ==================== RECRUITMENT MODULE PAGES ====================
-const RecruitmentDashboard =safeLazy(() => import('../pages/hr/recruitmentpage/RecruitmentDashboard'));
-const RecruitmentAnalytics =safeLazy(() => import('../pages/hr/recruitmentpage/RecruitmentAnalytics'));
-const CandidatePipeline =safeLazy(() => import('../pages/hr/recruitmentpage/CandidatePipeline'));
-const OnBoarding =safeLazy(() => import('../pages/hr/recruitmentpage/OnBoarding'));
-const RecruitmentList =safeLazy(() => import('../pages/hr/recruitmentpage/RecruitmentList'));
-const TestMenuTreePage =safeLazy(() => import('../pages/TestMenuTreePage'));
+const RecruitmentDashboard =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/RecruitmentDashboard'));
+const RecruitmentAnalytics =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/RecruitmentAnalytics'));
+const CandidatePipeline =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/CandidatePipeline'));
+const OnBoarding =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/OnBoarding'));
+const RecruitmentList =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/RecruitmentList'));
+const TestMenuTreePage =safeLazy(() => import('@/shared/pages/TestMenuTreePage'));
 
 // Workforce Planning
-const WorkforcePlansPage =safeLazy(() => import('../pages/hr/recruitmentpage/workforcePlan/WorkforcePlansPage'));
-const WorkforcePlanCreate =safeLazy(() => import('../components/hr/recruitment/workforcePlan/WorkforcePlanCreate'));
-const WorkforcePlanEdit =safeLazy(() => import('../components/hr/recruitment/workforcePlan/WorkforcePlanEdit'));
-const WorkforcePlanDetail =safeLazy(() => import('../components/hr/recruitment/workforcePlan/WorkforcePlanDetail'));
-const WorkforcePlanReviewSection =safeLazy(() => import('../components/hr/recruitment/workforcePlan/WorkforcePlanReviewSection'));
+const WorkforcePlansPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/workforcePlan/WorkforcePlansPage'));
+const WorkforcePlanCreate =safeLazy(() => import('@/modules/hr/components/recruitment/workforcePlan/WorkforcePlanCreate'));
+const WorkforcePlanEdit =safeLazy(() => import('@/modules/hr/components/recruitment/workforcePlan/WorkforcePlanEdit'));
+const WorkforcePlanDetail =safeLazy(() => import('@/modules/hr/components/recruitment/workforcePlan/WorkforcePlanDetail'));
+const WorkforcePlanReviewSection =safeLazy(() => import('@/modules/hr/components/recruitment/workforcePlan/WorkforcePlanReviewSection'));
 
 // Job Requisition
-const JobRequisitionsPage =safeLazy(() => import('../pages/hr/recruitmentpage/jobRequisition/JobRequisitionsPage'));
-const JobRequisitionCreate =safeLazy(() => import('../pages/hr/recruitmentpage/jobRequisition/JobRequisitionCreate'));
-const JobRequisitionEdit =safeLazy(() => import('../pages/hr/recruitmentpage/jobRequisition/JobRequisitionEdit'));
-const JobRequisitionDetail =safeLazy(() => import('../pages/hr/recruitmentpage/jobRequisition/JobRequisitionDetail'));
+const JobRequisitionsPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/jobRequisition/JobRequisitionsPage'));
+const JobRequisitionCreate =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/jobRequisition/JobRequisitionCreate'));
+const JobRequisitionEdit =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/jobRequisition/JobRequisitionEdit'));
+const JobRequisitionDetail =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/jobRequisition/JobRequisitionDetail'));
 
 // Job Posting
-const JobPostingsPage =safeLazy(() => import('../pages/hr/recruitmentpage/jobPosting/JobPostingsPage'));
-const JobPostingCreate =safeLazy(() => import('../pages/hr/recruitmentpage/jobPosting/JobPostingCreate'));
-const JobPostingEdit =safeLazy(() => import('../pages/hr/recruitmentpage/jobPosting/JobPostingEdit'));
-const JobPostingDetail =safeLazy(() => import('../components/hr/recruitment/jobPosting/JobPostingDetail'));
-const JobPostingDashboardPage =safeLazy(() => import('../pages/hr/recruitmentpage/JobPostingDashboardPage'));
-const PostApplicantsPage =safeLazy(() => import('../pages/hr/recruitmentpage/PostApplicantsPage'));
-const JpEvalFlowPage =safeLazy(() => import('../pages/hr/recruitmentpage/JpEvalFlowPage'));
+const JobPostingsPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/jobPosting/JobPostingsPage'));
+const JobPostingCreate =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/jobPosting/JobPostingCreate'));
+const JobPostingEdit =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/jobPosting/JobPostingEdit'));
+const JobPostingDetail =safeLazy(() => import('@/modules/hr/components/recruitment/jobPosting/JobPostingDetail'));
+const JobPostingDashboardPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/JobPostingDashboardPage'));
+const PostApplicantsPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/PostApplicantsPage'));
+const JpEvalFlowPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/JpEvalFlowPage'));
 
 // Applicant Management
-const ApplicantsPage =safeLazy(() => import('../pages/hr/recruitmentpage/applicant/ApplicantsPage'));
-const ApplicantDetail =safeLazy(() => import('../pages/hr/recruitmentpage/applicant/ApplicantDetail'));
-const ApplicantEvaluation =safeLazy(() => import('../pages/hr/recruitmentpage/applicant/ApplicantEvaluation'));
-const ApplicantEvaluationPageWrapper =safeLazy(() => import('../pages/hr/recruitmentpage/ApplicantEvaluationPageWrapper'));
+const ApplicantsPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/applicant/ApplicantsPage'));
+const ApplicantDetail =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/applicant/ApplicantDetail'));
+const ApplicantEvaluation =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/applicant/ApplicantEvaluation'));
+const ApplicantEvaluationPageWrapper =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/ApplicantEvaluationPageWrapper'));
 
 // Interview Management
-const InterviewsPage =safeLazy(() => import('../pages/hr/recruitmentpage/interview/InterviewsPage'));
-const InterviewSchedule =safeLazy(() => import('../pages/hr/recruitmentpage/interview/InterviewSchedule'));
-const InterviewDetail =safeLazy(() => import('../pages/hr/recruitmentpage/interview/InterviewDetail'));
-const InterviewEdit =safeLazy(() => import('../pages/hr/recruitmentpage/interview/InterviewEdit'));
+const InterviewsPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/interview/InterviewsPage'));
+const InterviewSchedule =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/interview/InterviewSchedule'));
+const InterviewDetail =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/interview/InterviewDetail'));
+const InterviewEdit =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/interview/InterviewEdit'));
 
 // Offer Management
-const OffersPage =safeLazy(() => import('../pages/hr/recruitmentpage/offer/OffersPage'));
-const OfferDetail =safeLazy(() => import('../pages/hr/recruitmentpage/offer/OfferDetail'));
+const OffersPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/offer/OffersPage'));
+const OfferDetail =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/offer/OfferDetail'));
+const OfferCreatePage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/offer/OfferCreatePage'));
+const ApplicantEvaluateEntryPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/applicant/ApplicantEvaluateEntryPage'));
 
 // Onboarding
-const OnboardingTasksPage =safeLazy(() => import('../pages/hr/recruitmentpage/onboarding/OnboardingTasksPage'));
-const OnboardingTaskDetail =safeLazy(() => import('../pages/hr/recruitmentpage/onboarding/OnboardingTaskDetail'));
-const OnboardingAssignmentPage =safeLazy(() => import('../pages/hr/recruitmentpage/onboarding/OnboardingAssignmentPage'));
-const OnboardingAssignmentDetail =safeLazy(() => import('../pages/hr/recruitmentpage/onboarding/OnboardingAssignmentDetail'));
+const OnboardingTasksPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/onboarding/OnboardingTasksPage'));
+const OnboardingTaskDetail =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/onboarding/OnboardingTaskDetail'));
+const OnboardingAssignmentPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/onboarding/OnboardingAssignmentPage'));
+const OnboardingAssignmentDetail =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/onboarding/OnboardingAssignmentDetail'));
 
 // Legacy Recruitment
-const JobRequisitionPage =safeLazy(() => import('../pages/hr/recruitmentpage/JobRequisitionPage'));
-const JobPostingPage =safeLazy(() => import('../pages/hr/recruitmentpage/JobPostingPage'));
-const ApprovedJobRequisitionPage =safeLazy(() => import('../pages/hr/recruitmentpage/ApprovedJobRequisitionPage'));
+const JobRequisitionPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/JobRequisitionPage'));
+const JobPostingPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/JobPostingPage'));
+const ApprovedJobRequisitionPage =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/ApprovedJobRequisitionPage'));
 
 // Settings Pages (HR)
-const PageEvaluationFlow =safeLazy(() => import('../pages/settings/hrSettings/Recruitment/PageEvaluationFlow'));
-const PageEvaluationType =safeLazy(() => import('../pages/settings/hrSettings/Recruitment/PageEvaluationType'));
-const PageEvaluationStep =safeLazy(() => import('../pages/settings/hrSettings/Recruitment/PageEvaluationStep'));
-const PageOnboardingTask =safeLazy(() => import('../pages/settings/hrSettings/Recruitment/PageOnboardingTask'));
-const PageHrRecruitmentSettings =safeLazy(() => import('../pages/settings/hrSettings/Recruitment/PageHrRecruitmentSettings'));
-const JobGrade =safeLazy(() => import('../pages/settings/hrSettings/jobgrade/JobGrade'));
-const JobGradeSubgrades =safeLazy(() => import('../pages/settings/hrSettings/jobgrade/JobGradeSubgrades'));
-const PageBenefitSet =safeLazy(() => import('../pages/settings/hrSettings/pageBenefitSet'));
-const PageEducationalQual =safeLazy(() => import('../pages/settings/hrSettings/pageEducationalQual'));
-const PagePosition =safeLazy(() => import('../pages/settings/hrSettings/position/pagePosition'));
-const PositionDetails =safeLazy(() => import('../pages/settings/hrSettings/position/PositionDetails'));
-const PageAnnualLeave =safeLazy(() => import('../pages/settings/hrSettings/pageAnnualLeave'));
-const LeavePolicyAccrualPage =safeLazy(() => import('../pages/settings/hrSettings/leavepolicyaccrual/LeavePolicyAccrualPage'));
-const LeavePolicy =safeLazy(() => import('../pages/settings/hrSettings/Leave/leavePolicy'));
-const LeavePolicyConfig =safeLazy(() => import('../pages/settings/hrSettings/Leave/leavePolicyConfig'));
-const LeaveAppChainHistory =safeLazy(() => import('../pages/settings/hrSettings/Leave/LeaveAppChainHistory'));
-const LeavePolicyConfigHistory =safeLazy(() => import('../pages/settings/hrSettings/Leave/leavePolicyConfigHistory'));
-const PolicyAssignmentRule =safeLazy(() => import('../pages/settings/hrSettings/Leave/policyAssignmentRule'));
-const PolicyAssignmentRuleHistory =safeLazy(() => import('../pages/settings/hrSettings/Leave/policyAssignmentRuleHistory'));
-const PageHrSettings =safeLazy(() => import('../pages/settings/hrSettings/PageHrSettings'));
+const PageEvaluationFlow =safeLazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageEvaluationFlow'));
+const PageEvaluationType =safeLazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageEvaluationType'));
+const PageEvaluationStep =safeLazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageEvaluationStep'));
+const PageOnboardingTask =safeLazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageOnboardingTask'));
+const PageHrRecruitmentSettings =safeLazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageHrRecruitmentSettings'));
+const JobGrade =safeLazy(() => import('@/modules/settings/pages/hrSettings/jobgrade/JobGrade'));
+const JobGradeSubgrades =safeLazy(() => import('@/modules/settings/pages/hrSettings/jobgrade/JobGradeSubgrades'));
+const PageBenefitSet =safeLazy(() => import('@/modules/settings/pages/hrSettings/pageBenefitSet'));
+const PageEducationalQual =safeLazy(() => import('@/modules/settings/pages/hrSettings/pageEducationalQual'));
+const PagePosition =safeLazy(() => import('@/modules/settings/pages/hrSettings/position/pagePosition'));
+const PositionDetails =safeLazy(() => import('@/modules/settings/pages/hrSettings/position/PositionDetails'));
+const PageAnnualLeave =safeLazy(() => import('@/modules/settings/pages/hrSettings/pageAnnualLeave'));
+const LeavePolicyAccrualPage =safeLazy(() => import('@/modules/settings/pages/hrSettings/leavepolicyaccrual/LeavePolicyAccrualPage'));
+const LeavePolicy =safeLazy(() => import('@/modules/settings/pages/hrSettings/Leave/leavePolicy'));
+const LeavePolicyConfig =safeLazy(() => import('@/modules/settings/pages/hrSettings/Leave/leavePolicyConfig'));
+const LeaveAppChainHistory =safeLazy(() => import('@/modules/settings/pages/hrSettings/Leave/LeaveAppChainHistory'));
+const LeavePolicyConfigHistory =safeLazy(() => import('@/modules/settings/pages/hrSettings/Leave/leavePolicyConfigHistory'));
+const PolicyAssignmentRule =safeLazy(() => import('@/modules/settings/pages/hrSettings/Leave/policyAssignmentRule'));
+const PolicyAssignmentRuleHistory =safeLazy(() => import('@/modules/settings/pages/hrSettings/Leave/policyAssignmentRuleHistory'));
+const PageHrSettings =safeLazy(() => import('@/modules/settings/pages/hrSettings/PageHrSettings'));
 
 // ==================== HR ROUTES ====================
 export const hrRoutes: AppRoute[] = [
@@ -305,6 +327,63 @@ export const hrRoutes: AppRoute[] = [
         title: 'Terminations',
         icon: UserX,
         element: withSuspense(Termination),
+        nav: false,
+    },
+    // Auth seeder uses plural "terminations"
+    {
+        path: 'hr/employees/terminations',
+        href: '/hr/employees/terminations',
+        title: 'Terminations',
+        icon: UserX,
+        element: withSuspense(Termination),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/profile',
+        href: '/hr/employees/profile',
+        title: 'Employee Profile',
+        icon: Users,
+        element: withSuspense(EmployeeProfilePage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/documents',
+        href: '/hr/employees/documents',
+        title: 'Employee Documents',
+        icon: FileText,
+        element: withSuspense(EmployeeDocumentsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/contracts',
+        href: '/hr/employees/contracts',
+        title: 'Contracts',
+        icon: FileText,
+        element: withSuspense(EmployeeContractsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/performance',
+        href: '/hr/employees/performance',
+        title: 'Performance Reviews',
+        icon: BarChart3,
+        element: withSuspense(EmployeePerformancePage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/promotions',
+        href: '/hr/employees/promotions',
+        title: 'Promotions',
+        icon: Award,
+        element: withSuspense(EmployeePromotionsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/transfers',
+        href: '/hr/employees/transfers',
+        title: 'Transfers',
+        icon: Users,
+        element: withSuspense(EmployeeTransfersPage),
         nav: false,
     },
     // ✅ Add Pending Education/Experience Route
@@ -390,6 +469,14 @@ export const hrRoutes: AppRoute[] = [
         element: withSuspense(YearEndProcessingPage),
         nav: false,
     },
+    {
+        path: 'hr/leave/types',
+        href: '/hr/leave/types',
+        title: 'Leave Types',
+        icon: Calendar,
+        element: withSuspense(PageAnnualLeave),
+        nav: false,
+    },
 
     // Attendance
     {
@@ -441,7 +528,7 @@ export const hrRoutes: AppRoute[] = [
         nav: false,
     },
 
-    // Training
+    // Training (Auth seeder paths)
     {
         path: 'hr/training',
         href: '/hr/training',
@@ -449,6 +536,114 @@ export const hrRoutes: AppRoute[] = [
         icon: GraduationCap,
         element: withSuspense(Training),
         nav: true,
+    },
+    {
+        path: 'hr/training/programs',
+        href: '/hr/training/programs',
+        title: 'Training Programs',
+        icon: GraduationCap,
+        element: withSuspense(TrainingProgramsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/training/calendar',
+        href: '/hr/training/calendar',
+        title: 'Training Calendar',
+        icon: Calendar,
+        element: withSuspense(TrainingProgramsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/training/feedback',
+        href: '/hr/training/feedback',
+        title: 'Training Feedback',
+        icon: ClipboardList,
+        element: withSuspense(TrainingProgramsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/training/certificates',
+        href: '/hr/training/certificates',
+        title: 'Certifications',
+        icon: Award,
+        element: withSuspense(TrainingProgramsPage),
+        nav: false,
+    },
+
+    // Payroll (Auth seeder paths)
+    {
+        path: 'hr/payroll/run',
+        href: '/hr/payroll/run',
+        title: 'Run Payroll',
+        icon: Briefcase,
+        element: withSuspense(PayrollRunPage),
+        nav: false,
+    },
+    {
+        path: 'hr/payroll/history',
+        href: '/hr/payroll/history',
+        title: 'Payroll History',
+        icon: FileText,
+        element: withSuspense(PayrollHistoryPage),
+        nav: false,
+    },
+    {
+        path: 'hr/payroll/salary-structure',
+        href: '/hr/payroll/salary-structure',
+        title: 'Salary Structure',
+        icon: FileText,
+        element: withSuspense(SalaryStructurePage),
+        nav: false,
+    },
+    {
+        path: 'hr/payroll/tax',
+        href: '/hr/payroll/tax',
+        title: 'Tax Configurations',
+        icon: FileText,
+        element: withSuspense(TaxConfigPage),
+        nav: false,
+    },
+
+    // HR Reports (Auth seeder paths)
+    {
+        path: 'hr/reports/employees',
+        href: '/hr/reports/employees',
+        title: 'Employee Reports',
+        icon: Users,
+        element: withSuspense(EmployeeReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/attendance',
+        href: '/hr/reports/attendance',
+        title: 'Attendance Reports',
+        icon: Clock,
+        element: withSuspense(AttendanceReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/leave',
+        href: '/hr/reports/leave',
+        title: 'Leave Reports',
+        icon: Calendar,
+        element: withSuspense(LeaveReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/payroll',
+        href: '/hr/reports/payroll',
+        title: 'Payroll Reports',
+        icon: FileText,
+        element: withSuspense(PayrollReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/recruitment',
+        href: '/hr/reports/recruitment',
+        title: 'Recruitment Reports',
+        icon: ClipboardList,
+        element: withSuspense(RecruitmentReportsPage),
+        nav: false,
     },
 
     // Recruitment Dashboard & Analytics
@@ -620,6 +815,15 @@ export const hrRoutes: AppRoute[] = [
         element: withSuspense(ApplicantsPage),
         nav: true,
     },
+    // Auth seeder path without applicant id — must be before :applicantId
+    {
+        path: 'hr/recruitment/applicant/evaluate',
+        href: '/hr/recruitment/applicant/evaluate',
+        title: 'Evaluate Applicant',
+        icon: ClipboardList,
+        element: withSuspense(ApplicantEvaluateEntryPage),
+        nav: false,
+    },
     {
         path: 'hr/recruitment/applicant/:applicantId',
         href: '/hr/recruitment/applicant/:applicantId',
@@ -679,6 +883,14 @@ export const hrRoutes: AppRoute[] = [
         icon: FileText,
         element: withSuspense(OffersPage),
         nav: true,
+    },
+    {
+        path: 'hr/recruitment/offer/new',
+        href: '/hr/recruitment/offer/new',
+        title: 'Create Offer',
+        icon: FileText,
+        element: withSuspense(OfferCreatePage),
+        nav: false,
     },
     {
         path: 'hr/recruitment/offer/:offerId',
@@ -1034,7 +1246,33 @@ export const hrSidebarRoutes: SidebarNavSection[] = [
         title: 'Training',
         icon: GraduationCap,
         items: [
-            { title: 'Training Programs', href: '/hr/training', activeMatch: 'prefix' },
+            { title: 'Training Programs', href: '/hr/training/programs', activeMatch: 'prefix' },
+            { title: 'Training Calendar', href: '/hr/training/calendar', activeMatch: 'prefix' },
+            { title: 'Feedback', href: '/hr/training/feedback', activeMatch: 'prefix' },
+            { title: 'Certifications', href: '/hr/training/certificates', activeMatch: 'prefix' },
+        ],
+    },
+    {
+        id: 'hr-payroll',
+        title: 'Payroll',
+        icon: Briefcase,
+        items: [
+            { title: 'Run Payroll', href: '/hr/payroll/run', activeMatch: 'prefix' },
+            { title: 'Payroll History', href: '/hr/payroll/history', activeMatch: 'prefix' },
+            { title: 'Salary Structure', href: '/hr/payroll/salary-structure', activeMatch: 'prefix' },
+            { title: 'Tax Configurations', href: '/hr/payroll/tax', activeMatch: 'prefix' },
+        ],
+    },
+    {
+        id: 'hr-reports',
+        title: 'HR Reports',
+        icon: FileText,
+        items: [
+            { title: 'Employee Reports', href: '/hr/reports/employees', activeMatch: 'prefix' },
+            { title: 'Attendance Reports', href: '/hr/reports/attendance', activeMatch: 'prefix' },
+            { title: 'Leave Reports', href: '/hr/reports/leave', activeMatch: 'prefix' },
+            { title: 'Payroll Reports', href: '/hr/reports/payroll', activeMatch: 'prefix' },
+            { title: 'Recruitment Reports', href: '/hr/reports/recruitment', activeMatch: 'prefix' },
         ],
     },
     {
