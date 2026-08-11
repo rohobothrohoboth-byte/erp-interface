@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
   ChevronRight,
@@ -48,6 +49,8 @@ const BranchTable: React.FC<BranchTableProps> = ({
   const sortedBranches = [...branches].sort((a, b) => {
     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
+
+  const navigate = useNavigate();
 
   const handleViewDetails = (branch: BranchListDto) => {
     setSelectedBranch(branch);
@@ -237,6 +240,13 @@ const BranchTable: React.FC<BranchTableProps> = ({
                             >
                               <Eye size={14} />
                               View Details
+                            </button>
+                            <button
+                                onClick={() => navigate(`/core/department?branchId=${branch.id}`)}
+                                className="w-full text-left px-3 py-1.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md flex items-center gap-2"
+                            >
+                              <Building size={14} />
+                              Departments
                             </button>
                             <button
                                 onClick={() => handleEdit(branch)}
