@@ -10,7 +10,9 @@ import {
     ArrowRightLeft,
     SlidersHorizontal,
     RefreshCcw,
-    type LucideIcon
+    PackageCheck,
+    PackagePlus,
+    ClipboardList,
 } from 'lucide-react';
 import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
@@ -44,6 +46,10 @@ const ReorderRequestsPage = lazy(() => import('@/modules/inventory/pages/reports
 const StockReportsPage = lazy(() => import('@/modules/inventory/pages/reports/StockReportsPage'));
 const MovementReportsPage = lazy(() => import('@/modules/inventory/pages/reports/MovementReportsPage'));
 const DemandForecastPage = lazy(() => import('@/modules/inventory/pages/reports/DemandForecastPage'));
+// Employee Materials Pages
+const MyMaterialsPage = lazy(() => import('@/modules/inventory/pages/materials/MyMaterialsPage'));
+const RequestMaterialPage = lazy(() => import('@/modules/inventory/pages/materials/RequestMaterialPage'));
+const MaterialRequestsAdminPage = lazy(() => import('@/modules/inventory/pages/materials/MaterialRequestsAdminPage'));
 
 export const inventoryRoutes: AppRoute[] = [
     // Dashboard
@@ -212,6 +218,31 @@ export const inventoryRoutes: AppRoute[] = [
         element: withSuspense(DemandForecastPage),
         nav: false,
     },
+    // Employee Materials
+    {
+        path: 'inventory/my-materials',
+        href: '/inventory/my-materials',
+        title: 'My Materials',
+        icon: PackageCheck,
+        element: withSuspense(MyMaterialsPage),
+        nav: true,
+    },
+    {
+        path: 'inventory/request-material',
+        href: '/inventory/request-material',
+        title: 'Request Material',
+        icon: PackagePlus,
+        element: withSuspense(RequestMaterialPage),
+        nav: true,
+    },
+    {
+        path: 'inventory/material-requests',
+        href: '/inventory/material-requests',
+        title: 'Material Requests',
+        icon: ClipboardList,
+        element: withSuspense(MaterialRequestsAdminPage),
+        nav: true,
+    },
 ];
 
 export const inventorySidebarRoutes: SidebarNavSection[] = [
@@ -252,6 +283,16 @@ export const inventorySidebarRoutes: SidebarNavSection[] = [
         items: [
             { title: 'Warehouses', href: '/inventory/warehouses', activeMatch: 'prefix' },
             { title: 'Zones & Bins', href: '/inventory/warehouse-zones', activeMatch: 'prefix' },
+        ],
+    },
+    {
+        id: 'inv-materials',
+        title: 'Employee Materials',
+        icon: PackageCheck,
+        items: [
+            { title: 'My Materials', href: '/inventory/my-materials', activeMatch: 'prefix' },
+            { title: 'Request Material', href: '/inventory/request-material', activeMatch: 'prefix' },
+            { title: 'Material Requests', href: '/inventory/material-requests', activeMatch: 'prefix' },
         ],
     },
     {
