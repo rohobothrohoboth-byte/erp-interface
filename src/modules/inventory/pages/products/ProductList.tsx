@@ -7,7 +7,7 @@ import { productApi, categoryApi, unitApi } from "@/modules/inventory/services/c
 import { stockApi } from "@/modules/inventory/services/stock.api";
 import { warehouseApi } from "@/modules/inventory/services/warehouse.api";
 import type { Product, ProductCreate, Category, Unit } from "@/modules/inventory/types/catalog.types";
-import { FormModal, Field, inputCls } from "@/modules/inventory/components/FormModal";
+import { FormModal, Field, inputCls, DetailModal } from "@/modules/inventory/components/FormModal";
 
 type ProductRow = Product & {
   categoryName: string;
@@ -38,6 +38,8 @@ export default function ProductList() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<ProductCreate>(emptyProduct);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<ProductRow | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -124,21 +126,32 @@ export default function ProductList() {
     }
     setSubmitting(true);
     try {
-      await productApi.create({
-        ...form,
-        unitPrice: Number(form.unitPrice) || 0,
-        reorderLevel: Number(form.reorderLevel) || 0,
-      });
-      showToast.success("Product created");
+      if (editingId) {
+        await productApi.update({
+          ...form,
+          id: editingId,
+          unitPrice: Number(form.unitPrice) || 0,
+          reorderLevel: Number(form.reorderLevel) || 0,
+        });
+        showToast.success("Product updated");
+      } else {
+        await productApi.create({
+          ...form,
+          unitPrice: Number(form.unitPrice) || 0,
+          reorderLevel: Number(form.reorderLevel) || 0,
+        });
+        showToast.success("Product created");
+      }
       setShowForm(false);
       setForm(emptyProduct);
+      setEditingId(null);
       load();
     } catch (err: any) {
-      showToast.error(err?.message || "Failed to create product");
+      showToast.error(err?.message || `Failed to ${editingId ? "update" : "create"} product`);
     } finally {
       setSubmitting(false);
     }
-  }, [form, load]);
+  }, [form, editingId, load]);
 
   const handleDelete = useCallback(
     async (id: string, name: string) => {
@@ -185,16 +198,20 @@ export default function ProductList() {
           return;
         }
         setForm(emptyProduct);
+        setEditingId(null);
         setShowForm(true);
       }}
     >
       <FormModal
         open={showForm}
-        title="Add Product"
-        onClose={() => setShowForm(false)}
+        title={editingId ? "Edit Product" : "Add Product"}
+        onClose={() => {
+          setShowForm(false);
+          setEditingId(null);
+        }}
         onSubmit={submit}
         submitting={submitting}
-        submitLabel="Create Product"
+        submitLabel={editingId ? "Save Changes" : "Create Product"}
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="SKU *">
@@ -283,6 +300,27 @@ export default function ProductList() {
           Active
         </label>
       </FormModal>
+      <DetailModal
+        open={viewing !== null}
+        title={viewing?.name ?? "Product"}
+        onClose={() => setViewing(null)}
+        rows={
+          viewing
+            ? [
+                { label: "SKU", value: viewing.sku },
+                { label: "Name", value: viewing.name },
+                { label: "Category", value: viewing.categoryName },
+                { label: "Unit", value: viewing.unitSymbol },
+                { label: "Unit Price", value: viewing.unitPrice },
+                { label: "Reorder Level", value: viewing.reorderLevel ?? "—" },
+                { label: "Barcode", value: viewing.barcode ?? "—" },
+                { label: "On Hand", value: viewing.qtyOnHand ?? "—" },
+                { label: "Warehouse", value: viewing.warehouseLabel },
+                { label: "Status", value: viewing.isActive ? "Active" : "Inactive" },
+              ]
+            : []
+        }
+      />
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-500">
           <Loader2 className="mb-3 h-8 w-8 animate-spin text-emerald-600" />
@@ -330,8 +368,29 @@ export default function ProductList() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => showToast.success("Opened record")}>
+                      <Button variant="ghost" size="sm" onClick={() => setViewing(row)}>
                         View
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setForm({
+                            sku: row.sku,
+                            name: row.name,
+                            description: row.description ?? "",
+                            categoryId: row.categoryId,
+                            unitId: row.unitId,
+                            unitPrice: row.unitPrice,
+                            reorderLevel: row.reorderLevel ?? 0,
+                            barcode: row.barcode ?? "",
+                            isActive: row.isActive,
+                          });
+                          setEditingId(row.id);
+                          setShowForm(true);
+                        }}
+                      >
+                        Edit
                       </Button>
                       <Button
                         variant="ghost"

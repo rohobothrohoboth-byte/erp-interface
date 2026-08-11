@@ -73,3 +73,51 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 
 export const inputCls =
   "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-800 focus:border-emerald-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100";
+
+// Read-only detail modal for "View" actions.
+export function DetailModal({
+  open,
+  title,
+  onClose,
+  rows,
+}: {
+  open: boolean;
+  title: string;
+  onClose: () => void;
+  rows: { label: string; value: ReactNode }[];
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-lg rounded-xl bg-white shadow-xl dark:bg-slate-900">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3 dark:border-slate-800">
+          <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">{title}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-slate-400 transition-colors hover:text-slate-600"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="max-h-[70vh] overflow-y-auto px-5 py-4">
+          <dl className="divide-y divide-slate-100 dark:divide-slate-800">
+            {rows.map((r, i) => (
+              <div key={i} className="flex justify-between gap-4 py-2">
+                <dt className="text-xs font-medium text-slate-500 dark:text-slate-400">{r.label}</dt>
+                <dd className="text-right text-sm text-slate-800 dark:text-slate-100">
+                  {r.value === null || r.value === undefined || r.value === "" ? "—" : r.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+        <div className="flex justify-end border-t border-slate-100 px-5 py-3 dark:border-slate-800">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

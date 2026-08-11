@@ -4,13 +4,31 @@ import { ModulePageShell, StatusBadge } from "@/shared/components/ModulePageShel
 import { Button } from "@/shared/components/ui/button";
 import { showToast } from "@/shared/layout/layout";
 import { warehouseApi } from "@/modules/inventory/services/warehouse.api";
-import type { Warehouse } from "@/modules/inventory/types/warehouse.types";
+import type { Warehouse, WarehouseCreate } from "@/modules/inventory/types/warehouse.types";
+import { FormModal, Field, inputCls, DetailModal } from "@/modules/inventory/components/FormModal";
+
+const emptyWarehouse: WarehouseCreate = {
+  name: "",
+  code: "",
+  location: "",
+  city: "",
+  phone: "",
+  email: "",
+  warehouseType: "Main",
+  status: "Active",
+  isActive: true,
+};
 
 export default function WarehousePage() {
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState<WarehouseCreate>(emptyWarehouse);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Warehouse | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,20 +50,30 @@ export default function WarehousePage() {
     load();
   }, [load]);
 
-  const handleCreate = useCallback(async () => {
-    const name = window.prompt("Warehouse name?");
-    if (!name) return;
-    const code = window.prompt("Warehouse code?");
-    if (!code) return;
-    const location = window.prompt("Location (optional)?") || null;
+  const submit = useCallback(async () => {
+    if (!form.name?.trim() || !form.code?.trim()) {
+      showToast.error("Name and code are required");
+      return;
+    }
+    setSubmitting(true);
     try {
-      await warehouseApi.create({ name, code, location, isActive: true, status: "Active" });
-      showToast.success("Warehouse created");
+      if (editingId) {
+        await warehouseApi.update({ ...form, id: editingId });
+        showToast.success("Warehouse updated");
+      } else {
+        await warehouseApi.create(form);
+        showToast.success("Warehouse created");
+      }
+      setShowForm(false);
+      setForm(emptyWarehouse);
+      setEditingId(null);
       load();
     } catch (err: any) {
-      showToast.error(err?.message || "Failed to create warehouse");
+      showToast.error(err?.message || `Failed to ${editingId ? "update" : "create"} warehouse`);
+    } finally {
+      setSubmitting(false);
     }
-  }, [load]);
+  }, [form, editingId, load]);
 
   const handleDelete = useCallback(
     async (wh: Warehouse) => {
@@ -86,8 +114,122 @@ export default function WarehousePage() {
       searchPlaceholder="Search..."
       onRefresh={load}
       primaryActionLabel="Add Warehouse"
-      onPrimaryAction={handleCreate}
+      onPrimaryAction={() => {
+        setForm(emptyWarehouse);
+        setEditingId(null);
+        setShowForm(true);
+      }}
     >
+      <FormModal
+        open={showForm}
+        title={editingId ? "Edit Warehouse" : "Add Warehouse"}
+        onClose={() => {
+          setShowForm(false);
+          setEditingId(null);
+        }}
+        onSubmit={submit}
+        submitting={submitting}
+        submitLabel={editingId ? "Save Changes" : "Create Warehouse"}
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Name *">
+            <input
+              className={inputCls}
+              value={form.name ?? ""}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="e.g. Main Warehouse"
+            />
+          </Field>
+          <Field label="Code *">
+            <input
+              className={inputCls}
+              value={form.code ?? ""}
+              onChange={(e) => setForm({ ...form, code: e.target.value })}
+              placeholder="e.g. WH-01"
+            />
+          </Field>
+          <Field label="Location">
+            <input
+              className={inputCls}
+              value={form.location ?? ""}
+              onChange={(e) => setForm({ ...form, location: e.target.value })}
+            />
+          </Field>
+          <Field label="City">
+            <input
+              className={inputCls}
+              value={form.city ?? ""}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+            />
+          </Field>
+          <Field label="Phone">
+            <input
+              className={inputCls}
+              value={form.phone ?? ""}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+          </Field>
+          <Field label="Email">
+            <input
+              className={inputCls}
+              value={form.email ?? ""}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </Field>
+          <Field label="Type">
+            <select
+              className={inputCls}
+              value={form.warehouseType ?? ""}
+              onChange={(e) => setForm({ ...form, warehouseType: e.target.value })}
+            >
+              <option value="Main">Main</option>
+              <option value="Sub">Sub</option>
+              <option value="Distribution">Distribution</option>
+              <option value="Store">Store</option>
+            </select>
+          </Field>
+          <Field label="Status">
+            <select
+              className={inputCls}
+              value={form.status ?? ""}
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </Field>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+          <input
+            type="checkbox"
+            checked={form.isActive ?? false}
+            onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+          />
+          Active
+        </label>
+      </FormModal>
+      <DetailModal
+        open={viewing !== null}
+        title={viewing?.name ?? "Warehouse"}
+        onClose={() => setViewing(null)}
+        rows={
+          viewing
+            ? [
+                { label: "Code", value: viewing.code },
+                { label: "Name", value: viewing.name },
+                { label: "Location", value: viewing.location ?? "—" },
+                { label: "City", value: viewing.city ?? "—" },
+                { label: "Type", value: viewing.warehouseType ?? "—" },
+                { label: "Phone", value: viewing.phone ?? "—" },
+                { label: "Email", value: viewing.email ?? "—" },
+                {
+                  label: "Status",
+                  value: viewing.status || (viewing.isActive ? "Active" : "Inactive"),
+                },
+              ]
+            : []
+        }
+      />
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-500">
           <Loader2 className="mb-3 h-8 w-8 animate-spin text-emerald-600" />
@@ -128,8 +270,29 @@ export default function WarehousePage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" onClick={() => showToast.success("Opened record")}>
+                        <Button variant="ghost" size="sm" onClick={() => setViewing(row)}>
                           View
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setForm({
+                              name: row.name,
+                              code: row.code,
+                              location: row.location ?? "",
+                              city: row.city ?? "",
+                              phone: row.phone ?? "",
+                              email: row.email ?? "",
+                              warehouseType: row.warehouseType ?? "Main",
+                              status: row.status ?? (row.isActive ? "Active" : "Inactive"),
+                              isActive: row.isActive,
+                            });
+                            setEditingId(row.id);
+                            setShowForm(true);
+                          }}
+                        >
+                          Edit
                         </Button>
                         <Button
                           variant="ghost"

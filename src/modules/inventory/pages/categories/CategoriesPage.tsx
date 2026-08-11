@@ -5,7 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { showToast } from "@/shared/layout/layout";
 import { categoryApi } from "@/modules/inventory/services/catalog.api";
 import type { Category, CategoryCreate } from "@/modules/inventory/types/catalog.types";
-import { FormModal, Field, inputCls } from "@/modules/inventory/components/FormModal";
+import { FormModal, Field, inputCls, DetailModal } from "@/modules/inventory/components/FormModal";
 
 const emptyCategory: CategoryCreate = { name: "", code: "", description: "", isActive: true };
 
@@ -17,6 +17,8 @@ export default function CategoriesPage() {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState<CategoryCreate>(emptyCategory);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Category | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,17 +47,23 @@ export default function CategoriesPage() {
     }
     setSubmitting(true);
     try {
-      await categoryApi.create(form);
-      showToast.success("Category created");
+      if (editingId) {
+        await categoryApi.update({ ...form, id: editingId });
+        showToast.success("Category updated");
+      } else {
+        await categoryApi.create(form);
+        showToast.success("Category created");
+      }
       setShowForm(false);
       setForm(emptyCategory);
+      setEditingId(null);
       load();
     } catch (err: any) {
-      showToast.error(err?.message || "Failed to create category");
+      showToast.error(err?.message || `Failed to ${editingId ? "update" : "create"} category`);
     } finally {
       setSubmitting(false);
     }
-  }, [form, load]);
+  }, [form, editingId, load]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -84,16 +92,20 @@ export default function CategoriesPage() {
       primaryActionLabel="Add Category"
       onPrimaryAction={() => {
         setForm(emptyCategory);
+        setEditingId(null);
         setShowForm(true);
       }}
     >
       <FormModal
         open={showForm}
-        title="Add Category"
-        onClose={() => setShowForm(false)}
+        title={editingId ? "Edit Category" : "Add Category"}
+        onClose={() => {
+          setShowForm(false);
+          setEditingId(null);
+        }}
         onSubmit={submit}
         submitting={submitting}
-        submitLabel="Create Category"
+        submitLabel={editingId ? "Save Changes" : "Create Category"}
       >
         <Field label="Name *">
           <input
@@ -128,6 +140,21 @@ export default function CategoriesPage() {
           Active
         </label>
       </FormModal>
+      <DetailModal
+        open={viewing !== null}
+        title={viewing?.name ?? "Category"}
+        onClose={() => setViewing(null)}
+        rows={
+          viewing
+            ? [
+                { label: "Name", value: viewing.name },
+                { label: "Code", value: viewing.code ?? "—" },
+                { label: "Description", value: viewing.description ?? "—" },
+                { label: "Status", value: viewing.isActive ? "Active" : "Inactive" },
+              ]
+            : []
+        }
+      />
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-500">
           <Loader2 className="mb-3 h-8 w-8 animate-spin text-emerald-600" />
@@ -164,9 +191,27 @@ export default function CategoriesPage() {
                     />
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button variant="ghost" size="sm" onClick={() => showToast.success("Opened record")}>
-                      View
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => setViewing(row)}>
+                        View
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setForm({
+                            name: row.name,
+                            code: row.code ?? "",
+                            description: row.description ?? "",
+                            isActive: row.isActive,
+                          });
+                          setEditingId(row.id);
+                          setShowForm(true);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
