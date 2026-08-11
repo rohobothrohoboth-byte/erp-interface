@@ -4,13 +4,19 @@ import { ModulePageShell, StatusBadge } from "@/shared/components/ModulePageShel
 import { Button } from "@/shared/components/ui/button";
 import { showToast } from "@/shared/layout/layout";
 import { unitApi } from "@/modules/inventory/services/catalog.api";
-import type { Unit } from "@/modules/inventory/types/catalog.types";
+import type { Unit, UnitCreate } from "@/modules/inventory/types/catalog.types";
+import { FormModal, Field, inputCls } from "@/modules/inventory/components/FormModal";
+
+const emptyUnit: UnitCreate = { name: "", symbol: "", description: "", isActive: true };
 
 export default function UnitsPage() {
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState<UnitCreate>(emptyUnit);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -31,6 +37,25 @@ export default function UnitsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const submit = useCallback(async () => {
+    if (!form.name.trim() || !form.symbol.trim()) {
+      showToast.error("Unit name and symbol are required");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await unitApi.create(form);
+      showToast.success("Unit created");
+      setShowForm(false);
+      setForm(emptyUnit);
+      load();
+    } catch (err: any) {
+      showToast.error(err?.message || "Failed to create unit");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [form, load]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -56,7 +81,53 @@ export default function UnitsPage() {
       onSearchChange={setSearch}
       searchPlaceholder="Search..."
       onRefresh={load}
+      primaryActionLabel="Add Unit"
+      onPrimaryAction={() => {
+        setForm(emptyUnit);
+        setShowForm(true);
+      }}
     >
+      <FormModal
+        open={showForm}
+        title="Add Unit of Measure"
+        onClose={() => setShowForm(false)}
+        onSubmit={submit}
+        submitting={submitting}
+        submitLabel="Create Unit"
+      >
+        <Field label="Name *">
+          <input
+            className={inputCls}
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="e.g. Pieces"
+          />
+        </Field>
+        <Field label="Symbol *">
+          <input
+            className={inputCls}
+            value={form.symbol}
+            onChange={(e) => setForm({ ...form, symbol: e.target.value })}
+            placeholder="e.g. PCS"
+          />
+        </Field>
+        <Field label="Description">
+          <textarea
+            className={inputCls}
+            rows={2}
+            value={form.description ?? ""}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+        </Field>
+        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+          <input
+            type="checkbox"
+            checked={form.isActive}
+            onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+          />
+          Active
+        </label>
+      </FormModal>
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-500">
           <Loader2 className="mb-3 h-8 w-8 animate-spin text-emerald-600" />

@@ -6,7 +6,8 @@ import { showToast } from "@/shared/layout/layout";
 import { productApi, categoryApi, unitApi } from "@/modules/inventory/services/catalog.api";
 import { stockApi } from "@/modules/inventory/services/stock.api";
 import { warehouseApi } from "@/modules/inventory/services/warehouse.api";
-import type { Product } from "@/modules/inventory/types/catalog.types";
+import type { Product, ProductCreate, Category, Unit } from "@/modules/inventory/types/catalog.types";
+import { FormModal, Field, inputCls } from "@/modules/inventory/components/FormModal";
 
 type ProductRow = Product & {
   categoryName: string;
@@ -15,11 +16,28 @@ type ProductRow = Product & {
   warehouseLabel: string;
 };
 
+const emptyProduct: ProductCreate = {
+  sku: "",
+  name: "",
+  description: "",
+  categoryId: "",
+  unitId: "",
+  unitPrice: 0,
+  reorderLevel: 0,
+  barcode: "",
+  isActive: true,
+};
+
 export default function ProductList() {
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<ProductRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState<ProductCreate>(emptyProduct);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -32,6 +50,8 @@ export default function ProductList() {
         unitApi.getAll(),
       ]);
 
+      setCategories(categories);
+      setUnits(units);
       const categoryById = new Map(categories.map((c) => [c.id, c.name]));
       const unitById = new Map(units.map((u) => [u.id, u.symbol]));
 
@@ -93,6 +113,33 @@ export default function ProductList() {
     load();
   }, [load]);
 
+  const submit = useCallback(async () => {
+    if (!form.sku.trim() || !form.name.trim()) {
+      showToast.error("SKU and name are required");
+      return;
+    }
+    if (!form.categoryId || !form.unitId) {
+      showToast.error("Please select a category and a unit of measure");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await productApi.create({
+        ...form,
+        unitPrice: Number(form.unitPrice) || 0,
+        reorderLevel: Number(form.reorderLevel) || 0,
+      });
+      showToast.success("Product created");
+      setShowForm(false);
+      setForm(emptyProduct);
+      load();
+    } catch (err: any) {
+      showToast.error(err?.message || "Failed to create product");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [form, load]);
+
   const handleDelete = useCallback(
     async (id: string, name: string) => {
       if (!window.confirm(`Delete product "${name}"? This cannot be undone.`)) return;
@@ -133,10 +180,109 @@ export default function ProductList() {
       onRefresh={load}
       primaryActionLabel="Add Product"
       onPrimaryAction={() => {
-        // TODO: wire up a product create/edit form (no form UI exists on this page yet).
-        showToast.info("Product creation form is not available yet.");
+        if (categories.length === 0 || units.length === 0) {
+          showToast.error("Create at least one Category and one Unit of Measure first.");
+          return;
+        }
+        setForm(emptyProduct);
+        setShowForm(true);
       }}
     >
+      <FormModal
+        open={showForm}
+        title="Add Product"
+        onClose={() => setShowForm(false)}
+        onSubmit={submit}
+        submitting={submitting}
+        submitLabel="Create Product"
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="SKU *">
+            <input
+              className={inputCls}
+              value={form.sku}
+              onChange={(e) => setForm({ ...form, sku: e.target.value })}
+              placeholder="e.g. RM-1001"
+            />
+          </Field>
+          <Field label="Name *">
+            <input
+              className={inputCls}
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="e.g. Portland Cement 50kg"
+            />
+          </Field>
+          <Field label="Category *">
+            <select
+              className={inputCls}
+              value={form.categoryId}
+              onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+            >
+              <option value="">Select category…</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Unit of Measure *">
+            <select
+              className={inputCls}
+              value={form.unitId}
+              onChange={(e) => setForm({ ...form, unitId: e.target.value })}
+            >
+              <option value="">Select unit…</option>
+              {units.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.symbol})
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Unit Price">
+            <input
+              type="number"
+              step="0.01"
+              className={inputCls}
+              value={form.unitPrice}
+              onChange={(e) => setForm({ ...form, unitPrice: Number(e.target.value) })}
+            />
+          </Field>
+          <Field label="Reorder Level">
+            <input
+              type="number"
+              className={inputCls}
+              value={form.reorderLevel ?? 0}
+              onChange={(e) => setForm({ ...form, reorderLevel: Number(e.target.value) })}
+            />
+          </Field>
+          <Field label="Barcode">
+            <input
+              className={inputCls}
+              value={form.barcode ?? ""}
+              onChange={(e) => setForm({ ...form, barcode: e.target.value })}
+            />
+          </Field>
+        </div>
+        <Field label="Description">
+          <textarea
+            className={inputCls}
+            rows={2}
+            value={form.description ?? ""}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+        </Field>
+        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+          <input
+            type="checkbox"
+            checked={form.isActive}
+            onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+          />
+          Active
+        </label>
+      </FormModal>
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-500">
           <Loader2 className="mb-3 h-8 w-8 animate-spin text-emerald-600" />

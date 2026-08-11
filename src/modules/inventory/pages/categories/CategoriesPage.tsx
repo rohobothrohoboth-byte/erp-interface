@@ -4,13 +4,19 @@ import { ModulePageShell, StatusBadge } from "@/shared/components/ModulePageShel
 import { Button } from "@/shared/components/ui/button";
 import { showToast } from "@/shared/layout/layout";
 import { categoryApi } from "@/modules/inventory/services/catalog.api";
-import type { Category } from "@/modules/inventory/types/catalog.types";
+import type { Category, CategoryCreate } from "@/modules/inventory/types/catalog.types";
+import { FormModal, Field, inputCls } from "@/modules/inventory/components/FormModal";
+
+const emptyCategory: CategoryCreate = { name: "", code: "", description: "", isActive: true };
 
 export default function CategoriesPage() {
   const [search, setSearch] = useState("");
   const [rows, setRows] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState<CategoryCreate>(emptyCategory);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -31,6 +37,25 @@ export default function CategoriesPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const submit = useCallback(async () => {
+    if (!form.name.trim()) {
+      showToast.error("Category name is required");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await categoryApi.create(form);
+      showToast.success("Category created");
+      setShowForm(false);
+      setForm(emptyCategory);
+      load();
+    } catch (err: any) {
+      showToast.error(err?.message || "Failed to create category");
+    } finally {
+      setSubmitting(false);
+    }
+  }, [form, load]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -56,7 +81,53 @@ export default function CategoriesPage() {
       onSearchChange={setSearch}
       searchPlaceholder="Search..."
       onRefresh={load}
+      primaryActionLabel="Add Category"
+      onPrimaryAction={() => {
+        setForm(emptyCategory);
+        setShowForm(true);
+      }}
     >
+      <FormModal
+        open={showForm}
+        title="Add Category"
+        onClose={() => setShowForm(false)}
+        onSubmit={submit}
+        submitting={submitting}
+        submitLabel="Create Category"
+      >
+        <Field label="Name *">
+          <input
+            className={inputCls}
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="e.g. Raw Material"
+          />
+        </Field>
+        <Field label="Code">
+          <input
+            className={inputCls}
+            value={form.code ?? ""}
+            onChange={(e) => setForm({ ...form, code: e.target.value })}
+            placeholder="e.g. RM"
+          />
+        </Field>
+        <Field label="Description">
+          <textarea
+            className={inputCls}
+            rows={2}
+            value={form.description ?? ""}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+        </Field>
+        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+          <input
+            type="checkbox"
+            checked={form.isActive}
+            onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+          />
+          Active
+        </label>
+      </FormModal>
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16 text-slate-500">
           <Loader2 className="mb-3 h-8 w-8 animate-spin text-emerald-600" />
