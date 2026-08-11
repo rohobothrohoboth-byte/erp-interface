@@ -10,6 +10,7 @@ import {
   useUpdateBranch,
   useDeleteBranch
 } from "@/modules/core/services/branch/branch.queries";
+import { useCompanies } from "@/modules/core/services/company/company.queries";
 import type {
   BranchListDto,
   AddBranchDto,
@@ -39,6 +40,12 @@ const BranchesPage: React.FC<BranchesPageProps> = () => {
     error: queryError,
     refetch
   } = useBranches(companyId ? { companyId } : undefined);
+
+  // In a single-company deployment there is no ?companyId in the URL, so default
+  // the branch's company to the (first/only) registered company. This makes
+  // "Add Branch" work from /core/branch without requiring a company drill-down.
+  const { data: companies = [] } = useCompanies();
+  const effectiveCompanyId = (companyId ?? companies[0]?.id) as UUID | undefined;
 
   const createBranchMutation = useCreateBranch();
   const updateBranchMutation = useUpdateBranch();
@@ -231,8 +238,8 @@ const BranchesPage: React.FC<BranchesPageProps> = () => {
         <AddHeader
             searchTerm={searchTerm}
             onSearchChange={handleSearchChange}
-            onAddBranch={companyId ? handleAddBranch : undefined}
-            defaultCompanyId={companyId as UUID}
+            onAddBranch={effectiveCompanyId ? handleAddBranch : undefined}
+            defaultCompanyId={effectiveCompanyId as UUID}
         />
 
         {/* Error Message */}

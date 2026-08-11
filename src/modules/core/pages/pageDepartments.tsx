@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Building2 } from "lucide-react";
 import DepartmentManagementHeader from "@/modules/core/components/department/DeptHeader";
 import DepartmentSearchFilters from "@/modules/core/components/department/DeptSearchFilters";
@@ -19,6 +20,10 @@ import type {
 } from "@/modules/core/types/dept";
 
 const DepartmentOverview = () => {
+  const [searchParams] = useSearchParams();
+  // When drilling in from a branch (/core/department?branchId=...), scope the list
+  // to that branch and default new departments to it (Branch -> Department hierarchy).
+  const branchId = (searchParams.get("branchId") || "") as UUID | "";
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [editingDepartment, setEditingDepartment] = useState<DeptListDto | null>(null);
@@ -110,15 +115,21 @@ const DepartmentOverview = () => {
     await deleteDepartmentMutation.mutateAsync(departmentId);
   };
 
+  // Scope to a single branch when drilling in from the Branch page.
+  const scopedDepartments = useMemo(
+    () => (branchId ? departments.filter((d) => d.branchId === branchId) : departments),
+    [departments, branchId]
+  );
+
   // Filter departments
   const filteredDepartments = useMemo(() => {
     if (!searchTerm.trim()) {
-      return departments;
+      return scopedDepartments;
     }
 
     const searchLower = searchTerm.toLowerCase();
 
-    return departments.filter((department) => {
+    return scopedDepartments.filter((department) => {
       const basicMatch =
           department.name.toLowerCase().includes(searchLower) ||
           department.nameAm.toLowerCase().includes(searchLower) ||
@@ -137,7 +148,7 @@ const DepartmentOverview = () => {
 
       return basicMatch || statusMatch || numericStatusMatch || statStrMatch;
     });
-  }, [departments, searchTerm, getStatusText]);
+  }, [scopedDepartments, searchTerm, getStatusText]);
 
   // Pagination
   const totalPages = Math.ceil(filteredDepartments.length / itemsPerPage);
@@ -220,7 +231,7 @@ const DepartmentOverview = () => {
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             onAddDepartment={handleAddDepartment}
-            selectedBranchId=""
+            selectedBranchId={branchId}
             onRefresh={handleRefresh}
             isLoading={isLoading}
         />
