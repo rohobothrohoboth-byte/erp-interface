@@ -4,8 +4,29 @@ import type { Quarter } from '@/modules/core/types/enum';
 
 export type { UUID };
 
+// Backend accepts: Weekly | Monthly | Quarterly | SemiAnnual | EightMonth | Yearly | Custom
+export type PeriodType =
+  | 'Weekly'
+  | 'Monthly'
+  | 'Quarterly'
+  | 'SemiAnnual'
+  | 'EightMonth'
+  | 'Yearly'
+  | 'Custom';
+
+export const PERIOD_TYPE_OPTIONS: { value: PeriodType; label: string }[] = [
+  { value: 'Weekly', label: 'Weekly' },
+  { value: 'Monthly', label: 'Monthly' },
+  { value: 'Quarterly', label: 'Quarterly' },
+  { value: 'SemiAnnual', label: 'Semi-Annual' },
+  { value: 'EightMonth', label: 'Eight Month' },
+  { value: 'Yearly', label: 'Yearly' },
+  { value: 'Custom', label: 'Custom' },
+];
+
 export interface PeriodListDto extends BaseDto {
   quarter: Quarter;
+  periodType?: PeriodType;
   fiscalYearId: UUID;
   name: string;
   quarterStr: string;
@@ -25,6 +46,7 @@ export interface AddPeriodDto {
   dateStart: string;
   dateEnd: string;
   quarter: Quarter;
+  periodType?: PeriodType;
   fiscalYearId: UUID;
 }
 
@@ -35,6 +57,7 @@ export interface EditPeriodDto {
   dateEnd: string;
   isActive: string;
   quarter: Quarter;
+  periodType?: PeriodType;
   fiscalYearId: UUID;
   rowVersion: string;
 }

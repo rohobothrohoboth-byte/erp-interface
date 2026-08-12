@@ -1,249 +1,223 @@
 import { useMemo, useState } from 'react';
+import { Loader2, UserX, PauseCircle, LogOut, Ban } from 'lucide-react';
 import { ModulePageShell, StatusBadge } from '@/shared/components/ModulePageShell';
 import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { Label } from '@/shared/components/ui/label';
-import { Textarea } from '@/shared/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/components/ui/select';
 import { showToast } from '@/shared/layout/layout';
+import { useEmployeeList } from '@/modules/hr/services/employee/emp.queries';
+import {
+  useTerminateEmployee,
+  useSuspendEmployee,
+  useRetireEmployee,
+  useStandByEmployee,
+} from '@/modules/hr/services/employee/empStatus/empStatus.queries';
+import type { EmployeeListDto } from '@/modules/hr/types/employee';
+import type { UUID } from 'crypto';
 
-type TerminationRecord = {
-  id: string;
-  employeeName: string;
-  employeeId: string;
-  department: string;
-  lastWorkingDay: string;
-  reason: string;
-  status: 'Pending' | 'Approved' | 'Completed' | 'Cancelled';
+type StatusAction = 'terminate' | 'suspend' | 'retire' | 'standby';
+
+const statusTone = (state: string): 'success' | 'warning' | 'danger' | 'neutral' | 'info' => {
+  const s = (state || '').toLowerCase();
+  if (s.includes('active') || s.includes('approved')) return 'success';
+  if (s.includes('terminat')) return 'danger';
+  if (s.includes('suspend') || s.includes('standby') || s.includes('probation')) return 'warning';
+  if (s.includes('retire')) return 'neutral';
+  if (s.includes('leave')) return 'info';
+  return 'neutral';
 };
 
-const INITIAL: TerminationRecord[] = [
-  {
-    id: 't1',
-    employeeName: 'Maya Chen',
-    employeeId: 'EMP-204',
-    department: 'Operations',
-    lastWorkingDay: '2026-08-20',
-    reason: 'Resignation',
-    status: 'Pending',
-  },
-  {
-    id: 't2',
-    employeeName: 'Luis Ortega',
-    employeeId: 'EMP-118',
-    department: 'Finance',
-    lastWorkingDay: '2026-08-15',
-    reason: 'End of contract',
-    status: 'Pending',
-  },
-  {
-    id: 't3',
-    employeeName: 'Priya Nair',
-    employeeId: 'EMP-091',
-    department: 'Engineering',
-    lastWorkingDay: '2026-07-31',
-    reason: 'Mutual agreement',
-    status: 'Approved',
-  },
-];
-
 export default function Termination() {
-  const [rows, setRows] = useState(INITIAL);
   const [search, setSearch] = useState('');
-  const [form, setForm] = useState({
-    employeeName: '',
-    employeeId: '',
-    department: '',
-    lastWorkingDay: '',
-    reason: 'Resignation',
-    notes: '',
-  });
+  const [pending, setPending] = useState<{ id: string; action: StatusAction } | null>(null);
+
+  const { data: employees = [], isLoading, isError, error, refetch } = useEmployeeList();
+
+  const terminate = useTerminateEmployee();
+  const suspend = useSuspendEmployee();
+  const retire = useRetireEmployee();
+  const standby = useStandByEmployee();
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) =>
-      [r.employeeName, r.employeeId, r.department, r.reason, r.status].some((v) =>
-        v.toLowerCase().includes(q)
-      )
+    if (!q) return employees;
+    return employees.filter((e) =>
+      [e.empFullName, e.code, e.department, e.position, e.empState]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
     );
-  }, [rows, search]);
+  }, [employees, search]);
 
-  const pendingCount = rows.filter((r) => r.status === 'Pending').length;
+  const activeCount = employees.filter((e) => {
+    const s = (e.empState || '').toLowerCase();
+    return s.includes('active') || s.includes('approved');
+  }).length;
+  const terminatedCount = employees.filter((e) =>
+    (e.empState || '').toLowerCase().includes('terminat')
+  ).length;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.employeeName.trim() || !form.employeeId.trim() || !form.lastWorkingDay) {
-      showToast.error('Employee, ID, and last working day are required');
+  const runAction = async (emp: EmployeeListDto, action: StatusAction) => {
+    const labels: Record<StatusAction, string> = {
+      terminate: 'terminate',
+      suspend: 'suspend',
+      retire: 'retire',
+      standby: 'move to standby',
+    };
+    if (!window.confirm(`Are you sure you want to ${labels[action]} ${emp.empFullName}?`)) {
       return;
     }
-    const next: TerminationRecord = {
-      id: `t-${Date.now()}`,
-      employeeName: form.employeeName.trim(),
-      employeeId: form.employeeId.trim(),
-      department: form.department || '—',
-      lastWorkingDay: form.lastWorkingDay,
-      reason: form.reason,
-      status: 'Pending',
-    };
-    setRows((prev) => [next, ...prev]);
-    setForm({
-      employeeName: '',
-      employeeId: '',
-      department: '',
-      lastWorkingDay: '',
-      reason: 'Resignation',
-      notes: '',
-    });
-    showToast.success('Termination request submitted');
+    setPending({ id: emp.id as string, action });
+    try {
+      const id = emp.id as UUID;
+      switch (action) {
+        case 'terminate':
+          await terminate.mutateAsync(id);
+          break;
+        case 'suspend':
+          await suspend.mutateAsync(id);
+          break;
+        case 'retire':
+          await retire.mutateAsync(id);
+          break;
+        case 'standby':
+          await standby.mutateAsync(id);
+          break;
+      }
+      showToast.success(`${emp.empFullName} ${labels[action]}d successfully`);
+    } catch (err) {
+      showToast.error(err);
+    } finally {
+      setPending(null);
+    }
   };
+
+  const isBusy = (id: string, action: StatusAction) =>
+    pending?.id === id && pending?.action === action;
+  const rowBusy = (id: string) => pending?.id === id;
 
   return (
     <ModulePageShell
-      title="Employee termination"
-      subtitle="Submit termination workflows and track pending exit cases."
+      title="Employee status & termination"
+      subtitle="Terminate, suspend, retire, or set employees to standby."
       stats={[
-        { label: 'Pending', value: pendingCount },
-        { label: 'Total cases', value: rows.length },
+        { label: 'Employees', value: employees.length },
+        { label: 'Active', value: activeCount },
+        { label: 'Terminated', value: terminatedCount },
       ]}
       searchValue={search}
       onSearchChange={setSearch}
-      searchPlaceholder="Search terminations..."
-      onRefresh={() => showToast.success('Termination list refreshed')}
+      searchPlaceholder="Search employees..."
+      onRefresh={() => refetch()}
     >
-      <div className="space-y-6">
-        <form
-          onSubmit={handleSubmit}
-          className="grid gap-4 rounded-lg border border-slate-200 p-4 md:grid-cols-2"
-        >
-          <div className="space-y-2 md:col-span-2">
-            <h2 className="text-sm font-semibold text-slate-800">New termination request</h2>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="employeeName">Employee name *</Label>
-            <Input
-              id="employeeName"
-              value={form.employeeName}
-              onChange={(e) => setForm((f) => ({ ...f, employeeName: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="employeeId">Employee ID *</Label>
-            <Input
-              id="employeeId"
-              value={form.employeeId}
-              onChange={(e) => setForm((f) => ({ ...f, employeeId: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="department">Department</Label>
-            <Input
-              id="department"
-              value={form.department}
-              onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastWorkingDay">Last working day *</Label>
-            <Input
-              id="lastWorkingDay"
-              type="date"
-              value={form.lastWorkingDay}
-              onChange={(e) => setForm((f) => ({ ...f, lastWorkingDay: e.target.value }))}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="reason">Reason</Label>
-            <Select
-              value={form.reason}
-              onValueChange={(v) => setForm((f) => ({ ...f, reason: v }))}
-            >
-              <SelectTrigger id="reason">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {['Resignation', 'End of contract', 'Mutual agreement', 'Redundancy', 'Dismissal'].map(
-                  (r) => (
-                    <SelectItem key={r} value={r}>
-                      {r}
-                    </SelectItem>
-                  )
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              rows={3}
-              value={form.notes}
-              onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              placeholder="Handover, assets, exit interview notes…"
-            />
-          </div>
-          <div className="md:col-span-2 flex justify-end">
-            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
-              Submit termination
-            </Button>
-          </div>
-        </form>
-
+      {isLoading ? (
+        <div className="flex items-center justify-center gap-2 py-16 text-slate-500">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Loading employees...
+        </div>
+      ) : isError ? (
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-rose-200 bg-rose-50 py-12 text-center">
+          <p className="text-sm text-rose-700">
+            {error?.message || 'Failed to load employees.'}
+          </p>
+          <Button variant="outline" onClick={() => refetch()}>
+            Try again
+          </Button>
+        </div>
+      ) : (
         <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Employee</th>
                 <th className="px-4 py-3 font-medium">Department</th>
-                <th className="px-4 py-3 font-medium">Last day</th>
-                <th className="px-4 py-3 font-medium">Reason</th>
+                <th className="px-4 py-3 font-medium">Position</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row) => (
-                <tr key={row.id} className="border-t border-slate-100 hover:bg-slate-50/80">
+              {filtered.map((emp) => (
+                <tr key={emp.id as string} className="border-t border-slate-100 hover:bg-slate-50/80">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-slate-900">{row.employeeName}</div>
-                    <div className="text-xs text-slate-500">{row.employeeId}</div>
+                    <div className="font-medium text-slate-900">{emp.empFullName}</div>
+                    <div className="text-xs text-slate-500">{emp.code}</div>
                   </td>
-                  <td className="px-4 py-3">{row.department}</td>
-                  <td className="px-4 py-3">{row.lastWorkingDay}</td>
-                  <td className="px-4 py-3">{row.reason}</td>
+                  <td className="px-4 py-3">{emp.department || '—'}</td>
+                  <td className="px-4 py-3">{emp.position || '—'}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge
-                      status={row.status}
-                      tone={
-                        row.status === 'Completed' || row.status === 'Approved'
-                          ? 'success'
-                          : row.status === 'Cancelled'
-                            ? 'danger'
-                            : 'warning'
-                      }
-                    />
+                    <StatusBadge status={emp.empState || 'Unknown'} tone={statusTone(emp.empState)} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-rose-200 text-rose-700 hover:bg-rose-50"
+                        disabled={rowBusy(emp.id as string)}
+                        onClick={() => runAction(emp, 'terminate')}
+                      >
+                        {isBusy(emp.id as string, 'terminate') ? (
+                          <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <UserX className="mr-1 h-3.5 w-3.5" />
+                        )}
+                        Terminate
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-amber-200 text-amber-700 hover:bg-amber-50"
+                        disabled={rowBusy(emp.id as string)}
+                        onClick={() => runAction(emp, 'suspend')}
+                      >
+                        {isBusy(emp.id as string, 'suspend') ? (
+                          <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Ban className="mr-1 h-3.5 w-3.5" />
+                        )}
+                        Suspend
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-slate-200 text-slate-700 hover:bg-slate-100"
+                        disabled={rowBusy(emp.id as string)}
+                        onClick={() => runAction(emp, 'retire')}
+                      >
+                        {isBusy(emp.id as string, 'retire') ? (
+                          <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <LogOut className="mr-1 h-3.5 w-3.5" />
+                        )}
+                        Retire
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-sky-200 text-sky-700 hover:bg-sky-50"
+                        disabled={rowBusy(emp.id as string)}
+                        onClick={() => runAction(emp, 'standby')}
+                      >
+                        {isBusy(emp.id as string, 'standby') ? (
+                          <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <PauseCircle className="mr-1 h-3.5 w-3.5" />
+                        )}
+                        Standby
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-400">
-                    No pending terminations match your search.
+                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                    {search ? 'No employees match your search.' : 'No employees found.'}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      )}
     </ModulePageShell>
   );
 }
