@@ -35,6 +35,11 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
   );
   const [branchType, setBranchType] = useState<BranchType>(BranchType["0"]);
   const [branchStat, setBranchStat] = useState<BranchStat>(BranchStat["0"]); // ✅ Added
+  const [branchPhone, setBranchPhone] = useState("");
+  const [branchEmail, setBranchEmail] = useState("");
+  const [branchAddress, setBranchAddress] = useState("");
+  const [branchCity, setBranchCity] = useState("");
+  const [branchManagerName, setBranchManagerName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const branchTypeOptions = Object.entries(BranchType).map(([key, value]) => ({
@@ -67,6 +72,11 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
         branchType: branchType,
         branchStat: branchStat, // ✅ Added
         compId: defaultCompanyId as UUID,
+        phone: branchPhone.trim(),
+        email: branchEmail.trim(),
+        address: branchAddress.trim(),
+        city: branchCity.trim(),
+        managerName: branchManagerName.trim(),
       };
 
       const response = await onAddBranch(newBranch);
@@ -86,6 +96,11 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
       setDateOpened(new Date().toISOString().split("T")[0]);
       setBranchType(BranchType["0"]);
       setBranchStat(BranchStat["0"]); // ✅ Reset status
+      setBranchPhone("");
+      setBranchEmail("");
+      setBranchAddress("");
+      setBranchCity("");
+      setBranchManagerName("");
       setIsOpen(false);
 
     } catch (error: any) {
@@ -268,6 +283,77 @@ const AddBranchModal: React.FC<AddBranchModalProps> = ({
                     <Input
                         value={branchLocation}
                         onChange={(e) => setBranchLocation(e.target.value)}
+                        placeholder="Eg. Addis Ababa"
+                        className="h-9 text-sm"
+                        disabled={isLoading}
+                    />
+                  </div>
+
+                  {/* Contact Person (Manager) */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Contact Person
+                    </Label>
+                    <Input
+                        value={branchManagerName}
+                        onChange={(e) => setBranchManagerName(e.target.value)}
+                        placeholder="Eg. John Doe"
+                        className="h-9 text-sm"
+                        disabled={isLoading}
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Phone
+                    </Label>
+                    <Input
+                        value={branchPhone}
+                        onChange={(e) => setBranchPhone(e.target.value)}
+                        placeholder="Eg. +251 911 000000"
+                        className="h-9 text-sm"
+                        disabled={isLoading}
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Email
+                    </Label>
+                    <Input
+                        type="email"
+                        value={branchEmail}
+                        onChange={(e) => setBranchEmail(e.target.value)}
+                        placeholder="Eg. branch@example.com"
+                        className="h-9 text-sm"
+                        disabled={isLoading}
+                    />
+                  </div>
+
+                  {/* Address */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Address
+                    </Label>
+                    <Input
+                        value={branchAddress}
+                        onChange={(e) => setBranchAddress(e.target.value)}
+                        placeholder="Eg. Bole, Street 5"
+                        className="h-9 text-sm"
+                        disabled={isLoading}
+                    />
+                  </div>
+
+                  {/* City */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      City
+                    </Label>
+                    <Input
+                        value={branchCity}
+                        onChange={(e) => setBranchCity(e.target.value)}
                         placeholder="Eg. Addis Ababa"
                         className="h-9 text-sm"
                         disabled={isLoading}

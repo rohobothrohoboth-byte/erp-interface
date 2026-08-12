@@ -38,7 +38,9 @@ const deriveFileUrl = (doc: any): string | null => {
       .replace(/\\/g, "/")
       .replace(/^\/?wwwroot\//i, "")
       .replace(/^\//, "");
-    return `${FILE_GATEWAY}/${clean}`;
+    // Served anonymously through the gateway's /file-content passthrough route,
+    // which proxies the file service's static wwwroot (e.g. uploads/<file>).
+    return `${FILE_GATEWAY}/file-content/${clean}`;
   }
 
   const id = doc.id ?? doc.Id;

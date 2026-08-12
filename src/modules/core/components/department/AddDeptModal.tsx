@@ -27,6 +27,10 @@ const AddDeptModal: React.FC<AddDeptModalProps> = ({ onAddDepartment }) => {
     name: "",
     nameAm: "",
     branchId: "" as UUID,
+    managerName: "",
+    description: "",
+    phone: "",
+    email: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -63,10 +67,14 @@ const AddDeptModal: React.FC<AddDeptModalProps> = ({ onAddDepartment }) => {
         name: newDepartment.name.trim(),
         nameAm: newDepartment.nameAm.trim(),
         branchId: newDepartment.branchId,
+        managerName: newDepartment.managerName.trim(),
+        description: newDepartment.description.trim(),
+        phone: newDepartment.phone.trim(),
+        email: newDepartment.email.trim(),
       });
 
       toast.success("Department added successfully");
-      setNewDepartment({ name: "", nameAm: "", branchId: "" as UUID });
+      setNewDepartment({ name: "", nameAm: "", branchId: "" as UUID, managerName: "", description: "", phone: "", email: "" });
       setIsOpen(false);
     } catch (error: any) {
       toast.error(error.message || "Failed to add department");
@@ -166,6 +174,63 @@ const AddDeptModal: React.FC<AddDeptModalProps> = ({ onAddDepartment }) => {
                         value={newDepartment.name}
                         onChange={(e) => setNewDepartment(prev => ({ ...prev, name: e.target.value }))}
                         placeholder="Finance"
+                        className="h-9 text-sm"
+                        disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {/* Contact Person (Manager) */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Contact Person
+                    </Label>
+                    <Input
+                        value={newDepartment.managerName}
+                        onChange={(e) => setNewDepartment(prev => ({ ...prev, managerName: e.target.value }))}
+                        placeholder="Eg. John Doe"
+                        className="h-9 text-sm"
+                        disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Description
+                    </Label>
+                    <Input
+                        value={newDepartment.description}
+                        onChange={(e) => setNewDepartment(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Short description"
+                        className="h-9 text-sm"
+                        disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Phone
+                    </Label>
+                    <Input
+                        value={newDepartment.phone}
+                        onChange={(e) => setNewDepartment(prev => ({ ...prev, phone: e.target.value }))}
+                        placeholder="Eg. +251 911 000000"
+                        className="h-9 text-sm"
+                        disabled={isSubmitting}
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      Email
+                    </Label>
+                    <Input
+                        type="email"
+                        value={newDepartment.email}
+                        onChange={(e) => setNewDepartment(prev => ({ ...prev, email: e.target.value }))}
+                        placeholder="Eg. dept@example.com"
                         className="h-9 text-sm"
                         disabled={isSubmitting}
                     />

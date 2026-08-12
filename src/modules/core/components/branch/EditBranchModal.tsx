@@ -44,6 +44,11 @@ export const EditBranchModal: React.FC<EditBranchModalProps> = ({
     branchStat: BranchStat["0"],
     compId: '' as UUID,
     rowVersion: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    managerName: '',
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -68,6 +73,11 @@ export const EditBranchModal: React.FC<EditBranchModalProps> = ({
         branchStat: branch.branchStat || BranchStat["0"],
         compId: branch.compId || '' as UUID,
         rowVersion: branch.rowVersion || '',
+        phone: branch.phone || '',
+        email: branch.email || '',
+        address: branch.address || '',
+        city: branch.city || '',
+        managerName: branch.managerName || '',
       });
     }
   }, [branch]);
@@ -288,6 +298,79 @@ export const EditBranchModal: React.FC<EditBranchModalProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+
+              {/* Contact Person (Manager) */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                  Contact Person
+                </Label>
+                <Input
+                    value={formData.managerName || ''}
+                    onChange={(e) => handleInputChange('managerName', e.target.value)}
+                    placeholder="Eg. John Doe"
+                    className="h-9 text-sm"
+                    disabled={isLoading}
+                />
+              </div>
+
+              {/* Phone and Email - Side by Side */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Phone
+                  </Label>
+                  <Input
+                      value={formData.phone || ''}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
+                      placeholder="Eg. +251 911 000000"
+                      className="h-9 text-sm"
+                      disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Email
+                  </Label>
+                  <Input
+                      type="email"
+                      value={formData.email || ''}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                      placeholder="Eg. branch@example.com"
+                      className="h-9 text-sm"
+                      disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Address and City - Side by Side */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    Address
+                  </Label>
+                  <Input
+                      value={formData.address || ''}
+                      onChange={(e) => handleInputChange('address', e.target.value)}
+                      placeholder="Eg. Bole, Street 5"
+                      className="h-9 text-sm"
+                      disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    City
+                  </Label>
+                  <Input
+                      value={formData.city || ''}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      placeholder="Eg. Addis Ababa"
+                      className="h-9 text-sm"
+                      disabled={isLoading}
+                  />
                 </div>
               </div>
             </form>
