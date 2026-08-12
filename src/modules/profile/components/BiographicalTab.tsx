@@ -124,9 +124,9 @@ export const BiographicalTab = memo(function BiographicalTab() {
 
   const handleSaveBio = useCallback(async () => {
     try {
-      const message =await saveBiographical(bio?.id ?? "", bioForm);
+      await saveBiographical(bio?.id ?? "", bioForm);
       invalidateProfile();
-      showToast.success(message);
+      showToast.success("Biographical info updated");
     } catch (error:any){
       showToast.error(error.message);
     }
@@ -134,9 +134,9 @@ export const BiographicalTab = memo(function BiographicalTab() {
 
   const handleSaveFin = useCallback(async () => {
     try {
-      const message = await saveFinancial(bio?.id ?? "", finForm);
+      await saveFinancial(bio?.id ?? "", finForm);
       invalidateProfile();
-      showToast.success(message);
+      showToast.success("Financial info updated");
     } catch (error:any) {
       showToast.error(error.message);
     }

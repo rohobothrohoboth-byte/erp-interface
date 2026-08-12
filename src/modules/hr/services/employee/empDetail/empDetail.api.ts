@@ -40,7 +40,15 @@ export const empDetailApi = {
   },
   getDocuments: (id: string) => get<EmpDetailDocument[]>(`${BASE}/GetEmpDocuments/${id}`),
   getCertAll:   (id: string) => get<EmpFileList[]>(`hrm/profile/v1/EmpMod/EmpCertAll/${id}`),
-  getLeave:     (_id: string): Promise<EmpDetailLeaveBalance[]> => Promise.resolve([]),
+  getLeave: async (id: string): Promise<EmpDetailLeaveBalance[]> => {
+    try {
+      const res = await api.get(`hrm/leave/v1/Balance/Employee/${id}`);
+      const data = res.data?.data ?? res.data ?? [];
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  },
 };
 
 export async function fetchCertBlobUrl(certId: string): Promise<string> {

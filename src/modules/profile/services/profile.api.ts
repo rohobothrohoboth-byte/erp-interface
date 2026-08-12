@@ -18,7 +18,7 @@ import type {
 
 const BASE    = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/MyPro`;
 const MOD_BASE = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/MyProMod`;
-const LEAVE_BASE = '/api/hrm/leave/v1/LeaveBalance';
+const LEAVE_BASE = '/api/hrm/leave/v1/Balance';
 
 const extractError = (error: unknown): string => {
   if (typeof error === 'object' && error !== null) {
@@ -85,7 +85,7 @@ export const profileApi = {
   },
   getLeaveBalance: async (): Promise<EmpLeaveBalDto[]> => {
     try {
-      const res = await api.get(`${LEAVE_BASE}/MyLeaveBalance`);
+      const res = await api.get(`${LEAVE_BASE}/MyBalance`);
       return res.data.data as EmpLeaveBalDto[];
     } catch (e) {
       throw new Error(extractError(e));

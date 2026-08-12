@@ -88,11 +88,9 @@ const FileList: React.FC<FileListProps> = ({
     setLoading(true);
     setError(null);
     try {
-      console.log(`📤 Loading files for ${module}/${referenceId} (${category || 'all'})`);
       const response = await getFilesByReference(module, referenceId, category);
       const data = response?.data?.data || response?.data || [];
       setFiles(Array.isArray(data) ? data : []);
-      console.log(`✅ Loaded ${files.length} files for ${module}/${referenceId}`);
     } catch (error: any) {
       console.error('Failed to load files:', error);
       // ✅ Don't show error for 404 - just means no files

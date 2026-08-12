@@ -203,9 +203,9 @@ export function FamilyTab() {
     if (!editingId) return;
     setSaving(true);
     try {
-      const message = await updateFamily(editingId, { id: editingId, ...form });
+      await updateFamily(editingId, { id: editingId, ...form });
       invalidateProfile();
-      showToast.success(message);
+      showToast.success("Family member updated");
       setEditingId(null);
       setForm(EMPTY_FAMILY);
     } catch (error:any) {
@@ -219,9 +219,9 @@ export function FamilyTab() {
     if (!form.firstName.trim()) return;
     setSaving(true);
     try {
-      const message = await addFamily(form);
+      await addFamily(form);
       invalidateProfile();
-      showToast.success(message);
+      showToast.success("Family member added");
       setForm(EMPTY_FAMILY);
       setAddingNew(false);
     } catch (error:any) {
@@ -234,9 +234,9 @@ export function FamilyTab() {
   const handleDelete = async (id: string) => {
     setDeleting(true);
     try {
-      const message = await deleteFamily(id);
+      await deleteFamily(id);
       invalidateProfile();
-      showToast.success(message);
+      showToast.success("Family member deleted");
     } catch (error:any) {
       showToast.error(error.message);
     } finally {

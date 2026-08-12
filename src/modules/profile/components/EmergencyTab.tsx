@@ -107,9 +107,9 @@ export function EmergencyTab() {
   };
   const handleSave = async () => {
     try {
-      const message = await saveEmergency(form);
+      await saveEmergency(form);
       invalidateProfile();
-      showToast.success(message);
+      showToast.success("Emergency contact updated");
     } catch (error:any) {
       showToast.error(error.message);
     }
