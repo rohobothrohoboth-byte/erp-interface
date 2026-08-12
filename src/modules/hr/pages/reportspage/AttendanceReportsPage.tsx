@@ -10,17 +10,6 @@ import {
   type AppliedFilter,
 } from './reportKit';
 
-// The shared api client's response shape varies, so normalize to a record array.
-function extractItems(res: any): any[] {
-  if (!res) return [];
-  if (Array.isArray(res)) return res;
-  if (Array.isArray(res.items)) return res.items;
-  if (Array.isArray(res.data)) return res.data;
-  if (Array.isArray(res.data?.items)) return res.data.items;
-  if (Array.isArray(res.data?.data?.items)) return res.data.data.items;
-  return [];
-}
-
 const fmtDate = (v?: string | null): string => {
   if (!v) return '';
   const d = new Date(v);
@@ -53,35 +42,48 @@ const statusTone = (s: string): 'success' | 'warning' | 'danger' | 'info' | 'neu
   return 'neutral';
 };
 
-const firstOfMonth = () => {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-};
-const today = () => new Date().toISOString().slice(0, 10);
+interface MonthlyReport {
+  records: any[];
+  presentCount?: number;
+  absentCount?: number;
+  lateCount?: number;
+  totalEmployees?: number;
+  attendanceRate?: number;
+}
+
+function normalizeReport(res: any): MonthlyReport {
+  const dto = res?.data ?? res ?? {};
+  const records = dto.records ?? dto.Records ?? dto.data?.records ?? [];
+  return {
+    records: Array.isArray(records) ? records : [],
+    presentCount: dto.presentCount ?? dto.PresentCount,
+    absentCount: dto.absentCount ?? dto.AbsentCount,
+    lateCount: dto.lateCount ?? dto.LateCount,
+    totalEmployees: dto.totalEmployees ?? dto.TotalEmployees,
+    attendanceRate: dto.attendanceRate ?? dto.AttendanceRate,
+  };
+}
+
+const currentMonth = () => new Date().toISOString().slice(0, 7); // YYYY-MM
 
 export default function AttendanceReportsPage() {
-  const [from, setFrom] = useState(firstOfMonth());
-  const [to, setTo] = useState(today());
+  const [ym, setYm] = useState(currentMonth());
   const [search, setSearch] = useState('');
   const [dept, setDept] = useState('');
   const [status, setStatus] = useState('');
 
+  const year = Number(ym.slice(0, 4));
+  const month = Number(ym.slice(5, 7));
+
   const {
-    data: records = [],
+    data: report,
     isLoading,
     error,
     refetch,
   } = useQuery({
-    queryKey: ['attendance', 'report', from, to],
-    queryFn: async () => {
-      const res = await attendanceApi.getAttendanceRecords({
-        from: new Date(from + 'T00:00:00Z').toISOString(),
-        to: new Date(to + 'T23:59:59Z').toISOString(),
-        page: 1,
-        pageSize: 2000,
-      });
-      return extractItems(res);
-    },
+    queryKey: ['attendance', 'monthly', year, month],
+    queryFn: async () => normalizeReport(await attendanceApi.getMonthlyReport(year, month)),
+    enabled: !!year && !!month,
   });
 
   const { data: employees = [] } = useQuery<EmployeeListDto[]>({
@@ -98,22 +100,22 @@ export default function AttendanceReportsPage() {
 
   const allRows: ReportRow[] = useMemo(
     () =>
-      records.map((r: any, idx: number) => {
-        const emp = empById.get(String(r.employeeId));
+      (report?.records ?? []).map((r: any, idx: number) => {
+        const emp = empById.get(String(r.employeeId ?? r.EmployeeId));
         return {
-          id: String(r.id ?? `${r.employeeId}-${r.date}-${idx}`),
-          date: fmtDate(r.date),
-          code: r.employeeCode || emp?.code || '',
-          name: r.employeeName || emp?.empFullName || '',
-          department: emp?.department || r.department || '',
-          checkIn: fmtTime(r.checkIn),
-          checkOut: fmtTime(r.checkOut),
-          hours: r.hoursWorked ?? 0,
-          overtime: r.overtimeHours ?? 0,
-          status: r.status || '',
+          id: String(r.id ?? r.Id ?? `${r.employeeId}-${r.date}-${idx}`),
+          date: fmtDate(r.date ?? r.Date),
+          code: r.employeeCode ?? r.EmployeeCode ?? emp?.code ?? '',
+          name: r.employeeName ?? r.EmployeeName ?? emp?.empFullName ?? '',
+          department: emp?.department ?? r.department ?? '',
+          checkIn: fmtTime(r.checkIn ?? r.CheckIn),
+          checkOut: fmtTime(r.checkOut ?? r.CheckOut),
+          hours: r.hoursWorked ?? r.HoursWorked ?? 0,
+          overtime: r.overtimeHours ?? r.OvertimeHours ?? 0,
+          status: r.status ?? r.Status ?? '',
         };
       }),
-    [records, empById],
+    [report, empById],
   );
 
   const departments = useMemo(
@@ -138,27 +140,36 @@ export default function AttendanceReportsPage() {
   const stats = useMemo(
     () => [
       { label: 'Records', value: rows.length },
-      { label: 'Present', value: rows.filter((r) => String(r.status).toLowerCase().includes('present')).length },
-      { label: 'Late', value: rows.filter((r) => String(r.status).toLowerCase().includes('late')).length },
-      { label: 'Absent', value: rows.filter((r) => String(r.status).toLowerCase().includes('absent')).length },
+      {
+        label: 'Present',
+        value: report?.presentCount ?? rows.filter((r) => String(r.status).toLowerCase().includes('present')).length,
+      },
+      {
+        label: 'Late',
+        value: report?.lateCount ?? rows.filter((r) => String(r.status).toLowerCase().includes('late')).length,
+      },
+      {
+        label: 'Absent',
+        value: report?.absentCount ?? rows.filter((r) => String(r.status).toLowerCase().includes('absent')).length,
+      },
     ],
-    [rows],
+    [rows, report],
   );
 
   const appliedFilters: AppliedFilter[] = [
-    { label: 'Period', value: `${fmtDate(from)} – ${fmtDate(to)}` },
+    { label: 'Month', value: ym },
     ...(dept ? [{ label: 'Department', value: dept }] : []),
     ...(status ? [{ label: 'Status', value: status }] : []),
     ...(search ? [{ label: 'Search', value: search }] : []),
   ];
 
-  const dateInput =
+  const controlCls =
     'rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900';
 
   return (
     <ReportView
       title="Attendance Report"
-      subtitle="Daily attendance, hours, and status by employee for the selected period."
+      subtitle="Monthly attendance, hours, and status by employee."
       columns={columns}
       rows={rows}
       stats={stats}
@@ -173,13 +184,8 @@ export default function AttendanceReportsPage() {
       filenameBase="attendance_report"
       filters={
         <>
-          <input type="date" className={dateInput} value={from} onChange={(e) => setFrom(e.target.value)} />
-          <input type="date" className={dateInput} value={to} onChange={(e) => setTo(e.target.value)} />
-          <select
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-            value={dept}
-            onChange={(e) => setDept(e.target.value)}
-          >
+          <input type="month" className={controlCls} value={ym} onChange={(e) => setYm(e.target.value)} />
+          <select className={controlCls} value={dept} onChange={(e) => setDept(e.target.value)}>
             <option value="">All departments</option>
             {departments.map((d) => (
               <option key={d} value={d}>
@@ -187,11 +193,7 @@ export default function AttendanceReportsPage() {
               </option>
             ))}
           </select>
-          <select
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-          >
+          <select className={controlCls} value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">All statuses</option>
             {statuses.map((s) => (
               <option key={s} value={s}>
