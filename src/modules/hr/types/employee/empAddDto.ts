@@ -16,6 +16,7 @@ export interface Step1Dto {
     jobGradeId: UUID;
     positionId: UUID;
     departmentId: UUID;
+    reportsToId?: UUID | null; // direct manager / boss (HRM.Profile.Employee)
     jgStepId: UUID;
     employmentType: EmpType;
     employmentNature: EmpNature;

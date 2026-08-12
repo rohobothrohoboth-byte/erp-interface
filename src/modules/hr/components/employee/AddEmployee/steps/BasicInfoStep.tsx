@@ -39,6 +39,7 @@ import type { Step1Dto, UUID } from '@/modules/hr/types/employee/empAddDto';
 import { amharicRegex } from '@/shared/utils/amharic-regex';
 import List from '@/modules/list/components/list';
 import { hrmmNamesApi } from '@/modules/list/services/hrmmNames/hrmmNames.api';
+import { getAllEmployees } from '@/modules/hr/services/employee/emp.api';
 import type { ListItem } from '@/modules/list/types/list';
 import type { NameListDto } from '@/modules/hr/types/NameListDto';
 import type { NameListItem } from '@/modules/list/types/NameList/nameList';
@@ -168,9 +169,12 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   const [positions, setPositions] = useState<NameListDto[]>([]);
   const [jobGrades, setJobGrades] = useState<NameListItem[]>([]);
   const [jobGradeSteps, setJobGradeSteps] = useState<NameListItem[]>([]);
+  // Direct-boss (reports-to) candidates: employees of the selected department.
+  const [managers, setManagers] = useState<ListItem[]>([]);
 
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [loadingManagers, setLoadingManagers] = useState(false);
   const [loadingPositions, setLoadingPositions] = useState(false);
   const [loadingJobGrades, setLoadingJobGrades] = useState(false);
   const [loadingJobGradeSteps, setLoadingJobGradeSteps] = useState(false);
@@ -214,6 +218,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       jgStepId: data.jgStepId || '' as UUID,
       positionId: data.positionId || '' as UUID,
       departmentId: data.departmentId || '' as UUID,
+      reportsToId: data.reportsToId ?? null,
       employmentType: data.employmentType || '0' as EmpType,
       employmentNature: data.employmentNature || '0' as EmpNature,
       workArrangement: data.workArrangement || '0' as WorkArrangement,
@@ -402,6 +407,48 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
       }
     };
     fetchPos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formik.values.departmentId]);
+
+  // ============================================================
+  // FETCH REPORTS-TO CANDIDATES (department's employees: head / vice-head / peers)
+  // ============================================================
+
+  useEffect(() => {
+    const deptId = formik.values.departmentId;
+    if (!deptId) {
+      setManagers([]);
+      if (formik.values.reportsToId) formik.setFieldValue('reportsToId', null);
+      return;
+    }
+
+    let cancelled = false;
+    const fetchManagers = async () => {
+      try {
+        setLoadingManagers(true);
+        const all = await getAllEmployees();
+        const inDept = all
+          .filter((e) => String(e.departmentId ?? '') === String(deptId))
+          .map<ListItem>((e) => ({
+            id: String(e.id),
+            name: `${e.empFullName}${e.code ? ` (${e.code})` : ''}${e.position ? ` — ${e.position}` : ''}`,
+          }));
+        if (cancelled) return;
+        setManagers(inDept);
+        // Clear a stale selection that isn't part of the newly selected department.
+        if (formik.values.reportsToId && !inDept.some((m) => m.id === String(formik.values.reportsToId))) {
+          formik.setFieldValue('reportsToId', null);
+        }
+      } catch {
+        if (!cancelled) setManagers([]);
+      } finally {
+        if (!cancelled) setLoadingManagers(false);
+      }
+    };
+    fetchManagers();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formik.values.departmentId]);
 
@@ -998,6 +1045,28 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
                         !formik.values.departmentId ||
                         posListItems.length === 0
                     }
+                />
+              </Field>
+
+              <Field
+                  label="Reports To (Direct Boss)"
+                  labelAm="ቀጥተኛ ኃላፊ"
+                  description="Approvals (e.g. leave) are routed through this person."
+              >
+                <List
+                    items={managers}
+                    selectedValue={(formik.values.reportsToId as string) || ''}
+                    onSelect={(item) => formik.setFieldValue('reportsToId', item.id || null)}
+                    placeholder={
+                      loadingManagers
+                          ? 'Loading...'
+                          : !formik.values.departmentId
+                              ? 'Select department first'
+                              : managers.length === 0
+                                  ? 'No employees in this department yet'
+                                  : 'Select or search direct boss'
+                    }
+                    disabled={loadingManagers || loading || !formik.values.departmentId || managers.length === 0}
                 />
               </Field>
 

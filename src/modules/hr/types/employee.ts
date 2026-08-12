@@ -16,6 +16,8 @@ export interface EmployeeListDto extends BaseDto {
   position: string;
   empState:EmpState;
   hasAccount: boolean;
+  departmentId?: UUID;
+  reportsToId?: UUID | null;
 }
 
 export interface EmployeeModDto {
