@@ -75,6 +75,30 @@ const ViewDeptModal: React.FC<ViewDeptModalProps> = ({
                 {selectedDepartment.deptStatStr}
               </span>
               </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Contact Person</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {selectedDepartment.managerName || '—'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Phone</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {selectedDepartment.phone || '—'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-sm text-slate-500 dark:text-slate-400">Email</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {selectedDepartment.email || '—'}
+                </span>
+              </div>
+              <div className="py-2">
+                <span className="block text-sm text-slate-500 dark:text-slate-400 mb-1">Description</span>
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {selectedDepartment.description || '—'}
+                </span>
+              </div>
             </div>
           </div>
 

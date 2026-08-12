@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { X, Eye, Building2, MapPin, Calendar, Hash } from "lucide-react";
+import { X, Eye, Building2, MapPin, Calendar, Hash, Phone, Mail, User, Home } from "lucide-react";
 import type { BranchListDto } from "@/modules/core/types/branch";
 import { Button } from "@/shared/components/ui/button";
 
@@ -136,6 +136,61 @@ const ViewBranchModal: React.FC<ViewBranchModalProps> = ({
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {selectedBranch.compAm}
+                </p>
+              </div>
+
+              {/* Contact Person */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <User className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Contact Person</span>
+                </div>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {selectedBranch.managerName || '—'}
+                </p>
+              </div>
+
+              {/* Phone */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Phone className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Phone</span>
+                </div>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {selectedBranch.phone || '—'}
+                </p>
+              </div>
+
+              {/* Email */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Mail className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Email</span>
+                </div>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {selectedBranch.email || '—'}
+                </p>
+              </div>
+
+              {/* City */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-xs text-slate-500 dark:text-slate-400">City</span>
+                </div>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {selectedBranch.city || '—'}
+                </p>
+              </div>
+
+              {/* Address */}
+              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 md:col-span-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <Home className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-xs text-slate-500 dark:text-slate-400">Address</span>
+                </div>
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {selectedBranch.address || '—'}
                 </p>
               </div>
             </div>
