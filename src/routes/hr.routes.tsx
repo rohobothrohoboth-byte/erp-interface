@@ -170,6 +170,9 @@ const AttendanceReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspa
 const LeaveReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/LeaveReportsPage'));
 const PayrollReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/PayrollReportsPage'));
 const RecruitmentReportsPage =safeLazy(() => import('@/modules/hr/pages/reportspage/RecruitmentReportsPage'));
+const RecruitmentRequisitionsReportPage =safeLazy(() => import('@/modules/hr/pages/reportspage/RecruitmentRequisitionsReportPage'));
+const RecruitmentPostingsReportPage =safeLazy(() => import('@/modules/hr/pages/reportspage/RecruitmentPostingsReportPage'));
+const RecruitmentInterviewsReportPage =safeLazy(() => import('@/modules/hr/pages/reportspage/RecruitmentInterviewsReportPage'));
 
 // ==================== RECRUITMENT MODULE PAGES ====================
 const RecruitmentDashboard =safeLazy(() => import('@/modules/hr/pages/recruitmentpage/RecruitmentDashboard'));
@@ -652,6 +655,30 @@ export const hrRoutes: AppRoute[] = [
         title: 'Recruitment Reports',
         icon: ClipboardList,
         element: withSuspense(RecruitmentReportsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/recruitment/requisitions',
+        href: '/hr/reports/recruitment/requisitions',
+        title: 'Requisitions Report',
+        icon: ClipboardList,
+        element: withSuspense(RecruitmentRequisitionsReportPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/recruitment/postings',
+        href: '/hr/reports/recruitment/postings',
+        title: 'Postings Report',
+        icon: ClipboardList,
+        element: withSuspense(RecruitmentPostingsReportPage),
+        nav: false,
+    },
+    {
+        path: 'hr/reports/recruitment/interviews',
+        href: '/hr/reports/recruitment/interviews',
+        title: 'Interviews Report',
+        icon: ClipboardList,
+        element: withSuspense(RecruitmentInterviewsReportPage),
         nav: false,
     },
 
@@ -1282,7 +1309,10 @@ export const hrSidebarRoutes: SidebarNavSection[] = [
             { title: 'Attendance Reports', href: '/hr/reports/attendance', activeMatch: 'prefix' },
             { title: 'Leave Reports', href: '/hr/reports/leave', activeMatch: 'prefix' },
             { title: 'Payroll Reports', href: '/hr/reports/payroll', activeMatch: 'prefix' },
-            { title: 'Recruitment Reports', href: '/hr/reports/recruitment', activeMatch: 'prefix' },
+            { title: 'Recruitment — Applicants', href: '/hr/reports/recruitment', activeMatch: 'exact' },
+            { title: 'Recruitment — Requisitions', href: '/hr/reports/recruitment/requisitions', activeMatch: 'prefix' },
+            { title: 'Recruitment — Postings', href: '/hr/reports/recruitment/postings', activeMatch: 'prefix' },
+            { title: 'Recruitment — Interviews', href: '/hr/reports/recruitment/interviews', activeMatch: 'prefix' },
         ],
     },
     {

@@ -13,7 +13,7 @@ export interface EvaluationTypeFilters {
 }
 
 class EvaluationTypeApi {
-  private baseUrl = `${import.meta.env.VITE_HRMM_RECRUIT_URL || 'hrm/recruit/v1'}/EvalType`;
+  private baseUrl = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/EvalType`;
  
   // Helper method to extract error messages
   private extractErrorMessage(error: any): string {

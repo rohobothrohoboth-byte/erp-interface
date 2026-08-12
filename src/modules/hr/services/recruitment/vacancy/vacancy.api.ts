@@ -1,36 +1,11 @@
 // src/services/hr/recruitment/vacancy/vacancy.api.ts
 
-import axios from 'axios';
+// Route through the API gateway (shared `api` client: base URL + auth + refresh).
+// Previously used a direct axios instance to https://localhost:1217 which bypassed
+// the gateway (ERR_CONNECTION_REFUSED).
+import { api as recruitApi } from '@/shared/services/api';
 
-// ✅ Direct API client for Recruit service (bypasses gateway)
-const recruitApi = axios.create({
-  baseURL: import.meta.env.VITE_RECRUIT_API_URL || 'https://localhost:1217',
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add auth interceptor
-recruitApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Response interceptor
-recruitApi.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        localStorage.removeItem('authToken');
-        window.location.href = '/login';
-      }
-      return Promise.reject(error);
-    }
-);
+const RECRUIT = import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1';
 
 export interface VacancyListItem {
   id: string;
@@ -80,25 +55,25 @@ export interface CreateApplicationRequest {
 class VacancyApi {
   // Get all published vacancies
   async getPublishedVacancies(): Promise<VacancyListItem[]> {
-    const response = await recruitApi.get('/api/hrm/recruit/v1/Vacancy/PublishedVacancy');
+    const response = await recruitApi.get(`${RECRUIT}/Vacancy/PublishedVacancy`);
     return response.data?.data || [];
   }
 
   // Get internal vacancies
   async getInternalVacancies(): Promise<VacancyListItem[]> {
-    const response = await recruitApi.get('/api/hrm/recruit/v1/Vacancy/InternalVacancy');
+    const response = await recruitApi.get(`${RECRUIT}/Vacancy/InternalVacancy`);
     return response.data?.data || [];
   }
 
   // Get external vacancies
   async getExternalVacancies(): Promise<VacancyListItem[]> {
-    const response = await recruitApi.get('/api/hrm/recruit/v1/Vacancy/ExternalVacancy');
+    const response = await recruitApi.get(`${RECRUIT}/Vacancy/ExternalVacancy`);
     return response.data?.data || [];
   }
 
   // Get vacancy detail
   async getVacancyDetail(id: string): Promise<VacancyDetail> {
-    const response = await recruitApi.get(`/api/hrm/recruit/v1/Vacancy/GetVacancy/${id}`);
+    const response = await recruitApi.get(`${RECRUIT}/Vacancy/GetVacancy/${id}`);
     return response.data?.data;
   }
 
@@ -112,7 +87,7 @@ class VacancyApi {
     }
 
     const response = await recruitApi.post(
-        '/api/hrm/recruit/v1/JobApplication/Apply',
+        `${RECRUIT}/JobApp/InternalApp`,
         formData,
         {
           headers: {
@@ -127,7 +102,7 @@ class VacancyApi {
   async hasApplied(vacancyId: string): Promise<boolean> {
     try {
       const response = await recruitApi.get(
-          `/api/hrm/recruit/v1/JobApplication/HasApplied/${vacancyId}`
+          `${RECRUIT}/JobApp/HasApplied/${vacancyId}`
       );
       return response.data?.data || false;
     } catch {
