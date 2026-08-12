@@ -19,6 +19,11 @@ export interface BranchListDto extends BaseDto {
   branchStatStr: string;
   openDateStr: string;
   openDateStrAm: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  managerName?: string;
 }
 
 export interface BranchCompListDto {
@@ -36,6 +41,11 @@ export interface AddBranchDto {
   branchType: BranchType;
   branchStat: BranchStat;
   compId: UUID;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  managerName?: string;
 }
 
 export interface EditBranchDto {
@@ -49,6 +59,11 @@ export interface EditBranchDto {
   branchStat: BranchStat;
   compId: UUID;
   rowVersion: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  managerName?: string;
 }
 
 // Original Branch interface for detailed view (if still needed)
