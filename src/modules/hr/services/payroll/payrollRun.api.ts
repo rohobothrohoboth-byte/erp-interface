@@ -8,6 +8,25 @@ import { api } from '@/shared/services/api';
 
 const GATEWAY = import.meta.env.VITE_GATEWAY_URL || 'http://192.168.1.7:5000';
 
+export interface PayrollEmployeeDto {
+  id: string;
+  payrollRunId: string;
+  employeeId: string;
+  employeeCode: string;
+  employeeName: string;
+  department: string;
+  position: string;
+  baseSalary: number;
+  grossPay: number;
+  taxAmount: number;
+  pensionContribution: number;
+  otherDeductions: number;
+  netPay: number;
+  daysWorked: number;
+  daysAbsent: number;
+  overtimeHours: number;
+}
+
 export interface PayrollRunDto {
   id: string;
   name: string;
@@ -25,6 +44,7 @@ export interface PayrollRunDto {
   approvedAt?: string | null;
   approvedBy?: string | null;
   notes?: string | null;
+  employees?: PayrollEmployeeDto[];
 }
 
 export async function getAllPayrollRuns(): Promise<PayrollRunDto[]> {
