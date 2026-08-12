@@ -252,6 +252,81 @@ export function printReport(
   win.document.close();
 }
 
+export interface LetterContent {
+  title: string;
+  refNo?: string;
+  date?: string;
+  recipient?: string;
+  body: string; // free text; blank lines separate paragraphs
+  closing?: string;
+  signatoryName?: string;
+  signatoryTitle?: string;
+}
+
+/**
+ * Open a print-ready formal letter on the company letterhead (logo + address +
+ * contact header, ref/date, recipient, body paragraphs, closing, signature).
+ * For HR letters (experience, clearance, employment, recommendation, guarantee…).
+ */
+export function printLetter(l: Letterhead, c: LetterContent) {
+  const win = window.open('', '_blank', 'width=1024,height=768');
+  if (!win) return;
+
+  const contact = contactLine(l);
+  const logo = l.logoUrl
+    ? `<img src="${esc(l.logoUrl)}" alt="logo" style="max-height:72px;max-width:180px;object-fit:contain" />`
+    : '';
+  const paragraphs = c.body
+    .split(/\n\s*\n/)
+    .map((p) => `<p>${esc(p.trim()).replace(/\n/g, '<br/>')}</p>`)
+    .join('');
+
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8" /><title>${esc(c.title)}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color:#1e293b; margin:40px; line-height:1.6; }
+  .letterhead { display:flex; align-items:center; gap:18px; border-bottom:3px solid #0f766e; padding-bottom:14px; }
+  .company { font-size:22px; font-weight:800; color:#0f172a; }
+  .company-am { font-size:14px; color:#334155; }
+  .addr { font-size:12px; color:#475569; margin-top:4px; }
+  .contact { font-size:12px; color:#0f766e; }
+  .meta { display:flex; justify-content:space-between; margin-top:26px; font-size:13px; }
+  .recipient { margin-top:22px; font-size:14px; }
+  .title { margin:22px 0 10px; font-size:15px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; text-decoration:underline; }
+  .body { font-size:14px; text-align:justify; }
+  .body p { margin:0 0 14px; }
+  .sign { margin-top:48px; font-size:14px; }
+  .sign .name { font-weight:700; }
+  .motto { text-align:center; font-style:italic; color:#0f766e; font-size:12px; margin-top:40px; border-top:1px solid #e2e8f0; padding-top:8px; }
+  @media print { body { margin:16mm; } th, .letterhead { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style></head><body>
+  <div class="letterhead">${logo}<div>
+    <div class="company">${esc(l.name)}</div>
+    ${l.nameAm ? `<div class="company-am">${esc(l.nameAm)}</div>` : ''}
+    ${l.address ? `<div class="addr">${esc(l.address)}</div>` : ''}
+    ${contact ? `<div class="contact">${esc(contact)}</div>` : ''}
+  </div></div>
+  <div class="meta"><span>${c.refNo ? `Ref: ${esc(c.refNo)}` : ''}</span><span>${esc(c.date || new Date().toLocaleDateString())}</span></div>
+  ${c.recipient ? `<div class="recipient">${esc(c.recipient)}</div>` : ''}
+  <div class="title">${esc(c.title)}</div>
+  <div class="body">${paragraphs}</div>
+  <div class="sign">
+    <div>${esc(c.closing || 'Sincerely,')}</div>
+    <div style="margin-top:36px" class="name">${esc(c.signatoryName || '')}</div>
+    <div>${esc(c.signatoryTitle || '')}</div>
+  </div>
+  ${l.motto ? `<div class="motto">${esc(l.motto)}</div>` : ''}
+  <script>
+    (function(){
+      var imgs = Array.prototype.slice.call(document.images);
+      Promise.all(imgs.map(function(i){ return i.complete ? true : new Promise(function(res){ i.onload = i.onerror = res; }); }))
+        .then(function(){ setTimeout(function(){ window.focus(); window.print(); }, 200); });
+    })();
+  </script>
+</body></html>`);
+  win.document.close();
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ReportView — on-screen letterhead + toolbar + table
 // ─────────────────────────────────────────────────────────────────────────────

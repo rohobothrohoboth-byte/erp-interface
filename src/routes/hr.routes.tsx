@@ -128,6 +128,7 @@ const PendingEmployeeDetail =safeLazy(() => import('@/modules/hr/components/empl
 const Termination =safeLazy(() => import('@/modules/hr/pages/employeepage/Termination'));
 const EmployeeProfilePage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeProfilePage'));
 const EmployeeDocumentsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeDocumentsPage'));
+const HrLettersPage =safeLazy(() => import('@/modules/hr/pages/letterspage/HrLettersPage'));
 const EmployeeContractsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeeContractsPage'));
 const EmployeePerformancePage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeePerformancePage'));
 const EmployeePromotionsPage =safeLazy(() => import('@/modules/hr/pages/employeepage/EmployeePromotionsPage'));
@@ -352,6 +353,14 @@ export const hrRoutes: AppRoute[] = [
         title: 'Employee Documents',
         icon: FileText,
         element: withSuspense(EmployeeDocumentsPage),
+        nav: false,
+    },
+    {
+        path: 'hr/employees/letters',
+        href: '/hr/employees/letters',
+        title: 'HR Letters',
+        icon: FileText,
+        element: withSuspense(HrLettersPage),
         nav: false,
     },
     {
@@ -1201,6 +1210,7 @@ export const hrSidebarRoutes: SidebarNavSection[] = [
             { title: 'Employee Record', href: '/hr/employees/record', activeMatch: 'exact' },
             { title: 'Pending Employees', href: '/hr/pend-employees', activeMatch: 'prefix' },
             { title: 'Pending Education/Experience', href: '/hr/employees/pending-edu-exp', activeMatch: 'prefix' }, // ✅ Add this
+            { title: 'HR Letters', href: '/hr/employees/letters', activeMatch: 'prefix' },
             { title: 'Terminations', href: '/hr/employees/termination', activeMatch: 'prefix' },
         ],
     },
