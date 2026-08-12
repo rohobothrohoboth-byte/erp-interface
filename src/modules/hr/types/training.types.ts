@@ -63,4 +63,6 @@ export interface TrainingEnrollmentCreate {
   courseId: string;
   employeeId: string;
   status?: string;
+  score?: number | null;
+  feedback?: string | null;
 }

@@ -136,6 +136,14 @@ class TrainingApi {
     }
   }
 
+  async updateEnrollment(id: string, dto: TrainingEnrollmentCreate): Promise<TrainingEnrollment> {
+    try {
+      return this.unwrap<TrainingEnrollment>(await api.put(`${this.baseUrl}/Enrollment/${id}`, dto));
+    } catch (error) {
+      throw new Error(this.extractErrorMessage(error));
+    }
+  }
+
   async cancelEnrollment(id: string): Promise<void> {
     try {
       await api.delete(`${this.baseUrl}/Enrollment/${id}`);

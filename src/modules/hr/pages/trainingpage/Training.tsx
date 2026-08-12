@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
@@ -13,6 +14,11 @@ import {
   Users,
   AlertTriangle,
   RefreshCw,
+  ClipboardCheck,
+  CalendarDays,
+  MessageSquare,
+  BadgeCheck,
+  Search,
 } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
@@ -729,35 +735,28 @@ function CoursesTab({ programs }: { programs: TrainingProgram[] }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Enrollments tab
+// Shared enrollment data + lookups (used by Enrollments / Feedback / Certifications)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function EnrollmentsTab() {
+const ENROLLMENT_STATUSES = ['Enrolled', 'In Progress', 'Completed', 'Failed', 'Cancelled'];
+
+interface EnrollmentData {
+  enrollments: TrainingEnrollment[];
+  courses: TrainingCourse[];
+  employees: EmployeeListDto[];
+  loading: boolean;
+  error: string | null;
+  reload: () => Promise<void>;
+}
+
+function useEnrollmentData(): EnrollmentData {
   const [enrollments, setEnrollments] = useState<TrainingEnrollment[]>([]);
   const [courses, setCourses] = useState<TrainingCourse[]>([]);
   const [employees, setEmployees] = useState<EmployeeListDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [courseId, setCourseId] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [rowBusyId, setRowBusyId] = useState<string | null>(null);
-
-  const courseTitle = useMemo(() => {
-    const map = new Map<string, string>();
-    courses.forEach((c) => map.set(c.id, c.title));
-    return (id: string) => map.get(id) || id;
-  }, [courses]);
-
-  const employeeName = useMemo(() => {
-    const map = new Map<string, string>();
-    employees.forEach((e) => map.set(String(e.id), e.empFullName));
-    return (id: string) => map.get(String(id)) || id;
-  }, [employees]);
-
-  const load = async () => {
+  const reload = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -777,9 +776,117 @@ function EnrollmentsTab() {
   };
 
   useEffect(() => {
-    load();
+    reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  return { enrollments, courses, employees, loading, error, reload };
+}
+
+function useLookups(courses: TrainingCourse[], employees: EmployeeListDto[]) {
+  const courseTitle = useMemo(() => {
+    const map = new Map<string, string>();
+    courses.forEach((c) => map.set(c.id, c.title));
+    return (id: string) => map.get(id) || id;
+  }, [courses]);
+
+  const employeeById = useMemo(() => {
+    const map = new Map<string, EmployeeListDto>();
+    employees.forEach((e) => map.set(String(e.id), e));
+    return map;
+  }, [employees]);
+
+  const employeeName = (id: string) => employeeById.get(String(id))?.empFullName || id;
+  const departments = useMemo(
+    () => Array.from(new Set(employees.map((e) => e.department).filter(Boolean))).sort(),
+    [employees],
+  );
+
+  return { courseTitle, employeeById, employeeName, departments };
+}
+
+/** Reusable search + department filter bar. */
+function FilterBar({
+  search,
+  onSearch,
+  dept,
+  onDept,
+  departments,
+  placeholder = 'Search by name or code…',
+}: {
+  search: string;
+  onSearch: (v: string) => void;
+  dept: string;
+  onDept: (v: string) => void;
+  departments: string[];
+  placeholder?: string;
+}) {
+  return (
+    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="relative flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <input
+          className={`${inputCls} pl-9`}
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder={placeholder}
+        />
+      </div>
+      <select
+        className={`${inputCls} sm:w-56`}
+        value={dept}
+        onChange={(e) => onDept(e.target.value)}
+      >
+        <option value="">All departments</option>
+        {departments.map((d) => (
+          <option key={d} value={d}>
+            {d}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enrollments tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface GradeFormState {
+  status: string;
+  score: string;
+  feedback: string;
+}
+
+function EnrollmentsTab() {
+  const { enrollments, courses, employees, loading, error, reload } = useEnrollmentData();
+  const { courseTitle, employeeById, employeeName, departments } = useLookups(courses, employees);
+
+  const [search, setSearch] = useState('');
+  const [dept, setDept] = useState('');
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [courseId, setCourseId] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [rowBusyId, setRowBusyId] = useState<string | null>(null);
+
+  // Grade modal
+  const [gradeTarget, setGradeTarget] = useState<TrainingEnrollment | null>(null);
+  const [gradeForm, setGradeForm] = useState<GradeFormState>({ status: 'Completed', score: '', feedback: '' });
+  const [grading, setGrading] = useState(false);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return enrollments.filter((en) => {
+      const emp = employeeById.get(String(en.employeeId));
+      if (dept && emp?.department !== dept) return false;
+      if (!q) return true;
+      return [emp?.empFullName, emp?.code, courseTitle(en.courseId), en.status]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [enrollments, search, dept, employeeById, courseTitle]);
 
   const openEnroll = () => {
     setCourseId(courses[0]?.id ?? '');
@@ -801,11 +908,46 @@ function EnrollmentsTab() {
       await trainingApi.enroll({ courseId, employeeId });
       toast.success('Employee enrolled');
       setModalOpen(false);
-      await load();
+      await reload();
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const openGrade = (en: TrainingEnrollment) => {
+    setGradeTarget(en);
+    setGradeForm({
+      status: en.status || 'Completed',
+      score: en.score != null ? String(en.score) : '',
+      feedback: en.feedback ?? '',
+    });
+  };
+
+  const submitGrade = async () => {
+    if (!gradeTarget) return;
+    const scoreNum = gradeForm.score.trim() === '' ? null : Number(gradeForm.score);
+    if (scoreNum != null && (Number.isNaN(scoreNum) || scoreNum < 0 || scoreNum > 100)) {
+      toast.error('Score must be between 0 and 100');
+      return;
+    }
+    setGrading(true);
+    try {
+      await trainingApi.updateEnrollment(gradeTarget.id, {
+        courseId: gradeTarget.courseId,
+        employeeId: gradeTarget.employeeId,
+        status: gradeForm.status,
+        score: scoreNum,
+        feedback: gradeForm.feedback.trim() || null,
+      });
+      toast.success('Result recorded');
+      setGradeTarget(null);
+      await reload();
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setGrading(false);
     }
   };
 
@@ -815,7 +957,7 @@ function EnrollmentsTab() {
     try {
       await trainingApi.cancelEnrollment(en.id);
       toast.success('Enrollment cancelled');
-      await load();
+      await reload();
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -828,7 +970,7 @@ function EnrollmentsTab() {
     try {
       await trainingApi.issueCertificate(en.id);
       toast.success('Certificate issued');
-      await load();
+      await reload();
     } catch (e) {
       toast.error(errMsg(e));
     } finally {
@@ -841,10 +983,12 @@ function EnrollmentsTab() {
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <div>
           <CardTitle>Enrollments</CardTitle>
-          <CardDescription>Enroll employees and manage their training records.</CardDescription>
+          <CardDescription>
+            Enroll employees, then record their result &amp; score via the Grade action.
+          </CardDescription>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
           <Button
@@ -866,7 +1010,7 @@ function EnrollmentsTab() {
             title="Failed to load enrollments"
             detail={error}
             action={
-              <Button size="sm" variant="outline" onClick={load}>
+              <Button size="sm" variant="outline" onClick={reload}>
                 Retry
               </Button>
             }
@@ -889,73 +1033,111 @@ function EnrollmentsTab() {
             }
           />
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
-            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
-              <thead className="bg-slate-50 dark:bg-slate-900/50">
-                <tr>
-                  <th className={thCls}>Employee</th>
-                  <th className={thCls}>Course</th>
-                  <th className={thCls}>Status</th>
-                  <th className={thCls}>Score</th>
-                  <th className={thCls}>Certificate</th>
-                  <th className={thCls}>Enrolled</th>
-                  <th className={`${thCls} text-right`}>Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                {enrollments.map((en) => (
-                  <tr key={en.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                    <td className={`${tdCls} font-medium text-slate-800 dark:text-slate-100`}>
-                      {employeeName(en.employeeId)}
-                    </td>
-                    <td className={tdCls}>{courseTitle(en.courseId)}</td>
-                    <td className={tdCls}>
-                      <StatusBadge status={en.status} />
-                    </td>
-                    <td className={tdCls}>{en.score ?? '—'}</td>
-                    <td className={tdCls}>
-                      {en.certificateIssued ? (
-                        <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                          Issued
-                        </Badge>
-                      ) : (
-                        <span className="text-xs text-slate-400">Not issued</span>
-                      )}
-                    </td>
-                    <td className={tdCls}>{fmtDate(en.enrolledAt)}</td>
-                    <td className={`${tdCls} text-right`}>
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => issue(en)}
-                          disabled={rowBusyId === en.id || en.certificateIssued}
-                          title="Issue certificate"
-                          className="text-emerald-600 hover:text-emerald-700"
-                        >
-                          {rowBusyId === en.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Award className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => cancel(en)}
-                          disabled={rowBusyId === en.id}
-                          title="Cancel enrollment"
-                          className="text-rose-600 hover:text-rose-700"
-                        >
-                          <XCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
+          <>
+            <FilterBar
+              search={search}
+              onSearch={setSearch}
+              dept={dept}
+              onDept={setDept}
+              departments={departments}
+            />
+            <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
+              <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-900/50">
+                  <tr>
+                    <th className={thCls}>Employee</th>
+                    <th className={thCls}>Department</th>
+                    <th className={thCls}>Course</th>
+                    <th className={thCls}>Status</th>
+                    <th className={thCls}>Score</th>
+                    <th className={thCls}>Certificate</th>
+                    <th className={thCls}>Enrolled</th>
+                    <th className={`${thCls} text-right`}>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filtered.map((en) => {
+                    const emp = employeeById.get(String(en.employeeId));
+                    return (
+                      <tr key={en.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                        <td className={`${tdCls} font-medium text-slate-800 dark:text-slate-100`}>
+                          {employeeName(en.employeeId)}
+                          {emp?.code && (
+                            <span className="ml-1 text-xs font-normal text-slate-400">({emp.code})</span>
+                          )}
+                          {en.feedback && (
+                            <div className="max-w-xs truncate text-xs font-normal text-slate-500 dark:text-slate-400">
+                              “{en.feedback}”
+                            </div>
+                          )}
+                        </td>
+                        <td className={tdCls}>{emp?.department || '—'}</td>
+                        <td className={tdCls}>{courseTitle(en.courseId)}</td>
+                        <td className={tdCls}>
+                          <StatusBadge status={en.status} />
+                        </td>
+                        <td className={tdCls}>{en.score ?? '—'}</td>
+                        <td className={tdCls}>
+                          {en.certificateIssued ? (
+                            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                              Issued
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-slate-400">Not issued</span>
+                          )}
+                        </td>
+                        <td className={tdCls}>{fmtDate(en.enrolledAt)}</td>
+                        <td className={`${tdCls} text-right`}>
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openGrade(en)}
+                              title="Record result / score"
+                              className="text-sky-600 hover:text-sky-700"
+                            >
+                              <ClipboardCheck className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => issue(en)}
+                              disabled={rowBusyId === en.id || en.certificateIssued}
+                              title="Issue certificate"
+                              className="text-emerald-600 hover:text-emerald-700"
+                            >
+                              {rowBusyId === en.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Award className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => cancel(en)}
+                              disabled={rowBusyId === en.id}
+                              title="Cancel enrollment"
+                              className="text-rose-600 hover:text-rose-700"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">
+                        No enrollments match your filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </CardContent>
 
@@ -989,6 +1171,354 @@ function EnrollmentsTab() {
           </select>
         </Field>
       </FormModal>
+
+      <FormModal
+        open={!!gradeTarget}
+        title="Record Result"
+        onClose={() => setGradeTarget(null)}
+        onSubmit={submitGrade}
+        submitting={grading}
+        submitLabel="Save result"
+      >
+        {gradeTarget && (
+          <div className="mb-1 rounded-md bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/50">
+            <div className="font-medium text-slate-800 dark:text-slate-100">
+              {employeeName(gradeTarget.employeeId)}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {courseTitle(gradeTarget.courseId)}
+            </div>
+          </div>
+        )}
+        <Field label="Status">
+          <select
+            className={inputCls}
+            value={gradeForm.status}
+            onChange={(e) => setGradeForm({ ...gradeForm, status: e.target.value })}
+          >
+            {ENROLLMENT_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Score (0–100)">
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step="0.1"
+            className={inputCls}
+            value={gradeForm.score}
+            onChange={(e) => setGradeForm({ ...gradeForm, score: e.target.value })}
+            placeholder="e.g. 85"
+          />
+        </Field>
+        <Field label="Feedback">
+          <textarea
+            className={inputCls}
+            rows={3}
+            value={gradeForm.feedback}
+            onChange={(e) => setGradeForm({ ...gradeForm, feedback: e.target.value })}
+            placeholder="Trainer's comments on the employee's performance…"
+          />
+        </Field>
+      </FormModal>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calendar tab — scheduled courses grouped by date
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CalendarTab({ programs }: { programs: TrainingProgram[] }) {
+  const [courses, setCourses] = useState<TrainingCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const programName = useMemo(() => {
+    const map = new Map<string, string>();
+    programs.forEach((p) => map.set(p.id, p.name));
+    return (id: string) => map.get(id) || '—';
+  }, [programs]);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setCourses(await trainingApi.getCourses());
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const scheduled = useMemo(
+    () =>
+      courses
+        .filter((c) => !!c.scheduledDate)
+        .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime()),
+    [courses],
+  );
+
+  const now = Date.now();
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div>
+          <CardTitle>Training Calendar</CardTitle>
+          <CardDescription>Scheduled courses ordered by date.</CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Loading label="Loading calendar…" />
+        ) : error ? (
+          <StateMessage icon={AlertTriangle} title="Failed to load calendar" detail={error} />
+        ) : scheduled.length === 0 ? (
+          <StateMessage
+            icon={CalendarDays}
+            title="No scheduled courses"
+            detail="Set a scheduled date on a course to see it here."
+          />
+        ) : (
+          <div className="space-y-2">
+            {scheduled.map((c) => {
+              const upcoming = new Date(c.scheduledDate!).getTime() >= now;
+              return (
+                <div
+                  key={c.id}
+                  className="flex items-center gap-4 rounded-lg border border-slate-100 p-3 dark:border-slate-800"
+                >
+                  <div
+                    className={`flex h-12 w-12 flex-col items-center justify-center rounded-md text-center ${
+                      upcoming
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                    }`}
+                  >
+                    <span className="text-xs font-semibold uppercase">
+                      {new Date(c.scheduledDate!).toLocaleString(undefined, { month: 'short' })}
+                    </span>
+                    <span className="text-lg font-bold leading-none">
+                      {new Date(c.scheduledDate!).getDate()}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-slate-800 dark:text-slate-100">{c.title}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {programName(c.programId)}
+                      {c.instructor ? ` · ${c.instructor}` : ''}
+                      {c.location ? ` · ${c.location}` : ''}
+                    </div>
+                  </div>
+                  <Badge
+                    className={
+                      upcoming
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                    }
+                  >
+                    {upcoming ? 'Upcoming' : 'Past'}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Feedback tab — enrollments that captured trainer feedback / scores
+// ─────────────────────────────────────────────────────────────────────────────
+
+function FeedbackTab() {
+  const { enrollments, courses, employees, loading, error, reload } = useEnrollmentData();
+  const { courseTitle, employeeById, employeeName, departments } = useLookups(courses, employees);
+  const [search, setSearch] = useState('');
+  const [dept, setDept] = useState('');
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return enrollments
+      .filter((en) => en.feedback || en.score != null)
+      .filter((en) => {
+        const emp = employeeById.get(String(en.employeeId));
+        if (dept && emp?.department !== dept) return false;
+        if (!q) return true;
+        return [emp?.empFullName, emp?.code, courseTitle(en.courseId)]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q));
+      });
+  }, [enrollments, search, dept, employeeById, courseTitle]);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div>
+          <CardTitle>Training Feedback</CardTitle>
+          <CardDescription>Trainer feedback and scores captured for enrollments.</CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Loading label="Loading feedback…" />
+        ) : error ? (
+          <StateMessage icon={AlertTriangle} title="Failed to load feedback" detail={error} />
+        ) : (
+          <>
+            <FilterBar search={search} onSearch={setSearch} dept={dept} onDept={setDept} departments={departments} />
+            {rows.length === 0 ? (
+              <StateMessage
+                icon={MessageSquare}
+                title="No feedback yet"
+                detail="Record a result on an enrollment (Enrollments tab → Grade) to capture feedback."
+              />
+            ) : (
+              <div className="space-y-2">
+                {rows.map((en) => {
+                  const emp = employeeById.get(String(en.employeeId));
+                  return (
+                    <div key={en.id} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <span className="font-medium text-slate-800 dark:text-slate-100">
+                            {employeeName(en.employeeId)}
+                          </span>
+                          {emp?.code && <span className="ml-1 text-xs text-slate-400">({emp.code})</span>}
+                          <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
+                            · {courseTitle(en.courseId)}
+                          </span>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <StatusBadge status={en.status} />
+                          {en.score != null && (
+                            <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                              {en.score} / 100
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      {en.feedback && (
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">“{en.feedback}”</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Certifications tab — issued certificates
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CertificationsTab() {
+  const { enrollments, courses, employees, loading, error, reload } = useEnrollmentData();
+  const { courseTitle, employeeById, employeeName, departments } = useLookups(courses, employees);
+  const [search, setSearch] = useState('');
+  const [dept, setDept] = useState('');
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return enrollments
+      .filter((en) => en.certificateIssued)
+      .filter((en) => {
+        const emp = employeeById.get(String(en.employeeId));
+        if (dept && emp?.department !== dept) return false;
+        if (!q) return true;
+        return [emp?.empFullName, emp?.code, courseTitle(en.courseId)]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q));
+      });
+  }, [enrollments, search, dept, employeeById, courseTitle]);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div>
+          <CardTitle>Certifications</CardTitle>
+          <CardDescription>Employees who have been issued a training certificate.</CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Loading label="Loading certifications…" />
+        ) : error ? (
+          <StateMessage icon={AlertTriangle} title="Failed to load certifications" detail={error} />
+        ) : (
+          <>
+            <FilterBar search={search} onSearch={setSearch} dept={dept} onDept={setDept} departments={departments} />
+            {rows.length === 0 ? (
+              <StateMessage
+                icon={BadgeCheck}
+                title="No certificates issued"
+                detail="Issue a certificate from the Enrollments tab to see it here."
+              />
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
+                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+                  <thead className="bg-slate-50 dark:bg-slate-900/50">
+                    <tr>
+                      <th className={thCls}>Employee</th>
+                      <th className={thCls}>Department</th>
+                      <th className={thCls}>Course</th>
+                      <th className={thCls}>Score</th>
+                      <th className={thCls}>Issued</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {rows.map((en) => {
+                      const emp = employeeById.get(String(en.employeeId));
+                      return (
+                        <tr key={en.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                          <td className={`${tdCls} font-medium text-slate-800 dark:text-slate-100`}>
+                            {employeeName(en.employeeId)}
+                            {emp?.code && <span className="ml-1 text-xs font-normal text-slate-400">({emp.code})</span>}
+                          </td>
+                          <td className={tdCls}>{emp?.department || '—'}</td>
+                          <td className={tdCls}>{courseTitle(en.courseId)}</td>
+                          <td className={tdCls}>{en.score ?? '—'}</td>
+                          <td className={tdCls}>
+                            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                              <BadgeCheck className="mr-1 h-3.5 w-3.5" /> {fmtDate(en.updatedAt || en.enrolledAt)}
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
     </Card>
   );
 }
@@ -997,8 +1527,33 @@ function EnrollmentsTab() {
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
+function tabFromPath(pathname: string): string {
+  if (pathname.includes('/calendar')) return 'calendar';
+  if (pathname.includes('/feedback')) return 'feedback';
+  if (pathname.includes('/certificate')) return 'certifications';
+  return 'programs';
+}
+
 const Training = () => {
   const [programs, setPrograms] = useState<TrainingProgram[]>([]);
+  const { pathname } = useLocation();
+  const [tab, setTab] = useState<string>(() => tabFromPath(pathname));
+
+  // Keep the active tab in sync when navigating between the Training sidebar links.
+  useEffect(() => {
+    setTab(tabFromPath(pathname));
+  }, [pathname]);
+
+  // Load programs once at the page level so name lookups work on any tab
+  // (tab content for Programs may not be mounted when landing on Calendar).
+  useEffect(() => {
+    trainingApi
+      .getPrograms()
+      .then(setPrograms)
+      .catch(() => {
+        /* individual tabs surface their own errors */
+      });
+  }, []);
 
   return (
     <motion.div
@@ -1009,12 +1564,12 @@ const Training = () => {
       <div>
         <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Training Management</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Manage training programs, courses, and employee enrollments.
+          Manage training programs, courses, enrollments, schedules, feedback, and certifications.
         </p>
       </div>
 
-      <Tabs defaultValue="programs" className="gap-4">
-        <TabsList>
+      <Tabs value={tab} onValueChange={setTab} className="gap-4">
+        <TabsList className="flex-wrap">
           <TabsTrigger value="programs">
             <BookOpen className="mr-1 h-4 w-4" /> Programs
           </TabsTrigger>
@@ -1023,6 +1578,15 @@ const Training = () => {
           </TabsTrigger>
           <TabsTrigger value="enrollments">
             <Users className="mr-1 h-4 w-4" /> Enrollments
+          </TabsTrigger>
+          <TabsTrigger value="calendar">
+            <CalendarDays className="mr-1 h-4 w-4" /> Calendar
+          </TabsTrigger>
+          <TabsTrigger value="feedback">
+            <MessageSquare className="mr-1 h-4 w-4" /> Feedback
+          </TabsTrigger>
+          <TabsTrigger value="certifications">
+            <BadgeCheck className="mr-1 h-4 w-4" /> Certifications
           </TabsTrigger>
         </TabsList>
 
@@ -1034,6 +1598,15 @@ const Training = () => {
         </TabsContent>
         <TabsContent value="enrollments">
           <EnrollmentsTab />
+        </TabsContent>
+        <TabsContent value="calendar">
+          <CalendarTab programs={programs} />
+        </TabsContent>
+        <TabsContent value="feedback">
+          <FeedbackTab />
+        </TabsContent>
+        <TabsContent value="certifications">
+          <CertificationsTab />
         </TabsContent>
       </Tabs>
     </motion.div>

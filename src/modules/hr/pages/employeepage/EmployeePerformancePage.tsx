@@ -38,6 +38,7 @@ export default function EmployeePerformancePage() {
   const reviewerId = employeeIdFromAuth || userId || '';
 
   const [search, setSearch] = useState('');
+  const [deptFilter, setDeptFilter] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<PerformanceReviewCreate>(emptyForm);
@@ -63,15 +64,35 @@ export default function EmployeePerformancePage() {
     return map;
   }, [employees]);
 
+  const employeeById = useMemo(() => {
+    const map = new Map<string, (typeof employees)[number]>();
+    employees.forEach((e) => map.set(String(e.id), e));
+    return map;
+  }, [employees]);
+
+  const departments = useMemo(
+    () => Array.from(new Set(employees.map((e) => e.department).filter(Boolean))).sort(),
+    [employees]
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return reviews;
-    return reviews.filter((r) =>
-      [employeeName.get(r.employeeId) || r.employeeId, r.period, r.status, r.comments]
+    return reviews.filter((r) => {
+      const emp = employeeById.get(r.employeeId);
+      if (deptFilter && emp?.department !== deptFilter) return false;
+      if (!q) return true;
+      return [
+        emp?.empFullName || r.employeeId,
+        emp?.code,
+        employeeName.get(r.reviewerId),
+        r.period,
+        r.status,
+        r.comments,
+      ]
         .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
-    );
-  }, [reviews, search, employeeName]);
+        .some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [reviews, search, deptFilter, employeeById, employeeName]);
 
   const invalidate = () => qc.invalidateQueries({ queryKey: REVIEWS_KEY });
 
@@ -191,7 +212,7 @@ export default function EmployeePerformancePage() {
       ]}
       searchValue={search}
       onSearchChange={setSearch}
-      searchPlaceholder="Search reviews..."
+      searchPlaceholder="Search by employee, code, reviewer, period..."
       onRefresh={() => refetch()}
       primaryActionLabel="New review"
       onPrimaryAction={openAdd}
@@ -209,11 +230,32 @@ export default function EmployeePerformancePage() {
           </Button>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
+        <div>
+          {departments.length > 0 && (
+            <div className="mb-4 flex items-center gap-2">
+              <label className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                Department
+              </label>
+              <select
+                className={`${inputCls} w-56`}
+                value={deptFilter}
+                onChange={(e) => setDeptFilter(e.target.value)}
+              >
+                <option value="">All departments</option>
+                {departments.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
                 <th className="px-4 py-3 font-medium">Employee</th>
+                <th className="px-4 py-3 font-medium">Reviewer</th>
                 <th className="px-4 py-3 font-medium">Period</th>
                 <th className="px-4 py-3 font-medium">Score</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -226,10 +268,18 @@ export default function EmployeePerformancePage() {
                   <td className="px-4 py-3">
                     <div className="font-medium text-slate-900">
                       {employeeName.get(r.employeeId) || r.employeeId}
+                      {employeeById.get(r.employeeId)?.code && (
+                        <span className="ml-1 text-xs font-normal text-slate-400">
+                          ({employeeById.get(r.employeeId)?.code})
+                        </span>
+                      )}
                     </div>
                     {r.comments && (
                       <div className="max-w-xs truncate text-xs text-slate-500">{r.comments}</div>
                     )}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {r.reviewerId ? employeeName.get(r.reviewerId) || '—' : '—'}
                   </td>
                   <td className="px-4 py-3">{r.period}</td>
                   <td className="px-4 py-3">{r.overallScore ?? '—'}</td>
@@ -287,13 +337,16 @@ export default function EmployeePerformancePage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
-                    {search ? 'No reviews match your search.' : 'No performance reviews yet.'}
+                  <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
+                    {search || deptFilter
+                      ? 'No reviews match your filters.'
+                      : 'No performance reviews yet.'}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -312,6 +365,20 @@ export default function EmployeePerformancePage() {
             onChange={(e) => setForm((f) => ({ ...f, employeeId: e.target.value }))}
           >
             <option value="">Select employee…</option>
+            {employees.map((emp) => (
+              <option key={String(emp.id)} value={String(emp.id)}>
+                {emp.empFullName} {emp.code ? `(${emp.code})` : ''}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Reviewer">
+          <select
+            className={inputCls}
+            value={form.reviewerId}
+            onChange={(e) => setForm((f) => ({ ...f, reviewerId: e.target.value }))}
+          >
+            <option value="">{reviewerId ? 'Me (current user)' : 'Select reviewer…'}</option>
             {employees.map((emp) => (
               <option key={String(emp.id)} value={String(emp.id)}>
                 {emp.empFullName} {emp.code ? `(${emp.code})` : ''}
