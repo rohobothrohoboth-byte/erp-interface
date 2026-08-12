@@ -59,6 +59,7 @@ interface CompanyEditForm {
   email: string;
   address: string;
   website: string;
+  motto: string;
   mission: string;
   vision: string;
   values: string;
@@ -73,6 +74,7 @@ const emptyForm: CompanyEditForm = {
   email: "",
   address: "",
   website: "",
+  motto: "",
   mission: "",
   vision: "",
   values: "",
@@ -104,6 +106,7 @@ const CompanyProfilePage = () => {
     address: base.address,
     website: base.website,
     logoUrl: base.logoUrl,
+    motto: base.motto,
     mission: base.mission,
     vision: base.vision,
     values: base.values,
@@ -121,6 +124,7 @@ const CompanyProfilePage = () => {
       email: company.email ?? "",
       address: company.address ?? "",
       website: company.website ?? "",
+      motto: company.motto ?? "",
       mission: company.mission ?? "",
       vision: company.vision ?? "",
       values: company.values ?? "",
@@ -148,6 +152,7 @@ const CompanyProfilePage = () => {
           email: form.email.trim() || undefined,
           address: form.address.trim() || undefined,
           website: form.website.trim() || undefined,
+          motto: form.motto.trim() || undefined,
           mission: form.mission.trim() || undefined,
           vision: form.vision.trim() || undefined,
           values: form.values.trim() || undefined,
@@ -235,6 +240,7 @@ const CompanyProfilePage = () => {
   ];
 
   const narrativeRows: { label: string; value?: string }[] = [
+    { label: "Motto / Slogan", value: company.motto },
     { label: "Mission", value: company.mission },
     { label: "Vision", value: company.vision },
     { label: "Values", value: company.values },
@@ -400,6 +406,14 @@ const CompanyProfilePage = () => {
             value={form.address}
             onChange={(e) => setField("address", e.target.value)}
             placeholder="Address"
+          />
+        </Field>
+        <Field label="Motto / Slogan">
+          <input
+            className={inputCls}
+            value={form.motto}
+            onChange={(e) => setField("motto", e.target.value)}
+            placeholder="e.g. Excellence in every step"
           />
         </Field>
         <Field label="Mission">

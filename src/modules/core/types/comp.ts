@@ -13,6 +13,7 @@ export interface CompListDto extends BaseDto {
   address?: string;
   website?: string;
   logoUrl?: string;
+  motto?: string;
   mission?: string;
   vision?: string;
   values?: string;
@@ -28,6 +29,7 @@ export interface AddCompDto {
   address?: string;
   website?: string;
   logoUrl?: string;
+  motto?: string;
   mission?: string;
   vision?: string;
   values?: string;
@@ -45,6 +47,7 @@ export interface EditCompDto {
   address?: string;
   website?: string;
   logoUrl?: string;
+  motto?: string;
   mission?: string;
   vision?: string;
   values?: string;

@@ -1,37 +1,12 @@
 // src/services/hr/recruitment/applicant/applicant.api.ts
 
-import axios from 'axios';
-import type { ApplicantListDto, ApplicantDetailDto } from '@/modules/hr/types/recruit/applicant/applicant.types';
+// Route through the API gateway (shared `api` client handles base URL + auth +
+// token refresh). Previously this used a direct axios instance pointed at
+// `https://localhost:1217`, which bypassed the gateway and failed with
+// ERR_CONNECTION_REFUSED. The gateway maps `/hrm/recruit/**` -> `api/hrm/recruit/**`.
+import { api } from '@/shared/services/api';
 
-// Direct API client for Recruit service
-const recruitApi = axios.create({
-  baseURL: import.meta.env.VITE_RECRUIT_API_URL || 'https://localhost:1217',
-  timeout: 30000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add auth interceptor
-recruitApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Response interceptor
-recruitApi.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        localStorage.removeItem('authToken');
-        window.location.href = '/login';
-      }
-      return Promise.reject(error);
-    }
-);
+const RECRUIT = import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1';
 
 export interface ApplicantListDto {
   id: string;
@@ -76,25 +51,25 @@ export interface ApplicantDetailDto extends ApplicantListDto {
 class ApplicantApi {
   // Get all internal applicants
   async getAllApplicants(): Promise<ApplicantListDto[]> {
-    const response = await recruitApi.post('/api/hrm/recruit/v1/Applicant/AllIntApp');
+    const response = await api.post(`${RECRUIT}/Applicant/AllIntApp`);
     return response.data?.data || [];
   }
 
   // Get applicant detail
   async getApplicantDetail(id: string): Promise<ApplicantDetailDto> {
-    const response = await recruitApi.get(`/api/hrm/recruit/v1/Applicant/GetIntApp/${id}`);
+    const response = await api.get(`${RECRUIT}/Applicant/GetIntApp/${id}`);
     return response.data?.data;
   }
 
   // ✅ Get applicants by job posting
   async getApplicantsByJobPosting(jobPostingId: string): Promise<ApplicantListDto[]> {
-    const response = await recruitApi.get(`/api/hrm/recruit/v1/Applicant/JobPostAllIntApp/${jobPostingId}`);
+    const response = await api.get(`${RECRUIT}/Applicant/JobPostAllIntApp/${jobPostingId}`);
     return response.data?.data || [];
   }
 
   // Update applicant status
   async updateApplicantStatus(applicantId: string, status: string, reason?: string): Promise<any> {
-    const response = await recruitApi.put(`/api/hrm/recruit/v1/Applicant/UpdateStatus/${applicantId}`, {
+    const response = await api.put(`${RECRUIT}/Applicant/UpdateStatus/${applicantId}`, {
       status,
       reason
     });

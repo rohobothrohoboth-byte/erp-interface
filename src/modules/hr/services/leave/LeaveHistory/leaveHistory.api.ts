@@ -1,8 +1,11 @@
 import { api } from "@/shared/services/api";
-import type { HistLvReqList,MyHistLvList } from "@/modules/hr/types/leaverequest";
+import type { HistLvReqList, MyHistLvList } from "@/modules/hr/types/leave/leaverequest";
 
 class LeaveReqHistoryApi {
-  private baseUrl = `${import.meta.env.VITE_HRMM_LEAVE_URL}/LvReqHist`;
+  // NOTE: use VITE_HRM_LEAVE_URL (not the misspelled VITE_HRMM_LEAVE_URL, which is
+  // undefined and produced requests to `undefined/LvReqHist/...`). Falls back to the
+  // gateway-relative path so it works even without the env var set.
+  private baseUrl = `${import.meta.env.VITE_HRM_LEAVE_URL || '/hrm/leave/v1'}/LvReqHist`;
 
   private extractErrorMessage(error: any): string {
     if (error.response?.data?.message) return error.response.data.message;
