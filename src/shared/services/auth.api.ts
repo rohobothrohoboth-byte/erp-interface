@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import { useAuthStore } from "@/shared/stores/auth.store";
 import { api } from "@/shared/services/api";
+import { isAccessTokenValid } from "@/modules/auth/utils/auth.utils";
 
 // Resolve the access-token expiry as an absolute ISO timestamp. Prefer the value
 // the server sends; otherwise read the JWT `exp` claim. NEVER default to "now" —
@@ -84,7 +85,9 @@ api.interceptors.response.use(
         } catch (refreshError) {
           processQueue(refreshError as Error, null);
 
-          if (!isLoggingOut) {
+          // Only log out if the access token is genuinely expired. A spurious 401
+          // from one endpoint must not destroy a still-valid session.
+          if (!isLoggingOut && !isAccessTokenValid()) {
             isLoggingOut = true;
 
 

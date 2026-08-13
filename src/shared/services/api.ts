@@ -1,7 +1,7 @@
 // services/api.ts
 
 import axios from "axios";
-import { getAccessToken } from "@/modules/auth/utils/auth.utils";
+import { getAccessToken, isAccessTokenValid } from "@/modules/auth/utils/auth.utils";
 import { useAuthStore } from "@/shared/stores/auth.store";
 
 /* =========================================
@@ -196,9 +196,13 @@ api.interceptors.response.use(
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
-                // Refresh failed - clear queue and redirect to login
+                // Refresh failed - clear queue. Only tear down the session if the
+                // access token is actually expired; a spurious 401 from a single
+                // endpoint must not log out a still-valid session.
                 processQueue(refreshError, null);
-                redirectToLogin();
+                if (!isAccessTokenValid()) {
+                    redirectToLogin();
+                }
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;
