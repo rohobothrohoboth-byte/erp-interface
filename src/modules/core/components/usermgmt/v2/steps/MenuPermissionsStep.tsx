@@ -62,6 +62,27 @@ interface ModuleGroup {
   menus: MenuItem[];
 }
 
+// Map an API menu node into a MenuItem, preserving the FULL nested tree (all depths).
+const mapMenuNode = (m: any): MenuItem => ({
+  id: m.id,
+  name: m.label || m.name || m.key,
+  label: m.label,
+  key: m.key,
+  parentId: m.parentId || null,
+  path: m.path,
+  icon: m.icon,
+  order: m.order,
+  perModuleId: m.perModuleId,
+  children: (m.children || []).map(mapMenuNode),
+});
+
+// Collect a menu's own id plus ALL descendant ids (any depth).
+const collectMenuIds = (menu: MenuItem): string[] => {
+  const ids: string[] = [menu.id];
+  (menu.children || []).forEach((c) => ids.push(...collectMenuIds(c)));
+  return ids;
+};
+
 export function MenuPermissionsStep({ selectedModuleIds, initialData, onSubmit, onBack }: Props) {
   const { isDarkMode, toggleDarkMode } = useDarkMode();
 
@@ -112,21 +133,8 @@ export function MenuPermissionsStep({ selectedModuleIds, initialData, onSubmit, 
               };
             }
 
-            // Add parent menu
-            grouped[modId].menus.push({
-              id: menu.id,
-              name: menu.label || menu.name || menu.key,
-              label: menu.label,
-              key: menu.key,
-              parentId: menu.parentId || null,
-              children: menu.children?.map((child: any) => ({
-                id: child.id,
-                name: child.label || child.name || child.key,
-                label: child.label,
-                key: child.key,
-                parentId: child.parentId || null
-              })) || []
-            });
+            // Add the full menu subtree (all depths preserved).
+            grouped[modId].menus.push(mapMenuNode(menu));
           }
         });
 
@@ -154,16 +162,11 @@ export function MenuPermissionsStep({ selectedModuleIds, initialData, onSubmit, 
     fetchMenuData();
   }, [selectedModuleIds]);
 
-  // Get ALL menu IDs including children
+  // Get ALL menu IDs including every descendant (any depth).
   const getAllMenuIds = useCallback((): string[] => {
     const ids: string[] = [];
     moduleGroups.forEach(group => {
-      group.menus.forEach(menu => {
-        ids.push(menu.id);
-        if (menu.children) {
-          menu.children.forEach(child => ids.push(child.id));
-        }
-      });
+      group.menus.forEach(menu => ids.push(...collectMenuIds(menu)));
     });
     return ids;
   }, [moduleGroups]);
@@ -185,12 +188,7 @@ export function MenuPermissionsStep({ selectedModuleIds, initialData, onSubmit, 
     const group = moduleGroups.find(g => g.moduleId === moduleId);
     if (!group) return [];
     const ids: string[] = [];
-    group.menus.forEach(menu => {
-      ids.push(menu.id);
-      if (menu.children) {
-        menu.children.forEach(child => ids.push(child.id));
-      }
-    });
+    group.menus.forEach(menu => ids.push(...collectMenuIds(menu)));
     return ids;
   }, [moduleGroups]);
 
@@ -204,14 +202,32 @@ export function MenuPermissionsStep({ selectedModuleIds, initialData, onSubmit, 
   }, [selected, getModuleMenuIds]);
 
   const getParentSelectionState = useCallback((menu: MenuItem) => {
-    if (!menu.children || menu.children.length === 0) {
+    // Consider every descendant (any depth) under this menu.
+    const descendantIds = (menu.children || []).flatMap(collectMenuIds);
+    if (descendantIds.length === 0) {
       return { isChecked: selected.includes(menu.id), isIndeterminate: false };
     }
-    const childIds = menu.children.map(c => c.id);
-    const selectedCount = childIds.filter(id => selected.includes(id)).length;
+    const selectedCount = descendantIds.filter(id => selected.includes(id)).length;
     if (selectedCount === 0) return { isChecked: false, isIndeterminate: false };
-    if (selectedCount === childIds.length) return { isChecked: true, isIndeterminate: false };
+    if (selectedCount === descendantIds.length) return { isChecked: true, isIndeterminate: false };
     return { isChecked: false, isIndeterminate: true };
+  }, [selected]);
+
+  // Toggle a menu node and its entire subtree (any depth).
+  const toggleNode = useCallback((menu: MenuItem) => {
+    const subtreeIds = collectMenuIds(menu);
+    const allSelected = subtreeIds.every(id => selected.includes(id));
+    if (allSelected) {
+      setSelected(prev => prev.filter(id => !subtreeIds.includes(id)));
+    } else {
+      setSelected(prev => [...new Set([...prev, ...subtreeIds])]);
+    }
+  }, [selected]);
+
+  // Checked when every id in the node's subtree is selected.
+  const isNodeChecked = useCallback((menu: MenuItem) => {
+    const subtreeIds = collectMenuIds(menu);
+    return subtreeIds.every(id => selected.includes(id));
   }, [selected]);
 
   const toggleModule = useCallback((moduleId: string) => {
@@ -225,18 +241,9 @@ export function MenuPermissionsStep({ selectedModuleIds, initialData, onSubmit, 
   }, [selected, getModuleMenuIds]);
 
   const toggleParentMenu = useCallback((menu: MenuItem) => {
-    if (!menu.children) {
-      toggleLeafMenu(menu.id);
-      return;
-    }
-    const childIds = menu.children.map(c => c.id);
-    const allSelected = childIds.every(id => selected.includes(id));
-    if (allSelected) {
-      setSelected(prev => prev.filter(id => !childIds.includes(id)));
-    } else {
-      setSelected(prev => [...new Set([...prev, ...childIds])]);
-    }
-  }, [selected]);
+    // Select/deselect the whole branch (parent + all descendants).
+    toggleNode(menu);
+  }, [toggleNode]);
 
   const toggleLeafMenu = (menuId: string) => {
     setSelected(prev =>
@@ -461,14 +468,19 @@ export function MenuPermissionsStep({ selectedModuleIds, initialData, onSubmit, 
                         {expanded && (
                             <div className="p-2 space-y-1 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                               {menu.children.map(child => {
-                                const checked = selected.includes(child.id);
+                                // A "child" may itself be a group with its own pages;
+                                // toggling it selects its whole subtree so nothing is missed.
+                                const hasSub = !!(child.children && child.children.length > 0);
+                                const checked = hasSub ? isNodeChecked(child) : selected.includes(child.id);
+                                const subCount = hasSub ? collectMenuIds(child).length - 1 : 0;
                                 return (
                                     <label key={child.id}
                                            className={`flex items-center gap-2 px-3 py-2 rounded cursor-pointer transition-all ${checked ? 'bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
-                                      <Checkbox checked={checked} onCheckedChange={() => toggleLeafMenu(child.id)}
+                                      <Checkbox checked={checked} onCheckedChange={() => (hasSub ? toggleNode(child) : toggleLeafMenu(child.id))}
                                                 className="data-[state=checked]:bg-emerald-600" />
                                       <FileText className="w-3.5 h-3.5 text-slate-400" />
                                       <span className="text-sm text-slate-700 dark:text-slate-300 flex-1">{child.name}</span>
+                                      {hasSub && <span className="text-[10px] text-slate-400">{subCount} sub</span>}
                                       {checked && <Check className="w-3.5 h-3.5 text-emerald-500" />}
                                     </label>
                                 );

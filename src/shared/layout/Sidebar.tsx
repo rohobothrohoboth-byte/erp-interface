@@ -433,9 +433,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
     const rawActiveModule = useModuleStore((s) => s.activeModule);
     const { setActiveModule } = useModuleStore();
     const storeCollapsed = useSidebarStore((s) => s.collapsed);
-    const openGroups = useSidebarStore((s) => s.openGroups);
     const toggleSidebar = useSidebarStore((s) => s.toggleCollapsed);
-    const toggleGroup = useSidebarStore((s) => s.toggleGroup);
+    // Local open-group state keyed by menu key. Supports arbitrarily nested groups;
+    // the sidebar store only tracked a single open group per module, which could not
+    // express nested sub-groups (e.g. Recruitment > Job Requisitions > All Requisitions).
+    const [openGroupKeys, setOpenGroupKeys] = useState<Record<string, boolean>>({});
+    const toggleGroupKey = useCallback((key: string) => {
+        setOpenGroupKeys(prev => ({ ...prev, [key]: !prev[key] }));
+    }, []);
     const { role, userName, permissions: rawPermissions, token, userId } = useAuthStore();
     const prefersReducedMotion = useReducedMotion();
 
@@ -596,45 +601,36 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
         // Sort menus by order
         hierarchicalMenus.sort((a, b) => (a.O || 0) - (b.O || 0));
 
+        // Recursively render a menu node. A node is a GROUP when it has children
+        // that are themselves renderable (have a path OR their own renderable
+        // children). Otherwise it is a leaf link. This lets multi-level menus
+        // (e.g. Recruitment > Job Requisitions > All Requisitions) render fully,
+        // instead of dropping path-less group nodes and their nested pages.
+        const isRenderable = (m: PermissionMenu): boolean => {
+            const kids = (m.C || []).filter(Boolean);
+            return hasValidPath(m) || kids.some(isRenderable);
+        };
 
+        const renderNode = (menu: PermissionMenu, depth: number): React.ReactNode => {
+            const kids = (menu.C || []).filter(Boolean).filter(isRenderable);
+            kids.sort((a, b) => (a.O || 0) - (b.O || 0));
 
-        // Render hierarchical menus
-        return hierarchicalMenus.map((menu: PermissionMenu) => {
-            const children = menu.C || [];
-            const hasVisibleChildren = children.length > 0;
-
-            if (hasVisibleChildren) {
+            if (kids.length > 0) {
                 return (
                     <NavGroupWithTheme
                         key={menu.K}
                         icon={getIcon(menu.I)}
                         label={menu.L}
                         labelKey={menu.K}
-                        isOpen={openGroups[activeModule] === menu.L}
-                        onToggle={() => toggleGroup(activeModule, menu.L)}
+                        isOpen={!!openGroupKeys[menu.K]}
+                        onToggle={() => toggleGroupKey(menu.K)}
                     >
-                        {children.map((child: PermissionMenu) => {
-                            if (!hasValidPath(child)) {
-
-                                return null;
-                            }
-                            return (
-                                <NavItemWithClose
-                                    key={child.K}
-                                    to={getMenuPath(child)}
-                                    label={child.L}
-                                    labelKey={child.K}
-                                    isChild
-                                    {...commonProps}
-                                />
-                            );
-                        })}
+                        {kids.map((child) => renderNode(child, depth + 1))}
                     </NavGroupWithTheme>
                 );
             }
 
             if (!hasValidPath(menu)) {
-                console.warn('⚠️ Menu has no path and no children:', menu.K, menu.L);
                 return null;
             }
 
@@ -642,20 +638,23 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
                 <NavItemWithClose
                     key={menu.K}
                     to={getMenuPath(menu)}
-                    icon={getIcon(menu.I)}
+                    icon={depth === 0 ? getIcon(menu.I) : undefined}
                     label={menu.L}
                     labelKey={menu.K}
+                    isChild={depth > 0}
                     {...commonProps}
                 />
             );
-        });
+        };
+
+        return hierarchicalMenus.map((menu: PermissionMenu) => renderNode(menu, 0));
     }, [
         permissions,
         activeModule,
         collapsed,
         theme,
-        openGroups,
-        toggleGroup,
+        openGroupKeys,
+        toggleGroupKey,
         NavItemWithClose,
         NavGroupWithTheme,
         isPrivileged,
