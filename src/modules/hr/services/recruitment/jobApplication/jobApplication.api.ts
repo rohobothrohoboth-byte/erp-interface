@@ -1,8 +1,12 @@
 import axios from 'axios';
 import { getAccessToken } from '@/modules/auth/utils/auth.utils';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import { api } from '@/shared/services/api';
 
-const BASE = `${import.meta.env.VITE_GATEWAY_URL || 'http://localhost:1212'}${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobApp`;
+// Multipart uploads use raw axios (so the browser sets the multipart boundary), but we
+// reuse the shared client's gateway base URL so requests always route through the gateway.
+const GATEWAY = (api.defaults.baseURL as string) || import.meta.env.VITE_GATEWAY_URL || '';
+const BASE = `${GATEWAY}${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/JobApp`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;

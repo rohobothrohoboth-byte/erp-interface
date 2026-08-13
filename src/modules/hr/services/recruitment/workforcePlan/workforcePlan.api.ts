@@ -9,8 +9,8 @@ import type {
 } from '@/modules/hr/types/recruit/workforcePlan';
 import type { ReviewDto } from '@/modules/hr/types/recruit/reviewDto';
 
-const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/WorkforcePlan`;
-const REVIEW_BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/Review`;
+const BASE = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/WorkforcePlan`;
+const REVIEW_BASE = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/Review`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;
