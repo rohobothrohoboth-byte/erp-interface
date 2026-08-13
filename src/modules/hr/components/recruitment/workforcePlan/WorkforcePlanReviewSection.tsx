@@ -649,7 +649,7 @@ const WorkforcePlanReviewSection: React.FC<WorkforcePlanReviewSectionProps> = ({
                         </Button>
                         <Button
                             className="bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => approveMutation.mutate({ id, comment: approveComment })}
+                            onClick={() => approveMutation.mutate({ id, comment: approveComment, appCount: (plan as any)?.totalPositions ?? 0 })}
                             disabled={approveMutation.isPending}
                         >
                             {approveMutation.isPending ? (

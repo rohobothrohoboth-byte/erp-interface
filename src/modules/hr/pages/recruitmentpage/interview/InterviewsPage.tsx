@@ -88,11 +88,8 @@ const InterviewsPage: React.FC = () => {
 // In InterviewsPage.tsx or InterviewDetail.tsx
 
     const handleCancel = (id: string) => {
-        // ✅ Call the UpdateStatus endpoint with "Cancelled"
-        updateStatusMutation.mutate({
-            id: id,
-            status: 'Cancelled'
-        }, {
+        // Cancel via the dedicated status endpoint (cancelMutation → PATCH UpdateStatus).
+        cancelMutation.mutate(id, {
             onSuccess: () => {
                 toast.success('Interview cancelled successfully');
                 refetch();

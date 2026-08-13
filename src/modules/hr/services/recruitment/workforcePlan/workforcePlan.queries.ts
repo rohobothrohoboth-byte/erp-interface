@@ -123,7 +123,7 @@ export const useApproveWorkforcePlan = (options?: {
 }) => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, { id: string; comment?: string }>({
+  return useMutation<void, Error, { id: string; comment?: string; appCount?: number }>({
     mutationFn: workforcePlanApi.approve,
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: workforcePlanKeys.lists() });
@@ -141,7 +141,7 @@ export const useRejectWorkforcePlan = (options?: {
 }) => {
   const queryClient = useQueryClient();
 
-  return useMutation<void, Error, { id: string; comment: string }>({
+  return useMutation<void, Error, { id: string; comment: string; appCount?: number }>({
     mutationFn: workforcePlanApi.reject,
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: workforcePlanKeys.lists() });

@@ -68,21 +68,33 @@ export const workforcePlanApi = {
     } catch (e) { throw new Error(extractError(e)); }
   },
 
-  submitForReview: async (id: string): Promise<void> => {
+  // Workforce plans are created directly as Pending; there is no separate "submit"
+  // step on the backend, so this is a no-op (kept for API compatibility).
+  submitForReview: async (_id: string): Promise<void> => {
+    return;
+  },
+
+  // Approve/reject go through the single Review/WoFoPl endpoint. `appCount` is the
+  // number of approved positions (defaults to the plan's total on approve, 0 on reject).
+  approve: async (vars: { id: string; comment?: string; appCount?: number }): Promise<void> => {
     try {
-      await api.post(`${BASE}/Submit/${id}`);
+      await api.post(`${REVIEW_BASE}/WoFoPl`, {
+        id: vars.id,
+        status: 'Approved',
+        comment: vars.comment ?? '',
+        appCount: vars.appCount ?? 0,
+      });
     } catch (e) { throw new Error(extractError(e)); }
   },
 
-  approve: async (id: string, comment?: string): Promise<void> => {
+  reject: async (vars: { id: string; comment: string; appCount?: number }): Promise<void> => {
     try {
-      await api.post(`${BASE}/Approve/${id}`, { comment });
-    } catch (e) { throw new Error(extractError(e)); }
-  },
-
-  reject: async (id: string, comment: string): Promise<void> => {
-    try {
-      await api.post(`${BASE}/Reject/${id}`, { comment });
+      await api.post(`${REVIEW_BASE}/WoFoPl`, {
+        id: vars.id,
+        status: 'Rejected',
+        comment: vars.comment ?? '',
+        appCount: 0,
+      });
     } catch (e) { throw new Error(extractError(e)); }
   },
 

@@ -90,9 +90,16 @@ class InterviewApi {
         return response.data;
     }
 
+    // ✅ Update interview status via the dedicated PATCH endpoint (Mod requires the
+    // full DTO and would 400 on a partial body).
+    async updateStatus(id: string, status: string): Promise<any> {
+        const response = await recruitApi.patch(`${RECRUIT}/Interview/UpdateStatus/${id}`, { status });
+        return response.data;
+    }
+
     // ✅ Cancel interview
     async cancelInterview(id: string): Promise<any> {
-        return this.updateInterview(id, { status: 'Cancelled' });
+        return this.updateStatus(id, 'Cancelled');
     }
 
     // ✅ Reschedule interview
