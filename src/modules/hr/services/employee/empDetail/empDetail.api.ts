@@ -71,3 +71,13 @@ export async function fetchCertBlobUrl(certId: string): Promise<string> {
     return '';
   }
 }
+
+// Download the guarantor's attached file (streamed by GetGuarantorFile/{employeeId}).
+export async function fetchGuarantorFileUrl(employeeId: string): Promise<string> {
+  try {
+    const res = await api.get(`${BASE}/GetGuarantorFile/${employeeId}`, { responseType: 'blob' });
+    return URL.createObjectURL(res.data as Blob);
+  } catch {
+    return '';
+  }
+}

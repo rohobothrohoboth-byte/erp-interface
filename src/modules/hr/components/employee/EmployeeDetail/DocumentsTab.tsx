@@ -18,8 +18,8 @@ import {
   FileSpreadsheet,
   FileJson
 } from 'lucide-react';
-import { useEmpCertAll, useEmpDetailPhotoFull, useEmpDetailStamp, useEmpDetailSign } from '@/modules/hr/services/employee/empDetail/empDetail.queries';
-import { fetchCertBlobUrl } from '@/modules/hr/services/employee/empDetail/empDetail.api';
+import { useEmpCertAll, useEmpDetailPhotoFull, useEmpDetailStamp, useEmpDetailSign, useEmpDetailGuarantor } from '@/modules/hr/services/employee/empDetail/empDetail.queries';
+import { fetchCertBlobUrl, fetchGuarantorFileUrl } from '@/modules/hr/services/employee/empDetail/empDetail.api';
 import type { EmpDetailImage } from '@/modules/hr/services/employee/empDetail/empDetail.api';
 import type { EmpFileList, EmpDetailDocument } from '@/modules/hr/types/employee/empDetail';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
@@ -270,8 +270,11 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
   const { data: photo } = useEmpDetailPhotoFull(employeeId);
   const { data: stamp } = useEmpDetailStamp(employeeId);
   const { data: sign } = useEmpDetailSign(employeeId);
+  const { data: guarantor } = useEmpDetailGuarantor(employeeId);
   const [viewing, setViewing] = useState<EmpDetailDocument | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const GUARANTOR_ID = '__guarantor_file__';
 
   const imageAssets = [
     photo?.image ? { key: 'photo', label: 'Photo', img: photo as EmpDetailImage } : null,
@@ -294,7 +297,10 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
   const handleView = useCallback(async (cert: EmpFileList) => {
     setLoadingId(cert.id);
     try {
-      const blobUrl = await fetchCertBlobUrl(cert.id);
+      // The guarantor file is streamed by employee id, not a cert id.
+      const blobUrl = String(cert.id) === GUARANTOR_ID
+        ? await fetchGuarantorFileUrl(employeeId)
+        : await fetchCertBlobUrl(cert.id);
       setViewing({
         id:           cert.id,
         fileName:     cert.fileName,
@@ -307,7 +313,7 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
     } finally {
       setLoadingId(null);
     }
-  }, []);
+  }, [employeeId]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -322,7 +328,20 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
 
   if (isLoading) return <DetailSkeleton rows={3} />;
 
-  const list: EmpFileList[] = certs ?? [];
+  const certList: EmpFileList[] = certs ?? [];
+  // Surface the guarantor's attached file as a downloadable document card.
+  const g = guarantor as { fileName?: string; contentType?: string; fileSizeStr?: string } | undefined;
+  const guarantorDoc: EmpFileList | null = g?.fileName
+    ? ({
+        id: GUARANTOR_ID,
+        fileName: g.fileName,
+        contentType: g.contentType || 'application/octet-stream',
+        size: g.fileSizeStr || '',
+        certType: 'Guarantor Document',
+        fileSize: 0,
+      } as unknown as EmpFileList)
+    : null;
+  const list: EmpFileList[] = guarantorDoc ? [...certList, guarantorDoc] : certList;
 
   return (
       <>
