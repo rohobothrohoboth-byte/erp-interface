@@ -21,8 +21,8 @@ import { Label } from '@/shared/components/ui/label';
 import { showToast } from '@/shared/layout/layout';
 import { useApplicantDetail } from '@/modules/hr/services/recruitment/applicant/applicant.queries';
 import {
-  useEvaluateStep,
-  useStartApplicantEvaluation,
+  useEvaluateApplicant,
+  useStartEvaluation,
   useEvaluationStatus,
 } from '@/modules/hr/services/recruitment/jobPostEval/jobPostEval.queries';
 import { Input } from '@/shared/components/ui/input';
@@ -99,31 +99,41 @@ const ApplicantEvaluationPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const id = applicantId ?? searchParams.get('id') ?? '';
 
-  const [score, setScore] = useState(50);
+  const [score, setScore] = useState(0);
   const [feedback, setFeedback] = useState('');
-  const [evalState, setEvalState] = useState<'not-started' | 'active' | 'rejected' | 'completed'>('not-started');
-  const [currentStepId, setCurrentStepId] = useState<string | null>(null);
 
   // ✅ Get applicant details
   const { data: applicant, isLoading, refetch } = useApplicantDetail(id);
 
-  // ✅ Get the actual JobApplication ID - use the ID from URL as fallback
-  const jobAppId = id;
+  // Throughout this module the route param is actually the JobApplication id.
+  const jobAppId = (applicant as any)?.jobApplicationId || id;
+  const jobPostingId = (applicant as any)?.jobPostingId || '';
 
-  // ✅ Get evaluation status using the correct ID
-  const { data: evalStatus, refetch: refetchEvalStatus } = useEvaluationStatus(jobAppId);
+  // ✅ Get evaluation progress (current step + score history)
+  const { data: progress, refetch: refetchEvalStatus } = useEvaluationStatus(jobAppId);
 
-  // ✅ Log for debugging
-  console.log('Applicant ID:', id);
-  console.log('JobApplication ID:', jobAppId);
-  console.log('Evaluation Status:', evalStatus);
+  const evalState: 'not-started' | 'active' | 'rejected' | 'completed' =
+    !progress || !progress.isStarted
+      ? 'not-started'
+      : progress.isCompleted
+        ? (progress.appStatus === 'Rejected' ? 'rejected' : 'completed')
+        : 'active';
+
+  const minScore = progress?.minScore ?? 0;
+  const maxScore = progress?.maxScore ?? 100;
+  const latestScore = progress?.scores?.length ? progress.scores[progress.scores.length - 1].score : score;
+
+  // Keep the entered score within the current step's allowed range.
+  useEffect(() => {
+    if (progress && progress.isStarted && !progress.isCompleted) {
+      setScore((s) => Math.min(maxScore, Math.max(minScore, s || minScore)));
+    }
+  }, [progress, minScore, maxScore]);
 
   // ✅ Mutations
-  const startEvalMutation = useStartApplicantEvaluation({
-    onSuccess: (data) => {
-      showToast.success('Evaluation started successfully');
-      setEvalState('active');
-      setCurrentStepId(data.currentStepId);
+  const startEvalMutation = useStartEvaluation({
+    onSuccess: () => {
+      showToast.success('Evaluation started for this posting');
       refetchEvalStatus();
     },
     onError: (e) => {
@@ -131,14 +141,10 @@ const ApplicantEvaluationPage: React.FC = () => {
     },
   });
 
-  const evalMutation = useEvaluateStep({
-    onSuccess: (data) => {
+  const evalMutation = useEvaluateApplicant({
+    onSuccess: () => {
       showToast.success('Evaluation submitted successfully');
-      if (data.isCompleted) {
-        setEvalState('completed');
-      } else {
-        setCurrentStepId(data.nextStepId || null);
-      }
+      setFeedback('');
       refetchEvalStatus();
       refetch();
     },
@@ -147,40 +153,20 @@ const ApplicantEvaluationPage: React.FC = () => {
     },
   });
 
-  // ✅ Check evaluation status on load
-  useEffect(() => {
-    if (evalStatus) {
-      if (evalStatus.isCompleted) {
-        setEvalState('completed');
-      } else if (evalStatus.currentStepId) {
-        setEvalState('active');
-        setCurrentStepId(evalStatus.currentStepId);
-      } else {
-        setEvalState('not-started');
-      }
-    }
-  }, [evalStatus]);
-
   const handleStartEvaluation = () => {
+    if (!jobPostingId) {
+      showToast.error('Job posting not found. Start evaluation from the Job Posting page.');
+      return;
+    }
+    startEvalMutation.mutate(jobPostingId);
+  };
+
+  const handleSubmit = () => {
     if (!jobAppId) {
       showToast.error('No application found');
       return;
     }
-    startEvalMutation.mutate({ jobAppId: jobAppId });
-  };
-
-  const handleSubmit = () => {
-    if (!jobAppId || !currentStepId) {
-      showToast.error('No active evaluation found');
-      return;
-    }
-    evalMutation.mutate({
-      jobAppId: jobAppId,
-      stepId: currentStepId,
-      evaluatorId: 'current-user-id', // Replace with actual user ID
-      score: score,
-      feedback: feedback.trim() || null,
-    });
+    evalMutation.mutate({ id: jobAppId, score, feedback: feedback.trim() || null });
   };
 
   if (isLoading) {
@@ -316,7 +302,10 @@ const ApplicantEvaluationPage: React.FC = () => {
                           </div>
                           <div>
                             <p className="text-xs text-green-600 font-semibold uppercase tracking-wide">Evaluation In Progress</p>
-                            <p className="text-lg font-bold text-gray-900 mt-0.5">Step {currentStepId?.slice(0, 8)}</p>
+                            <p className="text-lg font-bold text-gray-900 mt-0.5">
+                              {progress?.currentStepName || 'Current Step'}
+                              {progress?.totalSteps ? ` · Step ${progress.currentStepOrder} of ${progress.totalSteps}` : ''}
+                            </p>
                           </div>
                         </div>
                       </div>
@@ -327,7 +316,7 @@ const ApplicantEvaluationPage: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <AlertCircle size={16} className="text-blue-600" />
                             <p className="text-sm text-blue-800">
-                              Please evaluate the applicant's performance for the current step.
+                              Score this step between {minScore} and {maxScore}. A score below {minScore} rejects the applicant automatically.
                             </p>
                           </div>
                         </div>
@@ -336,6 +325,8 @@ const ApplicantEvaluationPage: React.FC = () => {
                             value={score}
                             onChange={setScore}
                             disabled={isLoadingMutation}
+                            min={minScore}
+                            max={maxScore}
                         />
 
                         <div className="space-y-1.5">
@@ -359,28 +350,16 @@ const ApplicantEvaluationPage: React.FC = () => {
                       <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-center gap-3">
                         <Button
                             type="button"
-                            variant="outline"
-                            onClick={() => {
-                              if (window.confirm('Are you sure you want to reject this applicant?')) {
-                                setEvalState('rejected');
-                              }
-                            }}
-                            disabled={isLoadingMutation}
-                            className="text-red-600 border-red-200 hover:bg-red-50 rounded-xl"
-                        >
-                          <XCircle size={16} className="mr-2" />
-                          Reject
-                        </Button>
-                        <Button
-                            type="button"
                             onClick={handleSubmit}
                             disabled={isLoadingMutation}
                             className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white cursor-pointer rounded-xl px-6 shrink-0"
                         >
                           {isLoadingMutation ? (
                               <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Submitting...</>
+                          ) : progress?.isFinal ? (
+                              <> Submit Final Score</>
                           ) : (
-                              <> Submit & Continue</>
+                              <> Submit &amp; Continue</>
                           )}
                         </Button>
                       </div>
@@ -405,8 +384,10 @@ const ApplicantEvaluationPage: React.FC = () => {
                         </p>
                         <div className="mt-6 bg-red-50 rounded-xl px-6 py-4 text-left w-full max-w-sm">
                           <p className="text-xs text-red-600 font-semibold uppercase tracking-wide mb-1">Score Submitted</p>
-                          <p className="text-3xl font-bold text-red-600">{score}<span className="text-sm font-normal text-red-400"> / 100</span></p>
-                          {feedback && <p className="text-sm text-gray-600 mt-2 italic">"{feedback}"</p>}
+                          <p className="text-3xl font-bold text-red-600">{latestScore}<span className="text-sm font-normal text-red-400"> / {maxScore}</span></p>
+                          {progress?.scores?.length && progress.scores[progress.scores.length - 1].feedback ? (
+                              <p className="text-sm text-gray-600 mt-2 italic">"{progress.scores[progress.scores.length - 1].feedback}"</p>
+                          ) : null}
                         </div>
                         <Button
                             type="button"
@@ -438,8 +419,10 @@ const ApplicantEvaluationPage: React.FC = () => {
                         </p>
                         <div className="mt-6 bg-green-50 rounded-xl px-6 py-4 text-left w-full max-w-sm">
                           <p className="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">Final Score</p>
-                          <p className="text-3xl font-bold text-green-600">{score}<span className="text-sm font-normal text-green-400"> / 100</span></p>
-                          {feedback && <p className="text-sm text-gray-600 mt-2 italic">"{feedback}"</p>}
+                          <p className="text-3xl font-bold text-green-600">{latestScore}<span className="text-sm font-normal text-green-400"> / {maxScore}</span></p>
+                          {progress?.scores?.length && progress.scores[progress.scores.length - 1].feedback ? (
+                              <p className="text-sm text-gray-600 mt-2 italic">"{progress.scores[progress.scores.length - 1].feedback}"</p>
+                          ) : null}
                         </div>
                         <Button
                             type="button"
