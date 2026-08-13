@@ -247,6 +247,19 @@ const WorkforcePlansPage: React.FC = () => {
                                                 </Button>
                                             )}
 
+                                            {/* Add Requisition (for approved/active plans) */}
+                                            {['Approved', 'Approve', 'Active'].includes(plan.statusStr as string) && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => navigate(`/hr/recruitment/requisition/new?planId=${plan.id}`)}
+                                                    className="text-emerald-600 border-emerald-300 hover:bg-emerald-50"
+                                                >
+                                                    <FileText className="w-3.5 h-3.5 mr-1" />
+                                                    Requisition
+                                                </Button>
+                                            )}
+
                                             {/* Edit (for draft plans) */}
                                             {isHR && plan.statusStr === 'Draft' && (
                                                 <Button

@@ -321,7 +321,7 @@ const WorkforcePlanDetail: React.FC = () => {
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-sm font-medium text-gray-700">Job Requisitions</h3>
-                                    {(plan.statusStr === 'Approved' || plan.statusStr === 'Active') && (
+                                    {['Approved', 'Approve', 'Active'].includes(plan.statusStr as string) && (
                                         <Button
                                             size="sm"
                                             onClick={() => navigate(`/hr/recruitment/requisition/new?planId=${planId}`)}

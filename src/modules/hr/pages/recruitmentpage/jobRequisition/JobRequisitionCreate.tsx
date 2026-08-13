@@ -15,6 +15,7 @@ import EnumSelect from '@/shared/components/ui/enumSelect';
 import { showToast } from '@/shared/layout/layout';
 import { useCreateJobRequisition } from '@/modules/hr/services/recruitment/jobRequisition/jobRequisition.queries';
 import { useWorkforcePlan } from '@/modules/hr/services/recruitment/workforcePlan/workforcePlan.queries';
+import { workforcePlanApi } from '@/modules/hr/services/recruitment/workforcePlan/workforcePlan.api';
 import { hrmmNamesApi } from '@/modules/list/services/hrmmNames/hrmmNames.api';
 import { jgStepService } from '@/modules/core/services/settings/ModHrm/JgStepService';
 import { Gender, EmpNature, WorkArrangement } from '@/modules/hr/types/enum';
@@ -38,6 +39,18 @@ const JobRequisitionCreate: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { data: plan } = useWorkforcePlan(planId);
+
+    // When no plan was pre-selected (e.g. arriving from the global "New Requisition"
+    // button), let the user pick one here instead of dead-ending.
+    const { data: allPlans = [] } = useQuery({
+        queryKey: ['workforcePlans'],
+        queryFn: () => workforcePlanApi.getAll(),
+        enabled: !planId,
+        staleTime: 60 * 1000,
+    });
+    const selectablePlans = (allPlans as any[]).filter(
+        (p) => ['Approved', 'Approve', 'Active'].includes(p.statusStr) || String(p.status) === '0' || String(p.status) === '1',
+    );
 
     const { data: positions = [] } = useQuery({
         queryKey: ['positionNames'],
@@ -92,23 +105,6 @@ const JobRequisitionCreate: React.FC = () => {
         createMutation.mutate(form);
     };
 
-    if (!planId) {
-        return (
-            <div className="p-6 max-w-4xl mx-auto">
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-                    <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                    <h2 className="text-lg font-semibold text-red-700">No Workforce Plan Selected</h2>
-                    <p className="text-sm text-red-600 mt-1">
-                        Please select a workforce plan first before creating a requisition.
-                    </p>
-                    <Button variant="outline" className="mt-4" onClick={() => navigate('/hr/recruitment/workforce-plans')}>
-                        Go to Workforce Plans
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 p-6 max-w-4xl mx-auto">
             {/* Header */}
@@ -129,6 +125,27 @@ const JobRequisitionCreate: React.FC = () => {
             <Card>
                 <CardContent className="p-6">
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Workforce plan (picker when none was pre-selected) */}
+                        <div className="space-y-2">
+                            <Label>Workforce Plan <span className="text-red-500">*</span></Label>
+                            {planId ? (
+                                <Input value={plan ? `${(plan as any).planCode} — ${(plan as any).title}` : 'Selected plan'} disabled readOnly className="bg-gray-50" />
+                            ) : (
+                                <Select value={form.workforcePlanId} onValueChange={(v) => set('workforcePlanId', v)} disabled={isSubmitting}>
+                                    <SelectTrigger className={`w-full ${errors.workforcePlanId ? 'border-red-500' : ''}`}><SelectValue placeholder="Select an approved workforce plan" /></SelectTrigger>
+                                    <SelectContent>
+                                        {selectablePlans.length === 0 && (
+                                            <div className="px-3 py-2 text-xs text-gray-400">No approved workforce plans yet</div>
+                                        )}
+                                        {selectablePlans.map((p) => (
+                                            <SelectItem key={p.id} value={p.id}>{p.planCode ? `${p.planCode} — ` : ''}{p.title}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                            {errors.workforcePlanId && <p className="text-xs text-red-500">{errors.workforcePlanId}</p>}
+                        </div>
+
                         {/* Requisition info */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
