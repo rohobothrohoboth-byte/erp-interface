@@ -11,7 +11,7 @@ import { Button } from '@/shared/components/ui/button';
 import { Checkbox } from '@/shared/components/ui/checkbox';
 import type { WizardFormData } from '@/modules/core/components/usermgmt/v2/AddAccountWizard';
 import { Input } from '@/shared/components/ui/input';
-import { permissionStructureApi } from '@/modules/auth/services/permission/permissionStructure.api';
+import { getAllMenus } from '@/modules/auth/services/account/account.api';
 import toast from 'react-hot-toast';
 
 const useDarkMode = () => {
@@ -105,10 +105,13 @@ export function MenuPermissionsStep({ selectedModuleIds, initialData, onSubmit, 
       setError(null);
 
       try {
-        console.log('=== Fetching GetMenuTree ===');
+        console.log('=== Fetching menus (raw nested tree) ===');
 
-        const menuTree = await permissionStructureApi.getMenuTree();
-        console.log('GetMenuTree response:', menuTree);
+        // Use the SAME source the edit step uses (raw nested tree). The previous
+        // permissionStructureApi.getMenuTree() re-ran buildMenuTree() over an
+        // already-nested response, which flattened it to parents only (children lost).
+        const menuTree = await getAllMenus();
+        console.log('menu tree response:', menuTree);
 
         if (!menuTree || !Array.isArray(menuTree)) {
           setModuleGroups([]);
