@@ -8,6 +8,7 @@ export interface WorkforcePlanListDto {
   department: string;
   departmentId: string;
   budgetId?: string | null;
+  planDevBudgetId?: string | null;
   year: number;
   startDate: string;
   endDate: string;
@@ -38,6 +39,7 @@ export interface WorkforcePlanAddDto {
   budget: number;
   budgetCurrency: string;
   budgetId?: string | null; // Finance budget to encumber against
+  planDevBudgetId?: string | null; // Plan & Development planned source budget
 }
 
 export interface WorkforcePlanModDto {

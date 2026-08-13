@@ -10,6 +10,7 @@ import { Textarea } from '@/shared/components/ui/textarea';
 import { useDepartments } from '@/modules/core/services/department/dept.queries';
 import { useQuery } from '@tanstack/react-query';
 import { getBudgets } from '@/modules/finance/services/finance.api';
+import { getAllBudgets } from '@/modules/plandev/services/project.api';
 
 import type { WorkforcePlanAddDto, WorkforcePlanModDto } from '@/modules/hr/types/recruit/workforcePlan';
 
@@ -41,6 +42,13 @@ const WorkforcePlanForm: React.FC<WorkforcePlanFormProps> = ({
         return d?.data?.items ?? d?.items ?? d?.data ?? (Array.isArray(d) ? d : []);
     })();
 
+    // Plan & Development planned budgets — the source that feeds the Finance allocation.
+    const { data: planDevBudgets = [] } = useQuery({
+        queryKey: ['planDevPersonnelBudgets'],
+        queryFn: () => getAllBudgets('Personnel'),
+        staleTime: 60 * 1000,
+    });
+
     const [form, setForm] = useState<any>({
         planCode: '',
         title: '',
@@ -53,6 +61,7 @@ const WorkforcePlanForm: React.FC<WorkforcePlanFormProps> = ({
         budget: 0,
         budgetCurrency: 'USD',
         budgetId: '',
+        planDevBudgetId: '',
         ...initialData,
     });
 
@@ -357,6 +366,27 @@ const WorkforcePlanForm: React.FC<WorkforcePlanFormProps> = ({
                         ))}
                     </select>
                 </div>
+            </div>
+
+            {/* Plan & Development planned budget — the source that feeds the Finance allocation. */}
+            <div className="space-y-2">
+                <Label className="text-sm font-medium">Plan &amp; Development Budget (planned source)</Label>
+                <select
+                    value={form.planDevBudgetId || ''}
+                    onChange={(e) => setForm(f => ({ ...f, planDevBudgetId: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    disabled={isSubmitting}
+                >
+                    <option value="">None (not linked to a planned budget)</option>
+                    {planDevBudgets.map((b: any) => (
+                        <option key={b.id} value={b.id}>
+                            {b.category}{b.plannedAmount != null ? ` — planned ${Number(b.plannedAmount).toLocaleString()}` : ''}
+                        </option>
+                    ))}
+                </select>
+                <p className="text-[11px] text-gray-400">
+                    The originating planned personnel budget from Plan &amp; Development. Finance allocates against this plan.
+                </p>
             </div>
 
             {/* Finance budget to encumber against (optional). When set, approval checks & reserves it. */}

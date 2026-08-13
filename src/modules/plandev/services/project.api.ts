@@ -568,6 +568,18 @@ export const getBudgetsByProject = async (projectId: string): Promise<Budget[]> 
     }
 };
 
+// Get all budgets (optionally filtered by budget type, e.g. "Personnel").
+// Used by Recruitment workforce planning to pick a planned source budget.
+export const getAllBudgets = async (budgetType?: string): Promise<Budget[]> => {
+    try {
+        const response = await plandevApi.get(`/Budget/all`, { params: { budgetType } });
+        return response?.data || [];
+    } catch (error) {
+        console.error('❌ Error fetching all budgets:', error);
+        return [];
+    }
+};
+
 // Get budget by ID
 export const getBudgetById = async (id: string): Promise<Budget> => {
     try {
