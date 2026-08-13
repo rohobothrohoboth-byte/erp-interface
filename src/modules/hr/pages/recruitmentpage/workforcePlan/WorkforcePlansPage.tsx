@@ -43,7 +43,8 @@ const WorkforcePlansPage: React.FC = () => {
     const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
 
     const filteredPlans = plans?.filter(plan => {
-        const matchesTab = activeTab === 'all' || plan.statusStr?.toLowerCase() === activeTab;
+        // Backend labels are "Pending Approval", "Approved", ... so match by prefix.
+        const matchesTab = activeTab === 'all' || plan.statusStr?.toLowerCase().startsWith(activeTab);
         const matchesSearch = plan.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             plan.planCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             plan.department?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -52,8 +53,8 @@ const WorkforcePlansPage: React.FC = () => {
 
     const stats = {
         total: plans?.length || 0,
-        active: plans?.filter(p => p.statusStr === 'Active').length || 0,
-        pending: plans?.filter(p => p.statusStr === 'Pending').length || 0,
+        active: plans?.filter(p => p.statusStr === 'Approved' || p.statusStr === 'Active').length || 0,
+        pending: plans?.filter(p => p.statusStr?.startsWith('Pending')).length || 0,
         completed: plans?.filter(p => p.statusStr === 'Completed').length || 0,
         cancelled: plans?.filter(p => p.statusStr === 'Cancelled').length || 0,
     };
@@ -235,7 +236,7 @@ const WorkforcePlansPage: React.FC = () => {
                                             </Button>
 
                                             {/* Review (for pending plans) */}
-                                            {plan.statusStr === 'Pending' && isHR && (
+                                            {plan.statusStr?.startsWith('Pending') && isHR && (
                                                 <Button
                                                     variant="outline"
                                                     size="sm"

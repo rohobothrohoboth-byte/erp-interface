@@ -168,7 +168,7 @@ const JobPostingDetail: React.FC = () => {
     const canDelete = (posting?.statusStr === 'Draft' || posting?.status === '0' ||
         posting?.statusStr === 'Closed' || posting?.status === '4') && isHR;
     const canPublish = (posting?.statusStr === 'Draft' || posting?.status === '0' ||
-        posting?.statusStr === 'Pending' || posting?.status === '1') && isHR;
+        posting?.statusStr?.startsWith('Pending') || posting?.status === '1') && isHR;
     const canClose = (posting?.statusStr === 'Published' || posting?.status === '3') && isHR;
 
     // ✅ Use posting data directly (no fallback to requisition)

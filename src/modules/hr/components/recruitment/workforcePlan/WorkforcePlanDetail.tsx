@@ -70,8 +70,8 @@ const WorkforcePlanDetail: React.FC = () => {
     const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
     const canEdit = plan?.statusStr === 'Draft' && isHR;
     const canSubmit = plan?.statusStr === 'Draft' && isHR;
-    const canApprove = plan?.statusStr === 'Pending' && isHR;
-    const canReject = plan?.statusStr === 'Pending' && isHR;
+    const canApprove = !!plan?.statusStr?.startsWith('Pending') && isHR;
+    const canReject = !!plan?.statusStr?.startsWith('Pending') && isHR;
 
     const getStatusBadge = (status: string) => {
         const statusMap: Record<string, { label: string; className: string }> = {
@@ -389,7 +389,7 @@ const WorkforcePlanDetail: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {plan.statusStr === 'Pending' && (
+                                    {plan.statusStr?.startsWith('Pending') && (
                                         <div className="flex items-start gap-3">
                                             <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
                                                 <Clock className="w-4 h-4 text-yellow-600" />
