@@ -15,8 +15,12 @@ import {
   BarChart3,
   Activity
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { EmpPhotoCircle } from '@/shared/components/ui/EmpPhoto';
 import { useEmpDetailLeave, useEmpDetailOverview } from '@/modules/hr/services/employee/empDetail/empDetail.queries';
+import { attendanceApi } from '@/modules/hr/services/attandance/attendanceApi';
+import { performanceApi } from '@/modules/hr/services/performance/performance.api';
+import { trainingApi } from '@/modules/hr/services/training/training.api';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 // ============ Helper Components ============
 
@@ -247,16 +251,56 @@ export const OverviewTab = memo(function OverviewTab({ employeeId }: { employeeI
   const { data, isLoading, error } = useEmpDetailOverview(employeeId);
   const { data: leaveData, isLoading: leaveLoading } = useEmpDetailLeave(employeeId);
 
-  const attendPct = data?.attendPer ? Number(data.attendPer) : 0;
+  // Real cross-service metrics. Each is best-effort (retry:false) so a single
+  // service being down never breaks the overview; we fall back to the values from
+  // the profile overview endpoint when a service call fails.
+  const now = new Date();
+  const { data: attendance } = useQuery({
+    queryKey: ['emp-attendance-summary', employeeId, now.getMonth() + 1, now.getFullYear()],
+    queryFn: () => attendanceApi.getAttendanceStats(employeeId, now.getMonth() + 1, now.getFullYear()),
+    enabled: !!employeeId,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: reviews } = useQuery({
+    queryKey: ['emp-perf-reviews', employeeId],
+    queryFn: () => performanceApi.getReviewsByEmployee(employeeId),
+    enabled: !!employeeId,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: enrollments } = useQuery({
+    queryKey: ['emp-training-enrollments', employeeId],
+    queryFn: () => trainingApi.getEnrollmentsByEmployee(employeeId),
+    enabled: !!employeeId,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const attendRate = (attendance as any)?.attendanceRate ?? (attendance as any)?.attendancePercentage;
+  const attendPct = attendRate != null
+    ? Math.round(Number(attendRate))
+    : (data?.attendPer ? Number(data.attendPer) : 0);
   const filledDays = Math.round((attendPct / 100) * WORKING_DAYS);
   const attendDisplay = `${attendPct}%`;
   const currentMonth = data?.attendMonth ?? new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
 
+  // Latest performance review score (out of 5) and total training enrollments.
+  const latestScore = Array.isArray(reviews)
+    ? (reviews as any[]).map(r => r.overallScore ?? r.OverallScore).filter(s => s != null).at(-1)
+    : undefined;
+  const perStr = latestScore != null
+    ? `${Number(latestScore).toFixed(1)}`
+    : (data?.perStr && data.perStr !== 'N/A' ? data.perStr : 'N/A');
+  const trainingCount = Array.isArray(enrollments)
+    ? String(enrollments.length)
+    : (data?.training ?? '0');
+
   const statCards = useMemo(() => [
-    { icon: <Clock className="h-5 w-5" />, label: t.tenure || 'Tenure', value: data?.tenure, color: 'text-emerald-600', bg: 'bg-emerald-50', trend: 2.5 },
-    { icon: <Star className="h-5 w-5" />, label: t.performance || 'Performance', value: data?.perStr, color: 'text-amber-600', bg: 'bg-amber-50', trend: 0.8 },
-    { icon: <Award className="h-5 w-5" />, label: t.training || 'Training', value: data?.training, color: 'text-blue-600', bg: 'bg-blue-50', trend: 1.2 },
-  ], [data?.tenure, data?.perStr, data?.training, t]);
+    { icon: <Clock className="h-5 w-5" />, label: t.tenure || 'Tenure', value: data?.tenure, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { icon: <Star className="h-5 w-5" />, label: t.performance || 'Performance', value: perStr, color: 'text-amber-600', bg: 'bg-amber-50' },
+    { icon: <Award className="h-5 w-5" />, label: t.training || 'Training', value: trainingCount, color: 'text-blue-600', bg: 'bg-blue-50' },
+  ], [data?.tenure, perStr, trainingCount, t]);
 
   const containerVariants = {
     hidden: { opacity: 0 },

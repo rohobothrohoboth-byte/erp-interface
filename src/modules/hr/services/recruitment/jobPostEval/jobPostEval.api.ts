@@ -2,7 +2,7 @@
 
 import { api } from '@/shared/services/api';
 
-const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobPostEval`;
+const BASE = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/JobPostEval`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;
@@ -12,55 +12,43 @@ const extractError = (error: any): string => {
   return error.message || 'An unexpected error occurred';
 };
 
+// Score payload for the current evaluation step.
+// `id` MUST be the JobApplication id. The backend picks the current step from
+// the application's progress and sets the evaluator from the JWT.
 export interface JpAppEvalDto {
   id: string;
   score: number;
   feedback?: string | null;
 }
 
-// ✅ DTO for starting evaluation
-export interface StartEvaluationDto {
-  jobAppId: string;
-}
-
-// ✅ DTO for evaluation status response
-export interface EvaluationStatusDto {
-  id: string;
-  jobAppId: string;
-  currentStepId: string;
-  isCompleted: boolean;
-  dateAdd: string;
-  dateMod: string | null;
-  isDeleted: boolean;
-}
-
-// ✅ DTO for evaluate step
-export interface EvaluateStepDto {
-  jobAppId: string;
+export interface EvalScoreHist {
   stepId: string;
-  evaluatorId: string;
+  stepName: string;
+  stepOrder: number;
   score: number;
   feedback?: string | null;
 }
 
-// ✅ DTO for evaluate response
-export interface EvaluateStepResponseDto {
-  id: string;
+// Mirrors backend Recruit.Domain.DTOs.JobAppEvalProgressDto.
+export interface EvalProgressDto {
   jobAppId: string;
-  evaluationStepId: string;
-  evaluatorId: string;
-  score: number;
-  feedback: string;
-  isCurrent: boolean;
+  isStarted: boolean;
   isCompleted: boolean;
-  nextStepId?: string;
-  dateAdd: string;
-  dateMod: string | null;
-  isDeleted: boolean;
+  appStatus: string;
+  currentStepId: string;
+  currentStepName: string;
+  currentStepOrder: number;
+  minScore: number;
+  maxScore: number;
+  isFinal: boolean;
+  totalSteps: number;
+  completedSteps: number;
+  scores: EvalScoreHist[];
 }
 
 export const jobPostEvalApi = {
-  // ✅ GET /JpStartEval/{id}
+  // Start evaluation for an entire job posting (bulk-creates progress for every
+  // application on the posting). Requires the posting to be Closed with a flow assigned.
   startEvaluation: async (jobPostingId: string): Promise<void> => {
     try {
       await api.get(`${BASE}/JpStartEval/${jobPostingId}`);
@@ -69,7 +57,7 @@ export const jobPostEvalApi = {
     }
   },
 
-  // ✅ POST /JpAppEvaluate
+  // Score the current step of a single job application.
   evaluateApplicant: async (data: JpAppEvalDto): Promise<void> => {
     try {
       await api.post(`${BASE}/JpAppEvaluate`, data);
@@ -78,31 +66,11 @@ export const jobPostEvalApi = {
     }
   },
 
-  // ✅ GET /GetProgress/{jobAppId}
-  getEvaluationStatus: async (jobAppId: string): Promise<EvaluationStatusDto> => {
+  // Read evaluation progress (current step + score history) for a job application.
+  getEvaluationStatus: async (jobAppId: string): Promise<EvalProgressDto | null> => {
     try {
       const response = await api.get(`${BASE}/GetProgress/${jobAppId}`);
-      return response.data?.data;
-    } catch (e) {
-      throw new Error(extractError(e));
-    }
-  },
-
-  // ✅ POST /StartEvaluation
-  startEvaluationForApplicant: async (data: StartEvaluationDto): Promise<EvaluationStatusDto> => {
-    try {
-      const response = await api.post(`${BASE}/StartEvaluation`, data);
-      return response.data?.data;
-    } catch (e) {
-      throw new Error(extractError(e));
-    }
-  },
-
-  // ✅ POST /JpAppEvaluate (detailed version)
-  evaluateStep: async (data: EvaluateStepDto): Promise<EvaluateStepResponseDto> => {
-    try {
-      const response = await api.post(`${BASE}/JpAppEvaluate`, data);
-      return response.data?.data;
+      return response.data?.data ?? null;
     } catch (e) {
       throw new Error(extractError(e));
     }

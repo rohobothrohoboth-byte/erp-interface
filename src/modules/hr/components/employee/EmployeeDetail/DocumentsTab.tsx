@@ -18,8 +18,9 @@ import {
   FileSpreadsheet,
   FileJson
 } from 'lucide-react';
-import { useEmpCertAll } from '@/modules/hr/services/employee/empDetail/empDetail.queries';
-import { fetchCertBlobUrl } from '@/modules/hr/services/employee/empDetail/empDetail.api';
+import { useEmpCertAll, useEmpDetailPhotoFull, useEmpDetailStamp, useEmpDetailSign, useEmpDetailGuarantor } from '@/modules/hr/services/employee/empDetail/empDetail.queries';
+import { fetchCertBlobUrl, fetchGuarantorFileUrl } from '@/modules/hr/services/employee/empDetail/empDetail.api';
+import type { EmpDetailImage } from '@/modules/hr/services/employee/empDetail/empDetail.api';
 import type { EmpFileList, EmpDetailDocument } from '@/modules/hr/types/employee/empDetail';
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 
@@ -234,16 +235,72 @@ const AwardIcon = () => (
 
 // ============ Main Component ============
 
+// Render an employee image asset (photo / stamp / signature) as a preview card.
+function ImageAssetCard({ label, img, onView }: { label: string; img: EmpDetailImage; onView: () => void }) {
+  const src = `data:${img.contentType || 'image/png'};base64,${img.image}`;
+  return (
+      <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="group relative bg-white rounded-xl border border-slate-200 hover:border-emerald-200 hover:shadow-md transition-all overflow-hidden"
+      >
+        <div className="flex items-center gap-3 p-4">
+          <div className="h-16 w-16 shrink-0 rounded-lg border border-slate-100 bg-slate-50 overflow-hidden flex items-center justify-center">
+            <img src={src} alt={label} className="h-full w-full object-contain" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-slate-800">{label}</p>
+            <p className="text-xs text-slate-400 truncate">{img.fileName || '—'}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{img.contentType?.split('/').pop()?.toUpperCase()} · {img.size}</p>
+          </div>
+          <button
+              onClick={onView}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 rounded-lg hover:bg-emerald-100 shrink-0"
+          >
+            <Eye className="w-3.5 h-3.5" /> View
+          </button>
+        </div>
+      </motion.div>
+  );
+}
+
 export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employeeId: string }) {
   const { t } = useLanguage();
   const { data: certs, isLoading } = useEmpCertAll(employeeId);
+  const { data: photo } = useEmpDetailPhotoFull(employeeId);
+  const { data: stamp } = useEmpDetailStamp(employeeId);
+  const { data: sign } = useEmpDetailSign(employeeId);
+  const { data: guarantor } = useEmpDetailGuarantor(employeeId);
   const [viewing, setViewing] = useState<EmpDetailDocument | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
+
+  const GUARANTOR_ID = '__guarantor_file__';
+
+  const imageAssets = [
+    photo?.image ? { key: 'photo', label: 'Photo', img: photo as EmpDetailImage } : null,
+    stamp?.image ? { key: 'stamp', label: 'Personal Stamp', img: stamp as EmpDetailImage } : null,
+    sign?.image ? { key: 'sign', label: 'Signature', img: sign as EmpDetailImage } : null,
+  ].filter(Boolean) as { key: string; label: string; img: EmpDetailImage }[];
+
+  const viewImageAsset = useCallback((label: string, img: EmpDetailImage) => {
+    setViewing({
+      id: img.id,
+      fileName: img.fileName || label,
+      contentType: img.contentType || 'image/png',
+      fileSizeStr: img.size,
+      documentType: label,
+      uploadedAt: '',
+      url: `data:${img.contentType || 'image/png'};base64,${img.image}`,
+    });
+  }, []);
 
   const handleView = useCallback(async (cert: EmpFileList) => {
     setLoadingId(cert.id);
     try {
-      const blobUrl = await fetchCertBlobUrl(cert.id);
+      // The guarantor file is streamed by employee id, not a cert id.
+      const blobUrl = String(cert.id) === GUARANTOR_ID
+        ? await fetchGuarantorFileUrl(employeeId)
+        : await fetchCertBlobUrl(cert.id);
       setViewing({
         id:           cert.id,
         fileName:     cert.fileName,
@@ -256,7 +313,7 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
     } finally {
       setLoadingId(null);
     }
-  }, []);
+  }, [employeeId]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -271,7 +328,20 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
 
   if (isLoading) return <DetailSkeleton rows={3} />;
 
-  const list: EmpFileList[] = certs ?? [];
+  const certList: EmpFileList[] = certs ?? [];
+  // Surface the guarantor's attached file as a downloadable document card.
+  const g = guarantor as { fileName?: string; contentType?: string; fileSizeStr?: string } | undefined;
+  const guarantorDoc: EmpFileList | null = g?.fileName
+    ? ({
+        id: GUARANTOR_ID,
+        fileName: g.fileName,
+        contentType: g.contentType || 'application/octet-stream',
+        size: g.fileSizeStr || '',
+        certType: 'Guarantor Document',
+        fileSize: 0,
+      } as unknown as EmpFileList)
+    : null;
+  const list: EmpFileList[] = guarantorDoc ? [...certList, guarantorDoc] : certList;
 
   return (
       <>
@@ -314,7 +384,7 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
               <div className="flex items-center gap-2">
                 <div className="px-2.5 py-1 bg-white/80 backdrop-blur-sm rounded-full">
                 <span className="text-xs font-medium text-slate-600">
-                  {list.length} {list.length === 1 ? (t.file || 'file') : (t.files || 'files')}
+                  {list.length + imageAssets.length} {list.length + imageAssets.length === 1 ? (t.file || 'file') : (t.files || 'files')}
                 </span>
                 </div>
               </div>
@@ -322,8 +392,40 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
           </div>
 
           {/* Content */}
-          <div className="p-6">
-            {list.length === 0 ? (
+          <div className="p-6 space-y-6">
+            {imageAssets.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Identity &amp; Signatures</h4>
+                  <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {imageAssets.map((a) => (
+                        <ImageAssetCard key={a.key} label={a.label} img={a.img} onView={() => viewImageAsset(a.label, a.img)} />
+                    ))}
+                  </motion.div>
+                </div>
+            )}
+
+            {list.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-700 mb-3">Certificates &amp; Files</h4>
+                  <motion.div
+                      variants={containerVariants}
+                      initial="hidden"
+                      animate="visible"
+                      className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                  >
+                    {list.map((cert) => (
+                        <DocumentCard
+                            key={cert.id}
+                            cert={cert}
+                            onView={() => handleView(cert)}
+                            isLoading={loadingId === cert.id}
+                        />
+                    ))}
+                  </motion.div>
+                </div>
+            )}
+
+            {list.length === 0 && imageAssets.length === 0 && (
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -335,33 +437,17 @@ export const DocumentsTab = memo(function DocumentsTab({ employeeId }: { employe
                   <h4 className="text-base font-semibold text-slate-700 mb-1">{t.noDocuments || 'No Documents'}</h4>
                   <p className="text-sm text-slate-400">{t.noDocumentsUploaded || 'No documents have been uploaded for this employee yet.'}</p>
                 </motion.div>
-            ) : (
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                >
-                  {list.map((cert) => (
-                      <DocumentCard
-                          key={cert.id}
-                          cert={cert}
-                          onView={() => handleView(cert)}
-                          isLoading={loadingId === cert.id}
-                      />
-                  ))}
-                </motion.div>
             )}
           </div>
 
           {/* Footer Stats (if documents exist) */}
-          {list.length > 0 && (
+          {(list.length > 0 || imageAssets.length > 0) && (
               <div className="bg-slate-50 px-6 py-3 border-t border-slate-100">
                 <div className="flex items-center justify-between text-xs text-slate-500">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5" />
-                      <span>{t.totalFiles || 'Total'}: {list.length} {t.files || 'files'}</span>
+                      <span>{t.totalFiles || 'Total'}: {list.length + imageAssets.length} {t.files || 'files'}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />

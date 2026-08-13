@@ -8,7 +8,7 @@ import type {
 } from "@/modules/profile/types/EmpEdu.types";
 import type { EmpRevDto } from "@/modules/hr/types/employee/empAddDto";
 
-const BASE = `${import.meta.env.VITE_HRMM_PROFILE_URL}/EmpEdu`;
+const BASE = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/EmpEdu`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;
@@ -61,8 +61,6 @@ export const educationApi = {
     try {
       // Get the current record to get all fields
       const current = await educationApi.getById(id);
-
-      console.log('📥 Current education record:', current);
 
       // Use provided rowVersion or get from current
       const currentRowVersion = rowVersion || current.rowVersion || '';
@@ -137,8 +135,6 @@ export const educationApi = {
         status: status, // "1" for Approved, "2" for Rejected
         rowVersion: currentRowVersion,
       };
-
-      console.log('📤 Updating education with data:', updateData);
 
       const res = await api.put(`${BASE}/ModEmpEdu/${id}`, updateData);
       return res.data.message;

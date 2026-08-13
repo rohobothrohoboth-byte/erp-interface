@@ -1,79 +1,156 @@
-import { useMemo, useState } from "react";
-import { ModulePageShell, StatusBadge } from "@/shared/components/ModulePageShell";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { ModulePageShell } from "@/shared/components/ModulePageShell";
 import { Button } from "@/shared/components/ui/button";
 import { showToast } from "@/shared/layout/layout";
-
-type Row = Record<string, string | number>;
-
-const DATA: Row[] = [{ id: "a1", aisle: "A1", bins: 20, occupancy: 80, temperature: "Ambient" }, { id: "a2", aisle: "A2", bins: 20, occupancy: 65, temperature: "Ambient" }, { id: "a3", aisle: "B1", bins: 16, occupancy: 42, temperature: "Ambient" }, { id: "a4", aisle: "C-COLD", bins: 10, occupancy: 55, temperature: "Cold" }];
+import { zoneApi } from "@/modules/inventory/services/warehouseZone.api";
+import { warehouseApi } from "@/modules/inventory/services/warehouse.api";
+import type { WarehouseLayoutZone } from "@/modules/inventory/types/warehouseZone.types";
+import type { Warehouse } from "@/modules/inventory/types/warehouse.types";
 
 export default function WarehouseLayoutPage() {
   const [search, setSearch] = useState("");
-  const [rows, setRows] = useState<Row[]>(DATA);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [warehouseId, setWarehouseId] = useState<string>("");
+  const [zones, setZones] = useState<WarehouseLayoutZone[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadWarehouses = useCallback(async () => {
+    try {
+      const data = await warehouseApi.getAll();
+      const list = Array.isArray(data) ? data : [];
+      setWarehouses(list);
+      setWarehouseId((prev) => prev || list[0]?.id || "");
+    } catch (err: any) {
+      showToast.error(err?.message || "Failed to load warehouses");
+    }
+  }, []);
+
+  const loadLayout = useCallback(async () => {
+    if (!warehouseId) {
+      setZones([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const layout = await zoneApi.getLayout(warehouseId);
+      setZones(Array.isArray(layout?.zones) ? layout.zones : []);
+    } catch (err: any) {
+      const message = err?.message || "Failed to load layout";
+      setError(message);
+      showToast.error(message);
+      setZones([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [warehouseId]);
+
+  useEffect(() => {
+    loadWarehouses();
+  }, [loadWarehouses]);
+
+  useEffect(() => {
+    loadLayout();
+  }, [loadLayout]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((row) =>
-      Object.values(row).some((v) => String(v).toLowerCase().includes(q))
+    if (!q) return zones;
+    return zones.filter((zone) =>
+      [zone.code ?? "", zone.name, zone.zoneType ?? ""].some((v) =>
+        String(v).toLowerCase().includes(q)
+      ) || zone.bins?.some((b) => String(b.code).toLowerCase().includes(q))
     );
-  }, [rows, search]);
+  }, [zones, search]);
+
+  const totalBins = useMemo(
+    () => zones.reduce((sum, z) => sum + (z.bins?.length ?? 0), 0),
+    [zones]
+  );
 
   const stats = [
-    { label: "Records", value: rows.length },
-    { label: "Showing", value: filtered.length },
+    { label: "Zones", value: zones.length },
+    { label: "Bins", value: totalBins },
   ];
 
   return (
     <ModulePageShell
       title="Warehouse Layout"
-      subtitle="Aisle and bin structure for directed putaway and picking."
+      subtitle="Zone and bin structure for directed putaway and picking."
       stats={stats}
       searchValue={search}
       onSearchChange={setSearch}
       searchPlaceholder="Search..."
-      onRefresh={() => showToast.success("Refreshed Warehouse Layout")}
-      primaryActionLabel="Import Layout"
-      onPrimaryAction={() => {
-        showToast.success("Saved");
-        setRows((prev) => prev);
-      }}
+      onRefresh={loadLayout}
+      filters={
+        <select
+          value={warehouseId}
+          onChange={(e) => setWarehouseId(e.target.value)}
+          className="h-9 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+        >
+          <option value="">Select warehouse</option>
+          {warehouses.map((w) => (
+            <option key={w.id} value={w.id}>
+              {w.code} — {w.name}
+            </option>
+          ))}
+        </select>
+      }
     >
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-4 py-3 font-medium">Aisle</th>
-              <th className="px-4 py-3 font-medium">Bins</th>
-              <th className="px-4 py-3 font-medium">Occupancy %</th>
-              <th className="px-4 py-3 font-medium">Climate</th>
-              <th className="px-4 py-3 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((row) => (
-              <tr key={String(row.id)} className="border-t border-slate-100 hover:bg-slate-50/80">
-                <td className="px-4 py-3 font-medium text-slate-900">{row.aisle}</td>
-                <td className="px-4 py-3 text-slate-700">{row.bins}</td>
-                <td className="px-4 py-3 text-slate-700">{row.occupancy}</td>
-                <td className="px-4 py-3 text-slate-700">{row.temperature}</td>
-                <td className="px-4 py-3 text-right">
-                  <Button variant="ghost" size="sm" onClick={() => showToast.success("Opened record")}>
-                    View
-                  </Button>
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={99} className="px-4 py-8 text-center text-slate-400">
-                  No records match your filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+          <Loader2 className="mb-3 h-8 w-8 animate-spin text-emerald-600" />
+          <p className="text-sm">Loading layout...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <AlertCircle className="mb-3 h-10 w-10 text-rose-400" />
+          <p className="text-sm font-medium text-slate-700">{error}</p>
+          <Button variant="outline" className="mt-4" onClick={loadLayout}>
+            Try again
+          </Button>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 px-4 py-8 text-center text-slate-400">
+          No zones found for this warehouse.
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((zone) => (
+            <div key={zone.id} className="rounded-lg border border-slate-200 p-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-semibold text-slate-900">{zone.name}</div>
+                  <div className="text-xs text-slate-500">
+                    {zone.code || "—"} · {zone.zoneType || "Zone"}
+                  </div>
+                </div>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                  {zone.bins?.length ?? 0} bins
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {(zone.bins ?? []).map((bin) => (
+                  <span
+                    key={bin.id}
+                    className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs text-slate-700"
+                    title={bin.description ?? undefined}
+                  >
+                    {bin.code}
+                    {bin.capacity != null ? ` (${bin.capacity})` : ""}
+                  </span>
+                ))}
+                {(zone.bins?.length ?? 0) === 0 && (
+                  <span className="text-xs text-slate-400">No bins configured.</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </ModulePageShell>
   );
 }

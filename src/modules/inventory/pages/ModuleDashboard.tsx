@@ -1,34 +1,34 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import {
     RefreshCw,
-    Plus,
     Sun,
     Moon,
     Activity,
     Shield,
-    Sparkles,
     TrendingUp,
     Package,
     Warehouse,
     AlertTriangle,
     BarChart4,
     Download,
-    Filter,
-    Calendar,
     Truck,
     Boxes
 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { Badge } from '@/shared/components/ui/badge';
 import InventoryStatCards from '@/modules/inventory/components/InventoryStatCards';
 import StockMovements from '@/modules/inventory/components/StockMovements';
 import WarehouseManagement from '@/modules/inventory/components/WarehouseManagement';
 import ReorderAlerts from '@/modules/inventory/components/ReorderAlerts';
 import InventoryTrends from '@/modules/inventory/components/InventoryTrends';
-import { useModuleStore } from '@/shared/stores/module.store';
+import { invDashboardApi } from '@/modules/inventory/services/dashboard.api';
+import { reorderApi } from '@/modules/inventory/services/reorder.api';
+import { stockApi } from '@/modules/inventory/services/stock.api';
+import type { DashboardStats } from '@/modules/inventory/types/dashboard.types';
+import type { ReorderAlert } from '@/modules/inventory/types/reorder.types';
+import type { StockMovement } from '@/modules/inventory/types/stock.types';
 
 // Dark mode hook
 const useDarkMode = () => {
@@ -53,12 +53,22 @@ const useDarkMode = () => {
 };
 
 // Quick Stats Component
-const QuickInventoryStats = () => {
+const QuickInventoryStats = ({
+    dashboardStats,
+    alerts,
+}: {
+    dashboardStats: DashboardStats | null;
+    alerts: ReorderAlert[];
+}) => {
+    const fmt = (value: number | undefined) =>
+        value === undefined ? '—' : value.toLocaleString();
+    const outOfStock = alerts.filter((a) => (a.quantityOnHand ?? 0) <= 0).length;
+
     const stats = [
-        { label: 'Low Stock Items', value: '23', icon: AlertTriangle, color: 'amber', trend: '+5' },
-        { label: 'Out of Stock', value: '8', icon: Package, color: 'red', trend: '+2' },
-        { label: 'Active Warehouses', value: '4', icon: Warehouse, color: 'blue', trend: '0' },
-        { label: 'Pending Orders', value: '156', icon: Truck, color: 'purple', trend: '+12' },
+        { label: 'Low Stock Items', value: fmt(dashboardStats?.lowStockCount), icon: AlertTriangle, color: 'amber', trend: '0' },
+        { label: 'Out of Stock', value: fmt(outOfStock), icon: Package, color: 'red', trend: '0' },
+        { label: 'Active Warehouses', value: fmt(dashboardStats?.warehouseCount), icon: Warehouse, color: 'blue', trend: '0' },
+        { label: 'Products', value: fmt(dashboardStats?.productCount), icon: Truck, color: 'purple', trend: '0' },
     ];
 
     return (
@@ -99,14 +109,12 @@ const QuickInventoryStats = () => {
 };
 
 // Recent Stock Movements Summary
-const RecentStockMovementsSummary = () => {
-    const movements = [
-        { id: 1, product: 'Laptop Pro X', type: 'in', quantity: 50, date: '2024-01-15', warehouse: 'Main Warehouse' },
-        { id: 2, product: 'Wireless Mouse', type: 'out', quantity: 120, date: '2024-01-15', warehouse: 'North Branch' },
-        { id: 3, product: 'USB-C Cable', type: 'in', quantity: 300, date: '2024-01-14', warehouse: 'Main Warehouse' },
-        { id: 4, product: 'Monitor 24"', type: 'out', quantity: 25, date: '2024-01-14', warehouse: 'South Branch' },
-        { id: 5, product: 'Keyboard Mechanical', type: 'in', quantity: 80, date: '2024-01-13', warehouse: 'East Branch' },
-    ];
+const RecentStockMovementsSummary = ({ movements }: { movements: StockMovement[] }) => {
+    const formatDate = (value?: string | null) => {
+        if (!value) return '';
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? '' : parsed.toLocaleDateString();
+    };
 
     return (
         <Card className="border-yellow-200 dark:border-yellow-800 shadow-sm">
@@ -122,46 +130,47 @@ const RecentStockMovementsSummary = () => {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="space-y-3">
-                    {movements.map((movement) => (
-                        <div key={movement.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <div className="flex items-center gap-3">
-                                <div className={`p-1.5 rounded-lg ${movement.type === 'in' ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
-                                    {movement.type === 'in' ? (
-                                        <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                                    ) : (
-                                        <TrendingUp className="w-3 h-3 text-red-600 dark:text-red-400 transform rotate-180" />
-                                    )}
+                {movements.length === 0 ? (
+                    <p className="text-sm text-slate-500 dark:text-slate-400 py-4 text-center">
+                        No recent stock movements.
+                    </p>
+                ) : (
+                    <div className="space-y-3">
+                        {movements.slice(0, 5).map((movement) => {
+                            const inbound = movement.type?.toUpperCase() === 'IN';
+                            return (
+                                <div key={movement.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-1.5 rounded-lg ${inbound ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                                            {inbound ? (
+                                                <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                                            ) : (
+                                                <TrendingUp className="w-3 h-3 text-red-600 dark:text-red-400 transform rotate-180" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{movement.productName ?? movement.productId}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">{movement.type}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className={`text-sm font-medium ${inbound ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                                            {inbound ? '+' : '-'}{Math.abs(movement.quantity)}
+                                        </p>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500">{formatDate(movement.movementDate)}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{movement.product}</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{movement.warehouse}</p>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <p className={`text-sm font-medium ${movement.type === 'in' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
-                                    {movement.type === 'in' ? '+' : '-'}{movement.quantity}
-                                </p>
-                                <p className="text-xs text-slate-400 dark:text-slate-500">{movement.date}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
 };
 
 // Animation variants
-const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: { staggerChildren: 0.05, when: "beforeChildren" }
-    }
-};
-
-const itemVariants = {
+const itemVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     visible: {
         y: 0,
@@ -171,12 +180,31 @@ const itemVariants = {
 };
 
 export default function InventoryDashboard() {
-    const activeModule = useModuleStore((s) => s.activeModule);
     const { isDarkMode, toggleDarkMode } = useDarkMode();
     const prefersReducedMotion = useReducedMotion();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
+    const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+    const [alerts, setAlerts] = useState<ReorderAlert[]>([]);
+    const [movements, setMovements] = useState<StockMovement[]>([]);
+
+    // Load real inventory data. Each source is resilient: a failing endpoint
+    // (e.g. permissions) should not blank the rest of the dashboard.
+    const loadData = useCallback(async () => {
+        const [statsRes, alertsRes, movementsRes] = await Promise.allSettled([
+            invDashboardApi.getStats(),
+            reorderApi.getAlerts(),
+            stockApi.getMovements(),
+        ]);
+        if (statsRes.status === 'fulfilled') setDashboardStats(statsRes.value);
+        if (alertsRes.status === 'fulfilled') setAlerts(alertsRes.value);
+        if (movementsRes.status === 'fulfilled') setMovements(movementsRes.value);
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     // Update current time
     useEffect(() => {
@@ -202,9 +230,9 @@ export default function InventoryDashboard() {
 
     const handleRefresh = useCallback(async () => {
         setRefreshing(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await loadData();
         setRefreshing(false);
-    }, []);
+    }, [loadData]);
 
     const buttonVariants = useMemo(() => ({
         hover: { scale: prefersReducedMotion ? 1 : 1.02 },
@@ -281,7 +309,7 @@ export default function InventoryDashboard() {
 
                 {/* Quick Stats */}
                 <motion.div variants={itemVariants}>
-                    <QuickInventoryStats />
+                    <QuickInventoryStats dashboardStats={dashboardStats} alerts={alerts} />
                 </motion.div>
 
                 {/* Tabs Navigation */}
@@ -309,7 +337,7 @@ export default function InventoryDashboard() {
                         <TabsContent value="overview" className="mt-6 space-y-6">
                             {/* Main Stats Cards */}
                             <motion.div variants={itemVariants}>
-                                <InventoryStatCards />
+                                <InventoryStatCards stats={dashboardStats} />
                             </motion.div>
 
                             {/* Main Content Grid */}
@@ -318,10 +346,10 @@ export default function InventoryDashboard() {
                                 className="grid grid-cols-1 lg:grid-cols-3 gap-6"
                             >
                                 <div className="lg:col-span-2">
-                                    <StockMovements />
+                                    <StockMovements movements={movements} />
                                 </div>
                                 <div>
-                                    <RecentStockMovementsSummary />
+                                    <RecentStockMovementsSummary movements={movements} />
                                 </div>
                             </motion.div>
 
@@ -333,19 +361,19 @@ export default function InventoryDashboard() {
 
                         <TabsContent value="stock" className="mt-6">
                             <div className="grid grid-cols-1 gap-6">
-                                <StockMovements />
+                                <StockMovements movements={movements} />
                             </div>
                         </TabsContent>
 
                         <TabsContent value="warehouses" className="mt-6">
                             <div className="grid grid-cols-1 gap-6">
-                                <WarehouseManagement />
+                                <WarehouseManagement warehouseCount={dashboardStats?.warehouseCount} />
                             </div>
                         </TabsContent>
 
                         <TabsContent value="alerts" className="mt-6">
                             <div className="grid grid-cols-1 gap-6">
-                                <ReorderAlerts />
+                                <ReorderAlerts alerts={alerts} />
                             </div>
                         </TabsContent>
                     </Tabs>

@@ -28,8 +28,11 @@ const OfferCreateModal: React.FC<OfferCreateModalProps> = ({
                                                                onClose,
                                                                onSuccess,
                                                            }) => {
+    // `applicantId` prop is actually the JobApplication id, so pass it as jobApplicationId
+    // and let the backend derive the applicant + posting.
     const [form, setForm] = useState<OfferAddDto>({
-        applicantId,
+        applicantId: '',
+        jobApplicationId: applicantId,
         jobPostingId,
         salary: 0,
         currency: 'USD',
@@ -61,7 +64,8 @@ const OfferCreateModal: React.FC<OfferCreateModalProps> = ({
             twoWeeks.setDate(twoWeeks.getDate() + 14);
 
             setForm({
-                applicantId,
+                applicantId: '',
+                jobApplicationId: applicantId,
                 jobPostingId,
                 salary: 0,
                 currency: 'USD',

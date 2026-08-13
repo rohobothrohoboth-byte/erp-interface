@@ -3,8 +3,6 @@ import {
   Users,
   Building,
   CreditCard,
-  ShoppingCart,
-  Package,
   FileText,
   Settings as SettingsIcon,
   TrendingUp,
@@ -48,10 +46,7 @@ const mainSettingsCards = [
   { id: 1, title: "Core Module", icon: SettingsIcon, href: "/settings/core", color: "slate" },
   { id: 2, title: "HRM Module", icon: Users, href: "/settings/hr", color: "blue" },
   { id: 3, title: "CRM Module", icon: Building, href: "/settings/crm", color: "emerald" },
-  { id: 4, title: "Finance Module", icon: CreditCard, href: "/settings/finance", color: "purple" },
-  { id: 5, title: "Procurement Module", icon: ShoppingCart, href: "/settings/procurement", color: "orange" },
-  { id: 6, title: "Inventory Module", icon: Package, href: "/settings/inventory", color: "amber" },
-  { id: 7, title: "File Management", icon: FileText, href: "/settings/file", color: "rose" }
+  { id: 4, title: "Finance Module", icon: CreditCard, href: "/settings/finance", color: "purple" }
 ]
 
 const getModuleColors = (color: string) => {

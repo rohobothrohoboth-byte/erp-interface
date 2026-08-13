@@ -29,3 +29,6 @@ export const useEmpDetailGuarantor= (id: string) => useQuery({ queryKey: empDeta
 export const useEmpDetailDocuments= (id: string) => useQuery({ queryKey: empDetailKeys.documents(id), queryFn: () => empDetailApi.getDocuments(id), staleTime: STALE, enabled: !!id });
 export const useEmpCertAll        = (id: string) => useQuery({ queryKey: [...empDetailKeys.documents(id), 'certs'], queryFn: () => empDetailApi.getCertAll(id), staleTime: STALE, enabled: !!id });
 export const useEmpDetailLeave    = (id: string) => useQuery({ queryKey: empDetailKeys.leave(id),     queryFn: () => empDetailApi.getLeave(id),     staleTime: STALE, enabled: !!id });
+export const useEmpDetailPhotoFull= (id: string) => useQuery({ queryKey: [...empDetailKeys.photo(id), 'full'], queryFn: () => empDetailApi.getPhotoFull(id), staleTime: STALE, enabled: !!id, retry: false });
+export const useEmpDetailStamp    = (id: string) => useQuery({ queryKey: [...empDetailKeys.all(id), 'stamp'], queryFn: () => empDetailApi.getStamp(id), staleTime: STALE, enabled: !!id, retry: false });
+export const useEmpDetailSign     = (id: string) => useQuery({ queryKey: [...empDetailKeys.all(id), 'sign'],  queryFn: () => empDetailApi.getSign(id),  staleTime: STALE, enabled: !!id, retry: false });

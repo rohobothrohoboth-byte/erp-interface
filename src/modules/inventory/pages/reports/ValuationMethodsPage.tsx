@@ -1,79 +1,113 @@
-import { useMemo, useState } from "react";
-import { ModulePageShell, StatusBadge } from "@/shared/components/ModulePageShell";
+import { useCallback, useEffect, useState } from "react";
+import { Loader2, AlertCircle } from "lucide-react";
+import { ModulePageShell } from "@/shared/components/ModulePageShell";
 import { Button } from "@/shared/components/ui/button";
 import { showToast } from "@/shared/layout/layout";
+import { valuationApi } from "@/modules/inventory/services/valuation.api";
+import type { ValuationMethodValue } from "@/modules/inventory/types/valuation.types";
 
-type Row = Record<string, string | number>;
-
-const DATA: Row[] = [{ id: "v1", method: "Weighted Average", scope: "Company Default", items: 188, status: "Active" }, { id: "v2", method: "FIFO", scope: "Spare Parts", items: 58, status: "Active" }, { id: "v3", method: "Standard Cost", scope: "Finished Goods", items: 31, status: "Draft" }];
+const METHOD_OPTIONS: { value: ValuationMethodValue; label: string }[] = [
+  { value: "AVG", label: "Weighted Average (AVG)" },
+  { value: "FIFO", label: "First In, First Out (FIFO)" },
+  { value: "LIFO", label: "Last In, First Out (LIFO)" },
+];
 
 export default function ValuationMethodsPage() {
-  const [search, setSearch] = useState("");
-  const [rows, setRows] = useState<Row[]>(DATA);
+  const [method, setMethod] = useState<ValuationMethodValue>("AVG");
+  const [saved, setSaved] = useState<ValuationMethodValue>("AVG");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((row) =>
-      Object.values(row).some((v) => String(v).toLowerCase().includes(q))
-    );
-  }, [rows, search]);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await valuationApi.getMethod();
+      const current = data?.method || "AVG";
+      setMethod(current);
+      setSaved(current);
+    } catch (err: any) {
+      const message = err?.message || "Failed to load valuation method";
+      setError(message);
+      showToast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const stats = [
-    { label: "Records", value: rows.length },
-    { label: "Showing", value: filtered.length },
-  ];
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const handleSave = useCallback(async () => {
+    setSaving(true);
+    try {
+      const data = await valuationApi.setMethod({ method });
+      const current = data?.method || method;
+      setSaved(current);
+      setMethod(current);
+      showToast.success("Valuation method saved");
+    } catch (err: any) {
+      showToast.error(err?.message || "Failed to save valuation method");
+    } finally {
+      setSaving(false);
+    }
+  }, [method]);
+
+  const knownOption = METHOD_OPTIONS.some((o) => o.value === saved);
 
   return (
     <ModulePageShell
       title="Valuation Methods"
       subtitle="Configure FIFO, weighted average, and standard cost policies."
-      stats={stats}
-      searchValue={search}
-      onSearchChange={setSearch}
-      searchPlaceholder="Search..."
-      onRefresh={() => showToast.success("Refreshed Valuation Methods")}
-      primaryActionLabel="Add Method"
-      onPrimaryAction={() => {
-        showToast.success("Saved");
-        setRows((prev) => prev);
-      }}
+      stats={[{ label: "Active Method", value: saved }]}
+      onRefresh={load}
     >
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
-        <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr>
-              <th className="px-4 py-3 font-medium">Method</th>
-              <th className="px-4 py-3 font-medium">Scope</th>
-              <th className="px-4 py-3 font-medium">Items</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((row) => (
-              <tr key={String(row.id)} className="border-t border-slate-100 hover:bg-slate-50/80">
-                <td className="px-4 py-3 font-medium text-slate-900">{row.method}</td>
-                <td className="px-4 py-3 text-slate-700">{row.scope}</td>
-                <td className="px-4 py-3 text-slate-700">{row.items}</td>
-                <td className="px-4 py-3"><StatusBadge status={String(row.status)} tone={["Active","Posted","Approved","Healthy","Done","Completed","On Track","Green"].includes(String(row.status)) ? "success" : ["Draft","Pending","Below Min","Blocked","At Risk","Amber"].includes(String(row.status)) ? "warning" : "neutral"} /></td>
-                <td className="px-4 py-3 text-right">
-                  <Button variant="ghost" size="sm" onClick={() => showToast.success("Opened record")}>
-                    View
-                  </Button>
-                </td>
-              </tr>
-            ))}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={99} className="px-4 py-8 text-center text-slate-400">
-                  No records match your filters.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16 text-slate-500">
+          <Loader2 className="mb-3 h-8 w-8 animate-spin text-emerald-600" />
+          <p className="text-sm">Loading valuation method...</p>
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <AlertCircle className="mb-3 h-10 w-10 text-rose-400" />
+          <p className="text-sm font-medium text-slate-700">{error}</p>
+          <Button variant="outline" className="mt-4" onClick={load}>
+            Try again
+          </Button>
+        </div>
+      ) : (
+        <div className="max-w-md space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-slate-700">
+              Inventory valuation method
+            </label>
+            <select
+              value={method}
+              onChange={(e) => setMethod(e.target.value)}
+              className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-700"
+            >
+              {METHOD_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+              {!knownOption && <option value={saved}>{saved}</option>}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">
+              This method is used to value on-hand inventory across all warehouses.
+            </p>
+          </div>
+          <Button
+            onClick={handleSave}
+            disabled={saving || method === saved}
+            className="bg-emerald-600 hover:bg-emerald-700"
+          >
+            {saving ? "Saving..." : "Save Method"}
+          </Button>
+        </div>
+      )}
     </ModulePageShell>
   );
 }

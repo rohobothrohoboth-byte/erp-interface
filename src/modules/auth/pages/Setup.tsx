@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -42,6 +42,12 @@ interface CompanyForm {
     phone: string;
     email: string;
     address: string;
+    website: string;
+    motto: string;
+    mission: string;
+    vision: string;
+    values: string;
+    structure: string;
 }
 
 interface BranchForm {
@@ -49,6 +55,11 @@ interface BranchForm {
     nameAm: string;
     location: string;
     branchType: string;
+    phone: string;
+    email: string;
+    address: string;
+    city: string;
+    managerName: string;
 }
 
 interface DepartmentForm {
@@ -126,7 +137,6 @@ const STEP_DEFS = [
 export default function Setup() {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
-    const [loading, setLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [setupData, setSetupData] = useState<SetupData | null>(null);
     const [showCredentials, setShowCredentials] = useState(false);
@@ -134,8 +144,8 @@ export default function Setup() {
 
     // Form data
     const [formData, setFormData] = useState<FormData>({
-        company: { name: "", nameAm: "", taxId: "", phone: "", email: "", address: "" },
-        branch: { name: "", nameAm: "", location: "", branchType: "Main" },
+        company: { name: "", nameAm: "", taxId: "", phone: "", email: "", address: "", website: "", motto: "", mission: "", vision: "", values: "", structure: "" },
+        branch: { name: "", nameAm: "", location: "", branchType: "Main", phone: "", email: "", address: "", city: "", managerName: "" },
         department: { name: "", nameAm: "" },
         position: { name: "", nameAm: "", jobGradeName: "Senior", noOfPosition: 1 },
         admin: {
@@ -569,12 +579,68 @@ function Step1CompanyForm({
                         placeholder="Enter email"
                     />
                 </div>
+                <div>
+                    <Label>Website</Label>
+                    <Input
+                        value={formData.company.website}
+                        onChange={(e) => updateCompany('website', e.target.value)}
+                        placeholder="https://example.com"
+                    />
+                </div>
                 <div className="md:col-span-2">
                     <Label>Address</Label>
                     <Input
                         value={formData.company.address}
                         onChange={(e) => updateCompany('address', e.target.value)}
                         placeholder="Enter address"
+                    />
+                </div>
+                <div className="md:col-span-2">
+                    <Label>Slogan / Motto</Label>
+                    <Input
+                        value={formData.company.motto}
+                        onChange={(e) => updateCompany('motto', e.target.value)}
+                        placeholder="Enter the company slogan or motto"
+                    />
+                </div>
+                <div className="md:col-span-2">
+                    <Label>Mission</Label>
+                    <textarea
+                        value={formData.company.mission}
+                        onChange={(e) => updateCompany('mission', e.target.value)}
+                        placeholder="Enter the company mission"
+                        rows={3}
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+                    />
+                </div>
+                <div className="md:col-span-2">
+                    <Label>Vision</Label>
+                    <textarea
+                        value={formData.company.vision}
+                        onChange={(e) => updateCompany('vision', e.target.value)}
+                        placeholder="Enter the company vision"
+                        rows={3}
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+                    />
+                </div>
+                <div className="md:col-span-2">
+                    <Label>Values</Label>
+                    <textarea
+                        value={formData.company.values}
+                        onChange={(e) => updateCompany('values', e.target.value)}
+                        placeholder="Enter the company values"
+                        rows={3}
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
+                    />
+                </div>
+                <div className="md:col-span-2">
+                    <Label>Structure</Label>
+                    <textarea
+                        value={formData.company.structure}
+                        onChange={(e) => updateCompany('structure', e.target.value)}
+                        placeholder="Describe the organizational structure"
+                        rows={3}
+                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
                     />
                 </div>
             </div>
@@ -643,6 +709,47 @@ function Step2BranchForm({
                         <option value="Main">Main</option>
                         <option value="Sub">Sub</option>
                     </select>
+                </div>
+                <div>
+                    <Label>City</Label>
+                    <Input
+                        value={formData.branch.city}
+                        onChange={(e) => updateBranch('city', e.target.value)}
+                        placeholder="Enter city"
+                    />
+                </div>
+                <div>
+                    <Label>Manager Name</Label>
+                    <Input
+                        value={formData.branch.managerName}
+                        onChange={(e) => updateBranch('managerName', e.target.value)}
+                        placeholder="Enter manager name"
+                    />
+                </div>
+                <div>
+                    <Label>Phone</Label>
+                    <Input
+                        value={formData.branch.phone}
+                        onChange={(e) => updateBranch('phone', e.target.value)}
+                        placeholder="Enter phone number"
+                    />
+                </div>
+                <div>
+                    <Label>Email</Label>
+                    <Input
+                        type="email"
+                        value={formData.branch.email}
+                        onChange={(e) => updateBranch('email', e.target.value)}
+                        placeholder="Enter email"
+                    />
+                </div>
+                <div className="md:col-span-2">
+                    <Label>Address</Label>
+                    <Input
+                        value={formData.branch.address}
+                        onChange={(e) => updateBranch('address', e.target.value)}
+                        placeholder="Enter address"
+                    />
                 </div>
             </div>
         </div>

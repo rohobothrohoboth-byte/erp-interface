@@ -37,6 +37,10 @@ const EditDeptModal: React.FC<EditDeptModalProps> = ({
     deptStat: department.deptStat,
     branchId: department.branchId,
     rowVersion: department.rowVersion,
+    managerName: department.managerName || "",
+    description: department.description || "",
+    phone: department.phone || "",
+    email: department.email || "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,6 +56,10 @@ const EditDeptModal: React.FC<EditDeptModalProps> = ({
       deptStat: department.deptStat,
       branchId: department.branchId,
       rowVersion: department.rowVersion,
+      managerName: department.managerName || "",
+      description: department.description || "",
+      phone: department.phone || "",
+      email: department.email || "",
     });
   }, [department]);
 
@@ -155,6 +163,63 @@ const EditDeptModal: React.FC<EditDeptModalProps> = ({
                   value={editedDepartment.name}
                   onChange={(e) => setEditedDepartment(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Finance"
+                  className="h-9 text-sm"
+                  disabled={isSubmitting}
+              />
+            </div>
+
+            {/* Contact Person (Manager) */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                Contact Person
+              </Label>
+              <Input
+                  value={editedDepartment.managerName || ""}
+                  onChange={(e) => setEditedDepartment(prev => ({ ...prev, managerName: e.target.value }))}
+                  placeholder="Eg. John Doe"
+                  className="h-9 text-sm"
+                  disabled={isSubmitting}
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                Description
+              </Label>
+              <Input
+                  value={editedDepartment.description || ""}
+                  onChange={(e) => setEditedDepartment(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Short description"
+                  className="h-9 text-sm"
+                  disabled={isSubmitting}
+              />
+            </div>
+
+            {/* Phone */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                Phone
+              </Label>
+              <Input
+                  value={editedDepartment.phone || ""}
+                  onChange={(e) => setEditedDepartment(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="Eg. +251 911 000000"
+                  className="h-9 text-sm"
+                  disabled={isSubmitting}
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                Email
+              </Label>
+              <Input
+                  type="email"
+                  value={editedDepartment.email || ""}
+                  onChange={(e) => setEditedDepartment(prev => ({ ...prev, email: e.target.value }))}
+                  placeholder="Eg. dept@example.com"
                   className="h-9 text-sm"
                   disabled={isSubmitting}
               />

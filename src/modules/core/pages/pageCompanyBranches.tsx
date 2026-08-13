@@ -20,6 +20,7 @@ import type {
 import { BranchType, BranchStat } from '@/modules/core/types/enum';
 import { Button } from '@/shared/components/ui/button';
 import { PageLoader } from '@/shared/components/ui/page-loader';
+import { api } from '@/shared/services/api';
 
 const CompanyBranchesPage = () => {
     const { companyId } = useParams<{ companyId: string }>();
@@ -46,11 +47,9 @@ const CompanyBranchesPage = () => {
         const fetchCompanyName = async () => {
             if (!companyId) return;
             try {
-                const response = await fetch(`/api/auth/v1/Company/Get/${companyId}`);
-                const data = await response.json();
-                if (data.success) {
-                    setCompanyName(data.data?.name || 'Company');
-                }
+                // Company lives in the Core Module service, not Auth.
+                const response = await api.get(`core/module/v1/Company/GetCompany/${companyId}`);
+                setCompanyName(response.data?.data?.name || 'Company');
             } catch (error) {
                 console.error('Error fetching company:', error);
                 setCompanyName('Company');
@@ -195,7 +194,7 @@ const CompanyBranchesPage = () => {
         <div className="space-y-5">
             {/* Back Button */}
             <button
-                onClick={() => navigate('/core/companies')}
+                onClick={() => navigate('/core/company')}
                 className="flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 transition-colors mb-4"
             >
                 <ArrowLeft className="w-4 h-4" />

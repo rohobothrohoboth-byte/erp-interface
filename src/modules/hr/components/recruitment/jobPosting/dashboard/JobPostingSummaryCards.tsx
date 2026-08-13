@@ -67,7 +67,7 @@ const JobPostingSummaryCards: React.FC<JobPostingSummaryCardsProps> = ({
             <ClipboardCheck size={14} className="text-green-600" /> Evaluation Flow
           </p>
           <button type="button"
-            onClick={() => navigate(`/hr/recruitment/job-posting/${postId}/eval-flow/${encodeURIComponent(postNumber)}`)}
+            onClick={() => navigate(`/hr/recruitment/posting/${postId}/eval-flow`)}
             className="flex items-center gap-1 text-xs text-green-600 hover:text-green-700 cursor-pointer font-medium">
             Manage <ChevronRight size={12} />
           </button>
@@ -79,7 +79,7 @@ const JobPostingSummaryCards: React.FC<JobPostingSummaryCardsProps> = ({
             </div>
             <p className="text-sm text-gray-400">No flow assigned</p>
             <button type="button"
-              onClick={() => navigate(`/hr/recruitment/job-posting/${postId}/eval-flow/${encodeURIComponent(postNumber)}`)}
+              onClick={() => navigate(`/hr/recruitment/posting/${postId}/eval-flow`)}
               className="mt-2 text-xs text-green-600 hover:underline cursor-pointer">
               Assign one →
             </button>

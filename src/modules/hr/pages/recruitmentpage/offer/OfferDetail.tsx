@@ -79,7 +79,7 @@ const OfferDetail: React.FC = () => {
         onError: (error) => toast.error(error.message || 'Failed to send offer'),
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
     const canEdit = isHR && offer?.status === 'Draft';
     const canSend = isHR && offer?.status === 'Draft';
     const canDelete = isHR && (offer?.status === 'Draft' || offer?.status === 'Rejected');

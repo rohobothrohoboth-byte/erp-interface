@@ -1,9 +1,25 @@
 import Cookies from "js-cookie";
-import type { AuthTokens } from "@/modules/auth/types/auth.types";
+import { jwtDecode } from "jwt-decode";
 
 export const getAccessToken = (): string | null => {
   // Try cookie first, then localStorage as fallback
   return Cookies.get("accessToken") || localStorage.getItem("accessToken") || null;
+};
+
+// True when we still hold an access token whose JWT `exp` is in the future.
+// Used to decide whether a failed token refresh should tear down the session:
+// a spurious 401 from a single endpoint must NOT log out a still-valid session.
+export const isAccessTokenValid = (): boolean => {
+  const token = getAccessToken();
+  if (!token) return false;
+  try {
+    const { exp } = jwtDecode<{ exp?: number }>(token);
+    if (!exp) return false;
+    // 5s skew buffer so we don't treat a just-expiring token as valid.
+    return exp * 1000 > Date.now() + 5000;
+  } catch {
+    return false;
+  }
 };
 
 export const getExpiresAt = (): Date | null => {
@@ -13,41 +29,9 @@ export const getExpiresAt = (): Date | null => {
 
 export const isAuthenticated = (): boolean => !!getAccessToken();
 
-export const login = async (username: string, password: string): Promise<void> => {
-  const tokens = await loginApi({ username, password }); // Adjust path as needed
-  setTokens(tokens);
-};
-
-export const refresh = async (): Promise<void> => {
-  const tokens = await refreshTokenApi(); // Adjust path as needed
-  setTokens(tokens);
-};
-
 export const logout = (): void => {
   Cookies.remove("accessToken", { path: "/" });
   Cookies.remove("expiresAt", { path: "/" });
   localStorage.removeItem("accessToken");
   localStorage.removeItem("expiresAt");
-};
-
-const setTokens = (tokens: AuthTokens): void => {
-  const expiresDate = new Date(tokens.expiresDate);
-
-  // Store in cookies
-  Cookies.set("accessToken", tokens.accessToken, {
-    expires: expiresDate,
-    secure: import.meta.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
-  Cookies.set("expiresAt", tokens.expiresDate, {
-    expires: expiresDate,
-    secure: import.meta.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-  });
-
-  // Also store in localStorage as backup (for cross-domain requests)
-  localStorage.setItem("accessToken", tokens.accessToken);
-  localStorage.setItem("expiresAt", tokens.expiresDate);
 };

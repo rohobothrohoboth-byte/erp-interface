@@ -8,6 +8,15 @@ import type {
 // FIXED: Use gateway path for profile service
 const BASE = 'hrm/profile/v1/EmpPro';
 
+// Employee image (photo/stamp/signature) returned as base64 with metadata.
+export interface EmpDetailImage {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: string;
+  image: string; // base64 payload
+}
+
 const get = async <T>(url: string): Promise<T> => {
   try {
     const res = await api.get(url);
@@ -40,12 +49,33 @@ export const empDetailApi = {
   },
   getDocuments: (id: string) => get<EmpDetailDocument[]>(`${BASE}/GetEmpDocuments/${id}`),
   getCertAll:   (id: string) => get<EmpFileList[]>(`hrm/profile/v1/EmpMod/EmpCertAll/${id}`),
-  getLeave:     (_id: string): Promise<EmpDetailLeaveBalance[]> => Promise.resolve([]),
+  getPhotoFull: (id: string) => get<EmpDetailImage | null>(`${BASE}/GetEmpPhoto/${id}`),
+  getStamp:     (id: string) => get<EmpDetailImage | null>(`${BASE}/GetEmpStamp/${id}`),
+  getSign:      (id: string) => get<EmpDetailImage | null>(`${BASE}/GetEmpSign/${id}`),
+  getLeave: async (id: string): Promise<EmpDetailLeaveBalance[]> => {
+    try {
+      const res = await api.get(`hrm/leave/v1/Balance/Employee/${id}`);
+      const data = res.data?.data ?? res.data ?? [];
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  },
 };
 
 export async function fetchCertBlobUrl(certId: string): Promise<string> {
   try {
     const res = await api.get(`hrm/profile/v1/EmpMod/EmpCertById/${certId}`, { responseType: 'blob' });
+    return URL.createObjectURL(res.data as Blob);
+  } catch {
+    return '';
+  }
+}
+
+// Download the guarantor's attached file (streamed by GetGuarantorFile/{employeeId}).
+export async function fetchGuarantorFileUrl(employeeId: string): Promise<string> {
+  try {
+    const res = await api.get(`${BASE}/GetGuarantorFile/${employeeId}`, { responseType: 'blob' });
     return URL.createObjectURL(res.data as Blob);
   } catch {
     return '';

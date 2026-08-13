@@ -8,7 +8,8 @@ import EmployeeTable from "@/modules/core/components/usermgmt/employeeTable";
 import type { AdminEmpListDto } from "@/modules/hr/types/employee";
 import { useNavigate } from "react-router-dom";
 import EmployeeSearch, { type AdminEmployeeFilters } from "@/modules/core/components/usermgmt/EmployeeSearch";
-import { getAllAppUsers } from "@/modules/auth/services/account/account.api";
+import { getAllAppUsers, reactivateAccount } from "@/modules/auth/services/account/account.api";
+import toast from "react-hot-toast";
 
 // ✅ ADD THE MAPPING FUNCTION HERE
 const mapEmployeeData = (employee: any): AdminEmpListDto => {
@@ -220,6 +221,21 @@ const UserManagement: React.FC = () => {
     });
   };
 
+  const handleReactivateAccount = async (employeeData: AdminEmpListDto) => {
+    const userId = userStatusMap.get(employeeData.id)?.userId;
+    if (!userId) {
+      toast.error("Could not resolve the user account to reactivate.");
+      return;
+    }
+    try {
+      await reactivateAccount(userId);
+      toast.success(`Account for ${employeeData.empFullName || 'user'} reactivated`);
+      await fetchAllEmployees(currentPage);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to reactivate account");
+    }
+  };
+
   const handleEditAccount = async (employeeData: AdminEmpListDto) => {
     const empSearchRes: EmpSearchRes = {
       id: employeeData.id as UUID,
@@ -324,6 +340,7 @@ const UserManagement: React.FC = () => {
                     onEmployeeTerminate={() => {}}
                     onAddAccount={handleAddAccount}
                     onEditAccount={handleEditAccount}
+                    onReactivateAccount={handleReactivateAccount}
                     showAddAccountButton={true}
                     loading={tableLoading}
                 />

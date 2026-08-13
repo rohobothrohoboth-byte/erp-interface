@@ -13,7 +13,7 @@ import type { HrDashboardResponse, ActivityItem, EventItem } from '@/modules/hr/
 // ============================================================
 const BaseUrl = '/hrm/profile/v1/EmpListRepo';
 const LeaveBaseUrl = '/hrm/leave/v1';
-const DashboardBaseUrl = '/hrm/profile/v1.0/dashboard';
+const DashboardBaseUrl = '/hrm/profile/v1/dashboard';
 
 // ============================================================
 // ✅ DEFAULT DATA STRUCTURE

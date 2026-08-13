@@ -67,11 +67,11 @@ const WorkforcePlanDetail: React.FC = () => {
         onError: (error) => toast.error(error.message)
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
     const canEdit = plan?.statusStr === 'Draft' && isHR;
     const canSubmit = plan?.statusStr === 'Draft' && isHR;
-    const canApprove = plan?.statusStr === 'Pending' && isHR;
-    const canReject = plan?.statusStr === 'Pending' && isHR;
+    const canApprove = !!plan?.statusStr?.startsWith('Pending') && isHR;
+    const canReject = !!plan?.statusStr?.startsWith('Pending') && isHR;
 
     const getStatusBadge = (status: string) => {
         const statusMap: Record<string, { label: string; className: string }> = {
@@ -321,7 +321,7 @@ const WorkforcePlanDetail: React.FC = () => {
                             <div className="p-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-sm font-medium text-gray-700">Job Requisitions</h3>
-                                    {(plan.statusStr === 'Approved' || plan.statusStr === 'Active') && (
+                                    {['Approved', 'Approve', 'Active'].includes(plan.statusStr as string) && (
                                         <Button
                                             size="sm"
                                             onClick={() => navigate(`/hr/recruitment/requisition/new?planId=${planId}`)}
@@ -389,7 +389,7 @@ const WorkforcePlanDetail: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    {plan.statusStr === 'Pending' && (
+                                    {plan.statusStr?.startsWith('Pending') && (
                                         <div className="flex items-start gap-3">
                                             <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center flex-shrink-0">
                                                 <Clock className="w-4 h-4 text-yellow-600" />

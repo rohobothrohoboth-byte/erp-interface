@@ -4,7 +4,8 @@ import { X, Calendar, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import type { AddPeriodDto, UUID } from "@/modules/core/types/period";
+import type { AddPeriodDto, UUID, PeriodType } from "@/modules/core/types/period";
+import { PERIOD_TYPE_OPTIONS } from "@/modules/core/types/period";
 import toast from "react-hot-toast";
 import { fiscalYearApi } from "@/modules/core/services/fiscalyear/fisc.api";
 import { Quarter } from "@/modules/core/types/enum";
@@ -182,6 +183,29 @@ export const AddPeriodModal = ({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Period Type */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                  Period Type
+                </Label>
+                <Select
+                    value={newPeriod.periodType ?? ""}
+                    onValueChange={(value) => setNewPeriod({ ...newPeriod, periodType: value as PeriodType })}
+                    disabled={loading}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select period type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PERIOD_TYPE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Start and End Dates */}

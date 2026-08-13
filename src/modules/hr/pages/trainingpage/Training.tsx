@@ -1,1271 +1,1612 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Award,
+  XCircle,
+  Loader2,
+  BookOpen,
+  GraduationCap,
+  Users,
+  AlertTriangle,
+  RefreshCw,
+  ClipboardCheck,
+  CalendarDays,
+  MessageSquare,
+  BadgeCheck,
+  Search,
+} from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/shared/components/ui/card';
 import { Button } from '@/shared/components/ui/button';
-import { Plus, BookOpen, Award, Clock, FileText, Users, Calendar, BarChart2, CheckCircle, ChevronRight, ArrowRight, Download } from 'lucide-react';
-import { useModuleStore } from '@/shared/stores/module.store';
 import { Badge } from '@/shared/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/tabs';
-import { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { FormModal, Field, inputCls } from '@/modules/inventory/components/FormModal';
+import { trainingApi } from '@/modules/hr/services/training/training.api';
+import { getAllEmployees } from '@/modules/hr/services/employee/emp.api';
+import type { EmployeeListDto } from '@/modules/hr/types/employee';
+import type {
+  TrainingProgram,
+  TrainingProgramCreate,
+  TrainingCourse,
+  TrainingCourseCreate,
+  TrainingEnrollment,
+} from '@/modules/hr/types/training.types';
 
-interface TrainingCourse {
-  id: number;
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared local helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const PROGRAM_STATUSES = ['Planning', 'Ongoing', 'Completed', 'Cancelled'];
+
+function fmtDate(value?: string | null): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString();
+}
+
+function toDateInput(value?: string | null): string {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toISOString().slice(0, 10);
+}
+
+function errMsg(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  return 'An unexpected error occurred';
+}
+
+function StatusBadge({ status }: { status?: string | null }) {
+  const s = (status || '').toLowerCase();
+  const tone =
+    s.includes('complete')
+      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+      : s.includes('cancel')
+      ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300'
+      : s.includes('ongoing') || s.includes('progress') || s.includes('active')
+      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300'
+      : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300';
+  return (
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${tone}`}>
+      {status || '—'}
+    </span>
+  );
+}
+
+function StateMessage({
+  icon: Icon,
+  title,
+  detail,
+  action,
+}: {
+  icon: typeof BookOpen;
   title: string;
-  category: string;
-  duration: string;
-  format: 'Online' | 'Classroom' | 'Hybrid';
-  status: 'Active' | 'Draft' | 'Archived';
-  enrolled: number;
-  completionRate: number;
+  detail?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-14 text-center">
+      <Icon className="h-10 w-10 text-slate-300 dark:text-slate-600" />
+      <div>
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{title}</p>
+        {detail && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{detail}</p>}
+      </div>
+      {action}
+    </div>
+  );
 }
 
-interface EmployeeTraining {
-  id: number;
-  employee: string;
-  position: string;
-  department: string;
-  course: string;
-  status: 'Completed' | 'In Progress' | 'Not Started';
-  completionDate: string;
-  score?: number;
-  certification: boolean;
+function Loading({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2 py-14 text-sm text-slate-500 dark:text-slate-400">
+      <Loader2 className="h-5 w-5 animate-spin" />
+      {label}
+    </div>
+  );
 }
 
-interface TrainingProgram {
-  id: number;
+const thCls = 'px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400';
+const tdCls = 'px-4 py-3 text-sm text-slate-700 dark:text-slate-200';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Programs tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ProgramFormState {
   name: string;
   description: string;
+  category: string;
   startDate: string;
   endDate: string;
-  participants: number;
-  budget: string;
-  status: 'Planning' | 'Ongoing' | 'Completed' | 'Cancelled';
+  status: string;
 }
 
-interface TrainingEvaluation {
-  id: number;
-  course: string;
-  participants: number;
-  averageScore: number;
-  effectiveness: number;
-  feedback: string;
-}
+const emptyProgramForm: ProgramFormState = {
+  name: '',
+  description: '',
+  category: '',
+  startDate: '',
+  endDate: '',
+  status: 'Planning',
+};
 
-interface TrainingBudget {
-  id: number;
-  category: string;
-  allocated: string;
-  spent: string;
-  remaining: string;
-  utilization: number;
-}
+function ProgramsTab({ onProgramsChange }: { onProgramsChange?: (programs: TrainingProgram[]) => void }) {
+  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-interface Employee {
-  id: number;
-  name: string;
-  department: string;
-}
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<TrainingProgram | null>(null);
+  const [form, setForm] = useState<ProgramFormState>(emptyProgramForm);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-const CourseOverview: React.FC<{ courses: TrainingCourse[] }> = ({ courses }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {courses.map(course => (
-      <motion.div 
-        key={course.id}
-        whileHover={{ y: -5 }}
-        className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900"
-      >
-        <div className="p-4">
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-full ${
-              course.status === 'Active' ? 'bg-emerald-100 dark:bg-emerald-900/50' : 
-              course.status === 'Draft' ? 'bg-yellow-100 dark:bg-yellow-900/50' : 'bg-gray-100 dark:bg-gray-800'
-            }`}>
-              <BookOpen className={`h-5 w-5 ${
-                course.status === 'Active' ? 'text-emerald-600 dark:text-emerald-400' : 
-                course.status === 'Draft' ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400'
-              }`} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg">{course.title}</h3>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="text-xs capitalize">
-                  {course.category}
-                </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {course.duration}
-                </Badge>
-                <Badge variant={course.format === 'Online' ? 'default' : 'secondary'} className="text-xs">
-                  {course.format}
-                </Badge>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-4 flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {course.enrolled} enrolled
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="w-24 h-2 bg-gray-200 rounded-full dark:bg-gray-800">
-                <div 
-                  className="h-2 rounded-full bg-emerald-500" 
-                  style={{ width: `${course.completionRate}%` }}
-                ></div>
-              </div>
-              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                {course.completionRate}%
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="border-t px-4 py-2 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Last updated: 2 days ago</span>
-          <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs">
-            Details <ChevronRight className="h-3 w-3" />
-          </Button>
-        </div>
-      </motion.div>
-    ))}
-  </div>
-);
-
-const EmployeeTrainingOverview: React.FC<{ records: EmployeeTraining[] }> = ({ records }) => (
-  <div className="space-y-4">
-    {records.map(record => (
-      <motion.div 
-        key={record.id}
-        whileHover={{ x: 5 }}
-        className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900"
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold text-lg">{record.employee}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {record.position} • {record.department}
-            </p>
-            <p className="text-sm font-medium mt-2 text-gray-700 dark:text-gray-300">
-              {record.course}
-            </p>
-          </div>
-          <div className="text-right">
-            <Badge 
-              variant={
-                record.status === 'Completed' ? 'default' : 
-                record.status === 'In Progress' ? 'secondary' : 'outline'
-              }
-              className="capitalize"
-            >
-              {record.status}
-            </Badge>
-            {record.completionDate && (
-              <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
-                {record.completionDate}
-              </p>
-            )}
-          </div>
-        </div>
-        
-        <div className="mt-4 flex justify-between items-center flex-wrap">
-          <div className="flex items-center gap-2">
-            {record.certification && (
-              <Badge variant="default" className="px-2 py-0.5 text-xs flex items-center gap-1">
-                <Award className="h-3 w-3" /> Certified
-              </Badge>
-            )}
-            {record.score && (
-              <Badge variant="outline" className="px-2 py-0.5 text-xs">
-                Score: {record.score}/100
-              </Badge>
-            )}
-          </div>
-          <Button variant="outline" size="sm" className="h-8 gap-1 text-xs md:mt-1">
-            View Record <ArrowRight className="h-3 w-3" />
-          </Button>
-        </div>
-      </motion.div>
-    ))}
-  </div>
-);
-
-const ProgramOverview: React.FC<{ programs: TrainingProgram[] }> = ({ programs }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    {programs.map(program => (
-      <motion.div 
-        key={program.id}
-        whileHover={{ scale: 1.02 }}
-        className={`border rounded-lg p-4 shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900 ${
-          program.status === 'Ongoing' 
-            ? 'ring-2 ring-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-900/20' 
-            : ''
-        }`}
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-semibold text-lg">{program.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {program.startDate} - {program.endDate}
-            </p>
-          </div>
-          <Badge 
-            variant={
-              program.status === 'Ongoing' ? 'default' : 
-              program.status === 'Planning' ? 'secondary' : 
-              program.status === 'Completed' ? 'outline' : 'destructive'
-            }
-            className="capitalize"
-          >
-            {program.status}
-          </Badge>
-        </div>
-        
-        <p className="text-sm mt-2 text-gray-600 dark:text-gray-300">
-          {program.description}
-        </p>
-        
-        <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-          <div className="p-2 rounded bg-gray-50 dark:bg-gray-800">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Participants</p>
-            <p className="font-medium">{program.participants}</p>
-          </div>
-          <div className="p-2 rounded bg-gray-50 dark:bg-gray-800">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Budget</p>
-            <p className="font-medium">{program.budget}</p>
-          </div>
-          <div className="p-2 rounded bg-gray-50 dark:bg-gray-800">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Days Left</p>
-            <p className="font-medium">
-              {program.status === 'Completed' ? 'Finished' : 
-               program.status === 'Planning' ? '--' : '14'}
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    ))}
-  </div>
-);
-
-const EvaluationOverview: React.FC<{ evaluations: TrainingEvaluation[] }> = ({ evaluations }) => (
-  <div className="space-y-4">
-    {evaluations.map(evalItem => (
-      <motion.div 
-        key={evalItem.id}
-        whileHover={{ scale: 1.01 }}
-        className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900"
-      >
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="font-semibold text-lg">{evalItem.course}</h3>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex items-center gap-1 text-sm">
-                <Users className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <span>{evalItem.participants} participants</span>
-              </div>
-              <div className="flex items-center gap-1 text-sm">
-                <BarChart2 className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <span>Avg. score: {evalItem.averageScore}/100</span>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="relative w-12 h-12">
-              <svg className="w-full h-full" viewBox="0 0 36 36">
-                <path
-                  d="M18 2.0845
-                    a 15.9155 15.9155 0 0 1 0 31.831
-                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#eee"
-                  strokeWidth="3"
-                />
-                <path
-                  d="M18 2.0845
-                    a 15.9155 15.9155 0 0 1 0 31.831
-                    a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke={evalItem.effectiveness > 70 ? "#10b981" : evalItem.effectiveness > 40 ? "#f59e0b" : "#ef4444"}
-                  strokeWidth="3"
-                  strokeDasharray={`${evalItem.effectiveness}, 100`}
-                />
-                <text x="18" y="20.5" textAnchor="middle" fontSize="8" fill={evalItem.effectiveness > 70 ? "#10b981" : evalItem.effectiveness > 40 ? "#f59e0b" : "#ef4444"} fontWeight="bold">
-                  {evalItem.effectiveness}%
-                </text>
-              </svg>
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-3">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            <span className="font-medium">Feedback:</span> {evalItem.feedback}
-          </p>
-        </div>
-        
-        <div className="mt-4 flex justify-end">
-          <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
-            Detailed Report <Download className="h-3 w-3" />
-          </Button>
-        </div>
-      </motion.div>
-    ))}
-  </div>
-);
-
-const BudgetOverview: React.FC<{ budgets: TrainingBudget[] }> = ({ budgets }) => (
-  <div className="space-y-4">
-    {budgets.map(budget => {
-      // Ensure utilization doesn't exceed 100% for the progress bar
-      const displayUtilization = Math.min(budget.utilization, 100);
-      
-      return (
-        <motion.div 
-          key={budget.id}
-          whileHover={{ scale: 1.01 }}
-          className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-all bg-white dark:bg-gray-900"
-        >
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-lg">{budget.category}</h3>
-            <Badge 
-              variant={
-                budget.utilization > 90 ? 'destructive' : 
-                budget.utilization > 70 ? 'secondary' : 'outline'
-              }
-              className="text-xs"
-            >
-              {budget.utilization}% utilized
-            </Badge>
-          </div>
-          
-          <div className="mt-4 grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Allocated</p>
-              <p className="font-medium">{budget.allocated}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Spent</p>
-              <p className="font-medium">{budget.spent}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Remaining</p>
-              <p className="font-medium" style={{ 
-                color: parseFloat(budget.remaining.replace(/[^0-9.]/g, '')) < 0 ? '#ef4444' : 'inherit'
-              }}>
-                {budget.remaining}
-              </p>
-            </div>
-          </div>
-          
-          <div className="mt-4 w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-            <div 
-              className={`h-2.5 rounded-full ${
-                budget.utilization > 90 ? 'bg-red-500' : 
-                budget.utilization > 70 ? 'bg-yellow-500' : 'bg-emerald-500'
-              }`} 
-              style={{ width: `${displayUtilization}%` }}
-            ></div>
-          </div>
-          
-          {/* Show warning if utilization exceeds 100% */}
-          {budget.utilization > 100 && (
-            <p className="mt-2 text-xs text-red-500">
-              Warning: Budget exceeded by {budget.utilization - 100}%
-            </p>
-          )}
-        </motion.div>
-      );
-    })}
-  </div>
-);
-const TrainingList = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <BookOpen className="h-5 w-5 text-emerald-500" />
-        <span>Training List</span>
-      </CardTitle>
-      <CardDescription>
-        Comprehensive list of all training programs and courses
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-4">
-        {courseData.map(course => (
-          <div key={course.id} className="border rounded-lg p-4 flex justify-between items-center">
-            <div>
-              <h3 className="font-medium">{course.title}</h3>
-              <p className="text-sm text-gray-500">{course.category} • {course.duration}</p>
-            </div>
-            <Button variant="outline" size="sm">
-              View Details
-            </Button>
-          </div>
-        ))}
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const TrainingForm = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Plus className="h-5 w-5 text-emerald-500" />
-        <span>Create New Training</span>
-      </CardTitle>
-      <CardDescription>
-        Add a new training program or course to the system
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <form className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Training Title</label>
-            <input className="w-full p-2 border rounded" placeholder="Enter title" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Category</label>
-            <select className="w-full p-2 border rounded">
-              <option>Select category</option>
-              <option>Leadership</option>
-              <option>Technical</option>
-              <option>Compliance</option>
-            </select>
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Start Date</label>
-            <input type="date" className="w-full p-2 border rounded" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">End Date</label>
-            <input type="date" className="w-full p-2 border rounded" />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Description</label>
-          <textarea className="w-full p-2 border rounded" rows={3} placeholder="Enter description"></textarea>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline">Cancel</Button>
-          <Button className="bg-emerald-600 hover:bg-emerald-700">Save Training</Button>
-        </div>
-      </form>
-    </CardContent>
-  </Card>
-);
-
-const EnrollmentManagement: React.FC<{ courseId: number }> = ({ courseId }) => {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [selectedEmployees, setSelectedEmployees] = useState<number[]>([]);
-  const [departmentFilter, setDepartmentFilter] = useState<string>('All');
-  
-  // Fetch employees (mock data for example)
-  useEffect(() => {
-    const mockEmployees = [
-      { id: 1, name: 'John Smith', department: 'Finance' },
-      { id: 2, name: 'Jane Doe', department: 'HR' },
-      { id: 3, name: 'Robert Johnson', department: 'IT' },
-      { id: 4, name: 'Emily Davis', department: 'Finance' },
-      { id: 5, name: 'Michael Brown', department: 'IT' },
-      { id: 6, name: 'Sarah Wilson', department: 'HR' },
-    ];
-    setEmployees(mockEmployees);
-  }, []);
-
-  const departments = ['All', ...new Set(employees.map(e => e.department))];
-
-  const filteredEmployees = departmentFilter === 'All' 
-    ? employees 
-    : employees.filter(e => e.department === departmentFilter);
-
-  const handleSelectAll = () => {
-    if (selectedEmployees.length === filteredEmployees.length) {
-      setSelectedEmployees([]);
-    } else {
-      setSelectedEmployees(filteredEmployees.map(e => e.id));
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await trainingApi.getPrograms();
+      setPrograms(data);
+      onProgramsChange?.(data);
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleEnroll = () => {
-    console.log(`Enrolling employees ${selectedEmployees.join(', ')} in course ${courseId}`);
-    alert(`Successfully enrolled ${selectedEmployees.length} employees`);
-    setSelectedEmployees([]);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyProgramForm);
+    setModalOpen(true);
   };
-    return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-emerald-500" />
-          <span>Enroll Employees</span>
-        </CardTitle>
-        <CardDescription>
-          Select employees to enroll in this training program
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <label htmlFor="department-filter" className="block text-sm font-medium mb-1">
-                Filter by Department
-              </label>
-              <select
-                id="department-filter"
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="w-full p-2 border rounded"
-              >
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-end">
-              <Button 
-                variant="outline"
-                onClick={handleSelectAll}
-                className="w-full sm:w-auto"
-              >
-                {selectedEmployees.length === filteredEmployees.length ? 'Deselect All' : 'Select All'}
-              </Button>
-            </div>
-          </div>
-          
-          <div className="grid gap-2 max-h-96 overflow-y-auto p-1">
-            {filteredEmployees.map(employee => (
-              <div key={employee.id} className="flex items-center gap-3 p-2 border rounded hover:bg-gray-50 dark:hover:bg-gray-800">
-                <input 
-                  type="checkbox" 
-                  id={`employee-${employee.id}`}
-                  checked={selectedEmployees.includes(employee.id)}
-                  onChange={() => {
-                    setSelectedEmployees(prev => 
-                      prev.includes(employee.id)
-                        ? prev.filter(id => id !== employee.id)
-                        : [...prev, employee.id]
-                    );
-                  }}
-                  className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                <label 
-                  htmlFor={`employee-${employee.id}`} 
-                  className="flex-1 flex justify-between items-center"
-                >
-                  <span>{employee.name}</span>
-                  <Badge variant="outline" className="text-xs">
-                    {employee.department}
-                  </Badge>
-                </label>
-              </div>
-            ))}
-          </div>
-          
-          <Button 
-            onClick={handleEnroll}
-            disabled={selectedEmployees.length === 0}
-            className="w-full bg-emerald-600 hover:bg-emerald-700"
-          >
-            Enroll Selected Employees ({selectedEmployees.length})
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
+  const openEdit = (p: TrainingProgram) => {
+    setEditing(p);
+    setForm({
+      name: p.name ?? '',
+      description: p.description ?? '',
+      category: p.category ?? '',
+      startDate: toDateInput(p.startDate),
+      endDate: toDateInput(p.endDate),
+      status: p.status ?? 'Planning',
+    });
+    setModalOpen(true);
+  };
 
-const TrainingDetails = () => {
-  const [activeTab, setActiveTab] = useState('details');
-  
+  const submit = async () => {
+    if (!form.name.trim()) {
+      toast.error('Program name is required');
+      return;
+    }
+    const dto: TrainingProgramCreate = {
+      name: form.name.trim(),
+      description: form.description.trim() || null,
+      category: form.category.trim() || null,
+      startDate: form.startDate || null,
+      endDate: form.endDate || null,
+      status: form.status,
+    };
+    setSubmitting(true);
+    try {
+      if (editing) {
+        await trainingApi.updateProgram(editing.id, dto);
+        toast.success('Program updated');
+      } else {
+        await trainingApi.createProgram(dto);
+        toast.success('Program created');
+      }
+      setModalOpen(false);
+      await load();
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const remove = async (p: TrainingProgram) => {
+    if (!window.confirm(`Delete program "${p.name}"? This cannot be undone.`)) return;
+    setDeletingId(p.id);
+    try {
+      await trainingApi.deleteProgram(p.id);
+      toast.success('Program deleted');
+      await load();
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5 text-emerald-500" />
-          <span>Training Details</span>
-        </CardTitle>
-        <CardDescription>
-          Detailed information about the selected training program
-        </CardDescription>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="details" className='cursor-pointer'>Details</TabsTrigger>
-            <TabsTrigger value="enrollment" className='cursor-pointer'>Enrollment</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div>
+          <CardTitle>Training Programs</CardTitle>
+          <CardDescription>Create and manage training programs.</CardDescription>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button size="sm" onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="mr-1 h-4 w-4" /> Add Program
+          </Button>
+        </div>
       </CardHeader>
-      
       <CardContent>
-        {activeTab === 'details' ? (
-          <div className="space-y-4">
-            <div className="border-b pb-4">
-              <h2 className="text-xl font-bold">Leadership Development Program</h2>
-              <div className="flex gap-2 mt-2">
-                <Badge variant="default">Active</Badge>
-                <Badge variant="secondary">8 weeks</Badge>
-                <Badge variant="outline">Hybrid</Badge>
-              </div>
+        {loading ? (
+          <Loading label="Loading programs…" />
+        ) : error ? (
+          <StateMessage
+            icon={AlertTriangle}
+            title="Failed to load programs"
+            detail={error}
+            action={
+              <Button size="sm" variant="outline" onClick={load}>
+                Retry
+              </Button>
+            }
+          />
+        ) : programs.length === 0 ? (
+          <StateMessage
+            icon={BookOpen}
+            title="No programs yet"
+            detail="Get started by creating your first training program."
+            action={
+              <Button size="sm" onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-700">
+                <Plus className="mr-1 h-4 w-4" /> Add Program
+              </Button>
+            }
+          />
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
+            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+              <thead className="bg-slate-50 dark:bg-slate-900/50">
+                <tr>
+                  <th className={thCls}>Name</th>
+                  <th className={thCls}>Category</th>
+                  <th className={thCls}>Start</th>
+                  <th className={thCls}>End</th>
+                  <th className={thCls}>Status</th>
+                  <th className={`${thCls} text-right`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {programs.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                    <td className={tdCls}>
+                      <div className="font-medium text-slate-800 dark:text-slate-100">{p.name}</div>
+                      {p.description && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{p.description}</div>
+                      )}
+                    </td>
+                    <td className={tdCls}>{p.category || '—'}</td>
+                    <td className={tdCls}>{fmtDate(p.startDate)}</td>
+                    <td className={tdCls}>{fmtDate(p.endDate)}</td>
+                    <td className={tdCls}>
+                      <StatusBadge status={p.status} />
+                    </td>
+                    <td className={`${tdCls} text-right`}>
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(p)} title="Edit">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => remove(p)}
+                          disabled={deletingId === p.id}
+                          title="Delete"
+                          className="text-rose-600 hover:text-rose-700"
+                        >
+                          {deletingId === p.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+
+      <FormModal
+        open={modalOpen}
+        title={editing ? 'Edit Program' : 'Add Program'}
+        onClose={() => setModalOpen(false)}
+        onSubmit={submit}
+        submitting={submitting}
+        submitLabel={editing ? 'Update' : 'Create'}
+      >
+        <Field label="Name">
+          <input
+            className={inputCls}
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            placeholder="e.g. Leadership Development"
+          />
+        </Field>
+        <Field label="Description">
+          <textarea
+            className={inputCls}
+            rows={3}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+        </Field>
+        <Field label="Category">
+          <input
+            className={inputCls}
+            value={form.category}
+            onChange={(e) => setForm({ ...form, category: e.target.value })}
+            placeholder="e.g. Technical, Soft Skills"
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Start Date">
+            <input
+              type="date"
+              className={inputCls}
+              value={form.startDate}
+              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+            />
+          </Field>
+          <Field label="End Date">
+            <input
+              type="date"
+              className={inputCls}
+              value={form.endDate}
+              onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+            />
+          </Field>
+        </div>
+        <Field label="Status">
+          <select
+            className={inputCls}
+            value={form.status}
+            onChange={(e) => setForm({ ...form, status: e.target.value })}
+          >
+            {PROGRAM_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </FormModal>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Courses tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface CourseFormState {
+  title: string;
+  description: string;
+  instructor: string;
+  durationHours: string;
+  location: string;
+  capacity: string;
+  scheduledDate: string;
+}
+
+const emptyCourseForm: CourseFormState = {
+  title: '',
+  description: '',
+  instructor: '',
+  durationHours: '',
+  location: '',
+  capacity: '',
+  scheduledDate: '',
+};
+
+function CoursesTab({ programs }: { programs: TrainingProgram[] }) {
+  const [selectedProgram, setSelectedProgram] = useState<string>('');
+  const [courses, setCourses] = useState<TrainingCourse[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<TrainingCourse | null>(null);
+  const [form, setForm] = useState<CourseFormState>(emptyCourseForm);
+  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedProgram && programs.length > 0) {
+      setSelectedProgram(programs[0].id);
+    }
+  }, [programs, selectedProgram]);
+
+  const load = async (programId: string) => {
+    if (!programId) {
+      setCourses([]);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await trainingApi.getCoursesByProgram(programId);
+      setCourses(data);
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedProgram) load(selectedProgram);
+    else setCourses([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProgram]);
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyCourseForm);
+    setModalOpen(true);
+  };
+
+  const openEdit = (c: TrainingCourse) => {
+    setEditing(c);
+    setForm({
+      title: c.title ?? '',
+      description: c.description ?? '',
+      instructor: c.instructor ?? '',
+      durationHours: String(c.durationHours ?? ''),
+      location: c.location ?? '',
+      capacity: String(c.capacity ?? ''),
+      scheduledDate: toDateInput(c.scheduledDate),
+    });
+    setModalOpen(true);
+  };
+
+  const submit = async () => {
+    if (!selectedProgram) {
+      toast.error('Select a program first');
+      return;
+    }
+    if (!form.title.trim()) {
+      toast.error('Course title is required');
+      return;
+    }
+    const dto: TrainingCourseCreate = {
+      programId: selectedProgram,
+      title: form.title.trim(),
+      description: form.description.trim() || null,
+      instructor: form.instructor.trim() || null,
+      durationHours: Number(form.durationHours) || 0,
+      location: form.location.trim() || null,
+      capacity: Number(form.capacity) || 0,
+      scheduledDate: form.scheduledDate || null,
+    };
+    setSubmitting(true);
+    try {
+      if (editing) {
+        await trainingApi.updateCourse(editing.id, dto);
+        toast.success('Course updated');
+      } else {
+        await trainingApi.createCourse(dto);
+        toast.success('Course created');
+      }
+      setModalOpen(false);
+      await load(selectedProgram);
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const remove = async (c: TrainingCourse) => {
+    if (!window.confirm(`Delete course "${c.title}"?`)) return;
+    setDeletingId(c.id);
+    try {
+      await trainingApi.deleteCourse(c.id);
+      toast.success('Course deleted');
+      await load(selectedProgram);
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div>
+          <CardTitle>Courses</CardTitle>
+          <CardDescription>Manage courses within a program.</CardDescription>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => load(selectedProgram)}
+            disabled={loading || !selectedProgram}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            size="sm"
+            onClick={openCreate}
+            disabled={!selectedProgram}
+            className="bg-emerald-600 hover:bg-emerald-700"
+          >
+            <Plus className="mr-1 h-4 w-4" /> Add Course
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-4 max-w-sm">
+          <Field label="Program">
+            <select
+              className={inputCls}
+              value={selectedProgram}
+              onChange={(e) => setSelectedProgram(e.target.value)}
+              disabled={programs.length === 0}
+            >
+              {programs.length === 0 && <option value="">No programs available</option>}
+              {programs.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
+
+        {programs.length === 0 ? (
+          <StateMessage
+            icon={BookOpen}
+            title="No programs available"
+            detail="Create a program in the Programs tab before adding courses."
+          />
+        ) : loading ? (
+          <Loading label="Loading courses…" />
+        ) : error ? (
+          <StateMessage
+            icon={AlertTriangle}
+            title="Failed to load courses"
+            detail={error}
+            action={
+              <Button size="sm" variant="outline" onClick={() => load(selectedProgram)}>
+                Retry
+              </Button>
+            }
+          />
+        ) : courses.length === 0 ? (
+          <StateMessage
+            icon={GraduationCap}
+            title="No courses in this program"
+            detail="Add a course to get started."
+            action={
+              <Button size="sm" onClick={openCreate} className="bg-emerald-600 hover:bg-emerald-700">
+                <Plus className="mr-1 h-4 w-4" /> Add Course
+              </Button>
+            }
+          />
+        ) : (
+          <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
+            <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+              <thead className="bg-slate-50 dark:bg-slate-900/50">
+                <tr>
+                  <th className={thCls}>Title</th>
+                  <th className={thCls}>Instructor</th>
+                  <th className={thCls}>Duration</th>
+                  <th className={thCls}>Location</th>
+                  <th className={thCls}>Capacity</th>
+                  <th className={thCls}>Scheduled</th>
+                  <th className={`${thCls} text-right`}>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {courses.map((c) => (
+                  <tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                    <td className={tdCls}>
+                      <div className="font-medium text-slate-800 dark:text-slate-100">{c.title}</div>
+                      {c.description && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400">{c.description}</div>
+                      )}
+                    </td>
+                    <td className={tdCls}>{c.instructor || '—'}</td>
+                    <td className={tdCls}>{c.durationHours ? `${c.durationHours} h` : '—'}</td>
+                    <td className={tdCls}>{c.location || '—'}</td>
+                    <td className={tdCls}>{c.capacity ?? '—'}</td>
+                    <td className={tdCls}>{fmtDate(c.scheduledDate)}</td>
+                    <td className={`${tdCls} text-right`}>
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => openEdit(c)} title="Edit">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => remove(c)}
+                          disabled={deletingId === c.id}
+                          title="Delete"
+                          className="text-rose-600 hover:text-rose-700"
+                        >
+                          {deletingId === c.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+
+      <FormModal
+        open={modalOpen}
+        title={editing ? 'Edit Course' : 'Add Course'}
+        onClose={() => setModalOpen(false)}
+        onSubmit={submit}
+        submitting={submitting}
+        submitLabel={editing ? 'Update' : 'Create'}
+      >
+        <Field label="Title">
+          <input
+            className={inputCls}
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            placeholder="e.g. Intro to React"
+          />
+        </Field>
+        <Field label="Description">
+          <textarea
+            className={inputCls}
+            rows={3}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+          />
+        </Field>
+        <Field label="Instructor">
+          <input
+            className={inputCls}
+            value={form.instructor}
+            onChange={(e) => setForm({ ...form, instructor: e.target.value })}
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Duration (hours)">
+            <input
+              type="number"
+              min={0}
+              className={inputCls}
+              value={form.durationHours}
+              onChange={(e) => setForm({ ...form, durationHours: e.target.value })}
+            />
+          </Field>
+          <Field label="Capacity">
+            <input
+              type="number"
+              min={0}
+              className={inputCls}
+              value={form.capacity}
+              onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+            />
+          </Field>
+        </div>
+        <Field label="Location">
+          <input
+            className={inputCls}
+            value={form.location}
+            onChange={(e) => setForm({ ...form, location: e.target.value })}
+          />
+        </Field>
+        <Field label="Scheduled Date">
+          <input
+            type="date"
+            className={inputCls}
+            value={form.scheduledDate}
+            onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })}
+          />
+        </Field>
+      </FormModal>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared enrollment data + lookups (used by Enrollments / Feedback / Certifications)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ENROLLMENT_STATUSES = ['Enrolled', 'In Progress', 'Completed', 'Failed', 'Cancelled'];
+
+interface EnrollmentData {
+  enrollments: TrainingEnrollment[];
+  courses: TrainingCourse[];
+  employees: EmployeeListDto[];
+  loading: boolean;
+  error: string | null;
+  reload: () => Promise<void>;
+}
+
+function useEnrollmentData(): EnrollmentData {
+  const [enrollments, setEnrollments] = useState<TrainingEnrollment[]>([]);
+  const [courses, setCourses] = useState<TrainingCourse[]>([]);
+  const [employees, setEmployees] = useState<EmployeeListDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [enr, crs, emps] = await Promise.all([
+        trainingApi.getEnrollments(),
+        trainingApi.getCourses(),
+        getAllEmployees(),
+      ]);
+      setEnrollments(enr);
+      setCourses(crs);
+      setEmployees(emps);
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return { enrollments, courses, employees, loading, error, reload };
+}
+
+function useLookups(courses: TrainingCourse[], employees: EmployeeListDto[]) {
+  const courseTitle = useMemo(() => {
+    const map = new Map<string, string>();
+    courses.forEach((c) => map.set(c.id, c.title));
+    return (id: string) => map.get(id) || id;
+  }, [courses]);
+
+  const employeeById = useMemo(() => {
+    const map = new Map<string, EmployeeListDto>();
+    employees.forEach((e) => map.set(String(e.id), e));
+    return map;
+  }, [employees]);
+
+  const employeeName = (id: string) => employeeById.get(String(id))?.empFullName || id;
+  const departments = useMemo(
+    () => Array.from(new Set(employees.map((e) => e.department).filter(Boolean))).sort(),
+    [employees],
+  );
+
+  return { courseTitle, employeeById, employeeName, departments };
+}
+
+/** Reusable search + department filter bar. */
+function FilterBar({
+  search,
+  onSearch,
+  dept,
+  onDept,
+  departments,
+  placeholder = 'Search by name or code…',
+}: {
+  search: string;
+  onSearch: (v: string) => void;
+  dept: string;
+  onDept: (v: string) => void;
+  departments: string[];
+  placeholder?: string;
+}) {
+  return (
+    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="relative flex-1">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <input
+          className={`${inputCls} pl-9`}
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder={placeholder}
+        />
+      </div>
+      <select
+        className={`${inputCls} sm:w-56`}
+        value={dept}
+        onChange={(e) => onDept(e.target.value)}
+      >
+        <option value="">All departments</option>
+        {departments.map((d) => (
+          <option key={d} value={d}>
+            {d}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enrollments tab
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface GradeFormState {
+  status: string;
+  score: string;
+  feedback: string;
+}
+
+function EnrollmentsTab() {
+  const { enrollments, courses, employees, loading, error, reload } = useEnrollmentData();
+  const { courseTitle, employeeById, employeeName, departments } = useLookups(courses, employees);
+
+  const [search, setSearch] = useState('');
+  const [dept, setDept] = useState('');
+
+  const [modalOpen, setModalOpen] = useState(false);
+  const [courseId, setCourseId] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [rowBusyId, setRowBusyId] = useState<string | null>(null);
+
+  // Grade modal
+  const [gradeTarget, setGradeTarget] = useState<TrainingEnrollment | null>(null);
+  const [gradeForm, setGradeForm] = useState<GradeFormState>({ status: 'Completed', score: '', feedback: '' });
+  const [grading, setGrading] = useState(false);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return enrollments.filter((en) => {
+      const emp = employeeById.get(String(en.employeeId));
+      if (dept && emp?.department !== dept) return false;
+      if (!q) return true;
+      return [emp?.empFullName, emp?.code, courseTitle(en.courseId), en.status]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q));
+    });
+  }, [enrollments, search, dept, employeeById, courseTitle]);
+
+  const openEnroll = () => {
+    setCourseId(courses[0]?.id ?? '');
+    setEmployeeId(employees[0] ? String(employees[0].id) : '');
+    setModalOpen(true);
+  };
+
+  const submit = async () => {
+    if (!courseId) {
+      toast.error('Select a course');
+      return;
+    }
+    if (!employeeId) {
+      toast.error('Select an employee');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await trainingApi.enroll({ courseId, employeeId });
+      toast.success('Employee enrolled');
+      setModalOpen(false);
+      await reload();
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openGrade = (en: TrainingEnrollment) => {
+    setGradeTarget(en);
+    setGradeForm({
+      status: en.status || 'Completed',
+      score: en.score != null ? String(en.score) : '',
+      feedback: en.feedback ?? '',
+    });
+  };
+
+  const submitGrade = async () => {
+    if (!gradeTarget) return;
+    const scoreNum = gradeForm.score.trim() === '' ? null : Number(gradeForm.score);
+    if (scoreNum != null && (Number.isNaN(scoreNum) || scoreNum < 0 || scoreNum > 100)) {
+      toast.error('Score must be between 0 and 100');
+      return;
+    }
+    setGrading(true);
+    try {
+      await trainingApi.updateEnrollment(gradeTarget.id, {
+        courseId: gradeTarget.courseId,
+        employeeId: gradeTarget.employeeId,
+        status: gradeForm.status,
+        score: scoreNum,
+        feedback: gradeForm.feedback.trim() || null,
+      });
+      toast.success('Result recorded');
+      setGradeTarget(null);
+      await reload();
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setGrading(false);
+    }
+  };
+
+  const cancel = async (en: TrainingEnrollment) => {
+    if (!window.confirm('Cancel this enrollment?')) return;
+    setRowBusyId(en.id);
+    try {
+      await trainingApi.cancelEnrollment(en.id);
+      toast.success('Enrollment cancelled');
+      await reload();
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setRowBusyId(null);
+    }
+  };
+
+  const issue = async (en: TrainingEnrollment) => {
+    setRowBusyId(en.id);
+    try {
+      await trainingApi.issueCertificate(en.id);
+      toast.success('Certificate issued');
+      await reload();
+    } catch (e) {
+      toast.error(errMsg(e));
+    } finally {
+      setRowBusyId(null);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div>
+          <CardTitle>Enrollments</CardTitle>
+          <CardDescription>
+            Enroll employees, then record their result &amp; score via the Grade action.
+          </CardDescription>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+          <Button
+            size="sm"
+            onClick={openEnroll}
+            disabled={courses.length === 0 || employees.length === 0}
+            className="bg-emerald-600 hover:bg-emerald-700"
+          >
+            <Plus className="mr-1 h-4 w-4" /> Enroll
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Loading label="Loading enrollments…" />
+        ) : error ? (
+          <StateMessage
+            icon={AlertTriangle}
+            title="Failed to load enrollments"
+            detail={error}
+            action={
+              <Button size="sm" variant="outline" onClick={reload}>
+                Retry
+              </Button>
+            }
+          />
+        ) : enrollments.length === 0 ? (
+          <StateMessage
+            icon={Users}
+            title="No enrollments yet"
+            detail={
+              courses.length === 0
+                ? 'Create courses before enrolling employees.'
+                : 'Enroll an employee to get started.'
+            }
+            action={
+              courses.length > 0 && employees.length > 0 ? (
+                <Button size="sm" onClick={openEnroll} className="bg-emerald-600 hover:bg-emerald-700">
+                  <Plus className="mr-1 h-4 w-4" /> Enroll
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <>
+            <FilterBar
+              search={search}
+              onSearch={setSearch}
+              dept={dept}
+              onDept={setDept}
+              departments={departments}
+            />
+            <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
+              <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+                <thead className="bg-slate-50 dark:bg-slate-900/50">
+                  <tr>
+                    <th className={thCls}>Employee</th>
+                    <th className={thCls}>Department</th>
+                    <th className={thCls}>Course</th>
+                    <th className={thCls}>Status</th>
+                    <th className={thCls}>Score</th>
+                    <th className={thCls}>Certificate</th>
+                    <th className={thCls}>Enrolled</th>
+                    <th className={`${thCls} text-right`}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {filtered.map((en) => {
+                    const emp = employeeById.get(String(en.employeeId));
+                    return (
+                      <tr key={en.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                        <td className={`${tdCls} font-medium text-slate-800 dark:text-slate-100`}>
+                          {employeeName(en.employeeId)}
+                          {emp?.code && (
+                            <span className="ml-1 text-xs font-normal text-slate-400">({emp.code})</span>
+                          )}
+                          {en.feedback && (
+                            <div className="max-w-xs truncate text-xs font-normal text-slate-500 dark:text-slate-400">
+                              “{en.feedback}”
+                            </div>
+                          )}
+                        </td>
+                        <td className={tdCls}>{emp?.department || '—'}</td>
+                        <td className={tdCls}>{courseTitle(en.courseId)}</td>
+                        <td className={tdCls}>
+                          <StatusBadge status={en.status} />
+                        </td>
+                        <td className={tdCls}>{en.score ?? '—'}</td>
+                        <td className={tdCls}>
+                          {en.certificateIssued ? (
+                            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                              Issued
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-slate-400">Not issued</span>
+                          )}
+                        </td>
+                        <td className={tdCls}>{fmtDate(en.enrolledAt)}</td>
+                        <td className={`${tdCls} text-right`}>
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => openGrade(en)}
+                              title="Record result / score"
+                              className="text-sky-600 hover:text-sky-700"
+                            >
+                              <ClipboardCheck className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => issue(en)}
+                              disabled={rowBusyId === en.id || en.certificateIssued}
+                              title="Issue certificate"
+                              className="text-emerald-600 hover:text-emerald-700"
+                            >
+                              {rowBusyId === en.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Award className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => cancel(en)}
+                              disabled={rowBusyId === en.id}
+                              title="Cancel enrollment"
+                              className="text-rose-600 hover:text-rose-700"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {filtered.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">
+                        No enrollments match your filters.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <h3 className="font-medium">Description</h3>
-                <p className="text-sm text-gray-600">
-                  Comprehensive leadership training for managers and team leads.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-medium">Schedule</h3>
-                <p className="text-sm text-gray-600">
-                  Every Tuesday & Thursday<br />
-                  2:00 PM - 4:00 PM<br />
-                  Starts: Jun 15, 2024
-                </p>
-              </div>
-              <div className="space-y-2">
-                <h3 className="font-medium">Statistics</h3>
-                <p className="text-sm text-gray-600">
-                  24 enrolled<br />
-                  78% completion rate<br />
-                  4.5/5 average rating
-                </p>
-              </div>
+          </>
+        )}
+      </CardContent>
+
+      <FormModal
+        open={modalOpen}
+        title="Enroll Employee"
+        onClose={() => setModalOpen(false)}
+        onSubmit={submit}
+        submitting={submitting}
+        submitLabel="Enroll"
+      >
+        <Field label="Course">
+          <select className={inputCls} value={courseId} onChange={(e) => setCourseId(e.target.value)}>
+            {courses.length === 0 && <option value="">No courses available</option>}
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Employee">
+          <select className={inputCls} value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
+            {employees.length === 0 && <option value="">No employees available</option>}
+            {employees.map((emp) => (
+              <option key={String(emp.id)} value={String(emp.id)}>
+                {emp.empFullName}
+                {emp.code ? ` (${emp.code})` : ''}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </FormModal>
+
+      <FormModal
+        open={!!gradeTarget}
+        title="Record Result"
+        onClose={() => setGradeTarget(null)}
+        onSubmit={submitGrade}
+        submitting={grading}
+        submitLabel="Save result"
+      >
+        {gradeTarget && (
+          <div className="mb-1 rounded-md bg-slate-50 px-3 py-2 text-sm dark:bg-slate-800/50">
+            <div className="font-medium text-slate-800 dark:text-slate-100">
+              {employeeName(gradeTarget.employeeId)}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">
+              {courseTitle(gradeTarget.courseId)}
             </div>
           </div>
+        )}
+        <Field label="Status">
+          <select
+            className={inputCls}
+            value={gradeForm.status}
+            onChange={(e) => setGradeForm({ ...gradeForm, status: e.target.value })}
+          >
+            {ENROLLMENT_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Score (0–100)">
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step="0.1"
+            className={inputCls}
+            value={gradeForm.score}
+            onChange={(e) => setGradeForm({ ...gradeForm, score: e.target.value })}
+            placeholder="e.g. 85"
+          />
+        </Field>
+        <Field label="Feedback">
+          <textarea
+            className={inputCls}
+            rows={3}
+            value={gradeForm.feedback}
+            onChange={(e) => setGradeForm({ ...gradeForm, feedback: e.target.value })}
+            placeholder="Trainer's comments on the employee's performance…"
+          />
+        </Field>
+      </FormModal>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Calendar tab — scheduled courses grouped by date
+// ─────────────────────────────────────────────────────────────────────────────
+
+function CalendarTab({ programs }: { programs: TrainingProgram[] }) {
+  const [courses, setCourses] = useState<TrainingCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const programName = useMemo(() => {
+    const map = new Map<string, string>();
+    programs.forEach((p) => map.set(p.id, p.name));
+    return (id: string) => map.get(id) || '—';
+  }, [programs]);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setCourses(await trainingApi.getCourses());
+    } catch (e) {
+      setError(errMsg(e));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const scheduled = useMemo(
+    () =>
+      courses
+        .filter((c) => !!c.scheduledDate)
+        .sort((a, b) => new Date(a.scheduledDate!).getTime() - new Date(b.scheduledDate!).getTime()),
+    [courses],
+  );
+
+  const now = Date.now();
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div>
+          <CardTitle>Training Calendar</CardTitle>
+          <CardDescription>Scheduled courses ordered by date.</CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Loading label="Loading calendar…" />
+        ) : error ? (
+          <StateMessage icon={AlertTriangle} title="Failed to load calendar" detail={error} />
+        ) : scheduled.length === 0 ? (
+          <StateMessage
+            icon={CalendarDays}
+            title="No scheduled courses"
+            detail="Set a scheduled date on a course to see it here."
+          />
         ) : (
-          <EnrollmentManagement courseId={1} />
+          <div className="space-y-2">
+            {scheduled.map((c) => {
+              const upcoming = new Date(c.scheduledDate!).getTime() >= now;
+              return (
+                <div
+                  key={c.id}
+                  className="flex items-center gap-4 rounded-lg border border-slate-100 p-3 dark:border-slate-800"
+                >
+                  <div
+                    className={`flex h-12 w-12 flex-col items-center justify-center rounded-md text-center ${
+                      upcoming
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                        : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+                    }`}
+                  >
+                    <span className="text-xs font-semibold uppercase">
+                      {new Date(c.scheduledDate!).toLocaleString(undefined, { month: 'short' })}
+                    </span>
+                    <span className="text-lg font-bold leading-none">
+                      {new Date(c.scheduledDate!).getDate()}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-slate-800 dark:text-slate-100">{c.title}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      {programName(c.programId)}
+                      {c.instructor ? ` · ${c.instructor}` : ''}
+                      {c.location ? ` · ${c.location}` : ''}
+                    </div>
+                  </div>
+                  <Badge
+                    className={
+                      upcoming
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
+                    }
+                  >
+                    {upcoming ? 'Upcoming' : 'Past'}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
         )}
       </CardContent>
     </Card>
   );
-};
-
-const TrainingCalendar = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Calendar className="h-5 w-5 text-emerald-500" />
-        <span>Training Calendar</span>
-      </CardTitle>
-      <CardDescription>
-        View and manage all scheduled training sessions
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="border rounded-lg overflow-hidden">
-        <div className="grid grid-cols-7 bg-gray-100 dark:bg-gray-800">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="p-2 text-center font-medium text-sm">
-              {day}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7">
-          {Array.from({ length: 35 }).map((_, i) => {
-            const day = i - 5 + 1;
-            const hasTraining = [2, 7, 9, 14, 16, 21, 23, 28, 30].includes(day);
-            
-            return (
-              <div 
-                key={i} 
-                className={`min-h-16 p-1 border ${i >= 5 && day <= 30 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'}`}
-              >
-                {i >= 5 && day <= 30 && (
-                  <>
-                    <div className="text-sm font-medium">{day}</div>
-                    {hasTraining && (
-                      <div className="mt-1 text-xs p-1 bg-emerald-100 dark:bg-emerald-900 rounded">
-                        Training Session
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const TrainingRecords = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Users className="h-5 w-5 text-emerald-500" />
-        <span>Training Records</span>
-      </CardTitle>
-      <CardDescription>
-        Track and manage employee training participation and completion
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Training</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Completion</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Score</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {employeeTrainingData.map(record => (
-              <tr key={record.id}>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <div className="font-medium">{record.employee}</div>
-                  <div className="text-sm text-gray-500">{record.department}</div>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <div className="font-medium">{record.course}</div>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  <Badge 
-                    variant={
-                      record.status === 'Completed' ? 'default' : 
-                      record.status === 'In Progress' ? 'secondary' : 'outline'
-                    }
-                    className="capitalize"
-                  >
-                    {record.status}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {record.completionDate || '-'}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
-                  {record.score ? `${record.score}/100` : '-'}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </CardContent>
-  </Card>
-);
-
-const AnalysisImprovement = () => {
-  // Data for charts
-  const data = [
-  { name: 'Jan', enrolled: 12, completed: 10 },
-  { name: 'Feb', enrolled: 19, completed: 13 },
-  { name: 'Mar', enrolled: 15, completed: 12 },
-  { name: 'Apr', enrolled: 18, completed: 16 },
-  { name: 'May', enrolled: 22, completed: 19 },
-  { name: 'Jun', enrolled: 25, completed: 22 },
-];
-
-const pieData = [
-  { name: 'Completed', value: 78 },
-  { name: 'In Progress', value: 15 },
-  { name: 'Not Started', value: 7 },
-];
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
-
-
-    return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Training Analytics</h2>
-        <Button variant="outline">
-          <Download className="mr-2 h-4 w-4" />
-          Export Report
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Training Participation</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="enrolled" fill="#8884d8" name="Enrolled" />
-                <Bar dataKey="completed" fill="#82ca9d" name="Completed" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Completion Status</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Key Metrics</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="text-2xl font-bold">84%</div>
-              <p className="text-sm text-gray-600">Completion Rate</p>
-            </div>
-            <div>
-              <div className="text-2xl font-bold">4.7/5</div>
-              <p className="text-sm text-gray-600">Average Satisfaction</p>
-            </div>
-            <div>
-              <div className="text-2xl font-bold">92%</div>
-              <p className="text-sm text-gray-600">Attendance Rate</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">Top Performers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">JD</div>
-                  <div>
-                    <p className="font-medium">John Doe</p>
-                    <p className="text-sm text-gray-600">Completed 12 trainings</p>
-                  </div>
-                </div>
-                <div className="text-green-600 font-medium">98% avg</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">AS</div>
-                  <div>
-                    <p className="font-medium">Alice Smith</p>
-                    <p className="text-sm text-gray-600">Completed 10 trainings</p>
-                  </div>
-                </div>
-                <div className="text-green-600 font-medium">96% avg</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">RJ</div>
-                  <div>
-                    <p className="font-medium">Robert Johnson</p>
-                    <p className="text-sm text-gray-600">Completed 9 trainings</p>
-                  </div>
-                </div>
-                <div className="text-green-600 font-medium">94% avg</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-
-  );
-};
-const AttendanceTracking = () => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Clock className="h-5 w-5 text-emerald-500" />
-        <span>Attendance Tracking</span>
-      </CardTitle>
-      <CardDescription>
-        Track training attendance and participation
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <div className="space-y-6">
-        <div>
-          <h3 className="font-medium mb-2">Time Tracking</h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Check-in Methods</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    <span>Biometric</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    <span>RFID</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    <span>Mobile App</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Recent Check-ins</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm">
-                  <p>John Smith - 9:02 AM</p>
-                  <p>Jane Doe - 9:05 AM</p>
-                  <p>Robert Johnson - 8:58 AM</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-        
-        <div>
-          <h3 className="font-medium mb-2">Absence Management</h3>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Pending Requests</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">3</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Approved Leaves</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">12</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Unexcused Absences</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">2</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-);
-
-// Sample data
-const courseData: TrainingCourse[] = [
-  { id: 1, title: 'Leadership Development', category: 'Management', duration: '8 weeks', format: 'Hybrid', status: 'Active', enrolled: 24, completionRate: 78 },
-  { id: 2, title: 'Cybersecurity Awareness', category: 'IT', duration: '2 hours', format: 'Online', status: 'Active', enrolled: 156, completionRate: 92 },
-  { id: 3, title: 'Diversity & Inclusion', category: 'HR', duration: '4 hours', format: 'Classroom', status: 'Active', enrolled: 89, completionRate: 65 },
-  { id: 4, title: 'Advanced Excel', category: 'Finance', duration: '3 days', format: 'Online', status: 'Draft', enrolled: 0, completionRate: 0 },
-];
-
-const employeeTrainingData: EmployeeTraining[] = [
-  { id: 1, employee: 'John Smith', position: 'Manager', department: 'Finance', course: 'Leadership Development', status: 'Completed', completionDate: 'May 15, 2024', score: 88, certification: true },
-  { id: 2, employee: 'Jane Doe', position: 'HR Specialist', department: 'HR', course: 'Diversity & Inclusion', status: 'In Progress', completionDate: '', certification: false },
-  { id: 3, employee: 'Robert Johnson', position: 'IT Support', department: 'IT', course: 'Cybersecurity Awareness', status: 'Completed', completionDate: 'Apr 28, 2024', score: 95, certification: true },
-  { id: 4, employee: 'Emily Davis', position: 'Accountant', department: 'Finance', course: 'Advanced Excel', status: 'Not Started', completionDate: '', certification: false },
-];
-
-const programData: TrainingProgram[] = [
-  { id: 1, name: 'Annual Leadership Program', description: 'Year-long leadership development for managers', startDate: 'Jan 1, 2024', endDate: 'Dec 31, 2024', participants: 24, budget: '$45,000', status: 'Ongoing' },
-  { id: 2, name: 'Q3 Technical Training', description: 'Technical skills upgrade for IT department', startDate: 'Jul 15, 2024', endDate: 'Sep 30, 2024', participants: 18, budget: '$22,500', status: 'Planning' },
-  { id: 3, name: 'New Hire Orientation', description: 'Monthly onboarding for new employees', startDate: 'Jun 1, 2024', endDate: 'Jun 30, 2024', participants: 12, budget: '$8,000', status: 'Completed' },
-];
-
-const evaluationData: TrainingEvaluation[] = [
-  { id: 1, course: 'Leadership Development', participants: 24, averageScore: 82, effectiveness: 85, feedback: 'Excellent content and delivery. Some participants requested more case studies.' },
-  { id: 2, course: 'Cybersecurity Awareness', participants: 156, averageScore: 91, effectiveness: 92, feedback: 'Highly effective training. Employees reported increased awareness.' },
-  { id: 3, course: 'Diversity & Inclusion', participants: 89, averageScore: 76, effectiveness: 68, feedback: 'Good foundation but needs more interactive elements.' },
-];
-
-const budgetData: TrainingBudget[] = [
-  { id: 1, category: 'Leadership Development', allocated: '$50,000', spent: '$42,300', remaining: '$7,700', utilization: 85 },
-  { id: 2, category: 'Technical Skills', allocated: '$35,000', spent: '$28,150', remaining: '$6,850', utilization: 80 },
-  { id: 3, category: 'Compliance Training', allocated: '$15,000', spent: '$16,200', remaining: '$-1,200', utilization: 108 },
-  { id: 4, category: 'Soft Skills', allocated: '$20,000', spent: '$12,000', remaining: '$8,000', utilization: 60 },
-];
-
-type StatKey = 'totalCourses' | 'activeTrainings' | 'employeesTraining' | 'completionRate' | 'trainingBudget';
-
-interface Stats {
-  totalCourses: number;
-  activeTrainings: number;
-  employeesTraining: number;
-  completionRate: number;
-  trainingBudget: string;
 }
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { 
-    opacity: 1, 
-    transition: { 
-      staggerChildren: 0.1,
-      when: "beforeChildren" as const
-    } 
-  }
-};
+// ─────────────────────────────────────────────────────────────────────────────
+// Feedback tab — enrollments that captured trainer feedback / scores
+// ─────────────────────────────────────────────────────────────────────────────
 
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: { 
-    y: 0, 
-    opacity: 1, 
-    transition: { 
-      type: 'spring' as const, 
-      stiffness: 260, 
-      damping: 20 
-    }
-  }
-};
+function FeedbackTab() {
+  const { enrollments, courses, employees, loading, error, reload } = useEnrollmentData();
+  const { courseTitle, employeeById, employeeName, departments } = useLookups(courses, employees);
+  const [search, setSearch] = useState('');
+  const [dept, setDept] = useState('');
 
-const statCardVariants = {
-  hidden: { scale: 0.9, opacity: 0 },
-  visible: {
-    scale: 1,
-    opacity: 1,
-    transition: { type: "spring" as const, stiffness: 300 }
-  }
-};
-
-const Training = () => {
-  const activeModule = useModuleStore((s) => s.activeModule);
-  
-  const stats: Stats = {
-    totalCourses: courseData.length,
-    activeTrainings: programData.filter(p => p.status === 'Ongoing').length,
-    employeesTraining: employeeTrainingData.filter(e => e.status === 'In Progress').length,
-    completionRate: Math.round(
-      employeeTrainingData.filter(e => e.status === 'Completed').length / 
-      employeeTrainingData.length * 100
-    ),
-    trainingBudget: '$120,000'
-  };
-
-  const statConfig = {
-    totalCourses: {
-      icon: <BookOpen className="h-4 w-4 text-emerald-600" />,
-      title: 'Total Courses',
-      description: 'Available training programs'
-    },
-    activeTrainings: {
-      icon: <Clock className="h-4 w-4 text-emerald-500" />,
-      title: 'Active Trainings',
-      description: 'Ongoing programs'
-    },
-    employeesTraining: {
-      icon: <Users className="h-4 w-4 text-emerald-500" />,
-      title: 'Employees Training',
-      description: 'Currently in training'
-    },
-    completionRate: {
-      icon: <CheckCircle className="h-4 w-4 text-emerald-400" />,
-      title: 'Completion Rate',
-      description: 'Overall training completion'
-    },
-    trainingBudget: {
-      icon: <FileText className="h-4 w-4 text-emerald-600" />,
-      title: 'Training Budget',
-      description: 'Annual training allocation'
-    }
-  };
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return enrollments
+      .filter((en) => en.feedback || en.score != null)
+      .filter((en) => {
+        const emp = employeeById.get(String(en.employeeId));
+        if (dept && emp?.department !== dept) return false;
+        if (!q) return true;
+        return [emp?.empFullName, emp?.code, courseTitle(en.courseId)]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q));
+      });
+  }, [enrollments, search, dept, employeeById, courseTitle]);
 
   return (
-    <motion.div 
-      variants={containerVariants} 
-      initial="hidden" 
-      animate="visible"
-      className="space-y-6"
-    >
-      {/* Header Section with Gradient Title */}
-      <section className="flex flex-col gap-4">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 to-emerald-500 mr-3">
-              Training 
-            </span>& Development
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Central hub for managing employee training programs, tracking progress, and evaluating effectiveness.
-          </p>
+          <CardTitle>Training Feedback</CardTitle>
+          <CardDescription>Trainer feedback and scores captured for enrollments.</CardDescription>
         </div>
-      </section>
+        <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Loading label="Loading feedback…" />
+        ) : error ? (
+          <StateMessage icon={AlertTriangle} title="Failed to load feedback" detail={error} />
+        ) : (
+          <>
+            <FilterBar search={search} onSearch={setSearch} dept={dept} onDept={setDept} departments={departments} />
+            {rows.length === 0 ? (
+              <StateMessage
+                icon={MessageSquare}
+                title="No feedback yet"
+                detail="Record a result on an enrollment (Enrollments tab → Grade) to capture feedback."
+              />
+            ) : (
+              <div className="space-y-2">
+                {rows.map((en) => {
+                  const emp = employeeById.get(String(en.employeeId));
+                  return (
+                    <div key={en.id} className="rounded-lg border border-slate-100 p-3 dark:border-slate-800">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <span className="font-medium text-slate-800 dark:text-slate-100">
+                            {employeeName(en.employeeId)}
+                          </span>
+                          {emp?.code && <span className="ml-1 text-xs text-slate-400">({emp.code})</span>}
+                          <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
+                            · {courseTitle(en.courseId)}
+                          </span>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <StatusBadge status={en.status} />
+                          {en.score != null && (
+                            <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300">
+                              {en.score} / 100
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      {en.feedback && (
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">“{en.feedback}”</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
-      {/* Stats Overview */}
-      <motion.div 
-        variants={containerVariants}
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4"
-      >
-        {(Object.keys(statConfig) as StatKey[]).map((key) => (
-          <motion.div key={key} variants={statCardVariants}>
-            <Card className="hover:shadow-lg hover:ring-1 hover:ring-emerald-400 transition-all">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">
-                  {statConfig[key].title}
-                </CardTitle>
-                {statConfig[key].icon}
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {key === 'completionRate' 
-                    ? `${stats[key]}%`
-                    : key === 'trainingBudget'
-                    ? stats[key]
-                    : stats[key]
-                  }
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {statConfig[key].description}
-                </p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </motion.div>
+// ─────────────────────────────────────────────────────────────────────────────
+// Certifications tab — issued certificates
+// ─────────────────────────────────────────────────────────────────────────────
 
-      {/* Tabs Navigation */}
-      <Tabs defaultValue="Overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-7">
-          <TabsTrigger value="Overview" className="cursor-pointer">Overview</TabsTrigger>
-          <TabsTrigger value="list" className="cursor-pointer">Training List</TabsTrigger>
-          <TabsTrigger value="form" className="cursor-pointer">New Training</TabsTrigger>
-          <TabsTrigger value="details" className="cursor-pointer">Details</TabsTrigger>
-          <TabsTrigger value="calendar" className="cursor-pointer">Calendar</TabsTrigger>
-          <TabsTrigger value="records" className="cursor-pointer">Records</TabsTrigger>
-          <TabsTrigger value="analysis" className="cursor-pointer">Analysis</TabsTrigger>
+function CertificationsTab() {
+  const { enrollments, courses, employees, loading, error, reload } = useEnrollmentData();
+  const { courseTitle, employeeById, employeeName, departments } = useLookups(courses, employees);
+  const [search, setSearch] = useState('');
+  const [dept, setDept] = useState('');
+
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return enrollments
+      .filter((en) => en.certificateIssued)
+      .filter((en) => {
+        const emp = employeeById.get(String(en.employeeId));
+        if (dept && emp?.department !== dept) return false;
+        if (!q) return true;
+        return [emp?.empFullName, emp?.code, courseTitle(en.courseId)]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q));
+      });
+  }, [enrollments, search, dept, employeeById, courseTitle]);
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div>
+          <CardTitle>Certifications</CardTitle>
+          <CardDescription>Employees who have been issued a training certificate.</CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={reload} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <Loading label="Loading certifications…" />
+        ) : error ? (
+          <StateMessage icon={AlertTriangle} title="Failed to load certifications" detail={error} />
+        ) : (
+          <>
+            <FilterBar search={search} onSearch={setSearch} dept={dept} onDept={setDept} departments={departments} />
+            {rows.length === 0 ? (
+              <StateMessage
+                icon={BadgeCheck}
+                title="No certificates issued"
+                detail="Issue a certificate from the Enrollments tab to see it here."
+              />
+            ) : (
+              <div className="overflow-x-auto rounded-lg border border-slate-100 dark:border-slate-800">
+                <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800">
+                  <thead className="bg-slate-50 dark:bg-slate-900/50">
+                    <tr>
+                      <th className={thCls}>Employee</th>
+                      <th className={thCls}>Department</th>
+                      <th className={thCls}>Course</th>
+                      <th className={thCls}>Score</th>
+                      <th className={thCls}>Issued</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {rows.map((en) => {
+                      const emp = employeeById.get(String(en.employeeId));
+                      return (
+                        <tr key={en.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
+                          <td className={`${tdCls} font-medium text-slate-800 dark:text-slate-100`}>
+                            {employeeName(en.employeeId)}
+                            {emp?.code && <span className="ml-1 text-xs font-normal text-slate-400">({emp.code})</span>}
+                          </td>
+                          <td className={tdCls}>{emp?.department || '—'}</td>
+                          <td className={tdCls}>{courseTitle(en.courseId)}</td>
+                          <td className={tdCls}>{en.score ?? '—'}</td>
+                          <td className={tdCls}>
+                            <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                              <BadgeCheck className="mr-1 h-3.5 w-3.5" /> {fmtDate(en.updatedAt || en.enrolledAt)}
+                            </Badge>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
+
+function tabFromPath(pathname: string): string {
+  if (pathname.includes('/calendar')) return 'calendar';
+  if (pathname.includes('/feedback')) return 'feedback';
+  if (pathname.includes('/certificate')) return 'certifications';
+  return 'programs';
+}
+
+const Training = () => {
+  const [programs, setPrograms] = useState<TrainingProgram[]>([]);
+  const { pathname } = useLocation();
+  const [tab, setTab] = useState<string>(() => tabFromPath(pathname));
+
+  // Keep the active tab in sync when navigating between the Training sidebar links.
+  useEffect(() => {
+    setTab(tabFromPath(pathname));
+  }, [pathname]);
+
+  // Load programs once at the page level so name lookups work on any tab
+  // (tab content for Programs may not be mounted when landing on Calendar).
+  useEffect(() => {
+    trainingApi
+      .getPrograms()
+      .then(setPrograms)
+      .catch(() => {
+        /* individual tabs surface their own errors */
+      });
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6 p-4 md:p-6"
+    >
+      <div>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Training Management</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Manage training programs, courses, enrollments, schedules, feedback, and certifications.
+        </p>
+      </div>
+
+      <Tabs value={tab} onValueChange={setTab} className="gap-4">
+        <TabsList className="flex-wrap">
+          <TabsTrigger value="programs">
+            <BookOpen className="mr-1 h-4 w-4" /> Programs
+          </TabsTrigger>
+          <TabsTrigger value="courses">
+            <GraduationCap className="mr-1 h-4 w-4" /> Courses
+          </TabsTrigger>
+          <TabsTrigger value="enrollments">
+            <Users className="mr-1 h-4 w-4" /> Enrollments
+          </TabsTrigger>
+          <TabsTrigger value="calendar">
+            <CalendarDays className="mr-1 h-4 w-4" /> Calendar
+          </TabsTrigger>
+          <TabsTrigger value="feedback">
+            <MessageSquare className="mr-1 h-4 w-4" /> Feedback
+          </TabsTrigger>
+          <TabsTrigger value="certifications">
+            <BadgeCheck className="mr-1 h-4 w-4" /> Certifications
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="Overview">
-          <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-emerald-500" />
-                  <span>Course Overview</span>
-                </CardTitle>
-                <CardDescription>
-                  View and manage all available training courses
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <CourseOverview courses={courseData} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-emerald-500" />
-                  <span>Employee Training</span>
-                </CardTitle>
-                <CardDescription>
-                  Track employee participation and progress
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <EmployeeTrainingOverview records={employeeTrainingData} />
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-emerald-500" />
-                  <span>Program Overview</span>
-                </CardTitle>
-                <CardDescription>
-                  Current and upcoming training programs
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ProgramOverview programs={programData} />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart2 className="h-5 w-5 text-emerald-500" />
-                  <span>Training Evaluation</span>
-                </CardTitle>
-                <CardDescription>
-                  Effectiveness metrics and feedback
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <EvaluationOverview evaluations={evaluationData} />
-              </CardContent>
-            </Card>
-
-            <Card className="lg:col-span-3">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-emerald-500" />
-                  <span>Budget Overview</span>
-                </CardTitle>
-                <CardDescription>
-                  Training budget allocation and utilization
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <BudgetOverview budgets={budgetData} />
-              </CardContent>
-            </Card>
-          </motion.div>
+        <TabsContent value="programs">
+          <ProgramsTab onProgramsChange={setPrograms} />
         </TabsContent>
-
-        <TabsContent value="list">
-          <TrainingList />
+        <TabsContent value="courses">
+          <CoursesTab programs={programs} />
         </TabsContent>
-
-        <TabsContent value="form">
-          <TrainingForm />
+        <TabsContent value="enrollments">
+          <EnrollmentsTab />
         </TabsContent>
-
-        <TabsContent value="details">
-          <TrainingDetails />
-        </TabsContent>
-
         <TabsContent value="calendar">
-          <TrainingCalendar />
+          <CalendarTab programs={programs} />
         </TabsContent>
-
-        <TabsContent value="records">
-          <TrainingRecords />
+        <TabsContent value="feedback">
+          <FeedbackTab />
         </TabsContent>
-
-        <TabsContent value="analysis">
-          <AnalysisImprovement />
+        <TabsContent value="certifications">
+          <CertificationsTab />
         </TabsContent>
       </Tabs>
     </motion.div>

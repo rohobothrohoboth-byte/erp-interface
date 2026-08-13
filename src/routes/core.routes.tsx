@@ -219,14 +219,6 @@ export const coreRoutes: AppRoute[] = [
         element: withSuspense(BranchesPage),
         nav: true,
     },
-    {
-        path: 'core/company/:companyId/branches',
-        href: '/core/company/:companyId/branches',
-        title: 'Company Branches',
-        icon: Building2,
-        element: withSuspense(CompanyBranchesPage), // Shows branches for a specific company
-        nav: false,
-    },
     // ═══════════════════════════════════════════════════════════════
     // SETTINGS ROUTES - ONLY ONE DEFINITION PER PATH
     // ═══════════════════════════════════════════════════════════════

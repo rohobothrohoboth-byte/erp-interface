@@ -86,8 +86,6 @@ const ProfileHero = memo(function ProfileHero() {
 
     setSelectedPhoto(file);
 
-    console.log("Selected file:", file);
-
     // Later:
     // updatePhotoMutation.mutate(file);
   };

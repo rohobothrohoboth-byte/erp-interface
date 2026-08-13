@@ -76,7 +76,7 @@ const OnboardingAssignmentPage: React.FC = () => {
         onError: (error) => toast.error(error.message || 'Failed to delete assignment'),
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
 
     // ✅ Filter assignments based on tab and search
     const filteredAssignments = assignments?.filter(assignment => {

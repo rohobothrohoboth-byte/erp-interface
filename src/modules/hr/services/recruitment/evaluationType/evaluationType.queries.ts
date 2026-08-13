@@ -66,6 +66,21 @@ export const useUpdateEvaluationType = (
   });
 };
 
+export const useToggleEvaluationTypeStatus = (options?: {
+  onSuccess?: (data: EvaluationTypeListDto) => void;
+  onError?: (error: Error) => void;
+}) => {
+  const queryClient = useQueryClient();
+  return useMutation<EvaluationTypeListDto, Error, { id: UUID; rowVersion: string; stat: boolean }>({
+    mutationFn: ({ id, rowVersion, stat }) => evaluationTypeFetcher.updateEvaluationTypeStatus(id, rowVersion, stat),
+    onSuccess: (updatedItem) => {
+      queryClient.invalidateQueries({ queryKey: evaluationTypeKeys.lists() });
+      options?.onSuccess?.(updatedItem);
+    },
+    onError: options?.onError,
+  });
+};
+
 export const useDeleteEvaluationType = (
   options?: Omit<UseMutationOptions<void, Error, UUID>, 'mutationFn'>
 ) => {

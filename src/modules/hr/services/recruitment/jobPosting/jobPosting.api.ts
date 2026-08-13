@@ -8,7 +8,7 @@ import type {
 } from '@/modules/hr/types/recruit/jobPosting';
 import { api } from '@/shared/services/api';
 
-const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobPosting`;
+const BASE = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/JobPosting`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;

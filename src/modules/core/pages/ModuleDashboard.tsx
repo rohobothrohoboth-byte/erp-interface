@@ -344,7 +344,7 @@ const CoreDashboard = () => {
       description: t.operationalUnits || 'የስራ ክፍሎች',
       icon: <Building className="h-4 w-4" />,
       color: 'green',
-      onClick: () => navigate('/branches')
+      onClick: () => navigate('/core/branch')
     },
     {
       key: 'departments',
@@ -459,7 +459,7 @@ const CoreDashboard = () => {
               </Button>
 
               <Button
-                  onClick={() => navigate('/core/company/add')}
+                  onClick={() => navigate('/core/company')}
                   className="gap-2 bg-slate-800 hover:bg-slate-700 text-white"
               >
                 <Plus size={14} />

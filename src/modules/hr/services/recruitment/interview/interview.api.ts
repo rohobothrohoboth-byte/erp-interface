@@ -1,36 +1,11 @@
 // src/services/hr/recruitment/interview/interview.api.ts
 
-import axios from 'axios';
+// Route through the API gateway (shared `api` client handles base URL + auth +
+// token refresh). Previously used a direct axios instance to https://localhost:1217,
+// which bypassed the gateway (ERR_CONNECTION_REFUSED) and used the wrong token key.
+import { api as recruitApi } from '@/shared/services/api';
 
-// ✅ Direct API client for Recruit service
-const recruitApi = axios.create({
-    baseURL: import.meta.env.VITE_RECRUIT_API_URL || 'https://localhost:1217',
-    timeout: 30000,
-    headers: {
-        'Content-Type': 'application/json',
-    },
-});
-
-// Add auth interceptor
-recruitApi.interceptors.request.use((config) => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
-
-// Response interceptor
-recruitApi.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('authToken');
-            window.location.href = '/login';
-        }
-        return Promise.reject(error);
-    }
-);
+const RECRUIT = import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1';
 
 export interface CreateInterviewRequest {
     applicantId: string;
@@ -75,49 +50,56 @@ class InterviewApi {
 
         console.log('Creating interview with payload:', payload);
 
-        const response = await recruitApi.post('/api/hrm/recruit/v1/Interview/Add', payload);
+        const response = await recruitApi.post(`${RECRUIT}/Interview/Add`, payload);
         return response.data;
     }
 
     // ✅ Get all interviews
     async getAllInterviews(): Promise<any[]> {
-        const response = await recruitApi.get('/api/hrm/recruit/v1/Interview/All');
+        const response = await recruitApi.get(`${RECRUIT}/Interview/All`);
         return response.data?.data || [];
     }
 
     // ✅ Get interviews by applicant
     async getInterviewsByApplicant(applicantId: string): Promise<any[]> {
-        const response = await recruitApi.get(`/api/hrm/recruit/v1/Interview/ByApplicant/${applicantId}`);
+        const response = await recruitApi.get(`${RECRUIT}/Interview/ByApplicant/${applicantId}`);
         return response.data?.data || [];
     }
 
     // ✅ Get interviews by job posting
     async getInterviewsByJobPosting(jobPostingId: string): Promise<any[]> {
-        const response = await recruitApi.get(`/api/hrm/recruit/v1/Interview/ByJobPosting/${jobPostingId}`);
+        const response = await recruitApi.get(`${RECRUIT}/Interview/ByJobPosting/${jobPostingId}`);
         return response.data?.data || [];
     }
 
     // ✅ Get interview by ID
     async getInterview(id: string): Promise<any> {
-        const response = await recruitApi.get(`/api/hrm/recruit/v1/Interview/GetInterview/${id}`);
+        const response = await recruitApi.get(`${RECRUIT}/Interview/GetInterview/${id}`);
         return response.data?.data;
     }
 
     // ✅ Update interview
     async updateInterview(id: string, data: any): Promise<any> {
-        const response = await recruitApi.put(`/api/hrm/recruit/v1/Interview/Mod/${id}`, data);
+        const response = await recruitApi.put(`${RECRUIT}/Interview/Mod/${id}`, data);
         return response.data;
     }
 
     // ✅ Delete interview
     async deleteInterview(id: string): Promise<any> {
-        const response = await recruitApi.delete(`/api/hrm/recruit/v1/Interview/Del/${id}`);
+        const response = await recruitApi.delete(`${RECRUIT}/Interview/Del/${id}`);
+        return response.data;
+    }
+
+    // ✅ Update interview status via the dedicated PATCH endpoint (Mod requires the
+    // full DTO and would 400 on a partial body).
+    async updateStatus(id: string, status: string): Promise<any> {
+        const response = await recruitApi.patch(`${RECRUIT}/Interview/UpdateStatus/${id}`, { status });
         return response.data;
     }
 
     // ✅ Cancel interview
     async cancelInterview(id: string): Promise<any> {
-        return this.updateInterview(id, { status: 'Cancelled' });
+        return this.updateStatus(id, 'Cancelled');
     }
 
     // ✅ Reschedule interview

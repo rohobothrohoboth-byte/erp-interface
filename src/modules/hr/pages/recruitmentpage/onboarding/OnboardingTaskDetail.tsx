@@ -86,7 +86,7 @@ const OnboardingTaskDetail: React.FC = () => {
         onError: (error) => toast.error(error.message || 'Failed to update status'),
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
     const canEdit = isHR && task?.status !== 'Verified' && task?.status !== 'Completed';
 
     // ✅ Populate form when task data loads

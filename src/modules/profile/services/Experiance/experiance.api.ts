@@ -8,7 +8,7 @@ import type {
 } from "@/modules/profile/types/EmpExp.types";
 import type { EmpRevDto } from "@/modules/hr/types/employee/empAddDto";
 
-const BASE = `${import.meta.env.VITE_HRMM_PROFILE_URL}/EmpExp`;
+const BASE = `${import.meta.env.VITE_HRMM_PROFILE_URL || '/hrm/profile/v1'}/EmpExp`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;
@@ -61,8 +61,6 @@ export const experienceApi = {
     try {
       // Get the current record to get all fields
       const current = await experienceApi.getById(id);
-
-      console.log('📥 Current experience record:', current);
 
       // Use provided rowVersion or get from current
       const currentRowVersion = rowVersion || current.rowVersion || '';
@@ -129,8 +127,6 @@ export const experienceApi = {
         status: status, // "1" for Approved, "2" for Rejected
         rowVersion: currentRowVersion,
       };
-
-      console.log('📤 Updating experience with data:', updateData);
 
       const res = await api.put(`${BASE}/ModEmpExp/${id}`, updateData);
       return res.data.message;

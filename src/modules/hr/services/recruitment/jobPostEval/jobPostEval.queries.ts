@@ -1,7 +1,7 @@
 // src/services/hr/recruitment/jobPostEval/jobPostEval.queries.ts
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { jobPostEvalApi, type JpAppEvalDto, type StartEvaluationDto, type EvaluateStepDto } from '@/modules/hr/services/recruitment/jobPostEval/jobPostEval.api';
+import { jobPostEvalApi, type JpAppEvalDto } from '@/modules/hr/services/recruitment/jobPostEval/jobPostEval.api';
 import { jobPostingKeys } from '@/modules/hr/services/recruitment/jobPosting/jobPosting.key';
 
 // ============================================
@@ -18,13 +18,22 @@ export const evalKeys = {
 // QUERIES
 // ============================================
 
-
+// Evaluation progress (current step + score history) for a job application.
+export function useEvaluationStatus(jobAppId: string) {
+  return useQuery({
+    queryKey: evalKeys.status(jobAppId),
+    queryFn: () => (jobAppId ? jobPostEvalApi.getEvaluationStatus(jobAppId) : Promise.resolve(null)),
+    enabled: !!jobAppId,
+    staleTime: 30 * 1000,
+    retry: 1,
+  });
+}
 
 // ============================================
 // MUTATIONS
 // ============================================
 
-// ✅ Start evaluation for a job posting (triggers the flow)
+// Start evaluation for a whole job posting (bulk).
 export function useStartEvaluation(options?: {
   onSuccess?: () => void;
   onError?: (e: Error) => void;
@@ -43,70 +52,19 @@ export function useStartEvaluation(options?: {
   });
 }
 
-// ✅ Start evaluation for a specific applicant
-export function useStartApplicantEvaluation(options?: {
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
-}) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: StartEvaluationDto) => jobPostEvalApi.startEvaluationForApplicant(data),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: evalKeys.all });
-      options?.onSuccess?.(data);
-    },
-    onError: (error) => {
-      options?.onError?.(error);
-    },
-  });
-}
-
-// ✅ Evaluate applicant (basic version - single endpoint)
+// Score the current step for a single job application.
 export function useEvaluateApplicant(options?: {
   onSuccess?: () => void;
   onError?: (e: Error) => void;
 }) {
+  const qc = useQueryClient();
   return useMutation<void, Error, JpAppEvalDto>({
     mutationFn: jobPostEvalApi.evaluateApplicant,
-    onSuccess: () => {
+    onSuccess: (_, vars) => {
+      qc.invalidateQueries({ queryKey: evalKeys.status(vars.id) });
+      qc.invalidateQueries({ queryKey: evalKeys.all });
       options?.onSuccess?.();
     },
     onError: options?.onError,
-  });
-}
-// src/services/hr/recruitment/jobPostEval/jobPostEval.queries.ts
-
-// ✅ Fix: Use the correct ID for evaluation status
-export function useEvaluationStatus(jobAppId: string) {
-  return useQuery({
-    queryKey: evalKeys.status(jobAppId),
-    queryFn: () => {
-      if (!jobAppId) {
-        return Promise.resolve(null);
-      }
-      return jobPostEvalApi.getEvaluationStatus(jobAppId);
-    },
-    enabled: !!jobAppId,
-    staleTime: 2 * 60 * 1000,
-    retry: 1,
-  });
-}
-// ✅ Evaluate step (detailed version with step management)
-export function useEvaluateStep(options?: {
-  onSuccess?: (data: any) => void;
-  onError?: (error: any) => void;
-}) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: EvaluateStepDto) => jobPostEvalApi.evaluateStep(data),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: evalKeys.all });
-      options?.onSuccess?.(data);
-    },
-    onError: (error) => {
-      options?.onError?.(error);
-    },
   });
 }

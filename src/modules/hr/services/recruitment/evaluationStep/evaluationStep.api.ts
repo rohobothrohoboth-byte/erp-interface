@@ -5,7 +5,7 @@ import type {
 } from '@/modules/hr/types/recruit/evaluationStep';
 import { api } from '@/shared/services/api';
 
-const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/EvalStep`;
+const BASE = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/EvalStep`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;
@@ -60,12 +60,6 @@ export const evaluationStepApi = {
       await api.delete(`${BASE}/DelEvalStep/${id}`);
     } catch (e) { throw new Error(extractError(e)); }
   },
-
-  // Status toggle: POST body { id, rowVersion, stat }
-  updateStatus: async (id: string, rowVersion: string, stat: boolean): Promise<EvaluationStepListDto> => {
-    try {
-      const res = await api.post(`${BASE}/StatEvalStep`, { id, rowVersion, stat });
-      return res.data.data;
-    } catch (e) { throw new Error(extractError(e)); }
-  },
+  // Note: evaluation steps have no active/inactive state on the backend, so there is
+  // intentionally no status-toggle here (the previous StatEvalStep call had no endpoint).
 };

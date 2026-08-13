@@ -10,8 +10,10 @@ import {
   AlertCircle,
   PenTool,
   Eye,
-  Download
+  Download,
+  PenLine
 } from 'lucide-react';
+import { SignaturePad } from '@/shared/components/ui/SignaturePad';
 
 interface SignatureStepProps {
   signatureFile: File | null;
@@ -29,6 +31,14 @@ export const SignatureStep: React.FC<SignatureStepProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [mode, setMode] = useState<'upload' | 'draw'>('upload');
+
+  // Accept a signature drawn on the pad (PNG File) exactly like an uploaded file.
+  const handleCaptured = (file: File) => {
+    setSignatureFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setError(null);
+  };
 
   // Load preview if initial file exists
   useEffect(() => {
@@ -233,14 +243,50 @@ export const SignatureStep: React.FC<SignatureStepProps> = ({
               <PenTool className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-800">Upload Signature</h3>
+              <h3 className="text-xl font-bold text-slate-800">Employee Signature</h3>
               <p className="text-sm text-slate-500 mt-0.5">
-                Upload employee's digital signature
+                Upload a signature image or sign on the pad below
               </p>
             </div>
           </div>
 
+          {/* Mode toggle: Upload vs Draw */}
+          <div className="flex justify-center">
+            <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+              <button
+                type="button"
+                onClick={() => setMode('upload')}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition ${mode === 'upload' ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-500'}`}
+              >
+                <Upload className="h-4 w-4" /> Upload
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('draw')}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-sm font-medium transition ${mode === 'draw' ? 'bg-white text-purple-700 shadow-sm' : 'text-slate-500'}`}
+              >
+                <PenLine className="h-4 w-4" /> Draw
+              </button>
+            </div>
+          </div>
+
+          {/* Draw signature pad */}
+          {mode === 'draw' && (
+            <div className="w-full flex justify-center">
+              <div className="w-full max-w-2xl space-y-3">
+                <SignaturePad onCapture={handleCaptured} />
+                {signatureFile && previewUrl && (
+                  <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-3 text-center">
+                    <p className="mb-2 text-xs font-medium text-purple-700">Captured signature preview</p>
+                    <img src={previewUrl} alt="Signature" className="mx-auto max-h-24 object-contain" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Upload Area */}
+          {mode === 'upload' && (
           <div className="w-full flex justify-center">
             <div className="w-full max-w-2xl">
               <div className="relative">
@@ -417,9 +463,10 @@ export const SignatureStep: React.FC<SignatureStepProps> = ({
               </AnimatePresence>
             </div>
           </div>
+          )}
 
           {/* Upload Tips */}
-          {!signatureFile && !error && (
+          {mode === 'upload' && !signatureFile && !error && (
               <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

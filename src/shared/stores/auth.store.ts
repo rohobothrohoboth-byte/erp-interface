@@ -111,6 +111,144 @@ const normalizePermissions = (data: any[]): NormalizedModule[] => {
   });
 };
 
+// ============================================================
+// MENU CATALOG (full menu hierarchy, keyed by menu key)
+// ============================================================
+// The runtime /Menu/structure endpoint can return the user's menus without
+// their parent/group containers (orphaned), which makes the sidebar render
+// flat. We fetch the full menu catalog (every menu + its ParentKey + label)
+// and use it to rebuild the correct hierarchy, re-inserting any missing
+// ancestor groups with their real labels/icons.
+
+interface CatalogEntry {
+  key: string;        // canonical dot-key (e.g. "hr.emp.list")
+  label: string;
+  path: string;
+  icon: string;
+  order: number;
+  parentKey: string;  // parent's canonical dot-key
+}
+
+// Build a catalog indexed by BOTH the menu's dot-key and its GUID id, so we can
+// resolve whatever identifier /Menu/structure emits (some backends send the
+// menu GUID as the key, others send the dot-key) back to the canonical dot-key.
+const fetchMenuCatalog = async (): Promise<Record<string, CatalogEntry>> => {
+  try {
+    if (!api || typeof api.get !== 'function') return {};
+    const res = await api.get('/auth/v1/Permission/AllPerMenu');
+    const list = res?.data?.data || res?.data || [];
+    if (!Array.isArray(list)) return {};
+
+    const map: Record<string, CatalogEntry> = {};
+    for (const m of list) {
+      const key = m.key || m.Key;
+      if (!key) continue;
+      const entry: CatalogEntry = {
+        key,
+        label: m.label || m.Label || key,
+        path: m.path || m.Path || '',
+        icon: m.icon || m.Icon || '',
+        order: m.order ?? m.Order ?? 0,
+        parentKey: m.parentKey || m.ParentKey || '',
+      };
+      map[key] = entry;
+      const id = m.id || m.Id;
+      if (id) map[String(id)] = entry; // allow GUID lookups too
+    }
+    return map;
+  } catch (error) {
+    console.warn('⚠️ Could not fetch menu catalog, using raw menu structure:', error);
+    return {};
+  }
+};
+
+// Rebuild each module's menu tree from the user's permitted menus plus the
+// catalog, so parent/group nodes always appear and children nest correctly.
+const normalizeWithCatalog = (
+    data: any[],
+    catalog: Record<string, CatalogEntry>
+): NormalizedModule[] => {
+  if (!data || !Array.isArray(data)) return [];
+
+  return data.map((module: any): NormalizedModule => {
+    const moduleKey = module.k || module.K || '';
+    const moduleLabel = module.l || module.L || '';
+    const rawMenus = module.menus || module.M || module.m || [];
+
+    // Flatten the menus the user is permitted to see (any nesting depth).
+    // Resolve each identifier (dot-key OR GUID) to its canonical dot-key so the
+    // hierarchy can be rebuilt from the catalog's ParentKey links.
+    const permitted = new Map<string, { A: string[]; P: string; L: string; I: string; O: number }>();
+    const collect = (menus: any[]) => {
+      for (const mu of menus || []) {
+        const rawKey = mu.k || mu.K;
+        if (!rawKey) continue;
+        const key = catalog[rawKey]?.key || rawKey;
+        permitted.set(key, {
+          A: mu.a || mu.A || [],
+          P: mu.p || mu.P || '',
+          L: mu.l || mu.L || '',
+          I: mu.i || mu.I || '',
+          O: mu.o ?? mu.O ?? 0,
+        });
+        const children = mu.c || mu.C;
+        if (children && children.length) collect(children);
+      }
+    };
+    collect(rawMenus);
+
+    // Include each permitted menu plus all of its ancestors (from the catalog).
+    const include = new Set<string>();
+    for (const key of permitted.keys()) {
+      let k: string = key;
+      let guard = 0;
+      while (k && !include.has(k) && guard++ < 25) {
+        include.add(k);
+        const parent = catalog[k]?.parentKey;
+        k = parent && parent !== k ? parent : '';
+      }
+    }
+
+    const nodes = new Map<string, NormalizedMenu>();
+    for (const key of include) {
+      const cat = catalog[key];
+      const perm = permitted.get(key);
+      nodes.set(key, {
+        K: key,
+        L: perm?.L || cat?.label || key,
+        P: perm?.P || cat?.path || '',
+        I: cat?.icon || perm?.I || '',
+        O: cat?.order ?? perm?.O ?? 0,
+        A: perm?.A || [],
+        C: [],
+      });
+    }
+
+    // Link children to parents using the catalog's ParentKey.
+    const roots: NormalizedMenu[] = [];
+    for (const [key, node] of nodes) {
+      const parentKey = catalog[key]?.parentKey || '';
+      const parent = parentKey ? nodes.get(parentKey) : undefined;
+      if (parent) {
+        (parent.C as NormalizedMenu[]).push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+
+    const sortRec = (list: NormalizedMenu[]) => {
+      list.sort((a, b) => (a.O || 0) - (b.O || 0));
+      for (const n of list) {
+        if (n.C && n.C.length) sortRec(n.C as NormalizedMenu[]);
+        else n.C = null;
+      }
+    };
+    sortRec(roots);
+
+    return { K: moduleKey, L: moduleLabel, M: roots };
+  });
+};
+
 // ✅ Clear all auth storage
 const clearAllAuthStorage = () => {
   // Clear cookies
@@ -726,7 +864,16 @@ export const useAuthStore = create<AuthState>()(
               if (signal?.aborted) return;
 
               if (menuData && Array.isArray(menuData) && menuData.length > 0) {
-                const normalizedPermissions = normalizePermissions(menuData);
+                // Rebuild the hierarchy from the full menu catalog so parent
+                // groups always render and children nest correctly, even when
+                // /Menu/structure returns them orphaned. Fall back to the raw
+                // structure if the catalog is unavailable.
+                const catalog = await fetchMenuCatalog();
+                if (signal?.aborted) return;
+
+                const normalizedPermissions = catalog && Object.keys(catalog).length > 0
+                    ? normalizeWithCatalog(menuData, catalog)
+                    : normalizePermissions(menuData);
                 set({
                   permissions: normalizedPermissions,
                   isMenuLoaded: true,

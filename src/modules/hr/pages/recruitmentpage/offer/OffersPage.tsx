@@ -82,7 +82,7 @@ const OffersPage: React.FC = () => {
         onError: (error) => toast.error(error.message || 'Failed to send offer'),
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
 
     const filteredOffers = offers?.filter(offer => {
         const matchesTab = activeTab === 'all' || offer.status?.toLowerCase() === activeTab;

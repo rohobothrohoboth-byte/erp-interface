@@ -13,7 +13,8 @@ import {
   UserPlus,
   AlertCircle,
   CheckCircle,
-  XCircle
+  XCircle,
+  Power
 } from "lucide-react";
 import type { AdminEmpListDto } from '@/modules/hr/types/employee';
 
@@ -28,6 +29,7 @@ interface EmployeeTableProps {
   onEmployeeTerminate: (employeeId: string) => void;
   onAddAccount?: (employee: AdminEmpListDto) => void;
   onEditAccount?: (employee: AdminEmpListDto) => void;
+  onReactivateAccount?: (employee: AdminEmpListDto) => void;
   showAddAccountButton?: boolean;
   loading?: boolean;
   itemsPerPage?: number;
@@ -41,6 +43,7 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                                                        onPageChange,
                                                        onAddAccount,
                                                        onEditAccount,
+                                                       onReactivateAccount,
                                                        loading = false,
                                                        itemsPerPage = 10,
                                                      }) => {
@@ -122,6 +125,10 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
   const handleEditAccountClick = useCallback((employee: AdminEmpListDto) => {
     onEditAccount?.(employee);
   }, [onEditAccount]);
+
+  const handleReactivateClick = useCallback((employee: AdminEmpListDto) => {
+    onReactivateAccount?.(employee);
+  }, [onReactivateAccount]);
 
   const handlePageChange = useCallback((page: number) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
@@ -315,19 +322,28 @@ const EmployeeTable: React.FC<EmployeeTableProps> = ({
                           {/* Actions */}
                           <td className="px-4 py-3 whitespace-nowrap text-right">
                             {employee.hasAccount ? (
-                                <motion.button
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => handleEditAccountClick(employee)}
-                                    className={`p-2 rounded-full transition-all duration-200 ${
-                                        employee.isAccountActive !== false
-                                            ? "bg-emerald-100 text-emerald-600 hover:bg-emerald-200"
-                                            : "bg-amber-100 text-amber-600 hover:bg-amber-200"
-                                    }`}
-                                    title={employee.isAccountActive !== false ? "Edit Account" : "Reactivate Account"}
-                                >
-                                  <PenBox className="h-4 w-4" />
-                                </motion.button>
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <motion.button
+                                      whileHover={{ scale: 1.05 }}
+                                      whileTap={{ scale: 0.95 }}
+                                      onClick={() => handleEditAccountClick(employee)}
+                                      className="p-2 rounded-full bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-all duration-200"
+                                      title="Edit Account"
+                                  >
+                                    <PenBox className="h-4 w-4" />
+                                  </motion.button>
+                                  {employee.isAccountActive === false && (
+                                      <motion.button
+                                          whileHover={{ scale: 1.05 }}
+                                          whileTap={{ scale: 0.95 }}
+                                          onClick={() => handleReactivateClick(employee)}
+                                          className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-all duration-200"
+                                          title="Reactivate Account"
+                                      >
+                                        <Power className="h-4 w-4" />
+                                      </motion.button>
+                                  )}
+                                </div>
                             ) : (
                                 <motion.button
                                     whileHover={{ scale: 1.05 }}

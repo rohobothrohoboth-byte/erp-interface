@@ -4,7 +4,8 @@ import { X, PenBox, Calendar } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import type { EditPeriodDto, PeriodListDto, UUID } from "@/modules/core/types/period";
+import type { EditPeriodDto, PeriodListDto, UUID, PeriodType } from "@/modules/core/types/period";
+import { PERIOD_TYPE_OPTIONS } from "@/modules/core/types/period";
 import toast from "react-hot-toast";
 import { Quarter } from "@/modules/core/types/enum";
 import { fiscalYearApi } from "@/modules/core/services/fiscalyear/fisc.api";
@@ -38,6 +39,7 @@ const EditPeriodModal: React.FC<EditPeriodModalProps> = ({
     dateEnd: "",
     isActive: period.isActive,
     quarter: period.quarter || "" as any,
+    periodType: period.periodType,
     fiscalYearId: period.fiscalYearId || "" as UUID,
     rowVersion: period.rowVersion || "",
   });
@@ -75,6 +77,7 @@ const EditPeriodModal: React.FC<EditPeriodModalProps> = ({
         dateEnd: dateEnd,
         isActive: period.isActive,
         quarter: period.quarter || "" as any,
+        periodType: period.periodType,
         fiscalYearId: period.fiscalYearId || "" as UUID,
         rowVersion: period.rowVersion || "",
       });
@@ -213,6 +216,29 @@ const EditPeriodModal: React.FC<EditPeriodModalProps> = ({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            {/* Period Type */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                Period Type
+              </Label>
+              <Select
+                  value={editedPeriod.periodType ?? ""}
+                  onValueChange={(value) => setEditedPeriod(prev => ({ ...prev, periodType: value as PeriodType }))}
+                  disabled={loading}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue placeholder="Select period type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PERIOD_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Start and End Dates */}

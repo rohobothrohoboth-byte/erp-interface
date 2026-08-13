@@ -11,12 +11,20 @@ export interface DeptListDto extends BaseDto {
   branch: string;
   branchAm: string;
   deptStatStr: string;
+  managerName?: string;
+  description?: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface AddDeptDto {
   name: string;
   nameAm: string;
   branchId: UUID;
+  managerName?: string;
+  description?: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface EditDeptDto {
@@ -26,6 +34,10 @@ export interface EditDeptDto {
   deptStat: string;
   branchId: UUID;
   rowVersion: string;
+  managerName?: string;
+  description?: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface BranchDeptList {

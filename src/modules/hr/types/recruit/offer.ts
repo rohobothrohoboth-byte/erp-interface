@@ -26,6 +26,8 @@ export interface OfferListDto {
 
 export interface OfferAddDto {
     applicantId: string;
+    // Preferred: the job application the offer is for (backend derives applicant + posting).
+    jobApplicationId?: string;
     jobPostingId: string;
     salary: number;
     currency: string;

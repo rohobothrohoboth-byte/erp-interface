@@ -17,8 +17,10 @@ export const useJobRequisitions = (workforcePlanId?: string, filters?: { search?
   return useQuery<JobReqListDto[], Error>({
     queryKey: jobRequisitionKeys.list(workforcePlanId, filters),
     queryFn: () => {
-      // If workforcePlanId is provided, get by workforce plan
-      if (workforcePlanId) {
+      // If a real workforce-plan id is provided, get by plan. The sentinel 'all'
+      // (used by the Approved Requisitions page) must fall through to "get all",
+      // otherwise it hits AllWfpJobReq/all with an invalid GUID.
+      if (workforcePlanId && workforcePlanId !== 'all') {
         return jobRequisitionApi.getAllWfpJobReq(workforcePlanId);
       }
       // Otherwise get all requisitions

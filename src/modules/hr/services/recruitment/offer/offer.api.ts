@@ -8,7 +8,7 @@ import type {
     OfferResponseDto
 } from '@/modules/hr/types/recruit/offer';
 
-const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/Offer`;
+const BASE = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/Offer`;
 
 const extractError = (error: any): string => {
     if (error.response?.data?.message) return error.response.data.message;

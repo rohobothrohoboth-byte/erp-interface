@@ -51,12 +51,23 @@ const JobPostingEdit: React.FC = () => {
         },
     });
 
+    // The list DTO only exposes the display string (postTypeStr), so map it back to the
+    // enum key the backend expects ("0" Internal / "1" External / "2" Internal & External).
+    const postTypeKeyFromStr = (str?: string): string => {
+        if (!str) return '0';
+        const s = str.toLowerCase();
+        if (s.includes('int') && s.includes('ext')) return '2';
+        if (s === 'both') return '2';
+        if (s.startsWith('ext')) return '1';
+        return '0';
+    };
+
     // Load data when posting is fetched
     useEffect(() => {
         if (posting) {
             setForm({
                 id: postId,
-                postType: posting.postTypeStr || '0' as any,
+                postType: postTypeKeyFromStr(posting.postTypeStr),
                 deadlineDate: posting.deadlineDateStr || '',
                 rowVersion: posting.rowVersion || '',
             });
