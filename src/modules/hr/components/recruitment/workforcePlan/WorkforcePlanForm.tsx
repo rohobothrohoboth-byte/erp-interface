@@ -8,6 +8,8 @@ import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { useDepartments } from '@/modules/core/services/department/dept.queries';
+import { useQuery } from '@tanstack/react-query';
+import { getBudgets } from '@/modules/finance/services/finance.api';
 
 import type { WorkforcePlanAddDto, WorkforcePlanModDto } from '@/modules/hr/types/recruit/workforcePlan';
 
@@ -28,6 +30,17 @@ const WorkforcePlanForm: React.FC<WorkforcePlanFormProps> = ({
                                                              }) => {
     const { data: departments = [] } = useDepartments();
 
+    // Finance budgets to encumber the plan against (Phase 1 budget control).
+    const { data: budgetsRaw } = useQuery({
+        queryKey: ['financeBudgets'],
+        queryFn: () => getBudgets({ pageSize: 100 }),
+        staleTime: 60 * 1000,
+    });
+    const budgets: any[] = (() => {
+        const d: any = (budgetsRaw as any)?.data;
+        return d?.data?.items ?? d?.items ?? d?.data ?? (Array.isArray(d) ? d : []);
+    })();
+
     const [form, setForm] = useState<any>({
         planCode: '',
         title: '',
@@ -39,6 +52,7 @@ const WorkforcePlanForm: React.FC<WorkforcePlanFormProps> = ({
         totalPositions: 1,
         budget: 0,
         budgetCurrency: 'USD',
+        budgetId: '',
         ...initialData,
     });
 
@@ -343,6 +357,27 @@ const WorkforcePlanForm: React.FC<WorkforcePlanFormProps> = ({
                         ))}
                     </select>
                 </div>
+            </div>
+
+            {/* Finance budget to encumber against (optional). When set, approval checks & reserves it. */}
+            <div className="space-y-2">
+                <Label className="text-sm font-medium">Finance Budget (allocation to check &amp; reserve)</Label>
+                <select
+                    value={form.budgetId || ''}
+                    onChange={(e) => setForm(f => ({ ...f, budgetId: e.target.value }))}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    disabled={isSubmitting}
+                >
+                    <option value="">None (no budget control)</option>
+                    {budgets.map((b: any) => (
+                        <option key={b.id} value={b.id}>
+                            {b.name}{b.totalAmount != null ? ` — ${Number(b.totalAmount).toLocaleString()}` : ''}
+                        </option>
+                    ))}
+                </select>
+                <p className="text-[11px] text-gray-400">
+                    If selected, approving this plan reserves the budget amount from Finance and is blocked if there isn't enough available.
+                </p>
             </div>
 
             {/* Actions */}
