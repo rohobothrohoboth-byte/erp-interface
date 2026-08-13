@@ -6,11 +6,9 @@ import { motion } from 'framer-motion';
 import {
     ArrowLeft,
     UserCheck,
-    Calendar,
     Mail,
     Phone,
     Building2,
-    Briefcase,
     Clock,
     CheckCircle,
     XCircle,
@@ -18,7 +16,6 @@ import {
     Trash2,
     Save,
     User,
-    AlertCircle,
     Send,
     Download,
     Printer,
@@ -31,27 +28,14 @@ import { Input } from '@/shared/components/ui/input';
 import { Textarea } from '@/shared/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/shared/components/ui/dialog';
 import { useAuthStore } from '@/shared/stores/auth.store';
+import {
+    useOnboardingAssignment,
+    useUpdateOnboardingAssignment,
+    useUpdateOnboardingAssignmentStatus,
+    useDeleteOnboardingAssignment,
+} from '@/modules/hr/services/recruitment/onboardingAssignment/onboardingAssignment.queries';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-
-// Mock data - replace with real data from API
-const mockAssignment = {
-    id: '1',
-    employeeName: 'John Doe',
-    employeeEmail: 'john.doe@company.com',
-    employeePhone: '+1 (555) 123-4567',
-    position: 'Software Engineer',
-    department: 'Engineering',
-    taskName: 'IT Setup',
-    taskDescription: 'Set up laptop, email, and required software tools.',
-    status: 'Pending',
-    scheduledDate: '2026-06-15',
-    completedDate: null,
-    assignedBy: 'HR Manager',
-    assignedDate: '2026-06-01',
-    notes: 'Employee will start on June 15, 2026. Please ensure all equipment is ready.',
-    priority: 'High',
-};
 
 const OnboardingAssignmentDetail: React.FC = () => {
     const { assignmentId = '' } = useParams<{ assignmentId: string }>();
@@ -66,10 +50,30 @@ const OnboardingAssignmentDetail: React.FC = () => {
         status: '',
     });
 
-    // In a real app, fetch the assignment by ID
-    // const { data: assignment, isLoading } = useOnboardingAssignment(assignmentId);
-    const assignment = mockAssignment;
-    const isLoading = false;
+    const { data: real, isLoading } = useOnboardingAssignment(assignmentId);
+    // Fill in fields the backend does not persist so the UI stays intact.
+    const assignment = real
+        ? {
+              ...real,
+              assignedBy: (real as any).assignedBy || 'HR',
+              assignedDate: (real as any).assignedDate || real.createdAt,
+              priority: real.priority || 'Medium',
+              notes: real.notes || '',
+          }
+        : undefined;
+
+    const updateMutation = useUpdateOnboardingAssignment({
+        onSuccess: () => { toast.success('Assignment updated successfully'); setIsEditing(false); },
+        onError: (e) => toast.error(e.message || 'Failed to update assignment'),
+    });
+    const statusMutation = useUpdateOnboardingAssignmentStatus({
+        onSuccess: () => { toast.success('Assignment marked as completed'); setShowCompleteModal(false); },
+        onError: (e) => toast.error(e.message || 'Failed to update status'),
+    });
+    const deleteMutation = useDeleteOnboardingAssignment({
+        onSuccess: () => { toast.success('Assignment deleted successfully'); setShowDeleteModal(false); navigate('/hr/recruitment/onboarding/assignments'); },
+        onError: (e) => toast.error(e.message || 'Failed to delete assignment'),
+    });
 
     const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
     const canEdit = isHR && assignment?.status !== 'Completed' && assignment?.status !== 'Verified';
@@ -140,19 +144,24 @@ const OnboardingAssignmentDetail: React.FC = () => {
     };
 
     const handleUpdate = () => {
-        toast.success('Assignment updated successfully');
-        setIsEditing(false);
+        if (!assignment) return;
+        updateMutation.mutate({
+            id: assignmentId,
+            scheduledDate: form.scheduledDate || assignment.scheduledDate,
+            status: (form.status || assignment.status) as any,
+            notes: form.notes || assignment.notes,
+            rowVersion: assignment.rowVersion,
+        });
     };
 
     const handleComplete = () => {
-        toast.success('Assignment marked as completed');
-        setShowCompleteModal(false);
+        if (!assignmentId) return;
+        statusMutation.mutate({ id: assignmentId, status: 'Completed' });
     };
 
     const handleDelete = () => {
-        toast.success('Assignment deleted successfully');
-        setShowDeleteModal(false);
-        navigate('/hr/recruitment/onboarding/assignments');
+        if (!assignmentId) return;
+        deleteMutation.mutate(assignmentId);
     };
 
     const handleSendReminder = () => {
