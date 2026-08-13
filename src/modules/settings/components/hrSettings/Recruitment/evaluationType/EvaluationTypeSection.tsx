@@ -11,7 +11,8 @@ import {
   useEvaluationTypes, 
   useCreateEvaluationType, 
   useUpdateEvaluationType, 
-  useDeleteEvaluationType 
+  useDeleteEvaluationType,
+  useToggleEvaluationTypeStatus
 } from '@/modules/hr/services/recruitment/evaluationType/evaluationType.queries';
 import type { 
   EvaluationTypeListDto, 
@@ -56,6 +57,11 @@ const EvaluationTypeSection: React.FC = () => {
     onError: (error: any) => showToast.error(error?.message || 'Failed to delete'),
   });
 
+  const toggleStatusMutation = useToggleEvaluationTypeStatus({
+    onSuccess: (data) => showToast.success(`Evaluation type ${data.isActive ? 'activated' : 'deactivated'}`),
+    onError: (error: any) => showToast.error(error?.message || 'Failed to change status'),
+  });
+
   const handleAdd = (data: EvaluationTypeAddDto) => createMutation.mutate(data);
 
   const handleEdit = (data: EvaluationTypeAddDto) => {
@@ -79,12 +85,10 @@ const EvaluationTypeSection: React.FC = () => {
   };
 
   const handleToggleActive = (item: EvaluationTypeListDto) => {
-    updateMutation.mutate({
+    toggleStatusMutation.mutate({
       id: item.id,
-      name: item.name,
-      maxScore: item.maxScore,
-      isActive: !item.isActive,
       rowVersion: item.rowVersion,
+      stat: !item.isActive,
     });
   };
 

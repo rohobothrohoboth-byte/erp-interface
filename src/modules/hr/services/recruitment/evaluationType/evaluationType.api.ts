@@ -92,14 +92,14 @@ class EvaluationTypeApi {
     }
   }
 
-  // GET: /StatEvalType
-  async getEvaluationTypeStats(): Promise<any> {
+  // POST: /StatEvalType — toggle active/inactive. Body: { id, rowVersion, stat }
+  async updateStatus(id: UUID, rowVersion: string, stat: boolean): Promise<EvaluationTypeListDto> {
     try {
-      const response = await api.get(`${this.baseUrl}/StatEvalType`);
+      const response = await api.post(`${this.baseUrl}/StatEvalType`, { id, rowVersion, stat });
       return response.data.data;
     } catch (error) {
       const errorMessage = this.extractErrorMessage(error);
-      console.error('Error fetching evaluation type statistics:', errorMessage);
+      console.error('Error changing evaluation type status:', errorMessage);
       throw new Error(errorMessage);
     }
   }
@@ -113,11 +113,11 @@ export const evaluationTypeFetcher = {
   // Queries
   getAllEvaluationTypes: () => evaluationTypeApi.getAllEvaluationTypes(),
   getEvaluationTypeById: (id: UUID) => evaluationTypeApi.getEvaluationTypeById(id),
-  getEvaluationTypeStats: () => evaluationTypeApi.getEvaluationTypeStats(),
 
   // Mutations
   createEvaluationType: (data: EvaluationTypeAddDto) => evaluationTypeApi.createEvaluationType(data),
   updateEvaluationType: (data: EvaluationTypeModDto) => evaluationTypeApi.updateEvaluationType(data),
+  updateEvaluationTypeStatus: (id: UUID, rowVersion: string, stat: boolean) => evaluationTypeApi.updateStatus(id, rowVersion, stat),
   deleteEvaluationType: (id: UUID) => evaluationTypeApi.deleteEvaluationType(id),
 };
 
