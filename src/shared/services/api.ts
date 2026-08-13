@@ -97,6 +97,12 @@ taskDirectApi.interceptors.request.use((config) => {
    🔥 RESPONSE INTERCEPTOR
 ========================================= */
 let isRefreshing = false;
+// Timestamp of the last successful token refresh. Used to stop a refresh storm:
+// once we've just refreshed, a repeat 401 from an endpoint means that endpoint is
+// failing for some other reason (missing data, service-side rejection), so we must
+// NOT keep hammering the refresh endpoint.
+let lastRefreshAt = 0;
+const REFRESH_COOLDOWN_MS = 10000;
 let failedQueue: { resolve: (v: any) => void; reject: (e: any) => void }[] = [];
 
 const processQueue = (error: any, token: string | null = null) => {
@@ -169,6 +175,14 @@ api.interceptors.response.use(
                 return Promise.reject(error);
             }
 
+            // If we just refreshed, the token is already fresh. A repeat 401 means
+            // this endpoint is rejecting the request for another reason. Fail it
+            // instead of looping the refresh endpoint.
+            if (Date.now() - lastRefreshAt < REFRESH_COOLDOWN_MS) {
+                console.warn(`⚠️ 401 on ${url} shortly after refresh - not refreshing again`);
+                return Promise.reject(error);
+            }
+
             // If already refreshing, queue this request
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
@@ -187,6 +201,7 @@ api.interceptors.response.use(
             try {
                 // Attempt to refresh the token
                 await useAuthStore.getState().refresh();
+                lastRefreshAt = Date.now();
                 const newToken = getAccessToken();
 
                 // Process queued requests
