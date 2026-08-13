@@ -40,7 +40,7 @@ const WorkforcePlansPage: React.FC = () => {
         }
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
 
     const filteredPlans = plans?.filter(plan => {
         // Backend labels are "Pending Approval", "Approved", ... so match by prefix.

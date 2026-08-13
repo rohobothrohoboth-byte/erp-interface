@@ -67,7 +67,7 @@ const JobPostingsPage: React.FC = () => {
         onError: (error) => toast.error(error.message || 'Failed to close job posting'),
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
 
     // ✅ Filter postings based on search and tab
     const filteredPostings = postings?.filter(posting => {

@@ -116,7 +116,7 @@ const ApplicantDetail: React.FC = () => {
         }
     }, [shouldOpenInterview, applicant, isLoading, foundJobPostingId]);
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager' || role === 'ceo'|| role === 'mgr';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase()) || role === 'ceo'|| role === 'mgr';
 
     const effectiveJobPostingId = foundJobPostingId || applicant?.jobPostingId || '';
     console.log('Effective JobPostingId:', effectiveJobPostingId);

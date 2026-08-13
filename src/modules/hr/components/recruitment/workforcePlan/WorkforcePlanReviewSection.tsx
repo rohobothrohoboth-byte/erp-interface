@@ -102,7 +102,7 @@ const WorkforcePlanReviewSection: React.FC<WorkforcePlanReviewSectionProps> = ({
         },
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
     // Backend labels the status "Pending Approval", so match by prefix.
     const canApprove = !!plan?.statusStr?.startsWith('Pending') && isHR;
     const canReject = !!plan?.statusStr?.startsWith('Pending') && isHR;

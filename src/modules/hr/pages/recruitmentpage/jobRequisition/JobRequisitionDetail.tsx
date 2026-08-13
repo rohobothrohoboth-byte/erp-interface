@@ -50,7 +50,7 @@ const JobRequisitionDetail: React.FC = () => {
         onError: (error) => toast.error(error.message || 'Failed to delete requisition'),
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
     const canEdit = requisition?.statusStr === 'Draft' && isHR;
     const canDelete = (requisition?.statusStr === 'Draft' || requisition?.statusStr === 'Rejected') && isHR;
     const canCreatePosting = requisition?.statusStr === 'Approved' && isHR;

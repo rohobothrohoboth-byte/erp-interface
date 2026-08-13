@@ -157,7 +157,7 @@ const JobPostingDetail: React.FC = () => {
         onError: (error) => toast.error(error.message || 'Failed to close posting'),
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
 
     // ✅ Get status display
     const statusDisplay = getStatusDisplayName(posting?.statusStr || posting?.status || '');

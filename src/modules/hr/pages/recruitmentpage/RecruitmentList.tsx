@@ -89,7 +89,7 @@ const RecruitmentList = () => {
   const [requisitions, setRequisitions] = useState<Requisition[]>([]);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
-  const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+  const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
 
   // Transform workforce plans into recruitment plans
   const plans: RecruitmentPlan[] = workforcePlans?.map(plan => ({

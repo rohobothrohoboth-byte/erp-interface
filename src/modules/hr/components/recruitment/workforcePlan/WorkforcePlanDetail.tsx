@@ -67,7 +67,7 @@ const WorkforcePlanDetail: React.FC = () => {
         onError: (error) => toast.error(error.message)
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
     const canEdit = plan?.statusStr === 'Draft' && isHR;
     const canSubmit = plan?.statusStr === 'Draft' && isHR;
     const canApprove = !!plan?.statusStr?.startsWith('Pending') && isHR;

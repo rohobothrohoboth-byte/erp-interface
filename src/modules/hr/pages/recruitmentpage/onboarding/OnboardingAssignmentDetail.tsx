@@ -75,7 +75,7 @@ const OnboardingAssignmentDetail: React.FC = () => {
         onError: (e) => toast.error(e.message || 'Failed to delete assignment'),
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
     const canEdit = isHR && assignment?.status !== 'Completed' && assignment?.status !== 'Verified';
 
     const getStatusBadge = (status: string) => {

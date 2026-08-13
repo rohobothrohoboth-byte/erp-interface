@@ -51,7 +51,7 @@ const RecruitmentDashboardPage: React.FC = () => {
     const { data: jobPostings, isLoading: postingsLoading } = useJobPostings();
     const { data: applicants, isLoading: applicantsLoading } = useAllApplicants();
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
 
     useEffect(() => {
         if (!plansLoading && !postingsLoading && !applicantsLoading) {

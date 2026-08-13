@@ -37,7 +37,7 @@ const ApplicantsPage: React.FC = () => {
 
     const { data: applicants = [], isLoading, refetch } = useAllApplicants();
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
 
     const filteredApplicants = applicants?.filter(applicant => {
         const matchesTab = activeTab === 'all' || applicant.statusStr?.toLowerCase() === activeTab;

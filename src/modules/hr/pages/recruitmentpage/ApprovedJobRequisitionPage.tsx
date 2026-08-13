@@ -43,7 +43,7 @@ const ApprovedJobRequisitionPage: React.FC = () => {
         }
     });
 
-    const isHR = role === 'admin' || role === 'hr' || role === 'HR Manager';
+    const isHR = ['admin','super_admin','superadmin','hr','hr manager','hrmanager','hr admin','ceo','manager','mgr'].includes((role || '').toLowerCase());
 
     // Filter only approved requisitions
     const approvedRequisitions = allRequisitions.filter(req =>
