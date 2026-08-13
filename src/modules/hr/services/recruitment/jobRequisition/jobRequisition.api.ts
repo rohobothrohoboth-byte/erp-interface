@@ -8,8 +8,8 @@ import type {
 import type { ReviewDto } from '@/modules/hr/types/recruit/reviewDto';
 import { api } from '@/shared/services/api';
 
-const BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/JobReq`;
-const REVIEW_BASE = `${import.meta.env.VITE_HRMM_RECRUIT_URL || '/hrm/recruit/v1'}/Review`;
+const BASE = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/JobReq`;
+const REVIEW_BASE = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/Review`;
 
 const extractError = (error: any): string => {
   if (error.response?.data?.message) return error.response.data.message;

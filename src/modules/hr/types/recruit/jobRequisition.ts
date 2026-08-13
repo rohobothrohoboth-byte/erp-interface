@@ -36,24 +36,25 @@ export interface JobReqListDto extends BaseDto {
 
 /* =======================
    JobReqAddDto
+   Mirrors backend Recruit.Domain.DTOs.JobReqAddDto exactly.
 ======================= */
-// src/types/hr/recruit/jobRequisition.ts
-
 export interface JobReqAddDto {
-  workforcePlanId: string; // This should be a string (GUID will be parsed by backend)
-  position: string;
-  departmentId: string;
-  numOpen: number;
-  jobGrade: string;
-  salary: number;
-  salaryCurrency: string;
+  reqReason: string;
+  reqPositions: number;
+  budgetCode: string;
+  startDate: string;        // ISO date; backend binds to DateTime
+  positionId: string;       // Cor.HRMM.Position id
+  jgStepId: string;         // Cor.HRMM.JgStep id
+  workforcePlanId: string;  // WorkforcePlan id
+
+  keyRespo: string;
   desc: string;
-  qualification?: string;
-  keySkills?: string;
-  employmentType?: string;
-  preferredGender?: string;
+  reqQual: string;
+  keySkills: string;
   workLocation: string;
-  reqReason?: string;
+  preGender: string;        // enum.Gender key
+  empNature: string;        // enum.EmpNature key
+  workArr: string;          // enum.WorkArrangement key
 }
 
 /* =======================
