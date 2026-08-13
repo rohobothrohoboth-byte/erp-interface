@@ -58,6 +58,33 @@ export interface JobReqAddDto {
 }
 
 /* =======================
+   JobReqDetailDto (for edit pre-population)
+======================= */
+export interface JobReqDetailDto {
+  id: string;
+  reqNumber: string;
+  reqReason: string;
+  reqQuantity: number;
+  budgetCode: string;
+  startDate: string;
+  positionId: string;
+  jgStepId: string;
+  jobDecId: string;
+  position: string;
+  jgStep: string;
+  statusStr: string;
+  rowVersion: string;
+  keyRespo: string;
+  desc: string;
+  reqQual: string;
+  keySkills: string;
+  workLocation: string;
+  preGender: string;
+  empNature: string;
+  workArr: string;
+}
+
+/* =======================
    JobReqModDto
 ======================= */
 export interface JobReqModDto {

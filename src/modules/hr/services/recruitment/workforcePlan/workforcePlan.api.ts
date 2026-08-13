@@ -76,11 +76,12 @@ export const workforcePlanApi = {
 
   // Approve/reject go through the single Review/WoFoPl endpoint. `appCount` is the
   // number of approved positions (defaults to the plan's total on approve, 0 on reject).
+  // Backend ReviewDto.status expects ReviewStat enum keys: "0"=Approve, "1"=Modify, "2"=Reject.
   approve: async (vars: { id: string; comment?: string; appCount?: number }): Promise<void> => {
     try {
       await api.post(`${REVIEW_BASE}/WoFoPl`, {
         id: vars.id,
-        status: 'Approved',
+        status: '0',
         comment: vars.comment ?? '',
         appCount: vars.appCount ?? 0,
       });
@@ -91,7 +92,7 @@ export const workforcePlanApi = {
     try {
       await api.post(`${REVIEW_BASE}/WoFoPl`, {
         id: vars.id,
-        status: 'Rejected',
+        status: '2',
         comment: vars.comment ?? '',
         appCount: 0,
       });
@@ -105,9 +106,11 @@ export const workforcePlanApi = {
     } catch (e) { throw new Error(extractError(e)); }
   },
 
+  // Requisitions for a plan live under the JobReq controller.
   getRequisitions: async (planId: string): Promise<any[]> => {
     try {
-      const res = await api.get(`${BASE}/${planId}/Requisitions`);
+      const jobReqBase = `${import.meta.env.VITE_HRM_RECRUIT_URL || '/hrm/recruit/v1'}/JobReq`;
+      const res = await api.get(`${jobReqBase}/AllWfpJobReq/${planId}`);
       return normalizeArray(res.data?.data ?? res.data ?? []);
     } catch (e) { throw new Error(extractError(e)); }
   },

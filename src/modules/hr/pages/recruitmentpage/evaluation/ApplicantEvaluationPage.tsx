@@ -184,7 +184,7 @@ const ApplicantEvaluationPage: React.FC = () => {
             <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900">Applicant Not Found</h2>
             <p className="text-gray-500 mt-2">The applicant you're looking for doesn't exist.</p>
-            <Button onClick={() => navigate('/hr/recruitment')} className="mt-4">
+            <Button onClick={() => navigate('/hr/recruitment/applicants')} className="mt-4">
               Back
             </Button>
           </div>
@@ -213,7 +213,7 @@ const ApplicantEvaluationPage: React.FC = () => {
             <div className="flex items-center gap-4">
               <button
                   type="button"
-                  onClick={() => navigate('/hr/recruitment')}
+                  onClick={() => navigate('/hr/recruitment/applicants')}
                   className="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 text-sm cursor-pointer transition-colors shrink-0"
               >
                 <ArrowLeft size={16} /> Back
@@ -392,7 +392,7 @@ const ApplicantEvaluationPage: React.FC = () => {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => navigate('/hr/recruitment')}
+                            onClick={() => navigate('/hr/recruitment/applicants')}
                             className="mt-6 cursor-pointer rounded-xl"
                         >
                           Back
@@ -427,7 +427,7 @@ const ApplicantEvaluationPage: React.FC = () => {
                         <Button
                             type="button"
                             variant="outline"
-                            onClick={() => navigate('/hr/recruitment')}
+                            onClick={() => navigate('/hr/recruitment/applicants')}
                             className="mt-6 cursor-pointer rounded-xl"
                         >
                           Back

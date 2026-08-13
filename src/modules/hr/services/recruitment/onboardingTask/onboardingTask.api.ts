@@ -32,10 +32,10 @@ export const onboardingTaskApi = {
         } catch (e) { throw new Error(extractError(e)); }
     },
 
-    // GET tasks by plan
-    getByPlan: async (planId: string): Promise<OnboardingTaskListDto[]> => {
+    // Onboarding tasks are global templates; the backend has no plan filter, so return all.
+    getByPlan: async (_planId: string): Promise<OnboardingTaskListDto[]> => {
         try {
-            const res = await api.get(`${BASE}/ByPlan/${planId}`);
+            const res = await api.get(`${BASE}/All`);
             return normalizeArray(res.data?.data ?? res.data ?? []);
         } catch (e) { throw new Error(extractError(e)); }
     },

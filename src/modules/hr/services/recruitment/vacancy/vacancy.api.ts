@@ -98,16 +98,10 @@ class VacancyApi {
     return response.data;
   }
 
-  // Check if user has applied
-  async hasApplied(vacancyId: string): Promise<boolean> {
-    try {
-      const response = await recruitApi.get(
-          `${RECRUIT}/JobApp/HasApplied/${vacancyId}`
-      );
-      return response.data?.data || false;
-    } catch {
-      return false;
-    }
+  // The backend has no "has applied" endpoint yet, so avoid hitting a 404 and report
+  // false (the apply flow itself rejects duplicate applications server-side).
+  async hasApplied(_vacancyId: string): Promise<boolean> {
+    return false;
   }
 }
 

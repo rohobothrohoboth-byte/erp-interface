@@ -86,7 +86,7 @@ const JobPostingDashboardHeader: React.FC<JobPostingDashboardHeaderProps> = ({
           <ActionBtn label="Start Evaluation" icon={<FlaskConical size={15} />} variant="primary" onClick={onStartEvaluation} />
         )}
         <ActionBtn label="Eval Flow" icon={<ClipboardCheck size={15} />}
-          onClick={() => navigate(`/hr/recruitment/job-posting/${postId}/eval-flow/${encodeURIComponent(post.postNumber)}`)} />
+          onClick={() => navigate(`/hr/recruitment/posting/${postId}/eval-flow`)} />
         <ActionBtn label="Applicants" icon={<Users size={15} />}
           onClick={() => navigate(`/hr/recruitment/job-posting/${postId}/applicants/${encodeURIComponent(post.postNumber)}`)} />
       </div>

@@ -4,6 +4,7 @@ import type {
   JobReqListDto,
   JobReqAddDto,
   JobReqModDto,
+  JobReqDetailDto,
 } from '@/modules/hr/types/recruit/jobRequisition';
 import type { ReviewDto } from '@/modules/hr/types/recruit/reviewDto';
 import { api } from '@/shared/services/api';
@@ -42,6 +43,16 @@ export const jobRequisitionApi = {
   getById: async (id: string): Promise<JobReqListDto> => {
     try {
       const res = await api.get(`${BASE}/GetJobReq/${id}`);
+      return res.data?.data ?? res.data;
+    } catch (e) {
+      throw new Error(extractError(e));
+    }
+  },
+
+  // GET full detail (ids + job-description fields) for editing.
+  getDetail: async (id: string): Promise<JobReqDetailDto> => {
+    try {
+      const res = await api.get(`${BASE}/GetJobReqDetail/${id}`);
       return res.data?.data ?? res.data;
     } catch (e) {
       throw new Error(extractError(e));

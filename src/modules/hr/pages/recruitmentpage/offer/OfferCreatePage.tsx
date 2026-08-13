@@ -47,7 +47,10 @@ export default function OfferCreatePage() {
     setSaving(true);
     try {
       await offerApi.create({
-        applicantId: form.applicantId,
+        // The applicant picker lists job applications, so send the selected id as the
+        // jobApplicationId; the backend derives the applicant (and posting) from it.
+        applicantId: '',
+        jobApplicationId: form.applicantId,
         jobPostingId: form.jobPostingId,
         salary: Number(form.salary),
         currency: form.currency || 'ETB',
