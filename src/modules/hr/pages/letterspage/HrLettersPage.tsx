@@ -7,6 +7,7 @@ import { Field, inputCls } from '@/modules/inventory/components/FormModal';
 import { getAllEmployees } from '@/modules/hr/services/employee/emp.api';
 import type { EmployeeListDto } from '@/modules/hr/types/employee';
 import { useCompanyLetterhead, printLetter } from '@/modules/hr/pages/reportspage/reportKit';
+import { useAuthStore } from '@/shared/stores/auth.store';
 
 type LetterType = 'experience' | 'clearance' | 'employment' | 'recommendation' | 'guarantee' | 'warning';
 
@@ -98,6 +99,8 @@ export default function HrLettersPage() {
     setBody(buildBody(type, emp, letterhead.name));
   }, [type, employeeId, emp, letterhead.name]);
 
+  const printedBy = useAuthStore((s) => s.userName) || undefined;
+
   const onPrint = () => {
     printLetter(letterhead, {
       title: currentTitle,
@@ -108,7 +111,7 @@ export default function HrLettersPage() {
       closing,
       signatoryName,
       signatoryTitle,
-    });
+    }, printedBy);
   };
 
   return (

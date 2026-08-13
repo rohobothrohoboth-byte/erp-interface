@@ -43,6 +43,7 @@ interface CompanyForm {
     email: string;
     address: string;
     website: string;
+    motto: string;
     mission: string;
     vision: string;
     values: string;
@@ -143,7 +144,7 @@ export default function Setup() {
 
     // Form data
     const [formData, setFormData] = useState<FormData>({
-        company: { name: "", nameAm: "", taxId: "", phone: "", email: "", address: "", website: "", mission: "", vision: "", values: "", structure: "" },
+        company: { name: "", nameAm: "", taxId: "", phone: "", email: "", address: "", website: "", motto: "", mission: "", vision: "", values: "", structure: "" },
         branch: { name: "", nameAm: "", location: "", branchType: "Main", phone: "", email: "", address: "", city: "", managerName: "" },
         department: { name: "", nameAm: "" },
         position: { name: "", nameAm: "", jobGradeName: "Senior", noOfPosition: 1 },
@@ -592,6 +593,14 @@ function Step1CompanyForm({
                         value={formData.company.address}
                         onChange={(e) => updateCompany('address', e.target.value)}
                         placeholder="Enter address"
+                    />
+                </div>
+                <div className="md:col-span-2">
+                    <Label>Slogan / Motto</Label>
+                    <Input
+                        value={formData.company.motto}
+                        onChange={(e) => updateCompany('motto', e.target.value)}
+                        placeholder="Enter the company slogan or motto"
                     />
                 </div>
                 <div className="md:col-span-2">

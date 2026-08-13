@@ -91,7 +91,9 @@ const CompanyProfilePage = () => {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<CompanyEditForm>(emptyForm);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingStamp, setUploadingStamp] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const stampInputRef = useRef<HTMLInputElement>(null);
 
   const company = companies[0] as CompListDto | undefined;
 
@@ -106,6 +108,7 @@ const CompanyProfilePage = () => {
     address: base.address,
     website: base.website,
     logoUrl: base.logoUrl,
+    stampUrl: base.stampUrl,
     motto: base.motto,
     mission: base.mission,
     vision: base.vision,
@@ -193,6 +196,35 @@ const CompanyProfilePage = () => {
       toast.error(err?.message || "Failed to upload logo");
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const handleStampSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !company) return;
+
+    setUploadingStamp(true);
+    try {
+      const res = await uploadDocument({
+        file,
+        module: "core",
+        category: "stamp",
+        referenceId: String(company.id),
+        description: `Official stamp for ${company.name}`,
+      });
+      const doc = res?.data ?? res;
+      const stampUrl = deriveFileUrl(doc);
+      if (!stampUrl) {
+        toast.error("Upload succeeded but no file URL was returned");
+        return;
+      }
+      await updateCompany.mutateAsync(buildEditDto(company, { stampUrl }));
+      toast.success("Company stamp updated");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to upload stamp");
+    } finally {
+      setUploadingStamp(false);
     }
   };
 
@@ -288,20 +320,50 @@ const CompanyProfilePage = () => {
                   className="hidden"
                   onChange={handleLogoSelected}
                 />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2"
-                  disabled={uploadingLogo}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {uploadingLogo ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4" />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={uploadingLogo}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    {uploadingLogo ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    {uploadingLogo ? "Uploading..." : "Upload logo"}
+                  </Button>
+                  <input
+                    ref={stampInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleStampSelected}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    disabled={uploadingStamp}
+                    onClick={() => stampInputRef.current?.click()}
+                  >
+                    {uploadingStamp ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4" />
+                    )}
+                    {uploadingStamp ? "Uploading..." : company.stampUrl ? "Change stamp" : "Upload stamp"}
+                  </Button>
+                  {company.stampUrl && (
+                    <img
+                      src={company.stampUrl}
+                      alt="Company stamp"
+                      className="h-10 w-auto max-w-[80px] rounded border border-slate-200 object-contain dark:border-slate-700"
+                    />
                   )}
-                  {uploadingLogo ? "Uploading..." : "Upload logo"}
-                </Button>
+                </div>
               </div>
             </div>
           </div>
