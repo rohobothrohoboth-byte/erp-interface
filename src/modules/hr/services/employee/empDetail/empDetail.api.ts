@@ -8,6 +8,15 @@ import type {
 // FIXED: Use gateway path for profile service
 const BASE = 'hrm/profile/v1/EmpPro';
 
+// Employee image (photo/stamp/signature) returned as base64 with metadata.
+export interface EmpDetailImage {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: string;
+  image: string; // base64 payload
+}
+
 const get = async <T>(url: string): Promise<T> => {
   try {
     const res = await api.get(url);
@@ -40,6 +49,9 @@ export const empDetailApi = {
   },
   getDocuments: (id: string) => get<EmpDetailDocument[]>(`${BASE}/GetEmpDocuments/${id}`),
   getCertAll:   (id: string) => get<EmpFileList[]>(`hrm/profile/v1/EmpMod/EmpCertAll/${id}`),
+  getPhotoFull: (id: string) => get<EmpDetailImage | null>(`${BASE}/GetEmpPhoto/${id}`),
+  getStamp:     (id: string) => get<EmpDetailImage | null>(`${BASE}/GetEmpStamp/${id}`),
+  getSign:      (id: string) => get<EmpDetailImage | null>(`${BASE}/GetEmpSign/${id}`),
   getLeave: async (id: string): Promise<EmpDetailLeaveBalance[]> => {
     try {
       const res = await api.get(`hrm/leave/v1/Balance/Employee/${id}`);

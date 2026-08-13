@@ -6,8 +6,13 @@ import { Button } from '@/shared/components/ui/button';
 import { Field, inputCls } from '@/modules/inventory/components/FormModal';
 import { getAllEmployees } from '@/modules/hr/services/employee/emp.api';
 import type { EmployeeListDto } from '@/modules/hr/types/employee';
+import { empDetailApi } from '@/modules/hr/services/employee/empDetail/empDetail.api';
+import type { EmpDetailImage } from '@/modules/hr/services/employee/empDetail/empDetail.api';
 import { useCompanyLetterhead, printLetter } from '@/modules/hr/pages/reportspage/reportKit';
 import { useAuthStore } from '@/shared/stores/auth.store';
+
+const toDataUrl = (img?: EmpDetailImage | null): string | undefined =>
+  img?.image ? `data:${img.contentType || 'image/png'};base64,${img.image}` : undefined;
 
 type LetterType = 'experience' | 'clearance' | 'employment' | 'recommendation' | 'guarantee' | 'warning';
 
@@ -84,6 +89,23 @@ export default function HrLettersPage() {
   const [closing, setClosing] = useState('Sincerely,');
   const [signatoryName, setSignatoryName] = useState('');
   const [signatoryTitle, setSignatoryTitle] = useState('Human Resources Manager');
+  const [includeEmpSignature, setIncludeEmpSignature] = useState(true);
+
+  // Selected employee's signature & personal stamp (best-effort; may be absent).
+  const { data: empSign } = useQuery({
+    queryKey: ['emp-sign-letter', employeeId],
+    queryFn: () => empDetailApi.getSign(employeeId),
+    enabled: !!employeeId,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: empStamp } = useQuery({
+    queryKey: ['emp-stamp-letter', employeeId],
+    queryFn: () => empDetailApi.getStamp(employeeId),
+    enabled: !!employeeId,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const emp = useMemo(() => employees.find((e) => String(e.id) === employeeId), [employees, employeeId]);
   const filteredEmps = useMemo(() => {
@@ -111,6 +133,8 @@ export default function HrLettersPage() {
       closing,
       signatoryName,
       signatoryTitle,
+      signatureImage: includeEmpSignature ? toDataUrl(empSign) : undefined,
+      personalStampImage: includeEmpSignature ? toDataUrl(empStamp) : undefined,
     }, printedBy);
   };
 
@@ -167,6 +191,20 @@ export default function HrLettersPage() {
             <Field label="Signatory name"><input className={inputCls} value={signatoryName} onChange={(e) => setSignatoryName(e.target.value)} placeholder="e.g. Selam Bekele" /></Field>
             <Field label="Signatory title"><input className={inputCls} value={signatoryTitle} onChange={(e) => setSignatoryTitle(e.target.value)} /></Field>
           </div>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            <input
+              type="checkbox"
+              checked={includeEmpSignature}
+              onChange={(e) => setIncludeEmpSignature(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-teal-600"
+            />
+            Include the selected employee's signature &amp; personal stamp
+            {employeeId && (
+              <span className="text-xs text-slate-400">
+                ({empSign?.image ? 'signature ✓' : 'no signature'}, {empStamp?.image ? 'stamp ✓' : 'no stamp'})
+              </span>
+            )}
+          </label>
           <Button variant="outline" size="sm" className="w-full" onClick={() => setBody(buildBody(type, emp, letterhead.name))}>
             Reset body to template
           </Button>

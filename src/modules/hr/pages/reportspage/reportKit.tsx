@@ -271,6 +271,10 @@ export interface LetterContent {
   closing?: string;
   signatoryName?: string;
   signatoryTitle?: string;
+  // Optional data-URL images: the signatory's handwritten signature and their
+  // personal stamp (distinct from the company stamp on the letterhead).
+  signatureImage?: string;
+  personalStampImage?: string;
 }
 
 /**
@@ -327,9 +331,15 @@ export function printLetter(l: Letterhead, c: LetterContent, printedBy?: string)
   <div class="body">${paragraphs}</div>
   <div class="sign">
     <div>${esc(c.closing || 'Sincerely,')}</div>
-    ${stampImg ? `<div class="stamp">${stampImg}</div>` : '<div style="height:36px"></div>'}
+    ${c.signatureImage
+      ? `<div class="stamp"><img src="${esc(c.signatureImage)}" alt="signature" style="max-height:60px;max-width:180px;object-fit:contain" /></div>`
+      : '<div style="height:36px"></div>'}
     <div class="name">${esc(c.signatoryName || '')}</div>
     <div>${esc(c.signatoryTitle || '')}</div>
+    <div style="margin-top:8px;display:flex;gap:24px;align-items:flex-end">
+      ${c.personalStampImage ? `<img src="${esc(c.personalStampImage)}" alt="personal stamp" style="max-height:80px;max-width:130px;object-fit:contain" />` : ''}
+      ${stampImg ? `<div style="text-align:center">${stampImg}<div style="font-size:10px;color:#94a3b8">Company Stamp</div></div>` : ''}
+    </div>
   </div>
   ${printedBy ? `<div class="printedby">Printed by: ${esc(printedBy)} &middot; ${esc(new Date().toLocaleString())}</div>` : ''}
   ${l.motto ? `<div class="motto">${esc(l.motto)}</div>` : ''}
