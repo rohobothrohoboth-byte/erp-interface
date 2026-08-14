@@ -47,6 +47,9 @@ export const getRouteTitle = (path: string): string => {
     const coreTitle = getCoreRouteTitle(path);
     if (coreTitle !== 'Core Management') return coreTitle;
 
+    const adminRoute = coreAdminRoutes.find((route) => route.href === path);
+    if (adminRoute) return adminRoute.title;
+
     const financeTitle = getFinanceRouteTitle(path);
     if (financeTitle !== 'Finance Management') return financeTitle;
 
