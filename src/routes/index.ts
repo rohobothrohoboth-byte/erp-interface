@@ -2,6 +2,7 @@
 
 import { hrRoutes, hrSidebarRoutes, getHrRouteTitle } from './hr.routes';
 import { coreRoutes, coreSidebarRoutes, getCoreRouteTitle } from './core.routes';
+import { coreAdminRoutes, coreAdminSidebarRoutes } from './core-admin.routes';
 import { financeRoutes, financeSidebarRoutes, getFinanceRouteTitle } from './finance.routes';
 import { crmRoutes, crmSidebarRoutes, getCrmRouteTitle } from './crm.routes';
 import { inventoryRoutes, inventorySidebarRoutes, getInventoryRouteTitle } from './inventory.routes';
@@ -11,13 +12,12 @@ import { plandevRoutes, plandevSidebarRoutes, getPlandevRouteTitle } from './pla
 import { projectRoutes, projectSidebarRoutes, getProjectRouteTitle } from './project.routes';
 import type { AppRoute, SidebarNavSection } from './types';
 
-// Export types
 export type { AppRoute, SidebarNavSection };
 
-// Combine all module routes
 export const allRoutes: AppRoute[] = [
     ...hrRoutes,
     ...coreRoutes,
+    ...coreAdminRoutes,
     ...financeRoutes,
     ...crmRoutes,
     ...inventoryRoutes,
@@ -27,12 +27,10 @@ export const allRoutes: AppRoute[] = [
     ...projectRoutes,
 ];
 
-
-
-// Combine all sidebar routes
 export const allSidebarRoutes: SidebarNavSection[] = [
     ...hrSidebarRoutes,
     ...coreSidebarRoutes,
+    ...coreAdminSidebarRoutes,
     ...financeSidebarRoutes,
     ...crmSidebarRoutes,
     ...inventorySidebarRoutes,
@@ -42,7 +40,6 @@ export const allSidebarRoutes: SidebarNavSection[] = [
     ...projectSidebarRoutes,
 ];
 
-// Route title helper
 export const getRouteTitle = (path: string): string => {
     const hrTitle = getHrRouteTitle(path);
     if (hrTitle !== 'HR Management') return hrTitle;
@@ -74,9 +71,9 @@ export const getRouteTitle = (path: string): string => {
     return 'Dashboard';
 };
 
-// Export individual modules
 export { hrRoutes, hrSidebarRoutes, getHrRouteTitle };
 export { coreRoutes, coreSidebarRoutes, getCoreRouteTitle };
+export { coreAdminRoutes, coreAdminSidebarRoutes };
 export { financeRoutes, financeSidebarRoutes, getFinanceRouteTitle };
 export { crmRoutes, crmSidebarRoutes, getCrmRouteTitle };
 export { inventoryRoutes, inventorySidebarRoutes, getInventoryRouteTitle };
