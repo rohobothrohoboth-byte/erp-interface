@@ -25,10 +25,6 @@ import { Label } from "../components/ui/label";
 import toast, { Toaster } from "react-hot-toast";
 import { api } from "../services/api";
 
-// ============================================================
-// TYPES
-// ============================================================
-
 interface SetupData {
     modules: { key: string; name: string }[];
     roles: { name: string; description: string }[];
@@ -82,10 +78,6 @@ interface FormData {
     admin: AdminForm;
 }
 
-// ============================================================
-// STEP DEFINITIONS
-// ============================================================
-
 const STEP_DEFS = [
     {
         number: 1,
@@ -119,10 +111,6 @@ const STEP_DEFS = [
     },
 ] as const;
 
-// ============================================================
-// MAIN COMPONENT
-// ============================================================
-
 export default function Setup() {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
@@ -131,8 +119,8 @@ export default function Setup() {
     const [setupData, setSetupData] = useState<SetupData | null>(null);
     const [showCredentials, setShowCredentials] = useState(false);
     const [tempCredentials, setTempCredentials] = useState({ username: "", password: "" });
+    const contentRef = useRef<HTMLDivElement>(null);
 
-    // Form data
     const [formData, setFormData] = useState<FormData>({
         company: { name: "", nameAm: "", taxId: "", phone: "", email: "", address: "" },
         branch: { name: "", nameAm: "", location: "", branchType: "Main" },
@@ -152,7 +140,6 @@ export default function Setup() {
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Check if system needs setup
     useEffect(() => {
         const checkSetup = async () => {
             try {
@@ -170,10 +157,6 @@ export default function Setup() {
         };
         checkSetup();
     }, [navigate]);
-
-    // ============================================================
-    // VALIDATION
-    // ============================================================
 
     const validateStep = (step: number): boolean => {
         const newErrors: Record<string, string> = {};
@@ -204,25 +187,27 @@ export default function Setup() {
         return Object.keys(newErrors).length === 0;
     };
 
-    // ============================================================
-    // NAVIGATION
-    // ============================================================
+    const scrollContentToTop = () => {
+        requestAnimationFrame(() => {
+            if (contentRef.current) {
+                contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    };
 
     const nextStep = () => {
         if (validateStep(currentStep)) {
-            setCurrentStep(currentStep + 1);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setCurrentStep((step) => Math.min(step + 1, STEP_DEFS.length));
+            scrollContentToTop();
         }
     };
 
     const prevStep = () => {
-        setCurrentStep(currentStep - 1);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setCurrentStep((step) => Math.max(step - 1, 1));
+        scrollContentToTop();
     };
-
-    // ============================================================
-    // SUBMIT
-    // ============================================================
 
     const handleSubmit = async () => {
         if (!validateStep(5)) return;
@@ -258,10 +243,6 @@ export default function Setup() {
         navigate('/login');
     };
 
-    // ============================================================
-    // RENDER HELPERS
-    // ============================================================
-
     const renderStepContent = () => {
         switch (currentStep) {
             case 1:
@@ -278,10 +259,6 @@ export default function Setup() {
                 return null;
         }
     };
-
-    // ============================================================
-    // RENDER
-    // ============================================================
 
     return (
         <>
@@ -301,103 +278,136 @@ export default function Setup() {
                 }}
             />
 
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-4">
-                <div className="w-full max-w-3xl">
+            <div className="min-h-screen overflow-y-auto bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 px-4 py-6 sm:px-6 sm:py-8 lg:py-10">
+                <div ref={contentRef} className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-5xl flex-col">
                     {/* Header */}
-                    <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg mb-4">
-                            <Sparkles className="w-8 h-8 text-white" />
+                    <div className="mb-6 shrink-0 text-center sm:mb-8">
+                        <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg sm:h-16 sm:w-16">
+                            <Sparkles className="h-7 w-7 text-white sm:h-8 sm:w-8" />
                         </div>
-                        <h1 className="text-3xl font-bold text-slate-800 dark:text-slate-200">
+                        <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-800 dark:text-slate-100 sm:text-4xl">
                             System Setup
                         </h1>
-                        <p className="text-slate-500 dark:text-slate-400 mt-2">
-                            Welcome! Let's set up your organization.
+                        <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+                            Welcome! Let's set up your organization step by step.
                         </p>
                     </div>
 
-                    {/* Progress Steps */}
-                    <div className="flex justify-between mb-8 px-4">
-                        {STEP_DEFS.map((step, index) => {
-                            const isActive = currentStep === step.number;
-                            const isCompleted = currentStep > step.number;
-                            const Icon = step.icon;
-                            return (
-                                <div key={step.number} className="flex items-center">
-                                    <div className="flex flex-col items-center">
-                                        <div
-                                            className={`
-                        w-10 h-10 rounded-full flex items-center justify-center 
-                        ${isActive ? 'bg-blue-600 text-white ring-4 ring-blue-200 dark:ring-blue-900/50' :
-                                                isCompleted ? 'bg-emerald-500 text-white' :
-                                                    'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'}
-                        transition-all duration-300
-                      `}
+                    {/* Progress */}
+                    <div className="mb-6 shrink-0 overflow-x-auto pb-2 sm:mb-8">
+                        <div className="mx-auto flex min-w-[640px] max-w-4xl items-start justify-between px-2 sm:px-4">
+                            {STEP_DEFS.map((step, index) => {
+                                const isActive = currentStep === step.number;
+                                const isCompleted = currentStep > step.number;
+                                const Icon = step.icon;
+
+                                return (
+                                    <div key={step.number} className="flex min-w-0 flex-1 items-start">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                if (isCompleted) {
+                                                    setCurrentStep(step.number);
+                                                    scrollContentToTop();
+                                                }
+                                            }}
+                                            disabled={!isCompleted}
+                                            className="group flex min-w-0 flex-col items-center text-center disabled:cursor-default"
+                                            aria-current={isActive ? "step" : undefined}
                                         >
-                                            {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
-                                        </div>
-                                        <span className={`text-xs mt-1 font-medium ${
-                                            isActive ? 'text-blue-600 dark:text-blue-400' :
-                                                isCompleted ? 'text-emerald-600 dark:text-emerald-400' :
-                                                    'text-slate-400 dark:text-slate-500'
-                                        }`}>
-                      {step.title}
-                    </span>
+                                            <div
+                                                className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all duration-300 sm:h-12 sm:w-12 ${
+                                                    isActive
+                                                        ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-200 ring-4 ring-blue-100 dark:shadow-none dark:ring-blue-900/40'
+                                                        : isCompleted
+                                                            ? 'border-emerald-500 bg-emerald-500 text-white shadow-md'
+                                                            : 'border-slate-200 bg-white text-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500'
+                                                }`}
+                                            >
+                                                {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                                            </div>
+                                            <span className={`mt-2 max-w-[110px] text-[11px] font-semibold leading-tight sm:text-xs ${
+                                                isActive
+                                                    ? 'text-blue-700 dark:text-blue-400'
+                                                    : isCompleted
+                                                        ? 'text-emerald-700 dark:text-emerald-400'
+                                                        : 'text-slate-400 dark:text-slate-500'
+                                            }`}>
+                                                {step.title}
+                                            </span>
+                                        </button>
+
+                                        {index < STEP_DEFS.length - 1 && (
+                                            <div className={`mt-5 h-0.5 flex-1 min-w-6 transition-colors duration-300 sm:mt-6 ${
+                                                isCompleted ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
+                                            }`} />
+                                        )}
                                     </div>
-                                    {index < STEP_DEFS.length - 1 && (
-                                        <div className={`w-12 h-0.5 mx-2 ${
-                                            isCompleted ? 'bg-emerald-500' : 'bg-slate-200 dark:bg-slate-700'
-                                        }`} />
-                                    )}
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {/* Main Card */}
-                    <Card className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border-white/20 dark:border-slate-700/50 shadow-xl">
-                        <CardHeader>
-                            <CardTitle className="text-xl text-slate-800 dark:text-slate-200">
-                                {STEP_DEFS[currentStep - 1].title}
-                            </CardTitle>
-                            <CardDescription>
-                                Step {currentStep} of {STEP_DEFS.length} • {STEP_DEFS[currentStep - 1].description}
-                            </CardDescription>
+                    <Card className="min-h-0 flex-1 overflow-hidden border-slate-200/80 bg-white/95 shadow-2xl shadow-slate-200/50 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/90 dark:shadow-none">
+                        <CardHeader className="shrink-0 border-b border-slate-100 bg-white/70 px-5 py-5 dark:border-slate-800 dark:bg-slate-900/60 sm:px-7">
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <CardTitle className="text-xl text-slate-800 dark:text-slate-100 sm:text-2xl">
+                                        {STEP_DEFS[currentStep - 1].title}
+                                    </CardTitle>
+                                    <CardDescription className="mt-1 text-sm">
+                                        Step {currentStep} of {STEP_DEFS.length} • {STEP_DEFS[currentStep - 1].description}
+                                    </CardDescription>
+                                </div>
+                                <div className="hidden shrink-0 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 sm:block">
+                                    {Math.round((currentStep / STEP_DEFS.length) * 100)}%
+                                </div>
+                            </div>
                         </CardHeader>
-                        <CardContent>
+
+                        <CardContent className="flex min-h-0 flex-1 flex-col px-5 py-6 sm:px-7 sm:py-7">
                             <motion.div
                                 key={currentStep}
-                                initial={{ opacity: 0, x: 20 }}
+                                initial={{ opacity: 0, x: 16 }}
                                 animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.3 }}
+                                transition={{ duration: 0.25 }}
+                                className="min-h-0 flex-1"
                             >
                                 {renderStepContent()}
                             </motion.div>
 
                             {/* Navigation Buttons */}
-                            <div className="flex justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <div className="mt-8 flex shrink-0 flex-col-reverse gap-3 border-t border-slate-200 pt-5 dark:border-slate-700 sm:flex-row sm:items-center sm:justify-between">
                                 <Button
+                                    type="button"
                                     variant="outline"
                                     onClick={prevStep}
                                     disabled={currentStep === 1}
-                                    className="gap-2"
+                                    className="h-11 w-full gap-2 rounded-xl border-slate-200 bg-white px-5 sm:w-auto dark:border-slate-700 dark:bg-slate-900"
                                 >
-                                    <ChevronLeft className="w-4 h-4" /> Back
+                                    <ChevronLeft className="h-4 w-4" /> Back
                                 </Button>
+
                                 {currentStep < STEP_DEFS.length ? (
-                                    <Button onClick={nextStep} className="gap-2 bg-blue-600 hover:bg-blue-700">
-                                        Next <ArrowRight className="w-4 h-4" />
+                                    <Button
+                                        type="button"
+                                        onClick={nextStep}
+                                        className="h-11 w-full gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 shadow-md shadow-blue-200 transition-all hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 sm:w-auto dark:shadow-none"
+                                    >
+                                        Next <ArrowRight className="h-4 w-4" />
                                     </Button>
                                 ) : (
                                     <Button
+                                        type="button"
                                         onClick={handleSubmit}
                                         disabled={isSubmitting}
-                                        className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                                        className="h-11 w-full gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 shadow-md shadow-emerald-200 transition-all hover:-translate-y-0.5 hover:from-emerald-700 hover:to-teal-700 sm:w-auto dark:shadow-none"
                                     >
                                         {isSubmitting ? (
                                             <>Setting up...</>
                                         ) : (
-                                            <>Complete Setup <Check className="w-4 h-4" /></>
+                                            <>Complete Setup <Check className="h-4 w-4" /></>
                                         )}
                                     </Button>
                                 )}
@@ -407,15 +417,14 @@ export default function Setup() {
                 </div>
             </div>
 
-            {/* Credentials Modal */}
             {showCredentials && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 backdrop-blur-sm">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.92 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden"
+                        className="my-auto w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-xl dark:bg-slate-900"
                     >
-                        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 text-white flex items-center gap-3">
+                        <div className="flex items-center gap-3 bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 text-white">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20">
                                 <KeyRound className="h-5 w-5" />
                             </div>
@@ -426,7 +435,7 @@ export default function Setup() {
                                 </p>
                             </div>
                         </div>
-                        <div className="px-6 py-5 space-y-4">
+                        <div className="space-y-4 px-6 py-5">
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                 Your organization has been configured. Use the credentials below to log in as the system admin.
                             </p>
@@ -440,449 +449,19 @@ export default function Setup() {
                                 label="Password"
                                 value={tempCredentials.password}
                             />
-                            <div className="rounded-lg border border-amber-100 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
-                                <p className="text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
-                                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                                    <span>You can change your password after your first login from account settings.</span>
+                            <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/30">
+                                <p className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300">
+                                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                                    Keep these credentials secure and change the password after your first login.
                                 </p>
                             </div>
-                            <Button
-                                className="w-full gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white"
-                                onClick={handleGoToLogin}
-                            >
-                                Go to Login <ArrowRight className="h-4 w-4" />
+                            <Button onClick={handleGoToLogin} className="h-11 w-full rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100">
+                                Continue to Login
                             </Button>
                         </div>
                     </motion.div>
                 </div>
             )}
         </>
-    );
-}
-
-// ============================================================
-// CREDENTIAL ROW COMPONENT
-// ============================================================
-
-function CredRow({
-                     icon,
-                     label,
-                     value,
-                 }: {
-    icon: React.ReactNode;
-    label: string;
-    value: string;
-}) {
-    const [copied, setCopied] = useState(false);
-    return (
-        <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500">
-                {icon} {label}
-            </div>
-            <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-4 py-2.5">
-                <span className="font-mono text-sm text-slate-800 dark:text-slate-200">{value}</span>
-                <button
-                    type="button"
-                    className="text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors"
-                    onClick={() => {
-                        navigator.clipboard.writeText(value);
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                    }}
-                >
-                    {copied ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500" />
-                    ) : (
-                        <Copy className="h-3.5 w-3.5" />
-                    )}
-                </button>
-            </div>
-        </div>
-    );
-}
-
-// ============================================================
-// STEP 1: COMPANY FORM
-// ============================================================
-
-function Step1CompanyForm({
-                              formData,
-                              setFormData,
-                              errors,
-                          }: {
-    formData: FormData;
-    setFormData: (data: FormData) => void;
-    errors: Record<string, string>;
-}) {
-    const updateCompany = (field: keyof CompanyForm, value: string) => {
-        setFormData({
-            ...formData,
-            company: { ...formData.company, [field]: value },
-        });
-    };
-
-    return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <Label>Company Name <span className="text-red-500">*</span></Label>
-                    <Input
-                        value={formData.company.name}
-                        onChange={(e) => updateCompany('name', e.target.value)}
-                        placeholder="Enter company name"
-                        className={errors.companyName ? 'border-red-500' : ''}
-                    />
-                    {errors.companyName && <p className="text-xs text-red-500 mt-1">{errors.companyName}</p>}
-                </div>
-                <div>
-                    <Label>Company Name (Amharic) <span className="text-red-500">*</span></Label>
-                    <Input
-                        value={formData.company.nameAm}
-                        onChange={(e) => updateCompany('nameAm', e.target.value)}
-                        placeholder="የኩባንያውን ስም ያስገቡ"
-                        className={errors.companyNameAm ? 'border-red-500' : ''}
-                    />
-                    {errors.companyNameAm && <p className="text-xs text-red-500 mt-1">{errors.companyNameAm}</p>}
-                </div>
-                <div>
-                    <Label>Tax ID</Label>
-                    <Input
-                        value={formData.company.taxId}
-                        onChange={(e) => updateCompany('taxId', e.target.value)}
-                        placeholder="Enter tax ID"
-                    />
-                </div>
-                <div>
-                    <Label>Phone</Label>
-                    <Input
-                        value={formData.company.phone}
-                        onChange={(e) => updateCompany('phone', e.target.value)}
-                        placeholder="Enter phone number"
-                    />
-                </div>
-                <div>
-                    <Label>Email</Label>
-                    <Input
-                        type="email"
-                        value={formData.company.email}
-                        onChange={(e) => updateCompany('email', e.target.value)}
-                        placeholder="Enter email"
-                    />
-                </div>
-                <div className="md:col-span-2">
-                    <Label>Address</Label>
-                    <Input
-                        value={formData.company.address}
-                        onChange={(e) => updateCompany('address', e.target.value)}
-                        placeholder="Enter address"
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ============================================================
-// STEP 2: BRANCH FORM
-// ============================================================
-
-function Step2BranchForm({
-                             formData,
-                             setFormData,
-                             errors,
-                         }: {
-    formData: FormData;
-    setFormData: (data: FormData) => void;
-    errors: Record<string, string>;
-}) {
-    const updateBranch = (field: keyof BranchForm, value: string) => {
-        setFormData({
-            ...formData,
-            branch: { ...formData.branch, [field]: value },
-        });
-    };
-
-    return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <Label>Branch Name <span className="text-red-500">*</span></Label>
-                    <Input
-                        value={formData.branch.name}
-                        onChange={(e) => updateBranch('name', e.target.value)}
-                        placeholder="Enter branch name"
-                        className={errors.branchName ? 'border-red-500' : ''}
-                    />
-                    {errors.branchName && <p className="text-xs text-red-500 mt-1">{errors.branchName}</p>}
-                </div>
-                <div>
-                    <Label>Branch Name (Amharic)</Label>
-                    <Input
-                        value={formData.branch.nameAm}
-                        onChange={(e) => updateBranch('nameAm', e.target.value)}
-                        placeholder="የቅርንጫፉን ስም ያስገቡ"
-                    />
-                </div>
-                <div>
-                    <Label>Location <span className="text-red-500">*</span></Label>
-                    <Input
-                        value={formData.branch.location}
-                        onChange={(e) => updateBranch('location', e.target.value)}
-                        placeholder="Enter location"
-                        className={errors.branchLocation ? 'border-red-500' : ''}
-                    />
-                    {errors.branchLocation && <p className="text-xs text-red-500 mt-1">{errors.branchLocation}</p>}
-                </div>
-                <div>
-                    <Label>Branch Type</Label>
-                    <select
-                        value={formData.branch.branchType}
-                        onChange={(e) => updateBranch('branchType', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
-                    >
-                        <option value="Main">Main</option>
-                        <option value="Sub">Sub</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ============================================================
-// STEP 3: DEPARTMENT FORM
-// ============================================================
-
-function Step3DepartmentForm({
-                                 formData,
-                                 setFormData,
-                                 errors,
-                             }: {
-    formData: FormData;
-    setFormData: (data: FormData) => void;
-    errors: Record<string, string>;
-}) {
-    const updateDepartment = (field: keyof DepartmentForm, value: string) => {
-        setFormData({
-            ...formData,
-            department: { ...formData.department, [field]: value },
-        });
-    };
-
-    return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <Label>Department Name <span className="text-red-500">*</span></Label>
-                    <Input
-                        value={formData.department.name}
-                        onChange={(e) => updateDepartment('name', e.target.value)}
-                        placeholder="Enter department name"
-                        className={errors.deptName ? 'border-red-500' : ''}
-                    />
-                    {errors.deptName && <p className="text-xs text-red-500 mt-1">{errors.deptName}</p>}
-                </div>
-                <div>
-                    <Label>Department Name (Amharic)</Label>
-                    <Input
-                        value={formData.department.nameAm}
-                        onChange={(e) => updateDepartment('nameAm', e.target.value)}
-                        placeholder="የክፍሉን ስም ያስገቡ"
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ============================================================
-// STEP 4: POSITION FORM
-// ============================================================
-
-function Step4PositionForm({
-                               formData,
-                               setFormData,
-                               errors,
-                               setupData,
-                           }: {
-    formData: FormData;
-    setFormData: (data: FormData) => void;
-    errors: Record<string, string>;
-    setupData: SetupData | null;
-}) {
-    const updatePosition = (field: keyof PositionForm, value: string | number) => {
-        setFormData({
-            ...formData,
-            position: { ...formData.position, [field]: value as any },
-        });
-    };
-
-    return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <Label>Position Name <span className="text-red-500">*</span></Label>
-                    <Input
-                        value={formData.position.name}
-                        onChange={(e) => updatePosition('name', e.target.value)}
-                        placeholder="Enter position name"
-                        className={errors.posName ? 'border-red-500' : ''}
-                    />
-                    {errors.posName && <p className="text-xs text-red-500 mt-1">{errors.posName}</p>}
-                </div>
-                <div>
-                    <Label>Position Name (Amharic)</Label>
-                    <Input
-                        value={formData.position.nameAm}
-                        onChange={(e) => updatePosition('nameAm', e.target.value)}
-                        placeholder="የአመራር ስም ያስገቡ"
-                    />
-                </div>
-                <div>
-                    <Label>Job Grade</Label>
-                    <select
-                        value={formData.position.jobGradeName}
-                        onChange={(e) => updatePosition('jobGradeName', e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200"
-                    >
-                        {setupData?.jobGrades.map(grade => (
-                            <option key={grade} value={grade}>{grade}</option>
-                        ))}
-                    </select>
-                </div>
-                <div>
-                    <Label>Number of Positions</Label>
-                    <Input
-                        type="number"
-                        value={formData.position.noOfPosition}
-                        onChange={(e) => updatePosition('noOfPosition', parseInt(e.target.value) || 1)}
-                        min={1}
-                    />
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ============================================================
-// STEP 5: ADMIN FORM
-// ============================================================
-
-function Step5AdminForm({
-                            formData,
-                            setFormData,
-                            errors,
-                        }: {
-    formData: FormData;
-    setFormData: (data: FormData) => void;
-    errors: Record<string, string>;
-}) {
-    const updateAdmin = (field: keyof AdminForm, value: string) => {
-        setFormData({
-            ...formData,
-            admin: { ...formData.admin, [field]: value },
-        });
-    };
-
-    return (
-        <div className="space-y-4">
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 mb-4">
-                <p className="text-sm text-amber-800 dark:text-amber-300 flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                    <span>This admin user will have full system access. Please keep these credentials secure.</span>
-                </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <Label>First Name</Label>
-                    <Input
-                        value={formData.admin.firstName}
-                        onChange={(e) => updateAdmin('firstName', e.target.value)}
-                        placeholder="Enter first name"
-                    />
-                </div>
-                <div>
-                    <Label>First Name (Amharic)</Label>
-                    <Input
-                        value={formData.admin.firstNameAm}
-                        onChange={(e) => updateAdmin('firstNameAm', e.target.value)}
-                        placeholder="የመጠሪያ ስም ያስገቡ"
-                    />
-                </div>
-                <div>
-                    <Label>Last Name</Label>
-                    <Input
-                        value={formData.admin.lastName}
-                        onChange={(e) => updateAdmin('lastName', e.target.value)}
-                        placeholder="Enter last name"
-                    />
-                </div>
-                <div>
-                    <Label>Last Name (Amharic)</Label>
-                    <Input
-                        value={formData.admin.lastNameAm}
-                        onChange={(e) => updateAdmin('lastNameAm', e.target.value)}
-                        placeholder="የአያት ስም ያስገቡ"
-                    />
-                </div>
-
-                <div>
-                    <Label>Username <span className="text-red-500">*</span></Label>
-                    <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            value={formData.admin.userName}
-                            onChange={(e) => updateAdmin('userName', e.target.value)}
-                            placeholder="Enter username"
-                            className={`pl-10 ${errors.adminUserName ? 'border-red-500' : ''}`}
-                        />
-                    </div>
-                    {errors.adminUserName && <p className="text-xs text-red-500 mt-1">{errors.adminUserName}</p>}
-                </div>
-                <div>
-                    <Label>Email <span className="text-red-500">*</span></Label>
-                    <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            type="email"
-                            value={formData.admin.email}
-                            onChange={(e) => updateAdmin('email', e.target.value)}
-                            placeholder="Enter email"
-                            className={`pl-10 ${errors.adminEmail ? 'border-red-500' : ''}`}
-                        />
-                    </div>
-                    {errors.adminEmail && <p className="text-xs text-red-500 mt-1">{errors.adminEmail}</p>}
-                </div>
-                <div>
-                    <Label>Password <span className="text-red-500">*</span></Label>
-                    <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            type="password"
-                            value={formData.admin.password}
-                            onChange={(e) => updateAdmin('password', e.target.value)}
-                            placeholder="Enter password (min 8 chars)"
-                            className={`pl-10 ${errors.adminPassword ? 'border-red-500' : ''}`}
-                        />
-                    </div>
-                    {errors.adminPassword && <p className="text-xs text-red-500 mt-1">{errors.adminPassword}</p>}
-                </div>
-                <div>
-                    <Label>Confirm Password <span className="text-red-500">*</span></Label>
-                    <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                            type="password"
-                            value={formData.admin.confirmPassword}
-                            onChange={(e) => updateAdmin('confirmPassword', e.target.value)}
-                            placeholder="Confirm password"
-                            className={`pl-10 ${errors.adminConfirm ? 'border-red-500' : ''}`}
-                        />
-                    </div>
-                    {errors.adminConfirm && <p className="text-xs text-red-500 mt-1">{errors.adminConfirm}</p>}
-                </div>
-            </div>
-        </div>
     );
 }
