@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { BookOpen, RefreshCw, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { BookOpen, RefreshCw } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import ChartOfAccountsSection from '@/modules/finance/components/generalledger/chartOfAccounts/ChartOfAccountsSection';
 import {
-  getFinanceIntegrity,
   getGeneralLedgerEntries,
   getTrialBalance,
-  type FinanceIntegrityResponse,
   type GeneralLedgerEntry,
   type TrialBalanceResponse,
 } from '@/modules/finance/services/generalLedger.api';
@@ -21,7 +19,6 @@ const PageGeneralLedger: React.FC = () => {
   const [activeView, setActiveView] = useState<'ledger' | 'trialBalance' | 'accounts'>('ledger');
   const [entries, setEntries] = useState<GeneralLedgerEntry[]>([]);
   const [trialBalance, setTrialBalance] = useState<TrialBalanceResponse | null>(null);
-  const [integrity, setIntegrity] = useState<FinanceIntegrityResponse | null>(null);
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [page, setPage] = useState(1);
@@ -41,15 +38,13 @@ const PageGeneralLedger: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [ledger, balance, health] = await Promise.all([
+      const [ledger, balance] = await Promise.all([
         getGeneralLedgerEntries({ ...filters, page, pageSize: 50 }),
         getTrialBalance(filters),
-        getFinanceIntegrity(filters),
       ]);
       setEntries(ledger.data ?? []);
       setTotalPages(Math.max(ledger.totalPages ?? 1, 1));
       setTrialBalance(balance);
-      setIntegrity(health);
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || 'Unable to load General Ledger data.');
     } finally {
@@ -64,7 +59,10 @@ const PageGeneralLedger: React.FC = () => {
   }, [activeView, loadLedger]);
 
   const applyFilters = () => {
-    setPage(1);
+    if (page !== 1) {
+      setPage(1);
+      return;
+    }
     void loadLedger();
   };
 
@@ -77,9 +75,7 @@ const PageGeneralLedger: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">General Ledger</h1>
-            <p className="text-sm text-gray-500">
-              Posted journal lines are the accounting source of truth.
-            </p>
+            <p className="text-sm text-gray-500">Posted journal lines are the accounting source of truth.</p>
           </div>
         </div>
         <Button
@@ -104,9 +100,7 @@ const PageGeneralLedger: React.FC = () => {
             type="button"
             onClick={() => setActiveView(value as typeof activeView)}
             className={`rounded-md px-4 py-2 text-sm font-medium transition ${
-              activeView === value
-                ? 'bg-indigo-600 text-white'
-                : 'text-gray-600 hover:bg-gray-100'
+              activeView === value ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
             }`}
           >
             {label}
@@ -137,36 +131,8 @@ const PageGeneralLedger: React.FC = () => {
                 className="rounded-md border px-3 py-2 text-gray-900"
               />
             </label>
-            <Button onClick={applyFilters} disabled={loading}>
-              Apply filters
-            </Button>
+            <Button onClick={applyFilters} disabled={loading}>Apply filters</Button>
           </div>
-
-          {integrity && (
-            <div
-              className={`flex items-center justify-between rounded-lg border p-4 ${
-                integrity.isHealthy
-                  ? 'border-emerald-200 bg-emerald-50'
-                  : 'border-red-200 bg-red-50'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {integrity.isHealthy ? (
-                  <ShieldCheck className="h-5 w-5 text-emerald-600" />
-                ) : (
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
-                )}
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {integrity.isHealthy ? 'Ledger integrity is healthy' : 'Ledger integrity needs attention'}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {integrity.postedEntries} posted entries checked; {integrity.invalidEntries} invalid.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {error && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -206,9 +172,7 @@ const PageGeneralLedger: React.FC = () => {
                     ))}
                     {!loading && entries.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
-                          No posted ledger entries match the selected filters.
-                        </td>
+                        <td colSpan={7} className="px-4 py-10 text-center text-gray-500">No posted ledger entries match the selected filters.</td>
                       </tr>
                     )}
                   </tbody>
@@ -217,12 +181,8 @@ const PageGeneralLedger: React.FC = () => {
               <div className="flex items-center justify-between border-t px-4 py-3 text-sm text-gray-600">
                 <span>Page {page} of {totalPages}</span>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => setPage((p) => p - 1)}>
-                    Previous
-                  </Button>
-                  <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>
-                    Next
-                  </Button>
+                  <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => setPage((p) => p - 1)}>Previous</Button>
+                  <Button variant="outline" size="sm" disabled={page >= totalPages || loading} onClick={() => setPage((p) => p + 1)}>Next</Button>
                 </div>
               </div>
             </div>
