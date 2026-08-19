@@ -29,7 +29,7 @@ import { useAuthStore } from "@/shared/stores/auth.store";
 import { useSidebarStore } from "@/shared/stores/sidebar.store";
 import { useLanguage } from '@/shared/i18n/LanguageContext';
 import { translateMenu } from '@/shared/i18n/translations/en';
-
+import { useCompanyStore } from "@/shared/stores/company.store"; // Add this
 /* ==================== TYPES ==================== */
 
 interface PermissionMenu {
@@ -443,7 +443,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
     }, []);
     const { role, userName, permissions: rawPermissions, token, userId } = useAuthStore();
     const prefersReducedMotion = useReducedMotion();
-
+    const { company, isLoading: companyLoading, fetchCompany } = useCompanyStore();
     const collapsed = propCollapsed ?? storeCollapsed;
 
     // Use permissions directly from auth store
@@ -504,7 +504,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
             fetchMenuStructure();
         }
     }, [permissions, token, userId]);
-
+    useEffect(() => {
+        if (!company && !companyLoading) {
+            fetchCompany();
+        }
+    }, [company, companyLoading, fetchCompany]);
     const theme = MODULE_THEMES[activeModule] || MODULE_THEMES.default;
     const isPrivileged = role === 'admin' || role === 'ceo' || role === 'vice.ceo' || role === 'auditor' || role === 'super_admin';
 
@@ -673,8 +677,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
     return (
         <motion.aside
             initial={false}
-            animate={{ width: collapsed ? 68 : 260 }}
-            transition={{ duration: prefersReducedMotion ? 0 : 0.2, ease: "easeInOut" }}
+            animate={{width: collapsed ? 68 : 260}}
+            transition={{duration: prefersReducedMotion ? 0 : 0.2, ease: "easeInOut"}}
             className="h-screen bg-white dark:bg-slate-900 flex flex-col shadow-lg border-r border-slate-200 dark:border-slate-800 relative z-40"
         >
             {onClose && (
@@ -682,7 +686,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
                     onClick={onClose}
                     className="absolute top-4 right-4 z-50 p-2 rounded-lg bg-white dark:bg-slate-800 shadow-md lg:hidden"
                 >
-                    <X size={20} className="text-slate-500" />
+                    <X size={20} className="text-slate-500"/>
                 </button>
             )}
 
@@ -692,39 +696,75 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
                     className="hidden lg:flex absolute -right-3 top-20 z-50 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md items-center justify-center text-slate-400 hover:text-emerald-500 transition-colors"
                     title={t.expandSidebar || "Expand sidebar"}
                 >
-                    <ChevronRight size={12} />
+                    <ChevronRight size={12}/>
                 </button>
             )}
 
-            <div className={`flex-shrink-0 px-3 py-3 flex items-center ${collapsed ? "justify-center" : "justify-between"} border-b border-slate-200 dark:border-slate-800`}>
-                <button onClick={() => navigate("/modules")} className="flex items-center gap-2 group cursor-pointer">
-                    <img src="/bda-logo-1.png" alt="Logo" className="w-8 h-8 rounded-full border-2 border-emerald-200 dark:border-emerald-800 object-cover shadow-sm" />
+            {/* In the Sidebar render, replace the logo section */}
+            <div
+                className={`flex-shrink-0 px-4 py-4 flex items-center ${collapsed ? "justify-center" : "justify-between"} border-b border-slate-200 dark:border-slate-800`}>
+                <button onClick={() => navigate("/modules")} className="flex items-center gap-3 group cursor-pointer">
+                    {/* Dynamic Logo - LARGER */}
+                    <div
+                        className="w-12 h-12 rounded-xl border-2 border-emerald-200 dark:border-emerald-800 object-cover shadow-md overflow-hidden flex-shrink-0 bg-slate-100 dark:bg-slate-800">
+                        {companyLoading ? (
+                            <div className="w-full h-full animate-pulse bg-slate-200 dark:bg-slate-700"/>
+                        ) : company?.logoUrl ? (
+                            <img
+                                src={company.logoUrl}
+                                alt={company.name || "Company Logo"}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const parent = e.currentTarget.parentElement;
+                                    if (parent) {
+                                        const fallback = document.createElement('span');
+                                        fallback.className = 'w-full h-full flex items-center justify-center text-lg font-bold text-emerald-600 dark:text-emerald-400';
+                                        fallback.textContent = company?.name?.charAt(0)?.toUpperCase() || 'B';
+                                        parent.appendChild(fallback);
+                                    }
+                                }}
+                            />
+                        ) : (
+                            <span
+                                className="w-full h-full flex items-center justify-center text-lg font-bold text-emerald-600 dark:text-emerald-400">
+          {company?.name?.charAt(0)?.toUpperCase() || 'B'}
+        </span>
+                        )}
+                    </div>
+
                     {!collapsed && (
-                        <div className="flex flex-col">
-                            <h1 className={`text-sm font-bold ${theme.textColor}`}>RST ERP</h1>
-                            <p className="text-[10px] text-slate-400">{t.enterpriseSolution || 'Enterprise Solution'}</p>
+                        <div className="flex flex-col min-w-0">
+                            {/* Slogan - BIGGER AND BOLD - No organization name */}
+                            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 truncate">
+                                {company?.motto || '"Yes We Can."'}
+                            </p>
                         </div>
                     )}
                 </button>
+
+                {/* Toggle button */}
                 <button
                     onClick={toggleSidebar}
                     className="hidden lg:flex items-center justify-center w-6 h-6 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 transition-colors shadow-sm"
                 >
-                    {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+                    {collapsed ? <ChevronRight size={14}/> : <ChevronLeft size={14}/>}
                 </button>
             </div>
-
             {!collapsed && (
-                <div className="mx-2 mt-3 p-2 rounded-lg bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800/50 dark:to-slate-800/30 border border-slate-100 dark:border-slate-700">
+                <div
+                    className="mx-2 mt-3 p-2 rounded-lg bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-800/50 dark:to-slate-800/30 border border-slate-100 dark:border-slate-700">
                     <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
-                            <span className="text-white text-xs font-bold">{userName?.charAt(0)?.toUpperCase() || 'U'}</span>
+                        <div
+                            className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
+                            <span
+                                className="text-white text-xs font-bold">{userName?.charAt(0)?.toUpperCase() || 'U'}</span>
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">{userName || t.user || 'User'}</p>
                             <p className="text-[10px] text-slate-500 dark:text-slate-400 capitalize">{role || t.employee || 'Employee'}</p>
                         </div>
-                        <Sparkles className="w-3 h-3 text-amber-500" />
+                        <Sparkles className="w-3 h-3 text-amber-500"/>
                     </div>
                 </div>
             )}
@@ -733,7 +773,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
                 <div className={`space-y-0.5 ${collapsed ? "px-2" : "px-2"}`}>
                     <NavItemWithClose
                         to={dashboardPath}
-                        icon={<LayoutDashboard size={18} />}
+                        icon={<LayoutDashboard size={18}/>}
                         label={t.dashboard || "Dashboard"}
                         end
                         {...theme}
@@ -747,7 +787,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
                 <div className="flex-shrink-0 p-3 border-t border-slate-200 dark:border-slate-800">
                     <NavItemWithClose
                         to="/settings"
-                        icon={<Settings size={18} />}
+                        icon={<Settings size={18}/>}
                         label={t.settings || "Settings"}
                         {...theme}
                         collapsed={collapsed}
@@ -760,7 +800,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose, isCollapsed: propCollapsed }
                             className="mt-2 w-full flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors"
                             title={t.expandSidebar || "Expand sidebar"}
                         >
-                            <ChevronRight size={14} />
+                            <ChevronRight size={14}/>
                         </button>
                     )}
                 </div>

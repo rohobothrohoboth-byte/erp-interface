@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import '@/shared/components/Honeycomb.css';
 import { useModuleStore } from '@/shared/stores/module.store';
+import { CompanyLogo } from '@/shared/components/CompanyLogo';
 
 const modules = [
   { label: "HR", color: "group-hover:from-green-400 group-hover:to-green-600", path: "/hr" },
@@ -9,7 +10,7 @@ const modules = [
   { label: "Inventory", color: "group-hover:from-yellow-300 group-hover:to-yellow-500", path: "/inventory" },
   { label: "Procurement", color: "group-hover:from-purple-300 group-hover:to-purple-500", path: "/procurement" },
   { label: "Finance", color: "group-hover:from-indigo-800 group-hover:to-indigo-500", path: "/finance" },
-  { label: "Logo", color: "", path: "/core" }, 
+  { label: "Logo", color: "", path: "/core" },
 ];
 
 const positions = [
@@ -32,38 +33,38 @@ export default function Honeycomb({ onModuleSelect }: HoneycombProps) {
 
   const handleModuleClick = (module: typeof modules[0]) => {
     const moduleName = module.label === "Logo" ? "Core" : module.label;
-        setActiveModule(moduleName);
-        document.title = `RST | ${moduleName}`;
-        if (onModuleSelect) {
+    setActiveModule(moduleName);
+    document.title = `RST | ${moduleName}`;
+    if (onModuleSelect) {
       onModuleSelect(moduleName);
     }
-        if (module.path) {
+    if (module.path) {
       navigate(module.path);
     }
   };
 
   return (
-    <section className="flex items-center justify-center h-full w-full">
-      <div className="relative w-full max-w-[90vmin] h-[90vmin] flex items-center justify-center">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-gradient-to-r from-blue-400 to-blue-600 blur-[10vmin] opacity-20 rounded-full w-[60%] h-[60%] animate-pulse" />
-        </div>
+      <section className="flex items-center justify-center h-full w-full">
+        <div className="relative w-full max-w-[90vmin] h-[90vmin] flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="bg-gradient-to-r from-blue-400 to-blue-600 blur-[10vmin] opacity-20 rounded-full w-[60%] h-[60%] animate-pulse" />
+          </div>
 
-        {modules.map((mod, i) => (
-          <div
-            key={mod.label}
-            className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${positions[i]} group cursor-pointer transition-all duration-300`}
-            style={{
-              width: 'clamp(68px, 15.5vmin, 125px)',
-              height: 'clamp(68px, 15.5vmin, 125px)',
-              animation: `honeycomb 2.1s ease forwards`,
-              animationDelay: `${i * 0.1}s`,
-              opacity: 0, 
-            }}
-            onClick={() => handleModuleClick(mod)}
-          >
-            <div
-              className={`
+          {modules.map((mod, i) => (
+              <div
+                  key={mod.label}
+                  className={`absolute transform -translate-x-1/2 -translate-y-1/2 ${positions[i]} group cursor-pointer transition-all duration-300`}
+                  style={{
+                    width: 'clamp(68px, 15.5vmin, 125px)',
+                    height: 'clamp(68px, 15.5vmin, 125px)',
+                    animation: `honeycomb 2.1s ease forwards`,
+                    animationDelay: `${i * 0.1}s`,
+                    opacity: 0,
+                  }}
+                  onClick={() => handleModuleClick(mod)}
+              >
+                <div
+                    className={`
                 hexagon
                 flex items-center justify-center
                 w-full h-full
@@ -73,20 +74,19 @@ export default function Honeycomb({ onModuleSelect }: HoneycombProps) {
                 bg-white
                 ${mod.color ? `group-hover:bg-gradient-to-r ${mod.color} group-hover:text-white` : ""}
               `}
-            >
-              {mod.label === "Logo" ? (
-                <img
-                  src="/bda-logo-1.png"
-                  alt="Company Logo"
-                  className="w-[80%] h-[80%] object-contain"
-                />
-              ) : (
-                mod.label
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
+                >
+                  {mod.label === "Logo" ? (
+                      <CompanyLogo
+                          className="w-[80%] h-[80%] object-contain p-2"
+                          fallbackText="RST"
+                      />
+                  ) : (
+                      mod.label
+                  )}
+                </div>
+              </div>
+          ))}
+        </div>
+      </section>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, PenBox, Building2 } from 'lucide-react';
+import { X, PenBox } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 import { Label } from '@/shared/components/ui/label';
 import { Input } from '@/shared/components/ui/input';

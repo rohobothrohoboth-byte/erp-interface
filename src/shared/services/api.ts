@@ -23,7 +23,7 @@ const convertDatesToUtc = (obj: any): any => {
     }
     return obj;
 };
-const fallbackUrl = "http://192.168.1.7:5000";
+const fallbackUrl = "http://192.168.1.2:5000";
 /* =========================================
    🔥 GET BASE URL WITH FALLBACK
 ========================================= */

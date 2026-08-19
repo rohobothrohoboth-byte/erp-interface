@@ -9,7 +9,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      // ✅ Try this alternative path for emotion
+      // ✅ Fix: Make sure the path is correct
       "@emotion/is-prop-valid": path.resolve(__dirname, "node_modules/@emotion/is-prop-valid/dist/emotion-is-prop-valid.cjs.js"),
     },
   },
@@ -19,9 +19,10 @@ export default defineConfig({
       "react-dom",
       "framer-motion",
     ],
-    // ✅ Remove @emotion packages from include if they don't exist
   },
   server: {
-    port: 1211,
+    host: '0.0.0.0', // ✅ ADD THIS - Listen on all network interfaces
+    port: 1211,       // Your port
+    strictPort: true, // Don't try other ports if 1211 is taken
   },
 })
