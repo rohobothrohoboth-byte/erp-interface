@@ -26,6 +26,7 @@ const PageGeneralLedger: React.FC = () => {
     const selectedPeriod = useMemo(() => periods.find((period) => period.id === periodId), [periods, periodId]);
 
     const loadTrialBalance = async (selectedPeriodId: string) => {
+        if (!selectedPeriodId) return;
         setLoading(true);
         setError(null);
         try {
@@ -60,10 +61,6 @@ const PageGeneralLedger: React.FC = () => {
                 if (!active) return;
                 const options = (result ?? []).map((period: any) => ({ id: period.id, name: period.name, startDate: period.startDate, endDate: period.endDate }));
                 setPeriods(options);
-                if (options[0]?.id) {
-                    setPeriodId(options[0].id);
-                    void loadTrialBalance(options[0].id);
-                }
             })
             .catch((err) => {
                 if (active) setError(err?.message ?? 'Unable to load financial periods.');
@@ -84,7 +81,7 @@ const PageGeneralLedger: React.FC = () => {
             <div className="rounded-lg border bg-white p-4 shadow-sm">
                 <div className="grid gap-4 md:grid-cols-3">
                     <label className="text-sm font-medium text-gray-700">Financial Period
-                        <select value={periodId} onChange={(event) => { const next = event.target.value; setPeriodId(next); setLedger(null); if (next) void loadTrialBalance(next); }} className="mt-1 block w-full rounded-md border px-3 py-2">
+                        <select value={periodId} onChange={(event) => { const next = event.target.value; setPeriodId(next); setLedger(null); setTrialBalance(null); setAccountId(''); if (next) void loadTrialBalance(next); }} className="mt-1 block w-full rounded-md border px-3 py-2">
                             <option value="">Select period</option>{periods.map((period) => <option key={period.id} value={period.id}>{period.name}</option>)}
                         </select>
                     </label>
