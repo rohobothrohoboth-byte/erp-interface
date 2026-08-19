@@ -2,19 +2,19 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { queryClient } from "./lib/queryClient";
-import { useAuthStore } from "./stores/auth.store";
+import { queryClient } from "@/shared/lib/queryClient";
+import { useAuthStore } from "@/shared/stores/auth.store";
 import { useEffect, lazy, Suspense, useState, useRef, Component } from "react";
 import { Toaster } from 'react-hot-toast';
-import api from "./services/api";
+import api from "@/shared/services/api";
 
 // Contexts
-import { LanguageProvider } from './i18n';
-import { NotificationProvider } from './contexts/NotificationContext';
+import { LanguageProvider } from '@/shared/i18n/index';
+import { NotificationProvider } from '@/shared/contexts/NotificationContext';
 
 // Components
-import ProtectedRoute from './components/ProtectedRoute';
-import { PageLoader } from './components/ui/page-loader';
+import ProtectedRoute from '@/shared/components/ProtectedRoute';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 
 // ✅ Error Boundary Class - FIXED to ignore Suspense exceptions
 class LazyErrorBoundary extends Component<
@@ -122,32 +122,32 @@ const safeLazy = (importFn: () => Promise<any>) => {
 };
 
 // ✅ Lazy imports with error handling
-const Layout = safeLazy(() => import("./layout/layout"));
-const SignInPage = safeLazy(() => import("./pages/SignInPage"));
-const Modules = safeLazy(() => import("./pages/Modules"));
-const ProfilePage = safeLazy(() => import("./pages/profile"));
-const NotFoundPage = safeLazy(() => import("./pages/NotFoundPage"));
-const TaskManagement = safeLazy(() => import('./pages/TaskManagement'));
-const EditTaskPage = safeLazy(() => import('./pages/EditTaskPage'));
-const TaskCalendar = safeLazy(() => import('./components/Dashboard/TaskCalendar'));
-const Setup = safeLazy(() => import("./pages/Setup"));
-const VacanciesPage = safeLazy(() => import("./pages/vacancy/VacanciesPage"));
-import PublicFileView from './pages/public/PublicFileView';
+const Layout = safeLazy(() => import("@/shared/layout/layout"));
+const SignInPage = safeLazy(() => import("@/modules/auth/pages/SignInPage"));
+const Modules = safeLazy(() => import("@/shared/pages/Modules"));
+const ProfilePage = safeLazy(() => import("@/modules/profile/pages/ProfilePage"));
+const NotFoundPage = safeLazy(() => import("@/shared/pages/NotFoundPage"));
+const TaskManagement = safeLazy(() => import('@/modules/task/pages/TaskManagement'));
+const EditTaskPage = safeLazy(() => import('@/modules/task/pages/EditTaskPage'));
+const TaskCalendar = safeLazy(() => import('@/modules/dashboard/components/TaskCalendar'));
+const Setup = safeLazy(() => import("@/modules/auth/pages/Setup"));
+const VacanciesPage = safeLazy(() => import("@/modules/vacancy/pages/VacanciesPage"));
+import PublicFileView from '@/shared/pages/public/PublicFileView';
 
 // ✅ Direct imports (not lazy)
 import { financeRoutes, financeSidebarRoutes } from './routes/finance.routes';
 import { allRoutes } from './routes';
 
 // Module Dashboard Components
-import Dashboard from "./pages/modules/HR";
-import CoreDashboard from "./pages/modules/Core";
-import FinanceDashboard from "./pages/modules/Finance";
-import CRMDashboard from "./pages/modules/CRM";
-import InventoryDashboard from "./pages/modules/Inventory";
-import Procurement from "./pages/modules/Procurement";
-import FileDashboard from "./pages/modules/File";
-import PlanDevDashboard from "./pages/modules/PlanDev";
-import ProjectManagementDashboard from "./pages/modules/ProjectManagement";
+import Dashboard from "@/modules/hr/pages/ModuleDashboard";
+import CoreDashboard from "@/modules/core/pages/ModuleDashboard";
+import FinanceDashboard from "@/modules/finance/pages/ModuleDashboard";
+import CRMDashboard from "@/modules/crm/pages/ModuleDashboard";
+import InventoryDashboard from "@/modules/inventory/pages/ModuleDashboard";
+import Procurement from "@/modules/procurement/pages/ModuleDashboard";
+import FileDashboard from "@/modules/file/pages/ModuleDashboard";
+import PlanDevDashboard from "@/modules/plandev/pages/ModuleDashboard";
+import ProjectManagementDashboard from "@/modules/project/pages/ModuleDashboard";
 
 function App() {
     const init = useAuthStore((s) => s.init);

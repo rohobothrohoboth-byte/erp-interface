@@ -11,7 +11,7 @@ import {
     Database,
     type LucideIcon
 } from 'lucide-react';
-import { PageLoader } from '../components/ui/page-loader';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
 
 const withSuspense = (
@@ -23,77 +23,77 @@ const withSuspense = (
 );
 
 // Core Pages
-const CoreDashboard = lazy(() => import('../pages/modules/Core'));
-const FiscalYearOverview = lazy(() => import('../pages/core/pageFiscYear'));
-const FiscalYearHistory = lazy(() => import('../pages/core/pageFiscYearHist'));
-const PagePeriod = lazy(() => import('../pages/core/pagePeriod'));
-const HolidayHistory = lazy(() => import('../pages/core/pageHolidayHist'));
-const UserOverview = lazy(() => import('../pages/core/usermanagement/pageUserManagement'));
-const PageAddUser = lazy(() => import('../pages/core/usermanagement/pageAddUser'));
-const PageAddUserV2 = lazy(() => import('../pages/core/usermanagement/pageAddUserV2'));
-const EditAccountPage = lazy(() => import('../pages/core/usermanagement/pageEditAccount'));
-const PageAddAccount = lazy(() => import('../pages/core/usermanagement/pageAddAccount'));
-const DepartmentOverview = lazy(() => import('../pages/core/pageDepartments'));
-//const CompanyBranchesPage = lazy(() => import('../pages/core/pageCompanies'));
-const BranchesPage = lazy(() => import('../pages/core/pageBranches'));
+const CoreDashboard = lazy(() => import('@/modules/core/pages/ModuleDashboard'));
+const FiscalYearOverview = lazy(() => import('@/modules/core/pages/pageFiscYear'));
+const FiscalYearHistory = lazy(() => import('@/modules/core/pages/pageFiscYearHist'));
+const PagePeriod = lazy(() => import('@/modules/core/pages/pagePeriod'));
+const HolidayHistory = lazy(() => import('@/modules/core/pages/pageHolidayHist'));
+const UserOverview = lazy(() => import('@/modules/core/pages/usermanagement/pageUserManagement'));
+const PageAddUser = lazy(() => import('@/modules/core/pages/usermanagement/pageAddUser'));
+const PageAddUserV2 = lazy(() => import('@/modules/core/pages/usermanagement/pageAddUserV2'));
+const EditAccountPage = lazy(() => import('@/modules/core/pages/usermanagement/pageEditAccount'));
+const PageAddAccount = lazy(() => import('@/modules/core/pages/usermanagement/pageAddAccount'));
+const DepartmentOverview = lazy(() => import('@/modules/core/pages/pageDepartments'));
+//const CompanyBranchesPage = lazy(() => import('@/modules/core/pages/pageCompanies'));
+const BranchesPage = lazy(() => import('@/modules/core/pages/pageBranches'));
 
 
-const CompaniesPage = lazy(() => import('../pages/core/pageCompanies'));
-const CompanyBranchesPage = lazy(() => import('../pages/core/pageCompanyBranches')); // NEW component
+const CompaniesPage = lazy(() => import('@/modules/core/pages/pageCompanies'));
+const CompanyBranchesPage = lazy(() => import('@/modules/core/pages/pageCompanyBranches')); // NEW component
 
 
 
-const PageModuleSettings = lazy(() => import('../pages/settings/coresettings/PageModuleSettings'));
-const PageCoreSettings = lazy(() => import('../pages/settings/coreSettings/PageCoreSettings'));
-const PageApiSettings = lazy(() => import('../pages/settings/coreSettings/PageApiSettings'));
-const PageMenuSettings = lazy(() => import('../pages/settings/coreSettings/PageMenuSettings'));
-const AuditTrailPage = lazy(() => import('../pages/finance/generalledgerpage/AuditTrailPage'));
-const PageSettings = lazy(() => import('../pages/settings/pageSettings'));
+const PageModuleSettings = lazy(() => import('@/modules/settings/pages/coreSettings/PageModuleSettings'));
+const PageCoreSettings = lazy(() => import('@/modules/settings/pages/coreSettings/PageCoreSettings'));
+const PageApiSettings = lazy(() => import('@/modules/settings/pages/coreSettings/PageApiSettings'));
+const PageMenuSettings = lazy(() => import('@/modules/settings/pages/coreSettings/PageMenuSettings'));
+const AuditTrailPage = lazy(() => import('@/modules/finance/pages/generalledgerpage/AuditTrailPage'));
+const PageSettings = lazy(() => import('@/modules/settings/pages/pageSettings'));
 
 // HR Settings
-const PageHrSettings = lazy(() => import('../pages/settings/hrSettings/PageHrSettings'));
-const JobGrade = lazy(() => import('../pages/settings/hrSettings/jobgrade/JobGrade'));
-const JobGradeSubgrades = lazy(() => import('../pages/settings/hrSettings/jobgrade/JobGradeSubgrades'));
-const PageBenefitSet = lazy(() => import('../pages/settings/hrSettings/pageBenefitSet'));
-const PageEducationalQual = lazy(() => import('../pages/settings/hrSettings/pageEducationalQual'));
-const PagePosition = lazy(() => import('../pages/settings/hrSettings/position/pagePosition'));
-const PositionDetails = lazy(() => import('../pages/settings/hrSettings/position/PositionDetails'));
-const PageAnnualLeave = lazy(() => import('../pages/settings/hrSettings/pageAnnualLeave'));
-const LeavePolicyAccrualPage = lazy(() => import('../pages/settings/hrSettings/leavepolicyaccrual/LeavePolicyAccrualPage'));
-const LeavePolicy = lazy(() => import('../pages/settings/hrSettings/Leave/leavePolicy'));
-const LeavePolicyConfig = lazy(() => import('../pages/settings/hrSettings/Leave/leavePolicyConfig'));
-const LeaveAppChainHistory = lazy(() => import('../pages/settings/hrSettings/Leave/LeaveAppChainHistory'));
-const LeavePolicyConfigHistory = lazy(() => import('../pages/settings/hrSettings/Leave/leavePolicyConfigHistory'));
-const PolicyAssignmentRule = lazy(() => import('../pages/settings/hrSettings/Leave/policyAssignmentRule'));
-const PolicyAssignmentRuleHistory = lazy(() => import('../pages/settings/hrSettings/Leave/policyAssignmentRuleHistory'));
-const LeaveAppChainManagement = lazy(() => import('../pages/settings/hrSettings/Leave/LeaveAppChainManagement'));
-const PageHrRecruitmentSettings = lazy(() => import('../pages/settings/hrSettings/Recruitment/PageHrRecruitmentSettings'));
-const PageEvaluationType = lazy(() => import('../pages/settings/hrSettings/Recruitment/PageEvaluationType'));
-const PageEvaluationFlow = lazy(() => import('../pages/settings/hrSettings/Recruitment/PageEvaluationFlow'));
-const PageEvaluationStep = lazy(() => import('../pages/settings/hrSettings/Recruitment/PageEvaluationStep'));
-const PageOnboardingTask = lazy(() => import('../pages/settings/hrSettings/Recruitment/PageOnboardingTask'));
+const PageHrSettings = lazy(() => import('@/modules/settings/pages/hrSettings/PageHrSettings'));
+const JobGrade = lazy(() => import('@/modules/settings/pages/hrSettings/jobgrade/JobGrade'));
+const JobGradeSubgrades = lazy(() => import('@/modules/settings/pages/hrSettings/jobgrade/JobGradeSubgrades'));
+const PageBenefitSet = lazy(() => import('@/modules/settings/pages/hrSettings/pageBenefitSet'));
+const PageEducationalQual = lazy(() => import('@/modules/settings/pages/hrSettings/pageEducationalQual'));
+const PagePosition = lazy(() => import('@/modules/settings/pages/hrSettings/position/pagePosition'));
+const PositionDetails = lazy(() => import('@/modules/settings/pages/hrSettings/position/PositionDetails'));
+const PageAnnualLeave = lazy(() => import('@/modules/settings/pages/hrSettings/pageAnnualLeave'));
+const LeavePolicyAccrualPage = lazy(() => import('@/modules/settings/pages/hrSettings/leavepolicyaccrual/LeavePolicyAccrualPage'));
+const LeavePolicy = lazy(() => import('@/modules/settings/pages/hrSettings/Leave/leavePolicy'));
+const LeavePolicyConfig = lazy(() => import('@/modules/settings/pages/hrSettings/Leave/leavePolicyConfig'));
+const LeaveAppChainHistory = lazy(() => import('@/modules/settings/pages/hrSettings/Leave/LeaveAppChainHistory'));
+const LeavePolicyConfigHistory = lazy(() => import('@/modules/settings/pages/hrSettings/Leave/leavePolicyConfigHistory'));
+const PolicyAssignmentRule = lazy(() => import('@/modules/settings/pages/hrSettings/Leave/policyAssignmentRule'));
+const PolicyAssignmentRuleHistory = lazy(() => import('@/modules/settings/pages/hrSettings/Leave/policyAssignmentRuleHistory'));
+const LeaveAppChainManagement = lazy(() => import('@/modules/settings/pages/hrSettings/Leave/LeaveAppChainManagement'));
+const PageHrRecruitmentSettings = lazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageHrRecruitmentSettings'));
+const PageEvaluationType = lazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageEvaluationType'));
+const PageEvaluationFlow = lazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageEvaluationFlow'));
+const PageEvaluationStep = lazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageEvaluationStep'));
+const PageOnboardingTask = lazy(() => import('@/modules/settings/pages/hrSettings/Recruitment/PageOnboardingTask'));
 
 // Finance Settings
-const PageFinanceSettings = lazy(() => import('../pages/settings/FinanceSettings/PageFinanceSettings'));
-const PageAccounts = lazy(() => import('../pages/settings/FinanceSettings/Account/PageAccounts'));
-const PageAccountDetail = lazy(() => import('../pages/settings/FinanceSettings/Account/PageAccountDetail'));
-const PageAccountCategory = lazy(() => import('../pages/settings/FinanceSettings/Account/PageAccountCategory'));
-const PageCostCenter = lazy(() => import('../pages/settings/FinanceSettings/CostCenter/PageCostCenter'));
-const PageBudgetCode = lazy(() => import('../pages/settings/FinanceSettings/BudgetCode/PageBudgetCode'));
-const PageBudgetCategory = lazy(() => import('../pages/settings/FinanceSettings/BudgetCategory/PageBudgetCategory'));
-const PagePaymentApprovalChain = lazy(() => import('../pages/settings/FinanceSettings/PagePaymentApprovalChain'));
+const PageFinanceSettings = lazy(() => import('@/modules/settings/pages/FinanceSettings/PageFinanceSettings'));
+const PageAccounts = lazy(() => import('@/modules/settings/pages/FinanceSettings/Account/PageAccounts'));
+const PageAccountDetail = lazy(() => import('@/modules/settings/pages/FinanceSettings/Account/PageAccountDetail'));
+const PageAccountCategory = lazy(() => import('@/modules/settings/pages/FinanceSettings/Account/PageAccountCategory'));
+const PageCostCenter = lazy(() => import('@/modules/settings/pages/FinanceSettings/CostCenter/PageCostCenter'));
+const PageBudgetCode = lazy(() => import('@/modules/settings/pages/FinanceSettings/BudgetCode/PageBudgetCode'));
+const PageBudgetCategory = lazy(() => import('@/modules/settings/pages/FinanceSettings/BudgetCategory/PageBudgetCategory'));
+const PagePaymentApprovalChain = lazy(() => import('@/modules/settings/pages/FinanceSettings/PagePaymentApprovalChain'));
 
 // CRM Settings
-const PageCrmSettings = lazy(() => import('../pages/settings/crmSettings/PageCrmSettings'));
-const PageLeadSources = lazy(() => import('../pages/settings/crmSettings/pageLeadSources'));
-const PageLeadStatuses = lazy(() => import('../pages/settings/crmSettings/pageLeadStatuses'));
-const PageIndustries = lazy(() => import('../pages/settings/crmSettings/pageIndustries'));
-const PageRoutingRules = lazy(() => import('../pages/settings/crmSettings/pageRoutingRules'));
-const PageLeadScoring = lazy(() => import('../pages/settings/crmSettings/pageLeadScoring'));
-const PageQuotationTemplates = lazy(() => import('../pages/settings/crmSettings/pageQuotationTemplates'));
-const PageEmailTemplates = lazy(() => import('../pages/settings/crmSettings/pageEmailTemplates'));
-const PageSMSTemplates = lazy(() => import('../pages/settings/crmSettings/pageSMSTemplates'));
-const PageTicketStatus = lazy(() => import('../pages/settings/crmSettings/pageTicketStatus'));
+const PageCrmSettings = lazy(() => import('@/modules/settings/pages/crmSettings/PageCrmSettings'));
+const PageLeadSources = lazy(() => import('@/modules/settings/pages/crmSettings/pageLeadSources'));
+const PageLeadStatuses = lazy(() => import('@/modules/settings/pages/crmSettings/pageLeadStatuses'));
+const PageIndustries = lazy(() => import('@/modules/settings/pages/crmSettings/pageIndustries'));
+const PageRoutingRules = lazy(() => import('@/modules/settings/pages/crmSettings/pageRoutingRules'));
+const PageLeadScoring = lazy(() => import('@/modules/settings/pages/crmSettings/pageLeadScoring'));
+const PageQuotationTemplates = lazy(() => import('@/modules/settings/pages/crmSettings/pageQuotationTemplates'));
+const PageEmailTemplates = lazy(() => import('@/modules/settings/pages/crmSettings/pageEmailTemplates'));
+const PageSMSTemplates = lazy(() => import('@/modules/settings/pages/crmSettings/pageSMSTemplates'));
+const PageTicketStatus = lazy(() => import('@/modules/settings/pages/crmSettings/pageTicketStatus'));
 
 export const coreRoutes: AppRoute[] = [
     // Dashboard
@@ -218,14 +218,6 @@ export const coreRoutes: AppRoute[] = [
         icon: Building2,
         element: withSuspense(BranchesPage),
         nav: true,
-    },
-    {
-        path: 'core/company/:companyId/branches',
-        href: '/core/company/:companyId/branches',
-        title: 'Company Branches',
-        icon: Building2,
-        element: withSuspense(CompanyBranchesPage), // Shows branches for a specific company
-        nav: false,
     },
     // ═══════════════════════════════════════════════════════════════
     // SETTINGS ROUTES - ONLY ONE DEFINITION PER PATH
@@ -621,7 +613,7 @@ export const coreSidebarRoutes: SidebarNavSection[] = [
         items: [
             { title: 'Companies', href: '/core/company', activeMatch: 'prefix' },
             { title: 'Departments', href: '/core/department', activeMatch: 'prefix' },
-            { title: 'Branches', href: '/core/branches', activeMatch: 'prefix' },
+            { title: 'Branches', href: '/core/branch', activeMatch: 'prefix' },
             { title: 'Fiscal Year', href: '/core/fiscal-year', activeMatch: 'prefix' },
         ],
     },
@@ -653,7 +645,7 @@ const ROUTE_TITLE_BY_PREFIX: [string, string][] = [
     ['/core/users', 'User Management'],
     ['/core/department', 'Departments'],
     ['/core/company', 'Companies'],
-    ['/core/branches', 'Branches'],
+    ['/core/branch', 'Branches'],
     ['/settings', 'Settings'],
     ['/settings/core', 'Core Settings'],
     ['/settings/hr', 'HR Settings'],

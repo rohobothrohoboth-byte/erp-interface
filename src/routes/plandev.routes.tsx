@@ -19,7 +19,7 @@ import {
     Gauge,
     type LucideIcon
 } from 'lucide-react';
-import { PageLoader } from '../components/ui/page-loader';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
 
 const withSuspense = (
@@ -31,63 +31,63 @@ const withSuspense = (
 );
 
 // Plan & Development Pages
-const PlanDevDashboard = lazy(() => import('../pages/modules/PlanDev'));
+const PlanDevDashboard = lazy(() => import('@/modules/plandev/pages/ModuleDashboard'));
 
 // Strategic Plans
-const StrategicPlansPage = lazy(() => import('../pages/plandev/strategic/StrategicPlansPage'));
-const CreateStrategicPlan = lazy(() => import('../pages/plandev/strategic/CreateStrategicPlan'));
-const EditStrategicPlan = lazy(() => import('../pages/plandev/strategic/EditStrategicPlan'));
-const StrategicPlanDetail = lazy(() => import('../pages/plandev/strategic/StrategicPlanDetail'));
+const StrategicPlansPage = lazy(() => import('@/modules/plandev/pages/strategic/StrategicPlansPage'));
+const CreateStrategicPlan = lazy(() => import('@/modules/plandev/pages/strategic/CreateStrategicPlan'));
+const EditStrategicPlan = lazy(() => import('@/modules/plandev/pages/strategic/EditStrategicPlan'));
+const StrategicPlanDetail = lazy(() => import('@/modules/plandev/pages/strategic/StrategicPlanDetail'));
 
 // Objectives
-const ObjectivesPage = lazy(() => import('../pages/plandev/objectives/ObjectivesPage'));
-const CreateObjective = lazy(() => import('../pages/plandev/objectives/CreateObjective'));
-const EditObjective = lazy(() => import('../pages/plandev/objectives/EditObjective'));
-const ObjectiveDetail = lazy(() => import('../pages/plandev/objectives/ObjectiveDetail'));
+const ObjectivesPage = lazy(() => import('@/modules/plandev/pages/objectives/ObjectivesPage'));
+const CreateObjective = lazy(() => import('@/modules/plandev/pages/objectives/CreateObjective'));
+const EditObjective = lazy(() => import('@/modules/plandev/pages/objectives/EditObjective'));
+const ObjectiveDetail = lazy(() => import('@/modules/plandev/pages/objectives/ObjectiveDetail'));
 
 // KPIs
-const KPIsPage = lazy(() => import('../pages/plandev/kpis/KPIsPage'));
-const CreateKPI = lazy(() => import('../pages/plandev/kpis/CreateKPI'));
-const EditKPI = lazy(() => import('../pages/plandev/kpis/EditKPI'));
-const KPIDetail = lazy(() => import('../pages/plandev/kpis/KPIDetail'));
+const KPIsPage = lazy(() => import('@/modules/plandev/pages/kpis/KPIsPage'));
+const CreateKPI = lazy(() => import('@/modules/plandev/pages/kpis/CreateKPI'));
+const EditKPI = lazy(() => import('@/modules/plandev/pages/kpis/EditKPI'));
+const KPIDetail = lazy(() => import('@/modules/plandev/pages/kpis/KPIDetail'));
 
 // Initiatives
-const ActiveInitiativesPage = lazy(() => import('../pages/plandev/initiatives/ActiveInitiativesPage'));
-const CompletedInitiativesPage = lazy(() => import('../pages/plandev/initiatives/CompletedInitiativesPage'));
-const InitiativeBudgetPage = lazy(() => import('../pages/plandev/initiatives/InitiativeBudgetPage'));
-const InitiativeDetail = lazy(() => import('../pages/plandev/initiatives/InitiativeDetail'));
-const CreateInitiative = lazy(() => import('../pages/plandev/initiatives/CreateInitiative'));
-const EditInitiative = lazy(() => import('../pages/plandev/initiatives/EditInitiative'));
+const ActiveInitiativesPage = lazy(() => import('@/modules/plandev/pages/initiatives/ActiveInitiativesPage'));
+const CompletedInitiativesPage = lazy(() => import('@/modules/plandev/pages/initiatives/CompletedInitiativesPage'));
+const InitiativeBudgetPage = lazy(() => import('@/modules/plandev/pages/initiatives/InitiativeBudgetPage'));
+const InitiativeDetail = lazy(() => import('@/modules/plandev/pages/initiatives/InitiativeDetail'));
+const CreateInitiative = lazy(() => import('@/modules/plandev/pages/initiatives/CreateInitiative'));
+const EditInitiative = lazy(() => import('@/modules/plandev/pages/initiatives/EditInitiative'));
 
 // Planning
-const PlanningCalendarPage = lazy(() => import('../pages/plandev/planning/PlanningCalendarPage'));
-const MilestonesPage = lazy(() => import('../pages/plandev/planning/MilestonesPage'));
-const CreateMilestone = lazy(() => import('../pages/plandev/planning/CreateMilestone'));
-const EditMilestone = lazy(() => import('../pages/plandev/planning/EditMilestone'));
-const MilestoneDetail = lazy(() => import('../pages/plandev/planning/MilestoneDetail'));
+const PlanningCalendarPage = lazy(() => import('@/modules/plandev/pages/planning/PlanningCalendarPage'));
+const MilestonesPage = lazy(() => import('@/modules/plandev/pages/planning/MilestonesPage'));
+const CreateMilestone = lazy(() => import('@/modules/plandev/pages/planning/CreateMilestone'));
+const EditMilestone = lazy(() => import('@/modules/plandev/pages/planning/EditMilestone'));
+const MilestoneDetail = lazy(() => import('@/modules/plandev/pages/planning/MilestoneDetail'));
 
 // Risks
-const RiskManagementPage = lazy(() => import('../pages/plandev/risks/RiskManagementPage'));
-const CreateRisk = lazy(() => import('../pages/plandev/risks/CreateRisk'));
-const EditRisk = lazy(() => import('../pages/plandev/risks/EditRisk'));
-const RiskDetail = lazy(() => import('../pages/plandev/risks/RiskDetail'));
+const RiskManagementPage = lazy(() => import('@/modules/plandev/pages/risks/RiskManagementPage'));
+const CreateRisk = lazy(() => import('@/modules/plandev/pages/risks/CreateRisk'));
+const EditRisk = lazy(() => import('@/modules/plandev/pages/risks/EditRisk'));
+const RiskDetail = lazy(() => import('@/modules/plandev/pages/risks/RiskDetail'));
 
 // Reports
-const ProgressReportsPage = lazy(() => import('../pages/plandev/reports/ProgressReportsPage'));
-const PerformanceReportsPage = lazy(() => import('../pages/plandev/reports/PerformanceReportsPage'));
-const ReportDetail = lazy(() => import('../pages/plandev/reports/ReportDetail'));
-const GenerateReport = lazy(() => import('../pages/plandev/reports/GenerateReport'));
+const ProgressReportsPage = lazy(() => import('@/modules/plandev/pages/reports/ProgressReportsPage'));
+const PerformanceReportsPage = lazy(() => import('@/modules/plandev/pages/reports/PerformanceReportsPage'));
+const ReportDetail = lazy(() => import('@/modules/plandev/pages/reports/ReportDetail'));
+const GenerateReport = lazy(() => import('@/modules/plandev/pages/reports/GenerateReport'));
 
 // Tasks
-const TasksPage = lazy(() => import('../pages/plandev/tasks/TasksPage'));
-const CreateTask = lazy(() => import('../pages/plandev/tasks/CreateTask'));
-const EditTask = lazy(() => import('../pages/plandev/tasks/EditTask'));
-const TaskDetail = lazy(() => import('../pages/plandev/tasks/TaskDetail'));
+const TasksPage = lazy(() => import('@/modules/plandev/pages/tasks/TasksPage'));
+const CreateTask = lazy(() => import('@/modules/plandev/pages/tasks/CreateTask'));
+const EditTask = lazy(() => import('@/modules/plandev/pages/tasks/EditTask'));
+const TaskDetail = lazy(() => import('@/modules/plandev/pages/tasks/TaskDetail'));
 
 // Strategic Plan Budget
-const StrategicPlanBudget = lazy(() => import('../pages/plandev/strategic/StrategicPlanBudget'));
-const CreateBudgetItem = lazy(() => import('../pages/plandev/strategic/CreateBudgetItem'));
-const EditBudgetItem = lazy(() => import('../pages/plandev/strategic/EditBudgetItem'));
+const StrategicPlanBudget = lazy(() => import('@/modules/plandev/pages/strategic/StrategicPlanBudget'));
+const CreateBudgetItem = lazy(() => import('@/modules/plandev/pages/strategic/CreateBudgetItem'));
+const EditBudgetItem = lazy(() => import('@/modules/plandev/pages/strategic/EditBudgetItem'));
 
 export const plandevRoutes: AppRoute[] = [
     // ============================================================

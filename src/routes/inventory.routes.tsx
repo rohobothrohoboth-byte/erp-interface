@@ -10,9 +10,11 @@ import {
     ArrowRightLeft,
     SlidersHorizontal,
     RefreshCcw,
-    type LucideIcon
+    PackageCheck,
+    PackagePlus,
+    ClipboardList,
 } from 'lucide-react';
-import { PageLoader } from '../components/ui/page-loader';
+import { PageLoader } from '@/shared/components/ui/page-loader';
 import type { AppRoute, SidebarNavSection } from './types';
 
 const withSuspense = (
@@ -24,7 +26,30 @@ const withSuspense = (
 );
 
 // Inventory Pages
-const InventoryDashboard = lazy(() => import('../pages/modules/Inventory'));
+const InventoryDashboard = lazy(() => import('@/modules/inventory/pages/ModuleDashboard'));
+const ProductList = lazy(() => import('@/modules/inventory/pages/products/ProductList'));
+const CategoriesPage = lazy(() => import('@/modules/inventory/pages/categories/CategoriesPage'));
+const UnitsPage = lazy(() => import('@/modules/inventory/pages/units/UnitsPage'));
+const BarcodePage = lazy(() => import('@/modules/inventory/pages/barcodes/BarcodePage'));
+const StockInPage = lazy(() => import('@/modules/inventory/pages/stock/StockInPage'));
+const StockOutPage = lazy(() => import('@/modules/inventory/pages/stock/StockOutPage'));
+const StockTransferPage = lazy(() => import('@/modules/inventory/pages/stock/StockTransferPage'));
+const StockAdjustmentPage = lazy(() => import('@/modules/inventory/pages/stock/StockAdjustmentPage'));
+const StockCountPage = lazy(() => import('@/modules/inventory/pages/stock/StockCountPage'));
+const WarehousePage = lazy(() => import('@/modules/inventory/pages/warehouse/WarehousePage'));
+const WarehouseZonesPage = lazy(() => import('@/modules/inventory/pages/warehouse/WarehouseZonesPage'));
+const WarehouseLayoutPage = lazy(() => import('@/modules/inventory/pages/warehouse/WarehouseLayoutPage'));
+const ValuationMethodsPage = lazy(() => import('@/modules/inventory/pages/reports/ValuationMethodsPage'));
+const ValuationReportPage = lazy(() => import('@/modules/inventory/pages/reports/ValuationReportPage'));
+const ReorderLevelsPage = lazy(() => import('@/modules/inventory/pages/reports/ReorderLevelsPage'));
+const ReorderRequestsPage = lazy(() => import('@/modules/inventory/pages/reports/ReorderRequestsPage'));
+const StockReportsPage = lazy(() => import('@/modules/inventory/pages/reports/StockReportsPage'));
+const MovementReportsPage = lazy(() => import('@/modules/inventory/pages/reports/MovementReportsPage'));
+const DemandForecastPage = lazy(() => import('@/modules/inventory/pages/reports/DemandForecastPage'));
+// Employee Materials Pages
+const MyMaterialsPage = lazy(() => import('@/modules/inventory/pages/materials/MyMaterialsPage'));
+const RequestMaterialPage = lazy(() => import('@/modules/inventory/pages/materials/RequestMaterialPage'));
+const MaterialRequestsAdminPage = lazy(() => import('@/modules/inventory/pages/materials/MaterialRequestsAdminPage'));
 
 export const inventoryRoutes: AppRoute[] = [
     // Dashboard
@@ -43,7 +68,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/products',
         title: 'Products',
         icon: Package,
-        element: withSuspense(() => import('../pages/inventory/products/ProductList')),
+        element: withSuspense(ProductList),
         nav: true,
     },
     {
@@ -51,7 +76,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/categories',
         title: 'Categories',
         icon: Boxes,
-        element: withSuspense(() => import('../pages/inventory/categories/CategoriesPage')),
+        element: withSuspense(CategoriesPage),
         nav: false,
     },
     {
@@ -59,7 +84,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/units',
         title: 'Units of Measure',
         icon: Package,
-        element: withSuspense(() => import('../pages/inventory/units/UnitsPage')),
+        element: withSuspense(UnitsPage),
         nav: false,
     },
     {
@@ -67,7 +92,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/barcodes',
         title: 'Barcode Management',
         icon: Package,
-        element: withSuspense(() => import('../pages/inventory/barcodes/BarcodePage')),
+        element: withSuspense(BarcodePage),
         nav: false,
     },
     // Stock Management
@@ -76,7 +101,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/stock-in',
         title: 'Stock In',
         icon: Package,
-        element: withSuspense(() => import('../pages/inventory/stock/StockInPage')),
+        element: withSuspense(StockInPage),
         nav: true,
     },
     {
@@ -84,7 +109,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/stock-out',
         title: 'Stock Out',
         icon: Package,
-        element: withSuspense(() => import('../pages/inventory/stock/StockOutPage')),
+        element: withSuspense(StockOutPage),
         nav: false,
     },
     {
@@ -92,7 +117,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/stock-transfer',
         title: 'Stock Transfer',
         icon: ArrowRightLeft,
-        element: withSuspense(() => import('../pages/inventory/stock/StockTransferPage')),
+        element: withSuspense(StockTransferPage),
         nav: false,
     },
     {
@@ -100,7 +125,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/stock-adjustment',
         title: 'Stock Adjustment',
         icon: SlidersHorizontal,
-        element: withSuspense(() => import('../pages/inventory/stock/StockAdjustmentPage')),
+        element: withSuspense(StockAdjustmentPage),
         nav: false,
     },
     {
@@ -108,7 +133,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/stock-count',
         title: 'Stock Count',
         icon: RefreshCcw,
-        element: withSuspense(() => import('../pages/inventory/stock/StockCountPage')),
+        element: withSuspense(StockCountPage),
         nav: false,
     },
     // Warehouse
@@ -117,7 +142,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/warehouses',
         title: 'Warehouses',
         icon: Warehouse,
-        element: withSuspense(() => import('../pages/inventory/warehouse/WarehousePage')),
+        element: withSuspense(WarehousePage),
         nav: true,
     },
     {
@@ -125,7 +150,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/warehouse-zones',
         title: 'Zones & Bins',
         icon: Warehouse,
-        element: withSuspense(() => import('../pages/inventory/warehouse/WarehouseZonesPage')),
+        element: withSuspense(WarehouseZonesPage),
         nav: false,
     },
     {
@@ -133,7 +158,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/warehouse-layout',
         title: 'Warehouse Layout',
         icon: Warehouse,
-        element: withSuspense(() => import('../pages/inventory/warehouse/WarehouseLayoutPage')),
+        element: withSuspense(WarehouseLayoutPage),
         nav: false,
     },
     // Reports
@@ -142,7 +167,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/valuation-methods',
         title: 'Valuation Methods',
         icon: BarChart3,
-        element: withSuspense(() => import('../pages/inventory/reports/ValuationMethodsPage')),
+        element: withSuspense(ValuationMethodsPage),
         nav: false,
     },
     {
@@ -150,7 +175,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/valuation-report',
         title: 'Valuation Report',
         icon: BarChart3,
-        element: withSuspense(() => import('../pages/inventory/reports/ValuationReportPage')),
+        element: withSuspense(ValuationReportPage),
         nav: false,
     },
     {
@@ -158,7 +183,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/reorder-levels',
         title: 'Reorder Levels',
         icon: BarChart3,
-        element: withSuspense(() => import('../pages/inventory/reports/ReorderLevelsPage')),
+        element: withSuspense(ReorderLevelsPage),
         nav: false,
     },
     {
@@ -166,7 +191,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/reorder-requests',
         title: 'Reorder Requests',
         icon: BarChart3,
-        element: withSuspense(() => import('../pages/inventory/reports/ReorderRequestsPage')),
+        element: withSuspense(ReorderRequestsPage),
         nav: false,
     },
     {
@@ -174,7 +199,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/stock-reports',
         title: 'Stock Reports',
         icon: BarChart3,
-        element: withSuspense(() => import('../pages/inventory/reports/StockReportsPage')),
+        element: withSuspense(StockReportsPage),
         nav: false,
     },
     {
@@ -182,7 +207,7 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/movement-reports',
         title: 'Movement Reports',
         icon: BarChart3,
-        element: withSuspense(() => import('../pages/inventory/reports/MovementReportsPage')),
+        element: withSuspense(MovementReportsPage),
         nav: false,
     },
     {
@@ -190,8 +215,33 @@ export const inventoryRoutes: AppRoute[] = [
         href: '/inventory/forecast',
         title: 'Demand Forecast',
         icon: BarChart3,
-        element: withSuspense(() => import('../pages/inventory/reports/DemandForecastPage')),
+        element: withSuspense(DemandForecastPage),
         nav: false,
+    },
+    // Employee Materials
+    {
+        path: 'inventory/my-materials',
+        href: '/inventory/my-materials',
+        title: 'My Materials',
+        icon: PackageCheck,
+        element: withSuspense(MyMaterialsPage),
+        nav: true,
+    },
+    {
+        path: 'inventory/request-material',
+        href: '/inventory/request-material',
+        title: 'Request Material',
+        icon: PackagePlus,
+        element: withSuspense(RequestMaterialPage),
+        nav: true,
+    },
+    {
+        path: 'inventory/material-requests',
+        href: '/inventory/material-requests',
+        title: 'Material Requests',
+        icon: ClipboardList,
+        element: withSuspense(MaterialRequestsAdminPage),
+        nav: true,
     },
 ];
 
@@ -233,6 +283,16 @@ export const inventorySidebarRoutes: SidebarNavSection[] = [
         items: [
             { title: 'Warehouses', href: '/inventory/warehouses', activeMatch: 'prefix' },
             { title: 'Zones & Bins', href: '/inventory/warehouse-zones', activeMatch: 'prefix' },
+        ],
+    },
+    {
+        id: 'inv-materials',
+        title: 'Employee Materials',
+        icon: PackageCheck,
+        items: [
+            { title: 'My Materials', href: '/inventory/my-materials', activeMatch: 'prefix' },
+            { title: 'Request Material', href: '/inventory/request-material', activeMatch: 'prefix' },
+            { title: 'Material Requests', href: '/inventory/material-requests', activeMatch: 'prefix' },
         ],
     },
     {
