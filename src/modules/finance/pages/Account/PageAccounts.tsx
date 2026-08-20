@@ -3,12 +3,11 @@ import { motion } from 'framer-motion';
 import { Plus, Search, Eye, Edit, Trash2, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
-  createAccount,
   deleteAccount,
   getAccounts,
   toggleAccountStatus,
-  updateAccount,
 } from '@/modules/finance/services/finance.api';
+import { createChartOfAccount, updateChartOfAccount } from '@/modules/finance/services/chartOfAccounts.service';
 import AccountFormModal, { type AccountFormValue } from '@/modules/finance/components/accounts/chartofAccount/AccountFormModal';
 import { showToast } from '@/shared/layout/layout';
 
@@ -75,10 +74,10 @@ const PageAccounts: React.FC = () => {
     };
 
     if (data.id) {
-      await updateAccount(payload);
+      await updateChartOfAccount(payload);
       showToast.success('Account updated successfully');
     } else {
-      await createAccount(payload);
+      await createChartOfAccount(payload);
       showToast.success('Account created successfully');
     }
 
@@ -158,17 +157,10 @@ const PageAccounts: React.FC = () => {
           <input type="text" placeholder="Search accounts..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
         <select value={filterType} onChange={e => setFilterType(e.target.value)} className="rounded-lg border border-gray-300 px-4 py-2">
-          <option value="All">All Types</option>
-          <option value="Asset">Asset</option>
-          <option value="Liability">Liability</option>
-          <option value="Equity">Equity</option>
-          <option value="Revenue">Revenue</option>
-          <option value="Expense">Expense</option>
+          <option value="All">All Types</option><option value="Asset">Asset</option><option value="Liability">Liability</option><option value="Equity">Equity</option><option value="Revenue">Revenue</option><option value="Expense">Expense</option>
         </select>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="rounded-lg border border-gray-300 px-4 py-2">
-          <option value="All">All Status</option>
-          <option value="Active">Active</option>
-          <option value="Inactive">Inactive</option>
+          <option value="All">All Status</option><option value="Active">Active</option><option value="Inactive">Inactive</option>
         </select>
         <button onClick={fetchAccounts} className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 hover:bg-gray-50"><RefreshCw size={18} /> Refresh</button>
       </div>
@@ -186,9 +178,7 @@ const PageAccounts: React.FC = () => {
               <th className="px-5 py-3 text-right text-xs font-medium uppercase text-gray-500">Actions</th>
             </tr></thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredAccounts.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">No accounts found</td></tr>
-              ) : filteredAccounts.map(account => (
+              {filteredAccounts.length === 0 ? <tr><td colSpan={7} className="px-6 py-8 text-center text-gray-500">No accounts found</td></tr> : filteredAccounts.map(account => (
                 <tr key={account.id} className="hover:bg-gray-50">
                   <td className="px-5 py-4 font-mono text-sm text-gray-900">{account.code}</td>
                   <td className="px-5 py-4 text-sm font-medium text-gray-900">{account.name}</td>
@@ -196,31 +186,21 @@ const PageAccounts: React.FC = () => {
                   <td className="px-5 py-4"><span className={`rounded-full px-2 py-1 text-xs font-medium ${account.normalBalance === 'Credit' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>{account.normalBalance || '—'}</span></td>
                   <td className="px-5 py-4 text-sm text-gray-500">{account.level || 1}</td>
                   <td className="px-5 py-4"><span className={`rounded-full px-2 py-1 text-xs font-medium ${account.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{account.isActive ? 'Active' : 'Inactive'}</span></td>
-                  <td className="px-5 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button onClick={() => navigate(`/finance/accounts/${account.id}`)} title="View details" className="rounded p-1 hover:bg-blue-100"><Eye size={16} className="text-blue-500" /></button>
-                      <button onClick={() => handleEdit(account)} title="Edit" className="rounded p-1 hover:bg-yellow-100"><Edit size={16} className="text-yellow-600" /></button>
-                      <button onClick={() => handleToggleStatus(account.id)} className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100">{account.isActive ? 'Deactivate' : 'Activate'}</button>
-                      <button onClick={() => handleDelete(account.id)} title="Delete" className="rounded p-1 hover:bg-red-100"><Trash2 size={16} className="text-red-500" /></button>
-                    </div>
-                  </td>
+                  <td className="px-5 py-4 text-right"><div className="flex items-center justify-end gap-2">
+                    <button onClick={() => navigate(`/finance/accounts/${account.id}`)} title="View details" className="rounded p-1 hover:bg-blue-100"><Eye size={16} className="text-blue-500" /></button>
+                    <button onClick={() => handleEdit(account)} title="Edit" className="rounded p-1 hover:bg-yellow-100"><Edit size={16} className="text-yellow-600" /></button>
+                    <button onClick={() => handleToggleStatus(account.id)} className="rounded px-2 py-1 text-xs text-gray-600 hover:bg-gray-100">{account.isActive ? 'Deactivate' : 'Activate'}</button>
+                    <button onClick={() => handleDelete(account.id)} title="Delete" className="rounded p-1 hover:bg-red-100"><Trash2 size={16} className="text-red-500" /></button>
+                  </div></td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="flex justify-between border-t bg-gray-50 px-6 py-3 text-sm text-gray-500">
-          <span>Showing {filteredAccounts.length} of {accounts.length} accounts</span>
-          <span className="text-indigo-600">{accounts.filter(a => a.isActive).length} active</span>
-        </div>
+        <div className="flex justify-between border-t bg-gray-50 px-6 py-3 text-sm text-gray-500"><span>Showing {filteredAccounts.length} of {accounts.length} accounts</span><span className="text-indigo-600">{accounts.filter(a => a.isActive).length} active</span></div>
       </div>
 
-      <AccountFormModal
-        isOpen={modalOpen}
-        account={selectedAccount}
-        onClose={() => { setModalOpen(false); setSelectedAccount(null); }}
-        onSave={handleSaveAccount}
-      />
+      <AccountFormModal isOpen={modalOpen} account={selectedAccount} onClose={() => { setModalOpen(false); setSelectedAccount(null); }} onSave={handleSaveAccount} />
     </motion.div>
   );
 };
